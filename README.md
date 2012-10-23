@@ -1,4 +1,2 @@
-COMS11300
+Linux Lab Coursework
 =========
-
-Procedural Programming Coursework
