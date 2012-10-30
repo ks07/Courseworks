@@ -56,8 +56,6 @@ double powerIndian(double x, int y) {
 int main() {
   printf("%f\n", 1000 * power(1.0 + (5.0/100.0), 25));
   printf("%f\n", 10000 * power(1 + (4.0/100.0), -12));
-  printf("%f\n", 1000 * powerIndian(1.0 + (5.0/100.0), 25));
   printf("%f\n", powerIndian(1.0000000001, 1000000000));
-  printf("%f\n", power(1.0000000001, 1000000000));
   return 0;
 }
