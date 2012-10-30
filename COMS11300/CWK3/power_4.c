@@ -56,50 +56,46 @@ double powerIndian(double x, int y) {
 
 /* Raises any real number x to the power y using the indian algorithm, where y 
    is a positive integer. Implemented using a while loop. */
-double powerLoop(double x, int y) {
-  double result = 0;
-  short int continueLoop = 1;
-  int stackMaxLength = 20;
-  int stackCurrLength = 0;
-  double stackX[stackMaxLength];
-  double stackY[stackMaxLength];
-  double stackR[stackMaxLength];
+double powerLoop(const double x, const int y) {
+  double result;
+  short int loopState = 1; /* 0 = complete, 1 = looping down, 2 = up */
+  int sMaxLen = 20;
+  int sCurrLen = 0;
+  double stackX[sMaxLen];
+  int stackY[sMaxLen];
 
-  while (continueLoop == 1) {
-    if (stackY[stackCurrLength] == 0) {
+  stackX[sCurrLen] = x;
+  stackY[sCurrLen] = y;
 
-      stackCurrLength++;
-      stackR[stackCurrLength] = 1;
-    } else if ((stackY[stackCurrLength] & 1) == 1) {
+  while (loopState != 0) {
+    if (stackY[sCurrLen] == 0) {
+      /* Should only be the case when going down. Turning point. */
+      result = 1;
+      loopState = 2;
+    } else if ((stackY[sCurrLen] & 1) == 1) {
       /* y is odd. */
-
-      stackCurrLength++;
-      stackR[stackCurrLength] = x * (powerIndian(x, y - 1));
+      
+      if (loopState == 1) {
+	sCurrLen++;
+	stackX[sCurrLen] = x;
+      } else {
+	result = stackX[sCurrLen] * result;
+	sCurrLen--;
+      }
     } else {
       /* y is even. */
 
-      stackCurrLength++;
+      if (loopState == 1) {
+	sCurrLen++;
+	stackX[sCurrLen] = x;
+      } else {
+
+      }
+      sCurrLen++;
       double toSquare = powerIndian(x, y / 2.0);
-      stackR[stackCurrLength] = toSquare * toSquare;
+      stackR[sCurrLen] = toSquare * toSquare;
     }
   }
-
-
-  /* /\* Run the loop at least once to cater for y=0. *\/ */
-  /* do { */
-  /*   if (y == 0) { */
-  /*     return ; */
-  /*   } else if ((y & 1) == 1) { */
-  /*     /\* y is odd. *\/ */
-
-  /*     return x * (powerIndian(x, y - 1)); */
-  /*   } else { */
-  /*     /\* y is even. *\/ */
-
-  /*     double toSquare = powerIndian(x, y / 2.0); */
-  /*     return toSquare * toSquare; */
-  /*   } */
-  /* } while (y > 0); */
 
   return result;
 }
