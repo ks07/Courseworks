@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-/* Raises any real number x to the power y, where y is a positive integer. */
+/* Raises any real number x to the power y, where y is an integer. */
 double power(double x, int y) {
   /* Handle the special case where x = 0 */
   if (y == 0) {
