@@ -13,16 +13,16 @@ double power(double x, int y) {
   if (y < 0) {
     for (; y < -1; y++) {
       result = result * x;
-      /* Debug Code */
-	 printf("x: %f, y: %d, r: %f\n", x, y, result);
+      /* Debug Code
+	 printf("x: %f, y: %d, r: %f\n", x, y, result); */
     }
 
     result = 1.0 / result;
   } else {
     for (; y > 1; y--) {
       result = result * x;
-      /* Debug Code */
-	 printf("x: %f, y: %d, r: %f\n", x, y, result);
+      /* Debug Code
+	 printf("x: %f, y: %d, r: %f\n", x, y, result); */
     }
   }
 
@@ -31,9 +31,6 @@ double power(double x, int y) {
 
 int main() {
   printf("%f\n", 1000 * power(1.0 + (5.0/100.0), 25));
-  printf("%.10f\n", power(-24.0, -5));
-  printf("%f\n", power(7.0, -2));
-  printf("%f\n", power(7.0, 2));
-  printf("%f\n", power(1, 0));
+  printf("%f\n", 10000 * power(1 + (4.0/100.0), -12));
   return 0;
 }
