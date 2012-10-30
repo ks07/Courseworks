@@ -9,9 +9,9 @@ double power(double x, int y) {
 
   double result = x;
 
-  while(y > 1) {
+  /* No assignment statement in the for loop, we can use the variable y as-is. */
+  for(; y > 1; y--) {
     result = result * x;
-    y--;
     /* Debug Code
        printf("x: %f, y: %d, r: %f\n", x, y, result); */
   }
@@ -20,6 +20,6 @@ double power(double x, int y) {
 }
 
 int main() {
-  printf("Sum: %f\n", 1000 * power(1.0 + (5.0/100.0), 25));
+  printf("%f\n", 1000 * power(1.0 + (5.0/100.0), 25));
   return 0;
 }
