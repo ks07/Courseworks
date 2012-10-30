@@ -74,13 +74,13 @@ double powerLoop(double x, int y) {
       /* y is odd. */
 
       stackCurrLength++;
-      return x * (powerIndian(x, y - 1));
+      stackR[stackCurrLength] = x * (powerIndian(x, y - 1));
     } else {
       /* y is even. */
 
       stackCurrLength++;
       double toSquare = powerIndian(x, y / 2.0);
-      return toSquare * toSquare;
+      stackR[stackCurrLength] = toSquare * toSquare;
     }
   }
 
