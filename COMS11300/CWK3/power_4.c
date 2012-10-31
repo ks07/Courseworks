@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define STACK_MAX_LENGTH 5
+
 /* Raises any real number x to the power y, where y is an integer. */
 double power(double x, int y) {
   /* Handle the special case where x = 0 */
@@ -60,9 +62,8 @@ double powerIndian(double x, int y) {
 double powerLoop(const double x, const int y) {
   double result;
   short int loopState = 1; /* 0 = complete, 1 = looping down, 2 = up */
-  const int sMaxLen = 50;
   int sCurrLen = 0;
-  int stackY[sMaxLen];
+  int stackY[STACK_MAX_LENGTH];
 
   stackY[sCurrLen] = y;
 
@@ -83,7 +84,7 @@ double powerLoop(const double x, const int y) {
       if (loopState == 1) {
 	sCurrLen++;
 
-	if (sCurrLen > sMaxLen) {
+	if (sCurrLen >= STACK_MAX_LENGTH) {
 	  printf("Error: Calculation Overflow\n");
 	  return 0;
 	}
@@ -99,7 +100,7 @@ double powerLoop(const double x, const int y) {
       if (loopState == 1) {
 	sCurrLen++;
 
-	if (sCurrLen > sMaxLen) {
+	if (sCurrLen >= STACK_MAX_LENGTH) {
 	  printf("Error: Calculation Overflow\n");
 	  return 0;
 	}
