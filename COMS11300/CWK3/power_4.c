@@ -82,6 +82,12 @@ double powerLoop(const double x, const int y) {
       
       if (loopState == 1) {
 	sCurrLen++;
+
+	if (sCurrLen > sMaxLen) {
+	  printf("Error: Calculation Overflow\n");
+	  return 0;
+	}
+
 	stackY[sCurrLen] = stackY[sCurrLen - 1] - 1;
       } else {
 	result = x * result;
@@ -92,6 +98,12 @@ double powerLoop(const double x, const int y) {
 
       if (loopState == 1) {
 	sCurrLen++;
+
+	if (sCurrLen > sMaxLen) {
+	  printf("Error: Calculation Overflow\n");
+	  return 0;
+	}
+
 	stackY[sCurrLen] = stackY[sCurrLen - 1] / 2;
       } else {
 	result = result * result;
