@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 
 /* Raises any real number x to the power y, where y is an integer. */
 double power(double x, int y) {
@@ -61,25 +62,29 @@ double powerLoop(const double x, const int y) {
   short int loopState = 1; /* 0 = complete, 1 = looping down, 2 = up */
   int sMaxLen = 20;
   int sCurrLen = 0;
-  double stackX[sMaxLen];
   int stackY[sMaxLen];
 
-  stackX[sCurrLen] = x;
   stackY[sCurrLen] = y;
 
   while (loopState != 0) {
+    /* DEBUG */
+    printf("State: %d CurrLen: %d Result: %f CurrStack: %d\n", loopState, sCurrLen, result, stackY[sCurrLen]);
+    sleep(1);
+
+
     if (stackY[sCurrLen] == 0) {
       /* Should only be the case when going down. Turning point. */
       result = 1;
       loopState = 2;
+      sCurrLen--;
     } else if ((stackY[sCurrLen] & 1) == 1) {
       /* y is odd. */
       
       if (loopState == 1) {
 	sCurrLen++;
-	stackX[sCurrLen] = x;
+	stackY[sCurrLen] = stackY[sCurrLen - 1] - 1;
       } else {
-	result = stackX[sCurrLen] * result;
+	result = x * result;
 	sCurrLen--;
       }
     } else {
@@ -87,13 +92,15 @@ double powerLoop(const double x, const int y) {
 
       if (loopState == 1) {
 	sCurrLen++;
-	stackX[sCurrLen] = x;
+	stackY[sCurrLen] = stackY[sCurrLen - 1] / 2;
       } else {
-
+	result = result * result;
+	sCurrLen--;
       }
-      sCurrLen++;
-      double toSquare = powerIndian(x, y / 2.0);
-      stackR[sCurrLen] = toSquare * toSquare;
+    }
+
+    if (sCurrLen < 0 && loopState == 2) {
+      loopState = 0;
     }
   }
 
@@ -101,8 +108,9 @@ double powerLoop(const double x, const int y) {
 }
 
 int main() {
-  printf("%f\n", 1000 * power(1.0 + (5.0/100.0), 25));
-  printf("%f\n", 10000 * power(1 + (4.0/100.0), -12));
-  printf("%f\n", powerIndian(1.0000000001, 1000000000));
+  /* printf("%f\n", 1000 * power(1.0 + (5.0/100.0), 25)); */
+  /* printf("%f\n", 10000 * power(1 + (4.0/100.0), -12)); */
+  /* printf("%f\n", powerIndian(1.0000000001, 1000000000)); */
+  printf("%f\n", powerLoop(3, 12));
   return 0;
 }
