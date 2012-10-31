@@ -1,6 +1,9 @@
 #include <stdio.h>
 
 #define STACK_MAX_LENGTH 50
+#define LOOP_STATE_COMPLETE 0
+#define LOOP_STATE_DOWN 1
+#define LOOP_STATE_UP 2
 
 /* Raises any real number x to the power y, where y is an integer. */
 double power(const double x, int y) {
@@ -56,22 +59,22 @@ double powerIndian(const double x, const int y) {
    is a positive integer. Implemented using a while loop. */
 double powerLoop(const double x, const int y) {
   double result;
-  short int loopState = 1; /* 0 = complete, 1 = looping down, 2 = up */
+  short int loopState = LOOP_STATE_DOWN;
   int sCurrLen = 0;
   int stackY[STACK_MAX_LENGTH];
 
   stackY[sCurrLen] = y;
 
-  while (loopState != 0) {
+  while (loopState != LOOP_STATE_COMPLETE) {
     if (stackY[sCurrLen] == 0) {
       /* Should only be the case when going down. Turning point. */
       result = 1;
-      loopState = 2;
+      loopState = LOOP_STATE_UP;
       sCurrLen--;
     } else if ((stackY[sCurrLen] & 1) == 1) {
       /* y is odd. */
       
-      if (loopState == 1) {
+      if (loopState == LOOP_STATE_DOWN) {
 	sCurrLen++;
 
 	/* C has no built in checking for array indexes. */
@@ -88,7 +91,7 @@ double powerLoop(const double x, const int y) {
     } else {
       /* y is even. */
 
-      if (loopState == 1) {
+      if (loopState == LOOP_STATE_DOWN) {
 	sCurrLen++;
 
 	if (sCurrLen >= STACK_MAX_LENGTH) {
@@ -103,8 +106,8 @@ double powerLoop(const double x, const int y) {
       }
     }
 
-    if (sCurrLen < 0 && loopState == 2) {
-      loopState = 0;
+    if (sCurrLen < 0 && loopState == LOOP_STATE_UP) {
+      loopState = LOOP_STATE_COMPLETE;
     }
   }
 
