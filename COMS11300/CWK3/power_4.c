@@ -3,7 +3,7 @@
 #define STACK_MAX_LENGTH 50
 
 /* Raises any real number x to the power y, where y is an integer. */
-double power(double x, int y) {
+double power(const double x, int y) {
   /* Handle the special case where x = 0 */
   if (y == 0) {
     return 1;
@@ -29,7 +29,7 @@ double power(double x, int y) {
 
 /* Raises any real number x to the power y using the indian algorithm. Y must be
    a positive integer. */
-double powerIndian(double x, int y) {
+double powerIndian(const double x, const int y) {
   /* Use a bitwise AND to check if odd or even. This works as if the least
        significant bit is a 1, the number is odd. Anything and'ed with 1 will
        only result in a 1 if the LSB is 1 - i.e. an odd number. This should,
@@ -74,6 +74,7 @@ double powerLoop(const double x, const int y) {
       if (loopState == 1) {
 	sCurrLen++;
 
+	/* C has no built in checking for array indexes. */
 	if (sCurrLen >= STACK_MAX_LENGTH) {
 	  printf("Error: Calculation Overflow\n");
 	  return 0;
