@@ -60,7 +60,7 @@ double powerIndian(double x, int y) {
 double powerLoop(const double x, const int y) {
   double result;
   short int loopState = 1; /* 0 = complete, 1 = looping down, 2 = up */
-  int sMaxLen = 20;
+  const int sMaxLen = 50;
   int sCurrLen = 0;
   int stackY[sMaxLen];
 
@@ -68,8 +68,8 @@ double powerLoop(const double x, const int y) {
 
   while (loopState != 0) {
     /* DEBUG */
-    printf("State: %d CurrLen: %d Result: %f CurrStack: %d\n", loopState, sCurrLen, result, stackY[sCurrLen]);
-    sleep(1);
+    /* printf("State: %d CurrLen: %d Result: %f CurrStack: %d\n", loopState, sCurrLen, result, stackY[sCurrLen]); */
+    /* sleep(1); */
 
 
     if (stackY[sCurrLen] == 0) {
@@ -108,9 +108,9 @@ double powerLoop(const double x, const int y) {
 }
 
 int main() {
-  /* printf("%f\n", 1000 * power(1.0 + (5.0/100.0), 25)); */
-  /* printf("%f\n", 10000 * power(1 + (4.0/100.0), -12)); */
-  /* printf("%f\n", powerIndian(1.0000000001, 1000000000)); */
-  printf("%f\n", powerLoop(3, 12));
+  printf("%f\n", 1000 * power(1.0 + (5.0/100.0), 25));
+  printf("%f\n", 10000 * power(1 + (4.0/100.0), -12));
+  printf("%f\n", powerIndian(1.0000000001, 1000000000));
+  printf("%f\n", powerLoop(1.0000000001, 2000000000));
   return 0;
 }
