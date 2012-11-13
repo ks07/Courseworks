@@ -6,7 +6,7 @@ char *condenseName(char name[], int length) {
   int newLength = length + 1;
   int i;
 
-  for (i = 0; i < (length - 1) ; i++) {
+  for (i = 0; i < (length - 1); i++) {
     if (name[i] == name[i + 1]) {
       name[i + 1] = '\0';
       i++;
@@ -25,6 +25,24 @@ char *condenseName(char name[], int length) {
   }
   ret[newLength - 1] = '\0';
   return strdup(ret);
+}
+
+/* Removes all vowels from a string after the first letter. */
+char *stripVowels(char name[], int length) {
+  int newLength = length + 1;
+  int i;
+  for (i = 0; i < length; i++) {
+    switch (name[i]) {
+    case 'a':
+    case 'e':
+    case 'i':
+    case 'o':
+    case 'u':
+      name[i] = '\0';
+      newLength--;
+      break;
+    }
+  }
 }
 
 int main(void) {
