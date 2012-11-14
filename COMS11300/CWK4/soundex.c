@@ -57,6 +57,7 @@ char *stripVowels(char name[], int length) {
   return strdup(ret);
 }
 
+/* Returns the uppercase representation of a letter if it exists, else returns the letter. */
 char toUpper(char letter) {
   if (letter > 96 && letter < 123) {
     /* In ASCII encoding, lowercase letters are 32 positions ahead of their
@@ -122,16 +123,17 @@ char *generateSOUNDEX(char name[], int len) {
 } 
 
 int main(void) {
-  char s[32];
-  strcpy(s, "Lem-Young");
-  char *t = strdup(s);
-  t = condenseName(t, strlen(t));
-  printf("%s\n", t);
-  t = stripVowels(t, strlen(t));
-  printf("%s\n", t);
-  t = generateSOUNDEX(t, strlen(t));
-  printf("%s\n", t);
-  //printf("%s\n", condenseName(s, 26));
+  char s[31];
+  while (1) {
+    scanf("%30s", s);
+    char *t = strdup(s);
+    t = condenseName(t, strlen(t));
+    printf("%s\n", t);
+    t = stripVowels(t, strlen(t));
+    printf("%s\n", t);
+    t = generateSOUNDEX(t, strlen(t));
+    printf("%s\n", t);
+  }
 
   return 0;
 }
