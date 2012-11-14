@@ -128,9 +128,9 @@ int main(void) {
     scanf("%30s", s);
     char *t = strdup(s);
     t = condenseName(t, strlen(t));
-    printf("%s\n", t);
+    //printf("%s\n", t);
     t = stripVowels(t, strlen(t));
-    printf("%s\n", t);
+    //printf("%s\n", t);
     t = generateSOUNDEX(t, strlen(t));
     printf("%s\n", t);
   }
