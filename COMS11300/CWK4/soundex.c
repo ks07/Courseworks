@@ -38,6 +38,9 @@ char *stripVowels(char name[], int length) {
     case 'i':
     case 'o':
     case 'u':
+    case 'w':
+    case 'y':
+    case 'h':
       name[i] = '\0';
       newLength--;
       break;
@@ -95,6 +98,7 @@ char getCodeValue(char letter) {
   case 'R':
     return '6';
   default:
+    /* We have forgotten to strip a character, if this is the case. */
     return '0';
   }
 }
@@ -124,16 +128,13 @@ char *generateSOUNDEX(char name[], int len) {
 
 int main(void) {
   char s[31];
-  while (1) {
-    scanf("%30s", s);
-    char *t = strdup(s);
-    t = condenseName(t, strlen(t));
-    //printf("%s\n", t);
-    t = stripVowels(t, strlen(t));
-    //printf("%s\n", t);
-    t = generateSOUNDEX(t, strlen(t));
-    printf("%s\n", t);
-  }
+  printf("Please enter a name:\n");
+  scanf(" %30[^\n]s", s);
+  char *t = strdup(s);
+  t = condenseName(t, strlen(t));
+  t = stripVowels(t, strlen(t));
+  t = generateSOUNDEX(t, strlen(t));
+  printf("%s\n", t);
 
   return 0;
 }
