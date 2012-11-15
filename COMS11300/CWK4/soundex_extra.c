@@ -134,7 +134,7 @@ int main(void) {
   scanf(" %30[^\n]s", s);
   char *t = strdup(s);
   t = condenseName(t, strlen(t));
-  t = stripVowels(t, strlen(t));
+  t = stripChars(t, strlen(t));
   t = generateSOUNDEX(t, strlen(t));
   printf("%s\n", t);
 
