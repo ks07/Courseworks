@@ -47,7 +47,7 @@ void condenseName(char name[], int length) {
   }
 }
 
-/* Removes all vowels, spaces and hyphens from a string after the first letter. */
+/* Removes all vowels, spaces and hyphens from a string after the first letter. The implementation of generateSOUNDEX means this function isn't necessary, but we will retain it in order to demonstrate a possible implementation. */
 void stripChars(char name[], int length) {
   int newLength = length;
   int i;
