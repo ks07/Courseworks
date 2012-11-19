@@ -1,9 +1,36 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Removes duplicate characters from a string. */
-char *condenseName(char name[], int length) {
-  int newLength = length + 1;
+/* Cleans a string that contains null characters, where characters have been stripped. */
+void cleanupString(char string[], int newLength) {
+  int firstEmpty, next;
+
+  /* Loop through characters until we find the first null character. */
+  for (firstEmpty = 0; string[firstEmpty] != '\0'; firstEmpty++) {}
+  
+  /* Keep note of the next character index to check. */
+  next = firstEmpty + 1;
+  /* Decrement newLength for each character in the cleaned string. */
+  newLength = newLength - firstEmpty;
+
+  /* Each iteration will move/confirm a character's presence in the cleaned string. */
+  for (; newLength > 0; newLength--) {
+    /* Continue through the string until the next non-null character is found. Danger of an infinite loop here if newLength is greater than the number of non-null characters in the array. */
+    while (string[next] == '\0') {
+      next++;
+    }
+    string[firstEmpty] = string[next];
+    firstEmpty++;
+    next++;
+  }
+
+  /* Make sure the string is null terminated. */
+  string[firstEmpty] = '\0';
+}
+
+/* Removes duplicate characters from a string. Length not including null. */
+void condenseName(char name[], int length) {
+  int newLength = length;
   int i;
 
   for (i = 0; i < (length - 1); i++) {
@@ -14,23 +41,16 @@ char *condenseName(char name[], int length) {
     }
   }
 
-  int j = 0;
-
-  char ret[newLength];
-  for (i = 0; i < length ; i++) {
-    if (name[i] != '\0') {
-      ret[j] = name[i];
-      j++;
-    }  
+  if (newLength != length) {
+    /* Use the cleanupString function to remove the nulls we have left throughout the string where characters were stripped. */
+    cleanupString(name, newLength);
   }
-  ret[j] = '\0';
-  return strdup(ret);
 }
 
-/* Removes all vowels, spaces and hyphens from a string after the first letter. */
-char *stripChars(char name[], int length) {
-  int newLength = length + 1;
-  int i, j;
+/* Removes all vowels, spaces and hyphens from a string after the first letter. The implementation of generateSOUNDEX means this function isn't necessary, but we will retain it in order to demonstrate a possible implementation. */
+void stripChars(char name[], int length) {
+  int newLength = length;
+  int i;
   for (i = 0; i < length; i++) {
     switch (name[i]) {
     case 'a':
@@ -49,21 +69,15 @@ char *stripChars(char name[], int length) {
     }
   }
 
-  char ret[newLength];
-  j = 0;
-  for (i = 0; i < length; i++) {
-    if (name[i] != '\0') {
-      ret[j] = name[i];
-      j++;
-    }
+  /* If modified, we use the cleanup function to remove the nulls throughout. */
+  if (newLength != length) {
+    cleanupString(name, newLength);
   }
-
-  ret[j] = '\0';
-  return strdup(ret);
 }
 
 /* Returns the uppercase representation of a letter if it exists, else returns the letter. */
 char toUpper(char letter) {
+  /* In ASCII encoding, a-z occupies the range 97-122. */
   if (letter > 96 && letter < 123) {
     /* In ASCII encoding, lowercase letters are 32 positions ahead of their
        uppercase counterparts. */
@@ -73,6 +87,7 @@ char toUpper(char letter) {
   }
 }
 
+/* Returns a character representing the numerical value of the given character in SOUNDEX encoding. Returns '0' if the provided character has an undefined value. */
 char getCodeValue(char letter) {
   switch(toUpper(letter)) {
   case 'B':
@@ -105,38 +120,44 @@ char getCodeValue(char letter) {
   }
 }
 
-char *generateSOUNDEX(char name[], int len) {
+/* Calculates the SOUNDEX code of the given string and replaces this string with the code. */
+void generateSOUNDEX(char name[], int len) {
+  condenseName(name, len); /* No need to re-calculate the length here. */
+  stripChars(name, strlen(name));
+
   /* This needs to be unsigned to avoid a warning from the compiler - negative array indexes are not valid! */
   unsigned char count = 1;
-  char encoded[5];
   int i = 1;
 
-  encoded[0] = toUpper(name[0]);
-  encoded[1] = '0';
-  encoded[2] = '0';
-  encoded[3] = '0';
-  encoded[4] = '\0';
+  name[0] = toUpper(name[0]);
 
+  /* Loop through the name until we have a full code or have used all letters. */
   while (count < 4 && i < len) {
-    encoded[count] = getCodeValue(name[i]);
-    if (encoded[count] != '0') {
+    name[count] = getCodeValue(name[i]);
+
+    /* If the character did not have an encoded value, try the next. This should only be the case if the name contained unexpected characters. */
+    if (name[count] != '0') {
       count++;
     }
     i++;
   }
 
-  return strdup(encoded);
-} 
+  /* If there were not enough letters to generate 3 digits, pad with 0s. */
+  for (; count < 4; count++) {
+    name[count] = '0';
+  }
+
+  /* Remember to null-terminate the string. */
+  name[4] = '\0';
+}
 
 int main(void) {
-  char s[31];
+  char name[31];
   printf("Please enter a name:\n");
-  scanf(" %30[^\n]s", s);
-  char *t = strdup(s);
-  t = condenseName(t, strlen(t));
-  t = stripChars(t, strlen(t));
-  t = generateSOUNDEX(t, strlen(t));
-  printf("%s\n", t);
+  /* Take a name of max-length 30. */
+  scanf(" %30[^\n]s", name);
+  generateSOUNDEX(name, strlen(name));
+  printf("%s\n", name);
 
   return 0;
 }
