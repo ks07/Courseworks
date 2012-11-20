@@ -51,7 +51,7 @@ void condenseName(char name[], int length) {
 void stripVowels(char name[], int length) {
   int newLength = length;
   int i;
-  for (i = 0; i < length; i++) {
+  for (i = 1; i < length; i++) {
     switch (name[i]) {
     case 'a':
     case 'e':
