@@ -122,6 +122,7 @@ char getCodeValue(char letter) {
 void generateSOUNDEX(char name[], int len) {
   condenseName(name, len); /* No need to re-calculate the length here. */
   stripVowels(name, strlen(name));
+  len = strlen(name);
 
   /* This needs to be unsigned to avoid a warning from the compiler - negative array indexes are not valid! */
   unsigned char count = 1;
