@@ -56,17 +56,32 @@ circle createCircle(int x, int y, int radius) {
   return ret;
 }
 
+/* Creates a line struct from two pairs of co-ordinates. */
+line createLine(int x1, int y1, int x2, int y2) {
+  point a, b;
+  a.x = x1;
+  a.y = y1;
+  b.x = x2;
+  b.y = y2;
+
+  line ret;
+  ret.a = a;
+  ret.b = b;
+
+  return ret;
+}
+
 /* Calculates the bounding box of a shape. */
 rectangle getBoundingBox(shape s) {
   rectangle ret;
   point nE, sW;
 
   if (s.shapeType == IsCircle) {
-    nE.x = c.centre.x + c.r;
-    nE.y = c.centre.y + c.r;
+    nE.x = s.sh.c.centre.x + s.sh.c.r;
+    nE.y = s.sh.c.centre.y + s.sh.c.r;
 
-    sW.x = c.centre.x - c.r;
-    sW.y = c.centre.y - c.r;
+    sW.x = s.sh.c.centre.x - s.sh.c.r;
+    sW.y = s.sh.c.centre.y - s.sh.c.r;
   } else {
     /* Need to find the most SW co-ords from both points. */
     if (s.sh.l.a.x < s.sh.l.b.x) {
@@ -136,19 +151,57 @@ void printRectangle(rectangle r) {
 }
 
 int main(void) {
-  int x[2], y[2], r[2];
-  circle c[2];
-  rectangle bB[3];
+  char sType, init;
+  shape s;
+  rectangle bBox;
+  int input[4];
+  circle c;
+  line l;
 
-  /* Input format:
-     x1 y1 r1 x2 y2 r2 */
-  scanf("%d %d %d %d %d %d", &x[0], &y[0], &r[0], &x[1], &y[1], &r[1]);
+  /* init marks if we have created our first bounding box */
+  init = 0;
 
-  c[0] = createCircle(x[0], y[0], r[0]);
-  c[1] = createCircle(x[1], y[1], r[1]);
-  bB[0] = getBoundingBox(c[0]);
-  bB[1] = getBoundingBox(c[1]);
-  bB[2] = combineBoundingBoxes(bB[0], bB[1]);
-  printRectangle(bB[2]);
+  scanf("%c", &sType);
+  while (sType != '\n') {
+    switch (sType) {
+    case 'L':
+    case 'l':
+      scanf("%d %d %d %d", &(input[0]), &(input[1]), &(input[2]), &(input[3]));
+          
+      l = createLine(input[0], input[1], input[2], input[3]);
+      s.shapeType = IsLine;
+      s.sh.l = l;
+      break;
+    case 'C':
+    case 'c':
+      scanf("%d %d %d", &(input[0]), &(input[1]), &(input[2]));
+    
+      c = createCircle(input[0], input[1], input[2]);
+      s.shapeType = IsCircle;
+      s.sh.c = c;
+      break;
+    default:
+      printf("Error: Invalid shape type '%c'.\n", sType);
+      return 1;
+    }
+
+    /* If this is our first run, we should only create the original
+       bounding box. */
+    if (init == 0) {
+      bBox = getBoundingBox(s);
+      init = 1;
+    } else {
+      bBox = combineBoundingBoxes(bBox, getBoundingBox(s));
+    }
+
+    /* Advance through input until we get to the next
+       non-whitespace (or \n). */
+    do {
+      scanf("%c", &sType);
+    } while (sType == ' ' || sType == '\t');
+  }
+
+  printRectangle(bBox);
+
   return 0;
 }
