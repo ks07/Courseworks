@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 
 /* References to compass directions throughout treat the positive y direction
@@ -151,7 +152,7 @@ void printRectangle(rectangle r) {
 }
 
 int main(void) {
-  char sType, init;
+  char sType, init, args;
   shape s;
   rectangle bBox;
   int input[4];
@@ -166,16 +167,27 @@ int main(void) {
     switch (sType) {
     case 'L':
     case 'l':
-      scanf("%d %d %d %d", &(input[0]), &(input[1]), &(input[2]), &(input[3]));
-          
+      args = scanf("%d %d %d %d", &(input[0]), &(input[1]), &(input[2]), &(input[3]));
+
+      if (args != 4) {
+	printf("Error: Invalid arguments for a line.\n");
+	/* Return non-zero value if process did not complete normally. */
+	return 1;
+      }
+
       l = createLine(input[0], input[1], input[2], input[3]);
       s.shapeType = IsLine;
       s.sh.l = l;
       break;
     case 'C':
     case 'c':
-      scanf("%d %d %d", &(input[0]), &(input[1]), &(input[2]));
-    
+      args = scanf("%d %d %d", &(input[0]), &(input[1]), &(input[2]));
+
+      if (args != 3) {
+        printf("Error: Invalid arguments for a circle.\n");
+        return 1;
+      }
+
       c = createCircle(input[0], input[1], input[2]);
       s.shapeType = IsCircle;
       s.sh.c = c;
