@@ -167,7 +167,7 @@ int main(void) {
     switch (sType) {
     case 'L':
     case 'l':
-      args = scanf("%d %d %d %d", &(input[0]), &(input[1]), &(input[2]), &(input[3]));
+      args = scanf(" %d %d %d %d", &(input[0]), &(input[1]), &(input[2]), &(input[3]));
 
       if (args != 4) {
 	printf("Error: Invalid arguments for a line.\n");
@@ -181,7 +181,7 @@ int main(void) {
       break;
     case 'C':
     case 'c':
-      args = scanf("%d %d %d", &(input[0]), &(input[1]), &(input[2]));
+      args = scanf(" %d %d %d", &(input[0]), &(input[1]), &(input[2]));
 
       if (args != 3) {
         printf("Error: Invalid arguments for a circle.\n");
