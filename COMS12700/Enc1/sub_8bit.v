@@ -70,9 +70,12 @@ module sub_8bit( input  wire                  op,
 
    wire [ 7 : 0 ] 			       c;
    wire [ 7 : 0 ] 			       b;
+   wire 				       w;
 
+   // Subtraction = x + y*(-1)
    neg t_( y, op, ci, b );   
 
+   // Ripple-carry adder.
    full_adder t0( x[0], b[0], ci, r[0], c[0] );
    full_adder t1( x[1], b[1], c[0], r[1], c[1] );
    full_adder t2( x[2], b[2], c[1], r[2], c[2] );
@@ -80,6 +83,12 @@ module sub_8bit( input  wire                  op,
    full_adder t4( x[4], b[4], c[3], r[4], c[4] );
    full_adder t5( x[5], b[5], c[4], r[5], c[5] );
    full_adder t6( x[6], b[6], c[5], r[6], c[6] );
-   full_adder t7( x[7], b[7], c[6], r[7], of );
+   full_adder t7( x[7], b[7], c[6], r[7], c[7] );
+
+   // Overflow detection.
+   // If inputs (after processing by t_) are of different signs, there will be
+   // no overflow.
+   xor t8( w, x[7], b[7] );
+   not t9( of, w );
 
 endmodule //sub_8bit
