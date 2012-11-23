@@ -31,9 +31,9 @@ module neg_sub( input wire                 x,
 
    xor t0( ox, x, n );
    or t1( w1, x, n );
-   not t2( w2, i );
-   and t3( w3, w1, w2 );
-   and t4( w4, w2, ci );
+   //not t2( w2, i );
+   and t3( w3, w1, i );
+   and t4( w4, i, ci );
    or t5( on, w4, w3 );
    
 endmodule //neg_sub
@@ -59,6 +59,8 @@ module neg( input wire signed [ 7 : 0 ]    i,
 
 endmodule //neg
 
+// An 8 bit adder and subtractor with oveflow detection.
+// If op = 1, r = x - y - ci, else r = x + y + ci
 module sub_8bit( input  wire                  op,
                  output wire                  of,
                  output wire signed [ 7 : 0 ]  r,
