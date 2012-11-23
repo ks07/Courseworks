@@ -70,7 +70,7 @@ module sub_8bit( input  wire                  op,
 
    wire [ 7 : 0 ] 			       c;
    wire [ 7 : 0 ] 			       b;
-   wire 				       w;
+   wire 				       w [ 2 : 0 ];
 
    // Subtraction = x + y*(-1)
    neg t_( y, op, ci, b );   
@@ -87,8 +87,11 @@ module sub_8bit( input  wire                  op,
 
    // Overflow detection.
    // If inputs (after processing by t_) are of different signs, there will be
-   // no overflow.
-   xor t8( w, x[7], b[7] );
-   not t9( of, w );
-
+   // no overflow. If this is not the case, then the result should match sign.
+   xor t8( w[0], x[7], b[7] );
+   not t9( w[1], w[0] );
+   // Check if result and input signs match.
+   xor t10( w[2], x[7], r[7] );
+   and t11( of, w[1], w[2] );
+   
 endmodule //sub_8bit
