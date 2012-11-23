@@ -28,15 +28,13 @@ module neg_sub( input wire                 x,
 		output wire               on );
 
    wire 				  w1, w2, w3, w4;
-   
-   
+
    xor t0( ox, x, n );
    or t1( w1, x, n );
    not t2( w2, i );
    and t3( w3, w1, w2 );
    and t4( w4, w2, ci );
    or t5( on, w4, w3 );
-   
    
 endmodule //neg_sub
 
@@ -49,7 +47,7 @@ module neg( input wire signed [ 7 : 0 ]    i,
    wire 				      n[ 7 : 0 ];
 
    assign n[0] = 0;
-   
+
    neg_sub t0( i[0], n[0], a, ci, o[0], n[1] );
    neg_sub t1( i[1], n[1], a, ci, o[1], n[2] );
    neg_sub t2( i[2], n[2], a, ci, o[2], n[3] );
