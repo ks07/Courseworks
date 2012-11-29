@@ -13,15 +13,15 @@
 
 2. Information
 
-name   : [...]
-email  : [...]
-year   : [...]
-course : [...]
+name   : George Field
+email  : gf12815@my.bristol.ac.uk
+year   : 1
+course : G403
 
 So that we can calibrate and improve the assignment in the future, give us
 a rough idea how long you spent on it (in hours):
 
-effort : [...] hours
+effort : 10 hours
 
 -------------------------------------------------------------------------------
 
@@ -49,19 +49,19 @@ or decrease in marks; examples include hard to quantify features such as
 the style or efficiency of a solution.
 
     Stage 1 : Implement sub_8bit  module
-[?]           - Computes correct result        for addition          (  5%)
-[?]           - Computes correct result        for subtraction       (  5%)
-[?]           - Computes correct overflow flag for addition          (  5%)
-[?]           - Computes correct overflow flag for subtraction       (  5%)
+X           - Computes correct result        for addition          (  5%)
+X           - Computes correct result        for subtraction       (  5%)
+X           - Computes correct overflow flag for addition          (  5%)
+X           - Computes correct overflow flag for subtraction       (  5%)
 
-[?] Stage 2 : Implement equ_8bit  module                             ( 20%)
+X Stage 2 : Implement equ_8bit  module                             ( 20%)
 
-[?] Stage 3 : Implement lth_8bit  module                             ( 20%)
+X Stage 3 : Implement lth_8bit  module                             ( 20%)
 
-[?] Stage 4 : Implement clr_28bit module                             ( 20%)
+X Stage 4 : Implement clr_28bit module                             ( 20%)
 
     Stage 5 : Implement sbox      module
-[?]           - Computes correct result                              ( 10%)
+X           - Computes correct result                              ( 10%)
 [?]           - Efficiency of solution wrt. logic gates              ( 10%)
 
                                                                      ------
