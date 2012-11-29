@@ -5,7 +5,7 @@ module in2_mux_1bit( output wire            r,
 		     input  wire          xs2,
 		     input  wire            c );
 
-   wire 				     w[ 10 : 0 ];
+   wire 				     w[ 2 : 0 ];
    
    not t0( w[0], c );
    and t1( w[1], xs1, c );
