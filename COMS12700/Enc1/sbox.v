@@ -60,22 +60,17 @@ module sbox( output wire [ 3 : 0 ] r,
    or tc8( c[8], c[2], c[4] );
    or tc9( r[1], c[8], c[7] );
 
-   wire 			   d [ 10 : 0 ];
+   wire 			   d [ 5 : 0 ];
 
    // D'
-   or td0( d[0], b[0], x[1] );
-   and td1( d[1], a[0], x[0] );
+   xor td0( d[0], x[0], x[3] );
+   or td1( d[1], b[0], x[1] );
    and td2( d[2], d[0], d[1] );
 
    and td3( d[3], x[2], b[1] );
    xnor td4( d[4], x[0], x[3] );
    and td5( d[5], d[3], d[4] );
 
-   and td6( d[6], x[3], b[2] );
-   and td7( d[7], d[6], d[0] );
-
-   or td8( d[8], d[2], d[5] );
-   or td9( r[0], d[8], d[7] );
-   
+   or td9( r[0], d[2], d[5] );
 
 endmodule //sbox
