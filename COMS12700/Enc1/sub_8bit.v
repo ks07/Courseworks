@@ -19,6 +19,26 @@ module full_adder( input wire                  x,
 
 endmodule //full_adder
 
+module overflow_detect( output wire           of,
+			input wire             x,
+			input wire             y,
+			input wire             r );
+
+   wire [ 2 : 0 ] 			       w;
+
+   // If inputs are of different signs, there will be no overflow.
+   // If this is not the case, then the result should match the sign
+   // of the operands.
+   xor t0( w[0], x, y );
+   not t1( w[1], w[0] );
+
+   // Check if result and input signs match.
+   xor t2( w[2], x, r );
+   and t3( of, w[1], w[2] );
+
+endmodule //overflow_detect
+   
+
 module sub_8bit( input  wire                  op,
                  output wire                  of,
                  output wire signed [ 7 : 0 ]  r,
@@ -48,6 +68,8 @@ module sub_8bit( input  wire                  op,
    full_adder fa4( x[4], w[4], carry[4], r[4], carry[5] );
    full_adder fa5( x[5], w[5], carry[5], r[5], carry[6] );
    full_adder fa6( x[6], w[6], carry[6], r[6], carry[7] );
-   full_adder fa7( x[7], w[7], carry[7], r[7], of );
+   full_adder fa7( x[7], w[7], carry[7], r[7], ); //ignore final co
+
+   overflow_detect of0( of, x[7], y[7], r[7] );
 
 endmodule
