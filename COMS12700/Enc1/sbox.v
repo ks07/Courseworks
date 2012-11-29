@@ -63,12 +63,19 @@ module sbox( output wire [ 3 : 0 ] r,
    wire 			   d [ 10 : 0 ];
 
    // D'
-   xnor td0( d[0], x[0], x[3] );
-   and td1( d[1], x[2], b[1] );
+   or td0( d[0], b[0], x[1] );
+   and td1( d[1], a[0], x[0] );
    and td2( d[2], d[0], d[1] );
 
-   xor td3( d[3], x[0], x[3] );
-   or td4( d[4], b[0], x[1] );
-   and td5( r[0], d[3], d[4] );
+   and td3( d[3], x[2], b[1] );
+   xnor td4( d[4], x[0], x[3] );
+   and td5( d[5], d[3], d[4] );
+
+   and td6( d[6], x[3], b[2] );
+   and td7( d[7], d[6], d[0] );
+
+   or td8( d[8], d[2], d[5] );
+   or td9( r[0], d[8], d[7] );
+   
 
 endmodule //sbox
