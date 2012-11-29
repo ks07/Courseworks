@@ -43,8 +43,31 @@ module sbox( output wire [ 3 : 0 ] r,
    or tb14( b[14], b[9], b[12] );
    or tb15( r[2], b[14], b[13] );
 
-   assign r[1] = 0;
-   assign r[0] = 0;
+   wire 			   c [ 8 : 0 ];
    
+   // C'
+   or tc0( c[0], b[0], b[2] );
+   and tc1( c[1], a[0], x[1] );
+   and tc2( c[2], c[0], c[1] );
 
-endmodule                
+   and tc3( c[3], x[3], b[0] );
+   and tc4( c[4], c[3], b[2] );
+
+   or tc5( c[5], x[2], b[1] );
+   and tc6( c[6], x[0], x[3] );
+   and tc7( c[7], c[5], c[6] );
+
+   or tc8( c[8], c[2], c[4] );
+   or tc9( r[1], c[8], c[7] );
+
+   wire 			   d [ 6 : 0 ];
+
+   // D'
+   //xnor td0( d[0], x[0], x[3] );
+   //and td1( d[1], x[2], b[1] );
+   //and td2( d[2], d[0], d[1] );
+
+   //xor td3( d[3], x[0], x[3] );
+   xor td0( r[0], x[1], x[2] );
+
+endmodule //sbox
