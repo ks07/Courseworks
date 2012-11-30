@@ -62,7 +62,7 @@ X Stage 4 : Implement clr_28bit module                             ( 20%)
 
     Stage 5 : Implement sbox      module
 X           - Computes correct result                              ( 10%)
-[?]           - Efficiency of solution wrt. logic gates              ( 10%)
+X           - Efficiency of solution wrt. logic gates              ( 10%)
 
                                                                      ------
                                                                      (100%)
