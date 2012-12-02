@@ -23,21 +23,27 @@ charList *listInsert(char value, charList *list) {
 
 void printList(charList *head) {
   while (head != NULL) {
-    printf("%c\n", head->value);
+    printf("%c", head->value);
     head = head->next;
   }
+
+  printf("\n");
 }
 
 int main(void) {
   charList *head;
+  char input;
 
-  head = listInsert('a', head);
-  printList(head);
+  //input = getchar();
+  scanf("%c", &input);
 
-  printf("\n");
+  while (input != '.') {
+    head = listInsert(input, head);
+    input = getchar();
+  }
 
-  head = listInsert('b', head);
-  head = listInsert('c', head);
+  head = listInsert(input, head);
+
   printList(head);
 
   return 0;
