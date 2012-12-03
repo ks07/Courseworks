@@ -31,11 +31,10 @@ void printList(charList *head) {
 }
 
 int main(void) {
-  charList *head;
+  charList *head = NULL;
   char input;
 
-  //input = getchar();
-  scanf("%c", &input);
+  input = getchar();
 
   while (input != '.') {
     head = listInsert(input, head);
