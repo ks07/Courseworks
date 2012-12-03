@@ -34,14 +34,10 @@ int main(void) {
   charList *head = NULL;
   char input;
 
-  input = getchar();
-
-  while (input != '.') {
-    head = listInsert(input, head);
+  do {
     input = getchar();
-  }
-
-  head = listInsert(input, head);
+    head = listInsert(input, head);
+  } while (input != '.');
 
   printList(head);
 
