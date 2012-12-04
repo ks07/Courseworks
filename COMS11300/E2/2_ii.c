@@ -3,42 +3,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Copies the contents of src[] into the beginning of dest[]. Dest must be at least as
-   long as src. */
-void arrayCopy(char *src, int srcLen, char *dest, int destLen) {
-  int i;
-
-  for (i = 0; i < srcLen; i++) {
-    dest[i] = src[i];
-  }
-}
-
 int main(void) {
-  char *inputA, *inputTemp, temp;
-  int i, aLength, tmpLength;
+  char *inputA, *inputB, temp;
+  int i, aLength, bLength;
 
   i = 0;
-  aLength = 1;
+  aLength = 2; // Smallest sentence possible is "."
   inputA = calloc(aLength, sizeof(char));
-  inputTemp = NULL;
 
   do {
     temp = getchar();
 
-    // Add the char to the array. We need to dynamically allocate the array.
-    if (i <= aLength) {
+    // Add the char to the array. We need to dynamically allocate the array. Check against i+1 as we need space
+    // to store the \0.
+    if ((i + 1) <= aLength) {
       // We must increase the size of the array. To reduce the number of resizes, we will
       // double the length each time.
-      tmpLength = aLength;
       aLength = aLength * 2;
 
-      inputTemp = inputA;
-      inputA = calloc(aLength, sizeof(char));
-      
-      arrayCopy(inputTemp, tmpLength, inputA, aLength);
-      // Free the memory used, so we don't cause a memory leak.
-      free(inputTemp);
-      inputTemp = NULL;
+      // Use realloc to resize an area of memory allocated previously, keeping contents intact.
+      inputA = realloc(inputA, aLength * sizeof(char));
     }
 
     inputA[i] = temp;
@@ -52,20 +36,20 @@ int main(void) {
   } while (temp != '\n');
 
   // We know the length of the second sentence.
-  tmpLength = i + 1;
-  inputTemp = calloc(tmpLength, sizeof(char));
+  bLength = i;
+  inputB = calloc(bLength + 1, sizeof(char));
 
-  for (i = 0; i < tmpLength; i++) {
-    inputTemp[i] = getchar();
+  for (i = 0; i <= bLength; i++) {
+    inputB[i] = getchar();
   }
 
   // Not strictly necessary in this case, but lets make these valid strings.
-  //inputA[20] = '\0';
-  //inputB[20] = '\0';
+  inputA[bLength] = '\0';
+  inputB[bLength] = '\0';
 
-  for (i = 0; i < tmpLength; i++) {
+  for (i = 0; i <= bLength; i++) {
     printf("%c", inputA[i]);
-    printf("%c", inputTemp[i]);
+    printf("%c", inputB[i]);
   }
   
   printf("\n");
