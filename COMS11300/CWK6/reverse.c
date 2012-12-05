@@ -11,12 +11,7 @@ charList *listInsert(char value, charList *list) {
 
   next = malloc(sizeof(charList));
   next->value = value;
-
-  if (list == NULL) {
-    list = next;
-  } else {
-    next->next = list;
-  }
+  next->next = list;
 
   return next;
 }

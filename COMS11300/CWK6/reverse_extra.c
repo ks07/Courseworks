@@ -9,12 +9,9 @@ typedef struct _charList {
 charList *listInsert(char value, charList *list) {
   charList *next;
 
-  next = calloc(1, sizeof(charList));
+  next = malloc(1, sizeof(charList));
   next->value = value;
-
-  if (list != NULL) {
-    next->next = list;
-  }
+  next->next = list;
 
   return next;
 }
@@ -31,16 +28,11 @@ void printList(charList *head) {
 /* Insert an item into a list after the given pointer. If the pointer is null,
    create a new list. */
 charList *listInsertAfter(char value, charList *before) {
-  charList *new = calloc(1, sizeof(charList));
+  charList *new = malloc(1, sizeof(charList));
   new->value = value;
 
-  if (before == NULL) {
-    before = new;
-  } else {
-    if (before->next != NULL) {
-      new->next = before->next;
-    }
-
+  if (before != NULL) {
+    new->next = before->next;
     before->next = new;
   }
 
