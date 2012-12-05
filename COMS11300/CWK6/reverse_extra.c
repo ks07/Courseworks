@@ -9,7 +9,7 @@ typedef struct _charList {
 charList *listInsert(char value, charList *list) {
   charList *next;
 
-  next = malloc(1, sizeof(charList));
+  next = malloc(1 * sizeof(charList));
   next->value = value;
   next->next = list;
 
@@ -28,7 +28,7 @@ void printList(charList *head) {
 /* Insert an item into a list after the given pointer. If the pointer is null,
    create a new list. */
 charList *listInsertAfter(char value, charList *before) {
-  charList *new = malloc(1, sizeof(charList));
+  charList *new = malloc(1 * sizeof(charList));
   new->value = value;
 
   if (before != NULL) {
