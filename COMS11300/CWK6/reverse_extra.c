@@ -25,8 +25,8 @@ void printList(charList *head) {
   printf("\n");
 }
 
-/* Insert an item into a list after the given pointer. If the pointer is null,
-   create a new list. */
+/* Insert an item into a list after the given pointer. If the pointer is
+   null, create a new list. Returns a pointer to the added element. */
 charList *listInsertAfter(char value, charList *before) {
   charList *new = malloc(1 * sizeof(charList));
   new->value = value;
