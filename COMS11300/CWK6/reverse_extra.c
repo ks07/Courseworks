@@ -28,40 +28,51 @@ void printList(charList *head) {
   printf("\n");
 }
 
-/* Inserts an element at the end of a given linked list. If the list
-   provided is NULL, a new list is created. This function returns a
-   pointer to the tail of the list, i.e. the inserted element. */
-charList *listInsertTail(char value, charList *list) {
+/* Insert an item into a list after the given pointer. If the pointer is null,
+   create a new list. */
+charList *listInsertAfter(char value, charList *before) {
   charList *new = calloc(1, sizeof(charList));
   new->value = value;
 
-  if (list == NULL) {
-    list = new;
+  if (before == NULL) {
+    before = new;
   } else {
-    while (list->next != NULL) {
-      list = list->next;
+    if (before->next != NULL) {
+      new->next = before->next;
     }
 
-    list->next = new;
-    list = list->next;
+    before->next = new;
   }
 
-  return list;
+  return new;
 }
 
 int main(void) {
   charList *head = NULL;
-  charList *tail;
+  charList *insertAfter;
   char input;
+  char insertAtHead = 0;
 
   input = getchar();
   if (input != '.') {
     head = listInsert(input, head);
-    tail = head;
+    insertAfter = head;
     input = getchar();
 
     while (input != '.') {
-      tail = listInsertTail(input, tail);
+      if (input == '\n' || insertAtHead == 1) {
+	head = listInsert(input, head);
+	insertAfter = head;
+	
+	if (input == '\n') {
+	  insertAtHead = 1;
+	} else {
+	  insertAtHead = 0;
+	}
+      } else {
+	insertAfter = listInsertAfter(input, insertAfter);
+      }
+
       input = getchar();
     }
   }
