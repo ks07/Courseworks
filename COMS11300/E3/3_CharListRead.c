@@ -71,7 +71,6 @@ void print_list(listelem *head) {
 
 int main( void ) {
   listelem *lp = read_list();
-  print_list(lp);
   lp = duplicate_char('R', lp);
   print_list(lp);
 
