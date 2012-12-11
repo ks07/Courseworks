@@ -16,12 +16,31 @@ double average(int numbers[], int length) {
   return result;
 }
 
+// Returns 1 if number is an integer.
+int isInt(double number) {
+  int numberAsInt = (int) number;
+  double result = number - ((double)numberAsInt);
+  if (result != 0) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
 void printDifferencesFromAvg(int numbers[], int length) {
   double avg = average(numbers, length);
   int i;
 
-  for (i = 0; i<length; i++) {
-    printf("%f\n", avg - (double)numbers[i]);
+  /* To make sure we can handle decimal averages, while still matching the
+     example output given, we need to change our formatting depending on avg. */
+  if (isInt(avg) == 1) {
+    for (i = 0; i<length; i++) {
+      printf("%.0f\n", avg - (double)numbers[i]);
+    }
+  } else {
+    for (i = 0; i<length; i++) {
+      printf("%f\n", avg - (double)numbers[i]);
+    }
   }
 }
 
