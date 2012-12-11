@@ -37,10 +37,8 @@ int compare_lists(listelem *head1, listelem *head2) {
   while ((head1 != NULL) && (head2 != NULL) && (result == 1)) {
     if (head1->symbol != head2->symbol) {
       result = 0;
-    } else if ((head1->next == head2->next) && (head1->next != NULL)) {
-      /* If both next pointers are the same, but head1 (and thus, head2) are not NULL,
-	 the lists differ in length. */
-      printf("\nLENGTH\n\n");
+    } else if ( ((head1->next == NULL) && (head2->next != NULL)) || ((head1->next != NULL) && (head2->next == NULL)) ) {
+      // If only a single next pointer is null, the lists are of different lengths and thus not equal.
       result = 0;
     } else {
       head1 = head1->next;
