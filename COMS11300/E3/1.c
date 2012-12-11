@@ -21,8 +21,7 @@ void printDifferencesFromAvg(int numbers[], int length) {
   int i;
 
   for (i = 0; i<length; i++) {
-    // When printing, truncate the decimal part to match with the example output.
-    printf("%.0f\n", avg - (double)numbers[i]);
+    printf("%f\n", avg - (double)numbers[i]);
   }
 }
 
