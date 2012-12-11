@@ -34,15 +34,20 @@ listelem *read_list( void ) {
 int compare_lists(listelem *head1, listelem *head2) {
   int result = 1;
 
-  while ((head1 != NULL) && (head2 != NULL) && (result == 1)) {
-    if (head1->symbol != head2->symbol) {
-      result = 0;
-    } else if ( ((head1->next == NULL) && (head2->next != NULL)) || ((head1->next != NULL) && (head2->next == NULL)) ) {
-      // If only a single next pointer is null, the lists are of different lengths and thus not equal.
-      result = 0;
-    } else {
-      head1 = head1->next;
-      head2 = head2->next;
+  // Base case where one list is empty, the other is not.
+  if ( ((head1 == NULL) && (head2 != NULL)) || ((head1 != NULL) && (head2 == NULL)) ) {
+    result = 0;
+  } else {
+    while ((head1 != NULL) && (head2 != NULL) && (result == 1)) {
+      if (head1->symbol != head2->symbol) {
+	result = 0;
+      } else if ( ((head1->next == NULL) && (head2->next != NULL)) || ((head1->next != NULL) && (head2->next == NULL)) ) {
+	// If only a single next pointer is null, the lists are of different lengths and thus not equal.
+	result = 0;
+      } else {
+	head1 = head1->next;
+	head2 = head2->next;
+      }
     }
   }
 
@@ -58,6 +63,5 @@ int main( void ) {
   } else {
     printf("DIFFERENT\n");
   }
-
   return 0;
 }
