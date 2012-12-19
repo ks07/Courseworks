@@ -81,17 +81,10 @@ void printTreeOrdered(tree *root) {
      along stack until we can take a right. Print current, then go right.
      Repeat. */
 
-  if (root == NULL) {
-    return;
-  } else {
-    if (root->left != NULL) {
-      printTreeOrdered(root->left);
-    }
-
+  if (root != NULL) {
+    printTreeOrdered(root->left);
     printf("%s %s\n", root->name, root->number);
-    if (root->right != NULL) {
-      printTreeOrdered(root->right);
-    }
+    printTreeOrdered(root->right);
   }
 }
 
