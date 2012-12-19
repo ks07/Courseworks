@@ -11,7 +11,7 @@ typedef struct _tree {
 
 
 void insertLeafRecursive(tree *new, tree *current) {
-  int cmp = strcmp(current->name, new->name);
+  int cmp = strcasecmp(current->name, new->name);
 
   if (cmp == 0) {
     // Name already exists in tree, so update number.
