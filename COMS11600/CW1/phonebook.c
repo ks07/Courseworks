@@ -97,8 +97,9 @@ int main(void) {
   number = malloc(21 * sizeof(char));
 
   do {
-    scanf("%100s %19s", name, number);
+    scanf("%100s", name);
     if (name[0] != '.') {
+      scanf("%20s", number);
       root = insertLeaf(name, number, root);
 
       name = malloc(101 * sizeof(char));
