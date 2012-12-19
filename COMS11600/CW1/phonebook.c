@@ -123,9 +123,29 @@ void printTreeOrdered(tree *root) {
   }
 }
 
+tree *findNearestLeafLeft(char *name, tree *current) {
+  int cmp = strcasecmp(current->name, name);
+
+  if (cmp == 0) {
+    return 
+  } else if (cmp < 0) {
+    if (current->right != NULL) {
+      findNearestLeafLeft(name, current->right);
+    } else {
+      return
+    }
+  } else {
+    if (current->left != NULL) {
+      findNearestLeafLeft(new, current->left);
+    } else {
+      current->left = new;
+    }
+  }
+}
+
 int main(void) {
   // Assume a maximum name of 100 characters, maximum number of 20.
-  char *name, *number;
+  char *name, *number, *name2, choice;
   tree *root = NULL;
 
   name = malloc(101 * sizeof(char));
@@ -142,7 +162,20 @@ int main(void) {
     }
   } while (name[0] != '.');
 
-  printTreeOrdered(root);
+  printf("Do you want to print all entries [Y/n]? ");
+  choice = getchar();
+
+  if (choice == 'n') {
+    name2 = malloc(101 * sizeof(char));
+    printf("First entry? ");
+    scanf("%100s", name);
+    printf("Last entry? ");
+    scanf("%100s", name2);
+    
+  } else {
+    // Default to yes.
+    printTreeOrdered(root);
+  }
 
   /*
   while (1) {
