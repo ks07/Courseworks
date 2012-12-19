@@ -2,9 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct _stringList {
+  char *string;
+  struct _stringList *next;
+} stringList;
+
 typedef struct _tree {
   char *name;
-  char *number;
+  stringList *numbers;
   struct _tree *left;
   struct _tree *right;
 } tree;
@@ -15,7 +20,8 @@ void insertLeafRecursive(tree *new, tree *current) {
 
   if (cmp == 0) {
     // Name already exists in tree, so update number.
-    current->number = new->number;
+    new->numbers->next = current->numbers;
+    current->numbers = new->numbers;
   } else if (cmp < 0) {
     if (current->right != NULL) {
       insertLeafRecursive(new, current->right);
@@ -34,7 +40,10 @@ void insertLeafRecursive(tree *new, tree *current) {
 tree *insertLeaf(char *name, char *number, tree *root) {
   tree *new = calloc(1, sizeof(tree));
   new->name = name;
-  new->number = number;
+
+  stringList *strings = calloc(1, sizeof(stringList));
+  strings->string = number;
+  new->numbers = strings;
 
   //Base case if tree is empty
   if (root == NULL) {
@@ -52,7 +61,7 @@ void printTreeInteractive(tree *root) {
   tree *curr = root;
   
   while (curr != NULL) {
-    printf("Node: %s, %s", curr->name, curr->number);
+    printf("Node: %s", curr->name);
     if (curr->left != NULL) {
       printf(" L");
     }
@@ -80,10 +89,19 @@ void printTreeOrdered(tree *root) {
   /* We must explore left as far as possible. Print at end. Reverse back
      along stack until we can take a right. Print current, then go right.
      Repeat. */
+  stringList *number;
 
   if (root != NULL) {
     printTreeOrdered(root->left);
-    printf("%s %s\n", root->name, root->number);
+    printf("%s", root->name);
+
+    number = root->numbers;
+    while (number != NULL) {
+      printf(" %s", number->string);
+      number = number->next;
+    }
+    printf("\n");
+
     printTreeOrdered(root->right);
   }
 }
