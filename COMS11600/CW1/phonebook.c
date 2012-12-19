@@ -14,12 +14,29 @@ typedef struct _tree {
   struct _tree *right;
 } tree;
 
+void fixCapitalisation(char *string) {
+  int i;
+
+  if (string[0] >= 'a' && string[0] <= 'z') {
+    string[0] += ('A' - 'a');
+  }
+
+  for (i = 1; string[i] != '\0'; i++) {
+    if (string[i] >= 'A' && string[i] <= 'Z') {
+      string[i] += ('a' - 'A');
+    }
+  }
+}
 
 void insertLeafRecursive(tree *new, tree *current) {
   int cmp = strcasecmp(current->name, new->name);
 
   if (cmp == 0) {
     // Name already exists in tree, so update number.
+    if (strcmp(current->name, new->name) != 0) {
+      fixCapitalisation(current->name);
+    }
+
     new->numbers->next = current->numbers;
     current->numbers = new->numbers;
   } else if (cmp < 0) {
