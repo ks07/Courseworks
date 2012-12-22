@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h> //TODO: DELETE ME
 
 typedef struct _stringList {
   char *string;
@@ -123,24 +124,45 @@ void printTreeOrdered(tree *root) {
   }
 }
 
-tree *findNearestLeafLeft(char *name, tree *current) {
-  int cmp = strcasecmp(current->name, name);
+void printTreeRange(char *name, char *name2, tree *current) {
+  stringList *number;
+  int cmp, cmp2;
 
-  if (cmp == 0) {
-    return 
-  } else if (cmp < 0) {
-    if (current->right != NULL) {
-      findNearestLeafLeft(name, current->right);
-    } else {
-      return
+  if (current != NULL) {
+    cmp = strcasecmp(name, current->name);
+    printf("Cmp: %s %s %d\n", name, current->name, cmp);
+    cmp2 = strcasecmp(name2, current->name);
+    printf("Cmp2: %s %s %d\n", name2, current->name, cmp);
+
+    if (cmp < 0) {
+      // If search name is to the right, skip.
+      printTreeRange(name, name2, current->left);
     }
-  } else {
-    if (current->left != NULL) {
-      findNearestLeafLeft(new, current->left);
-    } else {
-      current->left = new;
+
+    if (cmp <= 0 && cmp2 >= 0) {
+      printf("%s", current->name);
+      number = current->numbers;
+      while (number != NULL) {
+	printf(" %s", number->string);
+	number = number->next;
+      }
+      printf("\n");
+    }
+
+    if (cmp > 0) {
+      printTreeRange(name, name2, current->right);
     }
   }
+}
+
+char consumeWhitespace() {
+  char temp = getchar();
+
+  while (temp == '\n' || temp == ' ' || temp == '\t') {
+    temp = getchar();
+  }
+
+  return temp;
 }
 
 int main(void) {
@@ -162,8 +184,21 @@ int main(void) {
     }
   } while (name[0] != '.');
 
+  /*
+  srand((unsigned int) time(NULL));
+  for (choice=0; choice < 32; choice++) {
+    strcpy(number, "123");
+    name[0] = (rand() % 26) + 'a';
+    name[1] = (rand() % 26) + 'a';
+    name[2] = '\0';
+    root = insertLeaf(name, number, root);
+
+    name = malloc(101 * sizeof(char));
+    number = malloc(21 * sizeof(char));
+    }*/
+
   printf("Do you want to print all entries [Y/n]? ");
-  choice = getchar();
+  choice = consumeWhitespace();
 
   if (choice == 'n') {
     name2 = malloc(101 * sizeof(char));
@@ -171,7 +206,7 @@ int main(void) {
     scanf("%100s", name);
     printf("Last entry? ");
     scanf("%100s", name2);
-    
+    printTreeRange(name, name2, root);
   } else {
     // Default to yes.
     printTreeOrdered(root);
