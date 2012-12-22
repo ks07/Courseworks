@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h> //TODO: DELETE ME
 
 typedef struct _stringList {
   char *string;
@@ -103,59 +102,62 @@ void printTreeInteractive(tree *root) {
   }
 }
 
-void printTreeOrdered(tree *root) {
+void printLeaf(tree *leaf) {
+  stringList *number;
+  printf("%s", leaf->name);
+  for (number = leaf->numbers; number != NULL; number = number->next) {
+    printf(" %s", number->string);
+  }
+  printf("\n");
+}
+
+void printTreeOrdered(tree *leaf) {
   /* We must explore left as far as possible. Print at end. Reverse back
      along stack until we can take a right. Print current, then go right.
      Repeat. */
-  stringList *number;
-
-  if (root != NULL) {
-    printTreeOrdered(root->left);
-    printf("%s", root->name);
-
-    number = root->numbers;
-    while (number != NULL) {
-      printf(" %s", number->string);
-      number = number->next;
-    }
-    printf("\n");
-
-    printTreeOrdered(root->right);
+  if (leaf != NULL) {
+    printTreeOrdered(leaf->left);
+    printLeaf(leaf);
+    printTreeOrdered(leaf->right);
   }
 }
 
-void printTreeRange(char *name, char *name2, tree *current) {
-  stringList *number;
-  int cmp, cmp2;
+/* Two options here: Traverse entire tree as before, printing when we are within the bounds,
+   or traverse tree only until we meet the boundary. Try with the latter. */
+void printTreeRange(char *lower, char *upper, tree *current) {
+  int cmpLower, cmpUpper;
 
   if (current != NULL) {
-    cmp = strcasecmp(name, current->name);
-    printf("Cmp: %s %s %d\n", name, current->name, cmp);
-    cmp2 = strcasecmp(name2, current->name);
-    printf("Cmp2: %s %s %d\n", name2, current->name, cmp);
+    // cmpLower < 0 if current is left of (< than) lower.
+    cmpLower = strcasecmp(current->name, lower);
+    
+    if ((strcasecmp(lower, upper) == 0) && (cmpLower == 0)) {
+      // This node is both the upper and lower limit, so print and stop.
+      printLeaf(current);
+    } else {
+      // cmpUpper > 0 if current is right of (> than) upper.
+      cmpUpper = strcasecmp(current->name, upper);
 
-    if (cmp < 0) {
-      // If search name is to the right, skip.
-      printTreeRange(name, name2, current->left);
-    }
-
-    if (cmp <= 0 && cmp2 >= 0) {
-      printf("%s", current->name);
-      number = current->numbers;
-      while (number != NULL) {
-	printf(" %s", number->string);
-	number = number->next;
+      // First check if we need to move to get into bounds.
+      if (cmpLower < 0) {
+	// Need to go right.
+	printTreeRange(lower, upper, current->right);
+      } else if (cmpUpper > 0) {
+	// Need to go left.
+	printTreeRange(lower, upper, current->left);
+      } else {
+	// We must traverse left before printing this node.
+	printTreeRange(lower, upper, current->left);
+	printLeaf(current);
+	// Traverse right.
+	printTreeRange(lower, upper, current->right);
       }
-      printf("\n");
-    }
-
-    if (cmp > 0) {
-      printTreeRange(name, name2, current->right);
     }
   }
 }
 
-char consumeWhitespace() {
+// Reads in the next non-whitespace character.
+char getNextChar() {
   char temp = getchar();
 
   while (temp == '\n' || temp == ' ' || temp == '\t') {
@@ -167,57 +169,41 @@ char consumeWhitespace() {
 
 int main(void) {
   // Assume a maximum name of 100 characters, maximum number of 20.
-  char *name, *number, *name2, choice;
+  char *input1, *input2, choice;
   tree *root = NULL;
 
-  name = malloc(101 * sizeof(char));
-  number = malloc(21 * sizeof(char));
+  input1 = malloc(101 * sizeof(char));
+  input2 = malloc(21 * sizeof(char));
 
   do {
-    scanf("%100s", name);
-    if (name[0] != '.') {
-      scanf("%20s", number);
-      root = insertLeaf(name, number, root);
+    scanf("%100s", input1);
+    if (input1[0] != '.') {
+      scanf("%20s", input2);
+      root = insertLeaf(input1, input2, root);
 
-      name = malloc(101 * sizeof(char));
-      number = malloc(21 * sizeof(char));
+      input1 = malloc(101 * sizeof(char));
+      input2 = malloc(21 * sizeof(char));
     }
-  } while (name[0] != '.');
-
-  /*
-  srand((unsigned int) time(NULL));
-  for (choice=0; choice < 32; choice++) {
-    strcpy(number, "123");
-    name[0] = (rand() % 26) + 'a';
-    name[1] = (rand() % 26) + 'a';
-    name[2] = '\0';
-    root = insertLeaf(name, number, root);
-
-    name = malloc(101 * sizeof(char));
-    number = malloc(21 * sizeof(char));
-    }*/
+  } while (input1[0] != '.');
 
   printf("Do you want to print all entries [Y/n]? ");
-  choice = consumeWhitespace();
+  choice = getNextChar();
 
-  if (choice == 'n') {
-    name2 = malloc(101 * sizeof(char));
+  while (choice != 'n' && choice != 'y' && choice != 'Y' && choice != 'N') {
+    printf("Please enter either 'y' or 'n': '%c'", choice);
+    choice = getNextChar();
+  }
+
+  if (choice == 'n' || choice == 'N') {
+    input2 = malloc(101 * sizeof(char));
     printf("First entry? ");
-    scanf("%100s", name);
+    scanf("%100s", input1);
     printf("Last entry? ");
-    scanf("%100s", name2);
-    printTreeRange(name, name2, root);
+    scanf("%100s", input2);
+    printTreeRange(input1, input2, root);
   } else {
-    // Default to yes.
     printTreeOrdered(root);
   }
-
-  /*
-  while (1) {
-    printf("Printing From Root:\n");
-    printTree(root);
-  }
-  */
 
   return 0;
 }
