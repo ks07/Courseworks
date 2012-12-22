@@ -156,6 +156,27 @@ void printTreeRange(char *lower, char *upper, tree *current) {
   }
 }
 
+// Returns the corresponding leaf if tree does contain name, else returns NULL.
+tree *treeLookup(char *name, tree *current) {
+  int cmp;
+
+  if (current != NULL) {
+    cmp = strcasecmp(current->name, name);
+
+    if (cmp == 0) {
+      return current;
+    } else if (cmp < 0) {
+      // Current is left of target, go right.
+      return treeLookup(name, current->right);
+    } else {
+      // Current is right of target, go left.
+      return treeLookup(name, current->right);
+    }
+  } else {
+    return NULL;
+  }
+}
+
 // Reads in the next non-whitespace character.
 char getNextChar() {
   char temp = getchar();
@@ -170,39 +191,51 @@ char getNextChar() {
 int main(void) {
   // Assume a maximum name of 100 characters, maximum number of 20.
   char *input1, *input2, choice;
-  tree *root = NULL;
+  tree *lookup, *root = NULL;
 
   input1 = malloc(101 * sizeof(char));
   input2 = malloc(21 * sizeof(char));
 
   do {
     scanf("%100s", input1);
-    if (input1[0] != '.') {
+    if (input1[0] != '.' && input1[0] != '!') {
       scanf("%20s", input2);
       root = insertLeaf(input1, input2, root);
 
       input1 = malloc(101 * sizeof(char));
       input2 = malloc(21 * sizeof(char));
     }
-  } while (input1[0] != '.');
+  } while (input1[0] != '.' && input1[0] != '!');
 
-  printf("Do you want to print all entries [Y/n]? ");
-  choice = getNextChar();
-
-  while (choice != 'n' && choice != 'y' && choice != 'Y' && choice != 'N') {
-    printf("Please enter either 'y' or 'n': '%c'", choice);
-    choice = getNextChar();
-  }
-
-  if (choice == 'n' || choice == 'N') {
-    input2 = malloc(101 * sizeof(char));
-    printf("First entry? ");
+  if (input1[0] == '!') {
+    printf("What name? ");
     scanf("%100s", input1);
-    printf("Last entry? ");
-    scanf("%100s", input2);
-    printTreeRange(input1, input2, root);
+    lookup = treeLookup(input1, root);
+
+    if (lookup == NULL) {
+      printf("Name '%s' not found in phonebook!\n", input1);
+    } else {
+      printLeaf(lookup);
+    }
   } else {
-    printTreeOrdered(root);
+    printf("Do you want to print all entries [Y/n]? ");
+    choice = getNextChar();
+
+    while (choice != 'n' && choice != 'y' && choice != 'Y' && choice != 'N') {
+      printf("Please enter either 'y' or 'n': ");
+      choice = getNextChar();
+    }
+
+    if (choice == 'n' || choice == 'N') {
+      input2 = malloc(101 * sizeof(char));
+      printf("First entry? ");
+      scanf("%100s", input1);
+      printf("Last entry? ");
+      scanf("%100s", input2);
+      printTreeRange(input1, input2, root);
+    } else {
+      printTreeOrdered(root);
+    }
   }
 
   return 0;
