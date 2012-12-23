@@ -14,6 +14,7 @@ typedef struct _tree {
   struct _tree *right;
 } tree;
 
+// Capitalises the first letter of a string, while setting all others to lowercase.
 void fixCapitalisation(char *string) {
   int i;
 
@@ -28,6 +29,7 @@ void fixCapitalisation(char *string) {
   }
 }
 
+// Inserts a leaf struct into the given tree, or creates one if it does not exist.
 void insertLeafRecursive(tree *new, tree *current) {
   int cmp = strcasecmp(current->name, new->name);
 
@@ -54,6 +56,7 @@ void insertLeafRecursive(tree *new, tree *current) {
   }
 }
 
+// Inserts a new leaf into the given tree, or creates one if it does not exist.
 tree *insertLeaf(char *name, char *number, tree *root) {
   tree *new = calloc(1, sizeof(tree));
   new->name = name;
@@ -62,7 +65,7 @@ tree *insertLeaf(char *name, char *number, tree *root) {
   strings->string = number;
   new->numbers = strings;
 
-  //Base case if tree is empty
+  // Base case if tree is empty
   if (root == NULL) {
     return new;
   } else {
@@ -102,6 +105,7 @@ void printTreeInteractive(tree *root) {
   }
 }
 
+// Prints a phonebook entry on a single line.
 void printLeaf(tree *leaf) {
   stringList *number;
   printf("%s", leaf->name);
@@ -111,6 +115,7 @@ void printLeaf(tree *leaf) {
   printf("\n");
 }
 
+// Prints all entries in the phonebook in order.
 void printTreeOrdered(tree *leaf) {
   /* We must explore left as far as possible. Print at end. Reverse back
      along stack until we can take a right. Print current, then go right.
@@ -124,6 +129,7 @@ void printTreeOrdered(tree *leaf) {
 
 /* Two options here: Traverse entire tree as before, printing when we are within the bounds,
    or traverse tree only until we meet the boundary. Try with the latter. */
+// Prints all entries in the phonebook between a given lower and upper limit in order.
 void printTreeRange(char *lower, char *upper, tree *current) {
   int cmpLower, cmpUpper;
 
