@@ -218,7 +218,7 @@ int main(void) {
       printLeaf(lookup);
     }
   } else {
-    printf("Do you want to print all entries [Y/n]? ");
+    printf("Do you want to print all entries [y/n]? ");
     choice = getNextChar();
 
     while (choice != 'n' && choice != 'y' && choice != 'Y' && choice != 'N') {
