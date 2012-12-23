@@ -162,7 +162,6 @@ tree *treeLookup(char *name, tree *current) {
 
   if (current != NULL) {
     cmp = strcasecmp(current->name, name);
-
     if (cmp == 0) {
       return current;
     } else if (cmp < 0) {
@@ -170,7 +169,7 @@ tree *treeLookup(char *name, tree *current) {
       return treeLookup(name, current->right);
     } else {
       // Current is right of target, go left.
-      return treeLookup(name, current->right);
+      return treeLookup(name, current->left);
     }
   } else {
     return NULL;
@@ -198,14 +197,15 @@ int main(void) {
 
   do {
     scanf("%100s", input1);
-    if (input1[0] != '.' && input1[0] != '!') {
+
+    if (!((input1[0] == '.' || input1[0] == '!') && input1[1] == '\0')) {
       scanf("%20s", input2);
       root = insertLeaf(input1, input2, root);
 
       input1 = malloc(101 * sizeof(char));
       input2 = malloc(21 * sizeof(char));
     }
-  } while (input1[0] != '.' && input1[0] != '!');
+  } while (!((input1[0] == '.' || input1[0] == '!') && input1[1] == '\0')); // Allow names beginning with '!' or '.'
 
   if (input1[0] == '!') {
     printf("What name? ");
