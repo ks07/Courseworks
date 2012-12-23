@@ -232,7 +232,13 @@ int main(void) {
       scanf("%100s", input1);
       printf("Last entry? ");
       scanf("%100s", input2);
-      printTreeRange(input1, input2, root);
+
+      // Ensure limits are correctly assigned to lower/upper positions.
+      if (strcasecmp(input1, input2) < 0) {
+	printTreeRange(input1, input2, root);
+      } else {
+	printTreeRange(input2, input1, root);
+      }
     } else {
       printTreeOrdered(root);
     }
