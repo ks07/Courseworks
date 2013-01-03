@@ -1,0 +1,92 @@
+In this program you will have to implement a simple phonebook
+application which allows you to input phone numbers and then print
+them out as a list ordered by name. The program should be writen in c
+and, since each stage supercedes the previous one, you should just
+send one program that performs the highest stage achieved.
+
+1. Make a program that reads from standard input a name (no spaces
+allowed) and a phone number (again no space allowed). When the name
+that your program reads is a "." , then you should stop and print out
+the list of names and phone numbers. If the executable is called a.out if should look something like this when it is running: 
+% a.out
+Muller 01179545137 
+LZ 01179545136
+Lewis 01179545138 
+BR 0845484950 
+NASA +19876543210
+. 
+
+BR 0845484950 
+LZ 01179545136
+Lewis 0117955138 
+Muller 0117945137 
+NASA +19876543210 
+%
+
+Please also note that the expected input will be name space number. 
+Up to 40%
+
+2. Change the program so that it ignores the case when it is
+alphabetizing so LZ comes after Lewis.
+Up to 55% 
+
+3. Change the program so that if a name is entered more than once (ie,
+a person has more than one phone number), all phone numbers are
+printed in one line after the name. This includes names that differ
+only in case, if there are more than one version of any name it should
+print out the name with just the first letter capitalized. As an example
+
+% a.out
+Muller 01179545137 
+muller 01179545136
+MULLER 0854584950
+zack 198754321
+zack 198754322
+. 
+Muller 0117945137 01179545136 0854584950
+zack 198754321 198754322
+%
+
+So, since Muller is given in different versions, it prints it out with
+the first letter in capitals, but zack is given both times the same
+way, so it keeps it as zack.
+
+Up to 70%
+
+4. Change the program so that it gives an option to ask for a range to
+print out. Something like
+
+Do you want to print all entries y/n? n 
+First entry? Lee
+Last entry? Zeb 
+Lewis 0117955138 
+LZ 01179545136
+Muller 0117945137 
+NASA +19876543210
+
+Up to 85%
+
+
+5. Change the program so it also has a lookup mode, if you finish by
+pressing ! instead of . then it should return the phone number
+corresponding to the next name you enter. It should find the entry
+using binary search. As an example.
+
+% a.out
+Muller 01179545137 
+LZ 01179545136
+Lewis 01179545138 
+BR 0845484950 
+NASA +19876543210
+! 
+What name? NASA 
++19876543210 
+%
+
+Where it has writen "What name?" and the user has inputted "NASA", the program replies with the number for NASA.
+
+If the overall data structure is something more advanced than an
+array, it is not required that you use binary search.
+
+Up to 100%
+
