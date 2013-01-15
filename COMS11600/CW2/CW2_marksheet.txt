@@ -1,0 +1,83 @@
+Marking sheet. Read this entirely.
+
+Name:       __________________
+Coursecode: ____
+e-mail:     _______@bristol.ac.uk
+
+Base mark (tick the best category that applies to your program):
+
+A: 
+   _   0%   Nothing
+
+   _   5%   A program which does not compile.
+
+   _  10%   A working program that does not give the right output
+            i.e. it compiles, it reads the text file, and prompts for 
+            queries, but it does not give the right number of occurrences 
+            for a given keyword.
+
+   _  20%   A working program implementing the linked list approach. Your 
+            program gives the right number of occurrences for the test
+            keywords named on the assignment sheet. 
+
+   _  35%   A working program implementing the linked list approach and the
+            hash table approach. Your program gives the right number of 
+            occurrences for the test keywords named on the assignment sheet.
+            Your hash function and the table size are tuned for the suggested
+            input text file ("A Portrait"). 
+
+   _  45%   A working program implementing the linked list approach and the
+            hash table approach. The hash table is dynamically resized when 
+            it reaches a certain level of fullness. This makes your program 
+            flexible; you have tried it on input other than the suggested 
+            text file ("A Portrait") and it still performs well. 
+
+   _  60%   A working program implementing the linked list approach and the
+            hash table approach. Your hash table is dynamic (see 40%), and  
+            you have implemented the hash table as abstract data type (data 
+            structure and a set of operations on it). 
+
+Tick any of the following if appropriate:
+
+B: _   5%   You have commented your code properly.  This means every
+            function is clearly defined as an operation, an input and
+            corresponding output set. As a rough guide, 30% of your
+	    submission must be comments.
+
+C: _   5%   Your program has proper indentation. Indentation is
+            consistent throughout your code, empty lines are used
+	    consistently. For example, either you use an empty line
+	    between every two functions, or you never have an empty line
+	    between two functions. Either you have an empty
+	    line before every while, or not one before any while.
+	    Similarly for indentation, every statement must be indented
+	    properly. Do not tick box C if there is a single statement
+	    that is not indented properly. (HINT: use emacs and hit the
+	    tab key on every line and you have a neatly indented program
+	    -- do not do this if you don't want those marks)
+
+D: _   5%   You have defined constants and types, and declared variables 
+            using names which clearly indicate their use.
+
+E: _  10%   You do not use global variables, and functions and loops
+            are used properly. In particular, there is no duplicated
+	    code anywhere. If you have used a "COPY AND PASTE" feature
+	    of your editor, than it is likely that you have duplicated
+	    code, and that you cannot tick this box.
+ 
+F: _  10%   You made an extensive analysis using various hash functions and 
+            table sizes. You timed data organisation and retrieval using 
+            the linked list and the hash table approach. The results are 
+            documented and discussed in a report.
+         
+
+Provisional mark (Add marks A to F)
+
+ ___ %
+
+Agreed mark (to be filled in by the lecturer; this is the only box you do
+not fill in):
+
+ ___ %
+
+If you score 95% I might round it up to 100%.
