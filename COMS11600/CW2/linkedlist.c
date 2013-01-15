@@ -26,15 +26,12 @@ stringOccList *listInsert(char *value, stringOccList *list) {
 // Checks if a linked list beginning with *list contains the given value.
 // Returns the node containing the value if present, else NULL.
 stringOccList *listSearch(char *value, stringOccList *list) {
-  while (list != NULL) {
-    // Use strcasecmp, as the user probably doesn't care if the word starts a sentence or not.
-    if (strcasecmp(value, list->value) == 0) {
-      // Match, return the node.
-      return list;
-    }
+  // Use strcasecmp, as the user probably doesn't care if the word starts a sentence or not.
+  while (list != NULL && strcasecmp(value, list->value) != 0) {
+    list = list->next;
   }
 
-  return NULL;
+  return list;
 }
 
 // Checks whether a given character counts as whitespace or not.
@@ -56,6 +53,7 @@ char isWhitespace(char ch) {
 stringOccList *populateList(char *filename) {
   FILE *inputFile;
   stringOccList *head = NULL;
+  stringOccList *node;
 
   inputFile = fopen(filename, "r");
 
@@ -74,9 +72,17 @@ stringOccList *populateList(char *filename) {
 	// Reached the end of a word and gathered at least a single character, so add this word after adding a trailing '\0'.
 	word[count] = '\0';
 
-	newWord = malloc((count + 2) * sizeof(char));
-	strcpy(newWord, word);
-	head = listInsert(newWord, head);
+	node = listSearch(word, head);
+
+	if (node == NULL) {
+	  // Allocate a new array for the new word and insert it into the list.
+	  newWord = malloc((count + 2) * sizeof(char));
+	  strcpy(newWord, word);
+	  head = listInsert(newWord, head);
+	} else {
+	  // The word is already in the list, so we should just increase it's counter in the list.
+	  node->occurrences++;
+	}
 
 	count = 0;
       } else {
@@ -102,7 +108,13 @@ void printList(stringOccList *head) {
   }
 }
 
-int main(void) {
-  printList(populateList("test.txt"));
+int main(int argc, char *argv[]) {
+  printf("c: %d v0: %s v1: %s\n", argc, argv[0], argv[1]);
+  if (argc > 1) {
+    printList(populateList(argv[1]));
+  } else {
+    printList(populateList("test.txt"));
+  }
+
   return 0;
 }
