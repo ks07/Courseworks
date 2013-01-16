@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdbool.h>
 
 #define DEFAULT_FILENAME "a_portrait.txt"
 
@@ -34,17 +36,18 @@ stringOccList *listSearch(char *value, stringOccList *list) {
   return list;
 }
 
-// Checks whether a given character counts as whitespace or not.
-// Returns 1 if whitespace, else 0.
-char isWhitespace(char ch) {
-  switch (ch) {
-  case ' ':
-  case '\t':
-  case '\n':
-  case '\r':
-    return 1;
-  default:
-    return 0;
+// Checks whether a given character should be considered part of the given word,
+// assuming the same for the last character of the word.
+// Returns 0 (false) if the character should not be considered.
+char isWordChar(char new, char *word, int currIndex) {
+  if (isalnum(new)) {
+    // All alphanumeric characters should be considered word characters.
+    return true;
+  } else if (currIndex > 0 && !isspace(new)) {
+    // If the word is not empty, the new char is not whitespace, and the previous char is alphanumeric, true.
+    return isalnum(word[currIndex - 1]);
+  } else {
+    return false;
   }
 }
 
@@ -67,10 +70,20 @@ stringOccList *populateList(char *filename) {
     tmpChar = fgetc(inputFile);
     while (tmpChar != EOF) {
       word[count] = (char)tmpChar;
+      
+      // Re-use the tmpChar variable to store the result of checking the next character.
+      tmpChar = isWordChar(word[count], word, count);
 
-      if ((isWhitespace(word[count]) && count > 0) || count == 99 ) {
+      if (count == 99 || (count > 0 && !tmpChar)) {
 	// Reached the end of a word and gathered at least a single character, so add this word after adding a trailing '\0'.
-	word[count] = '\0';
+
+	// TODO: Optimise!
+	if (count > 1 && !isalnum(word[count - 1])) {
+	  // If both the final and penultimate characters are not alphanumeric, strip both.
+	  word[count - 1] = '\0';
+	} else {
+	  word[count] = '\0';
+	}
 
 	node = listSearch(word, head);
 
@@ -85,7 +98,7 @@ stringOccList *populateList(char *filename) {
 	}
 
 	count = 0;
-      } else {
+      } else if (tmpChar) {
 	// Found a word character, increment counter.
 	count++;
       }
@@ -103,7 +116,7 @@ stringOccList *populateList(char *filename) {
 
 void printList(stringOccList *head) {
   while (head != NULL) {
-    printf("%s %d\n", head->value, head->occurrences);
+    printf("'%s' %d\n", head->value, head->occurrences);
     head = head->next;
   }
 }
