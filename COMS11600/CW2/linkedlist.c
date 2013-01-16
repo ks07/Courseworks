@@ -122,11 +122,23 @@ void printList(stringOccList *head) {
 }
 
 int main(int argc, char *argv[]) {
-  printf("c: %d v0: %s v1: %s\n", argc, argv[0], argv[1]);
+  stringOccList *head;
+
   if (argc > 1) {
-    printList(populateList(argv[1]));
+    head = populateList(argv[1]);
   } else {
-    printList(populateList("test.txt"));
+    head = populateList("test.txt");
+  }
+
+  printf("Enter word for retrieval: ");
+  char choice[100];
+  scanf("%99s", choice);
+  
+  stringOccList *node = listSearch(choice, head);
+  if (node != NULL) {
+    printf("%s = %d\n", node->value, node->occurrences);
+  } else {
+    printf("Not found.\n");
   }
 
   return 0;
