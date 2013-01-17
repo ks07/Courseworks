@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define DEFAULT_FILENAME "a_portrait.txt"
 #define HASHTABLE_BUCKETS 200
@@ -310,17 +311,35 @@ void printTable(stringOccTable *hTable) {
   }
 }
 
+// Converts a time created with clock() into a float representing the time in seconds.
+// Returns a float value representing the time in seconds.
+float clockToSeconds(clock_t clocks) {
+  return ((float)clocks) / CLOCKS_PER_SEC;
+}
+
 int main(int argc, char *argv[]) {
   stringOccList *head;
   stringOccTable *table;
+  clock_t listTimer;
+  clock_t tableTimer;
 
   if (argc > 1) {
+    listTimer = clock();
     head = populateList(argv[1]);
+    listTimer = clock() - listTimer;
+    tableTimer = clock();
     table = populateTable(argv[1]);
+    tableTimer = clock() - tableTimer;
   } else {
+    listTimer = clock();
     head = populateList("test.txt"); // TODO Use defined constant
+    listTimer = clock() - listTimer;
+    tableTimer = clock();
     table = populateTable("test.txt");
+    tableTimer = clock() - tableTimer;
   }
+
+  printf("Time for population:\n  List: %f seconds Table: %f seconds\n", clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
   /*
   printf("Enter word for retrieval: ");
@@ -343,7 +362,7 @@ int main(int argc, char *argv[]) {
     printf("Not found.\n");
   }
   */
-  printTable(table);
+  //printTable(table);
 
   return 0;
 }
