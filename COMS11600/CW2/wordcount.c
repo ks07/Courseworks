@@ -117,15 +117,26 @@ stringOccTable *createHashtable(unsigned int buckets) {
 void tableInsert(char *value, stringOccTable *hTable) {
   unsigned int hash = calcHash(value, hTable->bucketCount);
   stringOccList *bucket = (hTable[hash])->table;
-
-  // Insert the new value into the relevant bucket, and update the point in the table.
-  bucket = listInsert(value, bucket);
-  (hTable[hash])->table = bucket;
+  stringOccList *node; // TODO refactor insert/search to avoid this being necessary.
 
   if (bucket == NULL) {
     // The bucket is empty, thus we must decrease the count of empty buckets.
     hTable->emptyBucketCount--;
+    bucket = listInsert(value, bucket);
+    (hTable[hash])->table = bucket;
   } else {
+    // The bucket already contains values, so we must check the overflow list for the actual key.
+    node = listSearch(value, bucket);
+
+    if (node == NULL) {
+      // Insert the new value into the relevant bucket, and update the point in the table.
+      bucket = listInsert(value, bucket);
+      (hTable[hash])->table = bucket;
+    } else {
+      // The word is already in the list, so we should just increase it's counter in the list.
+      node->occurrences++;
+    }
+
     // The bucket already contains values, so we should increase the maxOverflowSize if necessary.
     if (hTable->maxOverflowSize < bucket->length) {
       hTable->maxOverflowSize = bucket->length;
@@ -151,8 +162,66 @@ stringOccList *tableSearch(char *key, stringOccTable *hTable) {
 
 /* Main function and user interactions/control. */
 
+// Creates and populates a hashtable using the contents of the file represented by filename.
+// Returns a pointer to the newly created hashtable, or NULL if no words could be read, or the creation failed.
+stringOccTable *populateTable(char *filename) {
+  FILE *inputFile;
+  stringOccTable *hTable = createHashTable(HASHTABLE_BUCKETS);
+
+  inputFile = fopen(filename, "r");
+
+  // Could not open the given file, perhaps it does not exist, or insufficient permissions.
+  if (inputFile != NULL) {
+    char word[100]; // TODO: Variable length
+    unsigned char count = 0;
+    char *newWord;
+    int tmpChar;
+
+    tmpChar = fgetc(inputFile);
+    while (tmpChar != EOF) {
+      word[count] = (char)tmpChar;
+
+      // Re-use the tmpChar variable to store the result of checking the next character.
+      tmpChar = isWordChar(word[count], word, count);
+
+      if (count == 99 || (count > 0 && !tmpChar)) {
+        // Reached the end of a word and gathered at least a single character, so add this word after adding a trailing '\0'.
+
+        // TODO: Optimise!
+        if (count > 1 && !isalnum(word[count - 1])) {
+          // If both the final and penultimate characters are not alphanumeric, strip both.
+          word[count - 1] = '\0';
+        } else {
+          word[count] = '\0';
+        }
+
+	// Allocate a new array for the new word and insert it into the hashtable.
+	newWord = malloc((count + 2) * sizeof(char)); // TODO remove need to copy string if already contained in table.
+	strcpy(newWord, word);
+	tableInsert(newWord, hTable);
+
+        count = 0;
+      } else if (tmpChar) {
+        // Found a word character, increment counter.
+        count++;
+      }
+
+      tmpChar = fgetc(inputFile);
+    }
+
+    // Close the file descriptor
+    fclose(inputFile);
+  } else {
+    // Could not open the given file, perhaps it does not exist, or insufficient permissions.
+    return NULL; // TODO: Error messages.
+  }
+
+  // Return the pointer to the head of the list, or null if an error occurred.
+  return head;
+}
+
 // Creates and populates a linked list using the contents of the file represented by filename.
-// Returns the head of the newly created linked list, or NULL if no words oculd be read.
+// Returns the head of the newly created linked list, or NULL if no words could be read.
 stringOccList *populateList(char *filename) {
   FILE *inputFile;
   stringOccList *head = NULL;
@@ -208,6 +277,9 @@ stringOccList *populateList(char *filename) {
 
     // Close the file descriptor
     fclose(inputFile);
+  } else {
+    // Could not open the given file, perhaps it does not exist, or insufficient permissions.
+    return NULL;
   }
 
   // Return the pointer to the head of the list, or null if an error occurred.
@@ -221,20 +293,42 @@ void printList(stringOccList *head) {
   }
 }
 
+void printTable(stringOccTable *hTable) {
+  int i;
+
+  for (i = 0; i < HASHTABLE_BUCKETS; i++) {
+    printf("Bucket %d:\n", i);
+
+    printList(hTable->bucket);
+  }
+}
+
 int main(int argc, char *argv[]) {
   stringOccList *head;
+  stringOccTable *table;
 
   if (argc > 1) {
     head = populateList(argv[1]);
+    table = populateTable(argv[1]);
   } else {
-    head = populateList("test.txt");
+    head = populateList("test.txt"); // TODO Use defined constant
+    table = populateTable("test.txt");
   }
 
   printf("Enter word for retrieval: ");
   char choice[100];
   scanf("%99s", choice);
-  
+
+  printf("List: ");
   stringOccList *node = listSearch(choice, head);
+  if (node != NULL) {
+    printf("%s = %d\n", node->value, node->occurrences);
+  } else {
+    printf("Not found.\n");
+  }
+
+  printf("Table: ")
+  node = tableSearch(choice, table);
   if (node != NULL) {
     printf("%s = %d\n", node->value, node->occurrences);
   } else {
