@@ -5,36 +5,9 @@
 #include <stdbool.h>
 
 #define DEFAULT_FILENAME "a_portrait.txt"
+#define HASHTABLE_BUCKETS 200
 
-typedef struct _stringOccList {
-  struct _stringOccList *next;
-  char *value;
-  int occurrences;
-} stringOccList;
-
-// Inserts a new node as the head of a given linked list.
-// Returns the new node / the head of the list.
-stringOccList *listInsert(char *value, stringOccList *list) {
-  stringOccList *next;
-
-  next = malloc(sizeof(stringOccList));
-  next->value = value;
-  next->occurrences = 1;
-  next->next = list;
-
-  return next;
-}
-
-// Checks if a linked list beginning with *list contains the given value.
-// Returns the node containing the value if present, else NULL.
-stringOccList *listSearch(char *value, stringOccList *list) {
-  // Use strcasecmp, as the user probably doesn't care if the word starts a sentence or not.
-  while (list != NULL && strcasecmp(value, list->value) != 0) {
-    list = list->next;
-  }
-
-  return list;
-}
+/* General word handling functions. */
 
 // Checks whether a given character should be considered part of the given word,
 // assuming the same for the last character of the word.
@@ -50,6 +23,133 @@ char isWordChar(char new, char *word, int currIndex) {
     return false;
   }
 }
+
+
+
+/* Linked list functions and structs. */
+
+typedef struct _stringOccList {
+  struct _stringOccList *next;
+  char *value;
+  int occurrences;
+  // Keep track of the length so that we do not need to iterate over the entire list to calculate the max overflow.
+  unsigned int length; // TODO: Optimise, store only for the head.
+} stringOccList;
+
+// Inserts a new node as the head of a given linked list.
+// Returns the new node / the head of the list.
+stringOccList *listInsert(char *value, stringOccList *list) {
+  stringOccList *next;
+
+  next = malloc(sizeof(stringOccList));
+  next->value = value;
+  next->occurrences = 1;
+  next->next = list;
+
+  // Set the length of the list with the new element added.
+  if (list != NULL) {
+    next->length = list->length + 1;
+  } else {
+    next->length = 1;
+  }
+
+  return next;
+}
+
+// Checks if a linked list beginning with *list contains the given value.
+// Returns the node containing the value if present, else NULL.
+stringOccList *listSearch(char *value, stringOccList *list) {
+  // Use strcasecmp, as the user probably doesn't care if the word starts a sentence or not.
+  while (list != NULL && strcasecmp(value, list->value) != 0) {
+    list = list->next;
+  }
+
+  return list;
+}
+
+
+
+/* Hashtable functions. */
+
+typedef struct _stringOccTable {
+  // Stores a pointer to an array of stringOccList pointers initialised to NULL. The array pointer is
+  // not constant, and thus may be resized.
+  struct _stringOccList **table;
+  unsigned int emptyBucketCount;
+  unsigned int bucketCount;
+  unsigned int maxOverflowSize;
+} stringOccTable;
+
+// Calculate the hash of a given string key, assuring that the returned value is within the range of buckets.
+// Returns the hash value of the given key.
+unsigned int calcHash(char *key, unsigned int buckets) {
+  char current = key[0];
+  unsigned int hash = 0;
+
+  while (current != '\0') {
+    hash += current;
+  }
+
+  return hash % buckets;
+}
+
+// Creates a new hashtable struct.
+// Returns a pointer to a stringOccTable struct that holds an array of lists to act as overflow, and some 
+// variables to store metadata. Returns NULL if allocation failed. See struct declaration for more information.
+stringOccTable *createHashtable(unsigned int buckets) {
+  // Use calloc so that variables are initialised to NULL, and check the allocation succeeded.
+  stringOccTable *table = calloc(1, sizeof(stringOccTable));
+  if (table == NULL) {
+    return NULL;
+  }
+
+  // Declare the internal array of lists, again checking for success.
+  table->table = calloc(buckets, sizeof(stringOccList));
+  if (table->table == NULL) {
+    return NULL;
+  }
+
+  table->bucketCount = buckets;
+}
+
+// Inserts a value into the given hash table, incrementing it's counter if it already exists. hTable must be
+// initialised with createHashTable before being used as a parameter to this function.
+void tableInsert(char *value, stringOccTable *hTable) {
+  unsigned int hash = calcHash(value, hTable->bucketCount);
+  stringOccList *bucket = (hTable[hash])->table;
+
+  // Insert the new value into the relevant bucket, and update the point in the table.
+  bucket = listInsert(value, bucket);
+  (hTable[hash])->table = bucket;
+
+  if (bucket == NULL) {
+    // The bucket is empty, thus we must decrease the count of empty buckets.
+    hTable->emptyBucketCount--;
+  } else {
+    // The bucket already contains values, so we should increase the maxOverflowSize if necessary.
+    if (hTable->maxOverflowSize < bucket->length) {
+      hTable->maxOverflowSize = bucket->length;
+    }
+  }
+}
+
+// Searches the given hash table for the list node containing key.
+// Returns the stringOccList node containg the given key, else NULL if the key is not present.
+stringOccList *tableSearch(char *key, stringOccTable *hTable) {
+  unsigned int hash = calcHash(key, hTable->bucketCount);
+  stringOccList *bucket = (hTable[hash])->table;
+
+  if (bucket == NULL) {
+    // The bucket is empty, thus the table does not contain an entry corresponding to the given key.
+    return NULL;
+  } else {
+    return listSearch(key, bucket);
+  }
+}
+
+
+
+/* Main function and user interactions/control. */
 
 // Creates and populates a linked list using the contents of the file represented by filename.
 // Returns the head of the newly created linked list, or NULL if no words oculd be read.
