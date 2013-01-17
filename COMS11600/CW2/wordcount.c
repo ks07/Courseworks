@@ -110,20 +110,22 @@ stringOccTable *createHashtable(unsigned int buckets) {
   }
 
   table->bucketCount = buckets;
+
+  return table;
 }
 
 // Inserts a value into the given hash table, incrementing it's counter if it already exists. hTable must be
 // initialised with createHashTable before being used as a parameter to this function.
 void tableInsert(char *value, stringOccTable *hTable) {
   unsigned int hash = calcHash(value, hTable->bucketCount);
-  stringOccList *bucket = (hTable[hash])->table;
+  stringOccList *bucket = hTable->table[hash];
   stringOccList *node; // TODO refactor insert/search to avoid this being necessary.
 
   if (bucket == NULL) {
     // The bucket is empty, thus we must decrease the count of empty buckets.
     hTable->emptyBucketCount--;
     bucket = listInsert(value, bucket);
-    (hTable[hash])->table = bucket;
+    hTable->table[hash] = bucket;
   } else {
     // The bucket already contains values, so we must check the overflow list for the actual key.
     node = listSearch(value, bucket);
@@ -131,7 +133,7 @@ void tableInsert(char *value, stringOccTable *hTable) {
     if (node == NULL) {
       // Insert the new value into the relevant bucket, and update the point in the table.
       bucket = listInsert(value, bucket);
-      (hTable[hash])->table = bucket;
+      hTable->table[hash] = bucket;
     } else {
       // The word is already in the list, so we should just increase it's counter in the list.
       node->occurrences++;
@@ -148,7 +150,7 @@ void tableInsert(char *value, stringOccTable *hTable) {
 // Returns the stringOccList node containg the given key, else NULL if the key is not present.
 stringOccList *tableSearch(char *key, stringOccTable *hTable) {
   unsigned int hash = calcHash(key, hTable->bucketCount);
-  stringOccList *bucket = (hTable[hash])->table;
+  stringOccList *bucket = hTable->table[hash];
 
   if (bucket == NULL) {
     // The bucket is empty, thus the table does not contain an entry corresponding to the given key.
@@ -166,7 +168,7 @@ stringOccList *tableSearch(char *key, stringOccTable *hTable) {
 // Returns a pointer to the newly created hashtable, or NULL if no words could be read, or the creation failed.
 stringOccTable *populateTable(char *filename) {
   FILE *inputFile;
-  stringOccTable *hTable = createHashTable(HASHTABLE_BUCKETS);
+  stringOccTable *hTable = createHashtable(HASHTABLE_BUCKETS);
 
   inputFile = fopen(filename, "r");
 
@@ -217,7 +219,7 @@ stringOccTable *populateTable(char *filename) {
   }
 
   // Return the pointer to the head of the list, or null if an error occurred.
-  return head;
+  return hTable;
 }
 
 // Creates and populates a linked list using the contents of the file represented by filename.
@@ -299,7 +301,7 @@ void printTable(stringOccTable *hTable) {
   for (i = 0; i < HASHTABLE_BUCKETS; i++) {
     printf("Bucket %d:\n", i);
 
-    printList(hTable->bucket);
+    printList(hTable->table[i]);
   }
 }
 
@@ -327,7 +329,7 @@ int main(int argc, char *argv[]) {
     printf("Not found.\n");
   }
 
-  printf("Table: ")
+  printf("Table: ");
   node = tableSearch(choice, table);
   if (node != NULL) {
     printf("%s = %d\n", node->value, node->occurrences);
