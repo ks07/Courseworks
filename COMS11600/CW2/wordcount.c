@@ -339,7 +339,7 @@ int main(int argc, char *argv[]) {
     tableTimer = clock() - tableTimer;
   }
 
-  printf("Time for population:\n  List: %f seconds Table: %f seconds\n", clockToSeconds(listTimer), clockToSeconds(tableTimer));
+  printf("Time for population with %d words:\n  List: %f seconds Table: %f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
   /*
   printf("Enter word for retrieval: ");
