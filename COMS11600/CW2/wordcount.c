@@ -83,13 +83,13 @@ typedef struct _stringOccTable {
 // Calculate the hash of a given string key, assuring that the returned value is within the range of buckets.
 // Returns the hash value of the given key.
 unsigned int calcHash(char *key, unsigned int buckets) {
-  char current;
+  char current = key[0];
   unsigned int hash = 0;
   int i;
 
-  for (i = 0; current != '\0'; i++) {
-    current = key[i];
+  for (i = 1; current != '\0'; i++) {
     hash += current;
+    current = key[i];
   }
 
   return hash % buckets;
@@ -112,6 +112,7 @@ stringOccTable *createHashtable(unsigned int buckets) {
   }
 
   table->bucketCount = buckets;
+  table->emptyBucketCount = buckets;
 
   return table;
 }
@@ -300,8 +301,10 @@ void printList(stringOccList *head) {
 void printTable(stringOccTable *hTable) {
   int i;
 
+  printf("Table {empty: %d, maxOver: %d}\n", hTable->emptyBucketCount, hTable->maxOverflowSize);
+
   for (i = 0; i < HASHTABLE_BUCKETS; i++) {
-    printf("Bucket %d:\n", i);
+    printf("=Bucket %d:\n", i);
 
     printList(hTable->table[i]);
   }
@@ -319,6 +322,7 @@ int main(int argc, char *argv[]) {
     table = populateTable("test.txt");
   }
 
+  /*
   printf("Enter word for retrieval: ");
   char choice[100];
   scanf("%99s", choice);
@@ -338,6 +342,8 @@ int main(int argc, char *argv[]) {
   } else {
     printf("Not found.\n");
   }
+  */
+  printTable(table);
 
   return 0;
 }
