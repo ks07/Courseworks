@@ -83,10 +83,12 @@ typedef struct _stringOccTable {
 // Calculate the hash of a given string key, assuring that the returned value is within the range of buckets.
 // Returns the hash value of the given key.
 unsigned int calcHash(char *key, unsigned int buckets) {
-  char current = key[0];
+  char current;
   unsigned int hash = 0;
+  int i;
 
-  while (current != '\0') {
+  for (i = 0; current != '\0'; i++) {
+    current = key[i];
     hash += current;
   }
 
