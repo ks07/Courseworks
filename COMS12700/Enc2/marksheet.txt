@@ -49,12 +49,12 @@ or decrease in marks; examples include hard to quantify features such as
 the style or efficiency of a solution.
 
     Stage 1 : Implement
-[?]           - round        module                                  ( 10%)
-[?]           - key_schedule module                                  ( 10%)
+[X]           - round        module                                  ( 10%)
+[X]           - key_schedule module                                  ( 10%)
 
-[?] Stage 2 : Implement encrypt_v1 module, combinatorial design      ( 20%)
+[X] Stage 2 : Implement encrypt_v1 module, combinatorial design      ( 20%)
 
-[?] Stage 3 : Implement encrypt_v2 module, iterative     design      ( 30%)
+[X] Stage 3 : Implement encrypt_v2 module, iterative     design      ( 30%)
 
 [?] Stage 4 : Implement encrypt_v3 module, pipelined     design      ( 30%)
 
