@@ -10,7 +10,8 @@ module encrypt_v2( input  wire            clk,
    reg  [ 79 : 0 ] 			    ksOut;
    reg  [  4 : 0 ] 			    keyCounter;
    reg 					    ackReg;
-      
+   reg 	[ 63 : 0 ]			    kaReg;
+
    wire [ 63 : 0 ] 			    outWire;
    wire [ 63 : 0 ] 			    rndOutWire;
    wire [ 79 : 0 ] 			    ksOutWire;
@@ -22,6 +23,7 @@ module encrypt_v2( input  wire            clk,
    //ksOut[0] = K;
    initial begin:init0
       ackReg = 0;
+      kaReg = 0;
       keyCounter = 5'b00000;
    end
    
@@ -32,7 +34,11 @@ module encrypt_v2( input  wire            clk,
       if( req == 1'b1 ) begin
 	 if ( keyCounter == 5'b11111 ) begin
 	    // Last iteration, output results.
-	    ackReg = 1;
+	    #10 rndOut = rndOutWire;
+	    ksOut = ksOutWire;
+	    
+	    #10 kaReg = outWire;
+	    #1 ackReg = 1;
 	 end else if ( keyCounter == 5'b00000 ) begin
 	    // First iteration, get input.
 	    rndOut = M;
@@ -51,7 +57,7 @@ module encrypt_v2( input  wire            clk,
    end
 
    key_addition ka0( outWire, rndOut, ksOut );
-   assign C = outWire;
+   assign C = kaReg;
    assign ack = ackReg;
    
 endmodule
