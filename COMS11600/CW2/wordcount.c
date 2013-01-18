@@ -172,7 +172,8 @@ comparisonReturn *tableSearch(char *key, stringOccTable *hTable) {
 
   if (bucket == NULL) {
     // The bucket is empty, thus the table does not contain an entry corresponding to the given key.
-    return NULL;
+    comparisonReturn *empty = calloc(1, sizeof(comparisonReturn));
+    return empty;
   } else {
     return listSearch(key, bucket);
   }
