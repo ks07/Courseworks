@@ -37,6 +37,11 @@ typedef struct _stringOccList {
   unsigned int length; // TODO: Optimise, store only for the head.
 } stringOccList;
 
+typedef struct _comparisonReturn {
+  struct _stringOccList *node;
+  unsigned int comparisons;
+} comparisonReturn;
+
 // Inserts a new node as the head of a given linked list.
 // Returns the new node / the head of the list.
 stringOccList *listInsert(char *value, stringOccList *list) {
@@ -59,13 +64,22 @@ stringOccList *listInsert(char *value, stringOccList *list) {
 
 // Checks if a linked list beginning with *list contains the given value.
 // Returns the node containing the value if present, else NULL.
-stringOccList *listSearch(char *value, stringOccList *list) {
+comparisonReturn *listSearch(char *value, stringOccList *list) {
+  comparisonReturn *ret = calloc(1, sizeof(comparisonReturn));
+
   // Use strcasecmp, as the user probably doesn't care if the word starts a sentence or not.
   while (list != NULL && strcasecmp(value, list->value) != 0) {
+    ret->comparisons++;
     list = list->next;
   }
 
-  return list;
+  if (list != NULL) {
+    // If the node was found, our comparison count will be one less than it's true value.
+    ret->comparisons++;
+  }
+
+  ret->node = list;
+  return ret;
 }
 
 
@@ -132,7 +146,7 @@ void tableInsert(char *value, stringOccTable *hTable) {
     hTable->table[hash] = bucket;
   } else {
     // The bucket already contains values, so we must check the overflow list for the actual key.
-    node = listSearch(value, bucket);
+    node = (listSearch(value, bucket))->node;
 
     if (node == NULL) {
       // Insert the new value into the relevant bucket, and update the point in the table.
@@ -152,7 +166,7 @@ void tableInsert(char *value, stringOccTable *hTable) {
 
 // Searches the given hash table for the list node containing key.
 // Returns the stringOccList node containg the given key, else NULL if the key is not present.
-stringOccList *tableSearch(char *key, stringOccTable *hTable) {
+comparisonReturn *tableSearch(char *key, stringOccTable *hTable) {
   unsigned int hash = calcHash(key, hTable->bucketCount);
   stringOccList *bucket = hTable->table[hash];
 
@@ -260,7 +274,7 @@ stringOccList *populateList(char *filename) {
 	  word[count] = '\0';
 	}
 
-	node = listSearch(word, head);
+	node = (listSearch(word, head))->node;
 
 	if (node == NULL) {
 	  // Allocate a new array for the new word and insert it into the list.
@@ -341,27 +355,28 @@ int main(int argc, char *argv[]) {
 
   printf("Time for population with %d words:\n  List: %f seconds Table: %f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
-  /*
   printf("Enter word for retrieval: ");
   char choice[100];
   scanf("%99s", choice);
 
   printf("List: ");
-  stringOccList *node = listSearch(choice, head);
-  if (node != NULL) {
-    printf("%s = %d\n", node->value, node->occurrences);
+  comparisonReturn *search = listSearch(choice, head);
+  if (search->node != NULL) {
+    printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
   } else {
-    printf("Not found.\n");
+    printf("Not found\n");
   }
+  printf("  with %d comparisons.\n", search->comparisons);
 
   printf("Table: ");
-  node = tableSearch(choice, table);
-  if (node != NULL) {
-    printf("%s = %d\n", node->value, node->occurrences);
+  search = tableSearch(choice, table);
+  if (search->node != NULL) {
+    printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
   } else {
-    printf("Not found.\n");
+    printf("Not found\n");
   }
-  */
+  printf("  with %d comparisons.\n", search->comparisons);
+
   //printTable(table);
 
   return 0;
