@@ -60,7 +60,7 @@ typedef struct _stringOccList {
   char *value;
   int occurrences;
   // Keep track of the length so that we do not need to iterate over the entire list to calculate the max overflow.
-  unsigned int length; // TODO: Optimise, store only for the head.
+  unsigned int length;
 } stringOccList;
 
 typedef struct _comparisonReturn {
@@ -93,8 +93,8 @@ stringOccList *listInsert(char *value, stringOccList *list) {
 comparisonReturn *listSearch(char *value, stringOccList *list) {
   comparisonReturn *ret = calloc(1, sizeof(comparisonReturn));
 
-  // Use strcasecmp, as the user probably doesn't care if the word starts a sentence or not.
-  while (list != NULL && strcasecmp(value, list->value) != 0) {
+  // Loop through the list, stopping if we encounter the desired value or reach the end of the list.
+  while (list != NULL && strcmp(value, list->value) != 0) {
     ret->comparisons++;
     list = list->next;
   }
@@ -198,8 +198,7 @@ comparisonReturn *tableSearch(char *key, stringOccTable *hTable) {
 
   if (bucket == NULL) {
     // The bucket is empty, thus the table does not contain an entry corresponding to the given key.
-    comparisonReturn *empty = calloc(1, sizeof(comparisonReturn));
-    return empty;
+    return calloc(1, sizeof(comparisonReturn));
   } else {
     return listSearch(key, bucket);
   }
