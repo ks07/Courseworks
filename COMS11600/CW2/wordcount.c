@@ -345,6 +345,7 @@ int main(int argc, char *argv[]) {
   stringOccTable *table;
   clock_t listTimer;
   clock_t tableTimer;
+  char cont, choice[100];
 
   if (argc > 1) {
     listTimer = clock();
@@ -364,28 +365,33 @@ int main(int argc, char *argv[]) {
 
   printf("Time for population with %d words:\n  List: %f seconds Table: %f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
-  printf("Enter word for retrieval: ");
-  char choice[100];
-  scanf("%99s", choice);
-  strToLower(choice);
 
-  printf("List: ");
-  comparisonReturn *search = listSearch(choice, head);
-  if (search->node != NULL) {
-    printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
-  } else {
-    printf("Not found\n");
-  }
-  printf("  with %d comparisons.\n", search->comparisons);
+  do {
+    printf("Enter word for retrieval: ");
+    scanf("%99s", choice);
+    strToLower(choice);
 
-  printf("Table: ");
-  search = tableSearch(choice, table);
-  if (search->node != NULL) {
-    printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
-  } else {
-    printf("Not found\n");
-  }
-  printf("  with %d comparisons.\n", search->comparisons);
+    printf("List: ");
+    comparisonReturn *search = listSearch(choice, head);
+    if (search->node != NULL) {
+      printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
+    } else {
+      printf("Not found\n");
+    }
+    printf("  with %d comparisons.\n", search->comparisons);
+    
+    printf("Table: ");
+    search = tableSearch(choice, table);
+    if (search->node != NULL) {
+      printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
+    } else {
+      printf("Not found\n");
+    }
+    printf("  with %d comparisons.\n", search->comparisons);
+
+    printf("Would you like to search again? [Y/n]");
+    scanf("%c ", &cont);
+  } while (cont != 'n' && cont != 'N');
 
   //printTable(table);
 
