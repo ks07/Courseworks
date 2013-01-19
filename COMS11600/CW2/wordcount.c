@@ -402,7 +402,7 @@ int main(int argc, char *argv[]) {
     return 1;
   } else {
     // Print statistics on the population process.
-    printf("Time for population with %d words:\n  List: %f seconds Table: %f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
+    printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
     // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
     do {
