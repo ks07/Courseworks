@@ -25,7 +25,15 @@ char isWordChar(char new, char *word, int currIndex) {
   }
 }
 
+// Changes all uppercase characters in the given string into their lowercase counterparts.
+// The change is performed in-place, thus a copy should be passed if the original must be preserved.
+void strToLower(char *str) {
+  int i = 0;
 
+  while (str[i] != '\0') {
+    str[i] = toLower(str[i]);
+  }
+}
 
 /* Linked list functions and structs. */
 
@@ -200,7 +208,7 @@ stringOccTable *populateTable(char *filename) {
 
     tmpChar = fgetc(inputFile);
     while (tmpChar != EOF) {
-      word[count] = (char)tmpChar;
+      word[count] = toLower((char)tmpChar);
 
       // Re-use the tmpChar variable to store the result of checking the next character.
       tmpChar = isWordChar(word[count], word, count);
@@ -259,7 +267,7 @@ stringOccList *populateList(char *filename) {
 
     tmpChar = fgetc(inputFile);
     while (tmpChar != EOF) {
-      word[count] = (char)tmpChar;
+      word[count] = toLower((char)tmpChar);
       
       // Re-use the tmpChar variable to store the result of checking the next character.
       tmpChar = isWordChar(word[count], word, count);
@@ -359,6 +367,7 @@ int main(int argc, char *argv[]) {
   printf("Enter word for retrieval: ");
   char choice[100];
   scanf("%99s", choice);
+  strToLower(choice);
 
   printf("List: ");
   comparisonReturn *search = listSearch(choice, head);
