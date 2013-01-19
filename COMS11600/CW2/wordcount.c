@@ -68,26 +68,6 @@ typedef struct _comparisonReturn {
   unsigned int comparisons;
 } comparisonReturn;
 
-// Inserts a new node as the head of a given linked list.
-// Returns the new node / the head of the list.
-stringOccList *listInsert(char *value, stringOccList *list) {
-  stringOccList *next;
-
-  next = malloc(sizeof(stringOccList));
-  next->value = value;
-  next->occurrences = 1;
-  next->next = list;
-
-  // Set the length of the list with the new element added.
-  if (list != NULL) {
-    next->length = list->length + 1;
-  } else {
-    next->length = 1;
-  }
-
-  return next;
-}
-
 // Checks if a linked list beginning with *list contains the given value.
 // Returns the node containing the value if present, else NULL.
 comparisonReturn *listSearch(char *value, stringOccList *list) {
@@ -106,6 +86,43 @@ comparisonReturn *listSearch(char *value, stringOccList *list) {
 
   ret->node = list;
   return ret;
+}
+
+// Inserts a new node as the head of a given linked list.
+// Returns the new node / the head of the list.
+stringOccList *listInsert(char *value, stringOccList *list) {
+  stringOccList *next;
+
+  // We must first search the list to check whether we should increment an existing node or add a new one.
+  next = (listSearch(value, list))->node;
+
+  if (next == NULL) {
+    // Allocate a new array for the new word and insert it into the list.
+    char *newWord = malloc((strlen(value) + 1) * sizeof(char));
+    strcpy(newWord, value);
+
+    // Allocate a new node to insert at the head of the list.
+    next = malloc(sizeof(stringOccList));
+    next->value = newWord;
+    next->occurrences = 1;
+    next->next = list;
+
+    // Set the length of the list with the new element added.
+    if (list != NULL) {
+      next->length = list->length + 1;
+    } else {
+      next->length = 1;
+    }
+
+    // Return the new head of the list.
+    return next;
+  } else {
+    // The word is already in the list, so we should just increase it's counter in the list.
+    next->occurrences++;
+
+    // Return the head of the list.
+    return list;
+  }
 }
 
 
@@ -274,7 +291,6 @@ stringOccTable *populateTable(char *filename) {
 stringOccList *populateList(char *filename) {
   FILE *inputFile;
   stringOccList *head = NULL;
-  stringOccList *node;
 
   inputFile = fopen(filename, "r");
 
@@ -282,7 +298,6 @@ stringOccList *populateList(char *filename) {
   if (inputFile != NULL) {
     char word[100]; // TODO: Variable length
     unsigned char count = 0;
-    char *newWord;
     int tmpChar;
 
     tmpChar = fgetc(inputFile);
@@ -301,19 +316,11 @@ stringOccList *populateList(char *filename) {
 	} else {
 	  word[count] = '\0';
 	}
+	
+	// Insert the word into the linked list.
+	head = listInsert(word, head);
 
-	node = (listSearch(word, head))->node;
-
-	if (node == NULL) {
-	  // Allocate a new array for the new word and insert it into the list.
-	  newWord = malloc((count + 2) * sizeof(char));
-	  strcpy(newWord, word);
-	  head = listInsert(newWord, head);
-	} else {
-	  // The word is already in the list, so we should just increase it's counter in the list.
-	  node->occurrences++;
-	}
-
+	// Reset the counter ready for the next word.
 	count = 0;
       } else if (tmpChar) {
 	// Found a word character, increment counter.
