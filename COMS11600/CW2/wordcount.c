@@ -175,8 +175,12 @@ void tableInsert(char *value, stringOccTable *hTable) {
     node = (listSearch(value, bucket))->node;
 
     if (node == NULL) {
+      // The bucket does not hold the given key, so copy the string to a suitably sized array.
+      char *newWord = malloc((strlen(value) + 1) * sizeof(char));
+      strcpy(newWord, value);
+
       // Insert the new value into the relevant bucket, and update the point in the table.
-      bucket = listInsert(value, bucket);
+      bucket = listInsert(newWord, bucket);
       hTable->table[hash] = bucket;
     } else {
       // The word is already in the list, so we should just increase it's counter in the list.
@@ -220,10 +224,11 @@ stringOccTable *populateTable(char *filename) {
   if (inputFile != NULL) {
     char word[100]; // TODO: Variable length
     unsigned char count = 0;
-    char *newWord;
     int tmpChar;
 
+    // Store the output of fgetc into an int, so we can represent EOF.
     tmpChar = fgetc(inputFile);
+
     while (tmpChar != EOF) {
       word[count] = tolower((char)tmpChar);
 
@@ -233,7 +238,6 @@ stringOccTable *populateTable(char *filename) {
       if (count == 99 || (count > 0 && !tmpChar)) {
         // Reached the end of a word and gathered at least a single character, so add this word after adding a trailing '\0'.
 
-        // TODO: Optimise!
         if (count > 1 && !isalnum(word[count - 1])) {
           // If both the final and penultimate characters are not alphanumeric, strip both.
           word[count - 1] = '\0';
@@ -241,11 +245,10 @@ stringOccTable *populateTable(char *filename) {
           word[count] = '\0';
         }
 
-	// Allocate a new array for the new word and insert it into the hashtable.
-	newWord = malloc((count + 2) * sizeof(char)); // TODO remove need to copy string if already contained in table.
-	strcpy(newWord, word);
+	// Insert the word into the hashtable.
 	tableInsert(newWord, hTable);
 
+	// Reset the counter ready for the next word.
         count = 0;
       } else if (tmpChar) {
         // Found a word character, increment counter.
@@ -292,7 +295,6 @@ stringOccList *populateList(char *filename) {
       if (count == 99 || (count > 0 && !tmpChar)) {
 	// Reached the end of a word and gathered at least a single character, so add this word after adding a trailing '\0'.
 
-	// TODO: Optimise!
 	if (count > 1 && !isalnum(word[count - 1])) {
 	  // If both the final and penultimate characters are not alphanumeric, strip both.
 	  word[count - 1] = '\0';
