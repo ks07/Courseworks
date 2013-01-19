@@ -363,7 +363,7 @@ int main(int argc, char *argv[]) {
   stringOccTable *table;
   clock_t listTimer;
   clock_t tableTimer;
-  char cont, choice[100];
+  char choice[100], cont;
 
   if (argc > 1) {
     listTimer = clock();
@@ -410,7 +410,7 @@ int main(int argc, char *argv[]) {
       printf("  with %d comparisons.\n", search->comparisons);
 
       printf("Would you like to search again? [Y/n]");
-      cont = loopGetChar;
+      cont = loopGetChar();
 
       // Quit if cont == ' ', as this means we received EOF.
     } while (cont != 'n' && cont != 'N' && cont != ' ');
