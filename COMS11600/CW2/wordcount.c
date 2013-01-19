@@ -28,9 +28,9 @@ char isWordChar(char new, char *word, int currIndex) {
 // Changes all uppercase characters in the given string into their lowercase counterparts.
 // The change is performed in-place, thus a copy should be passed if the original must be preserved.
 void strToLower(char *str) {
-  int i = 0;
+  int i;
 
-  while (str[i] != '\0') {
+  for (i = 0; str[i] != '\0'; i++) {
     str[i] = tolower(str[i]);
   }
 }
