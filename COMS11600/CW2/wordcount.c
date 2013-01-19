@@ -51,7 +51,7 @@ char loopGetChar() {
   return (char)c;
 }
 
-	   
+
 
 /* Linked list functions and structs. */
 
@@ -137,7 +137,7 @@ unsigned int calcHash(char *key, unsigned int buckets) {
 }
 
 // Creates a new hashtable struct.
-// Returns a pointer to a stringOccTable struct that holds an array of lists to act as overflow, and some 
+// Returns a pointer to a stringOccTable struct that holds an array of lists to act as overflow, and some
 // variables to store metadata. Returns NULL if allocation failed. See struct declaration for more information.
 stringOccTable *createHashtable(unsigned int buckets) {
   // Use calloc so that variables are initialised to NULL, and check the allocation succeeded.
@@ -286,7 +286,7 @@ stringOccList *populateList(char *filename) {
     tmpChar = fgetc(inputFile);
     while (tmpChar != EOF) {
       word[count] = tolower((char)tmpChar);
-      
+
       // Re-use the tmpChar variable to store the result of checking the next character.
       tmpChar = isWordChar(word[count], word, count);
 
@@ -408,7 +408,7 @@ int main(int argc, char *argv[]) {
       printf("Enter word for retrieval: ");
       scanf("%99s", choice);
       strToLower(choice);
-      
+
       printf("List: ");
       printLookupResult(listSearch(choice, head));
 
