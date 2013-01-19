@@ -35,6 +35,24 @@ void strToLower(char *str) {
   }
 }
 
+// Reads in the next character from stdin that isn't whitespace.
+// Returns the next character, or a space (' ') if EOF was reached.
+char loopGetChar() {
+  int c;
+
+  do {
+    c = getchar();
+
+    if (c == EOF) {
+      return ' ';
+    }
+  } while (isspace(c));
+
+  return (char)c;
+}
+
+	   
+
 /* Linked list functions and structs. */
 
 typedef struct _stringOccList {
@@ -363,37 +381,42 @@ int main(int argc, char *argv[]) {
     tableTimer = clock() - tableTimer;
   }
 
-  printf("Time for population with %d words:\n  List: %f seconds Table: %f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
+  if (head == NULL || table == NULL) {
+    printf("Failed to load the text file.\n");
+  } else {
+    printf("Time for population with %d words:\n  List: %f seconds Table: %f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
-
-  do {
-    printf("Enter word for retrieval: ");
-    scanf("%99s", choice);
-    strToLower(choice);
-
-    printf("List: ");
-    comparisonReturn *search = listSearch(choice, head);
-    if (search->node != NULL) {
-      printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
-    } else {
-      printf("Not found\n");
-    }
-    printf("  with %d comparisons.\n", search->comparisons);
+    do {
+      printf("Enter word for retrieval: ");
+      scanf("%99s", choice);
+      strToLower(choice);
+      
+      printf("List: ");
+      comparisonReturn *search = listSearch(choice, head);
+      if (search->node != NULL) {
+	printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
+      } else {
+	printf("Not found\n");
+      }
+      printf("  with %d comparisons.\n", search->comparisons);
     
-    printf("Table: ");
-    search = tableSearch(choice, table);
-    if (search->node != NULL) {
-      printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
-    } else {
-      printf("Not found\n");
-    }
-    printf("  with %d comparisons.\n", search->comparisons);
+      printf("Table: ");
+      search = tableSearch(choice, table);
+      if (search->node != NULL) {
+	printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
+      } else {
+	printf("Not found\n");
+      }
+      printf("  with %d comparisons.\n", search->comparisons);
 
-    printf("Would you like to search again? [Y/n]");
-    scanf("%c ", &cont);
-  } while (cont != 'n' && cont != 'N');
+      printf("Would you like to search again? [Y/n]");
+      cont = loopGetChar;
 
-  //printTable(table);
+      // Quit if cont == ' ', as this means we received EOF.
+    } while (cont != 'n' && cont != 'N' && cont != ' ');
+
+    //printTable(table);
+  }
 
   return 0;
 }
