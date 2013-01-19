@@ -6,7 +6,7 @@
 #include <time.h>
 
 #define DEFAULT_FILENAME "a_portrait.txt"
-#define HASHTABLE_BUCKETS 200
+#define HASHTABLE_BUCKETS 1000
 
 /* General word handling functions. */
 
