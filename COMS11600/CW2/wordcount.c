@@ -358,65 +358,70 @@ float clockToSeconds(clock_t clocks) {
   return ((float)clocks) / CLOCKS_PER_SEC;
 }
 
+// Prints the result of a lookup operation to stdout from a given comparisonReturn struct.
+void printLookupResult(comparisonReturn *lookupResult) {
+  if (lookupResult->node != NULL) {
+    printf("Found '%s' %d times\n", lookupResult->node->value, lookupResult->node->occurrences);
+  } else {
+    printf("Not found\n");
+  }
+
+  printf("  with %d comparisons.\n", lookupResult->comparisons);
+}
+
 int main(int argc, char *argv[]) {
   stringOccList *head;
   stringOccTable *table;
   clock_t listTimer;
   clock_t tableTimer;
-  char choice[100], cont;
+  char *filename, choice[100], cont;
 
+  // Take the filename from the command line argument if present, else try the default.
   if (argc > 1) {
-    listTimer = clock();
-    head = populateList(argv[1]);
-    listTimer = clock() - listTimer;
-    tableTimer = clock();
-    table = populateTable(argv[1]);
-    tableTimer = clock() - tableTimer;
+    filename = argv[1];
   } else {
-    listTimer = clock();
-    head = populateList("test.txt"); // TODO Use defined constant
-    listTimer = clock() - listTimer;
-    tableTimer = clock();
-    table = populateTable("test.txt");
-    tableTimer = clock() - tableTimer;
+    filename = strdup(DEFAULT_FILENAME);
   }
 
+  // Populate the linked list from the file, and time how long it takes.
+  listTimer = clock();
+  head = populateList(filename);
+  listTimer = clock() - listTimer;
+
+  // Populate the hashtable from the file, and time how long this takes.
+  tableTimer = clock();
+  table = populateTable(filename);
+  tableTimer = clock() - tableTimer;
+
   if (head == NULL || table == NULL) {
+    // If either populate returns null, print the error and end the program.
     printf("Failed to load the text file.\n");
+
+    // Return value > 0 indicates an error has occured.
+    return 1;
   } else {
+    // Print statistics on the population process.
     printf("Time for population with %d words:\n  List: %f seconds Table: %f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
+    // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
     do {
       printf("Enter word for retrieval: ");
       scanf("%99s", choice);
       strToLower(choice);
       
       printf("List: ");
-      comparisonReturn *search = listSearch(choice, head);
-      if (search->node != NULL) {
-	printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
-      } else {
-	printf("Not found\n");
-      }
-      printf("  with %d comparisons.\n", search->comparisons);
-    
-      printf("Table: ");
-      search = tableSearch(choice, table);
-      if (search->node != NULL) {
-	printf("Found '%s' %d times\n", search->node->value, search->node->occurrences);
-      } else {
-	printf("Not found\n");
-      }
-      printf("  with %d comparisons.\n", search->comparisons);
+      printLookupResult(listSearch(choice, head));
 
-      printf("Would you like to search again? [Y/n]");
+      printf("Table: ");
+      printLookupResult(tableSearch(choice, table));
+
+      printf("Would you like to search again? [Y/n] ");
       cont = loopGetChar();
 
       // Quit if cont == ' ', as this means we received EOF.
     } while (cont != 'n' && cont != 'N' && cont != ' ');
-
-    //printTable(table);
   }
 
+  // Return 0 to signify successful operation.
   return 0;
 }
