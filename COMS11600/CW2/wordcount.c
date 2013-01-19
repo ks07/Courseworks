@@ -31,7 +31,7 @@ void strToLower(char *str) {
   int i = 0;
 
   while (str[i] != '\0') {
-    str[i] = toLower(str[i]);
+    str[i] = tolower(str[i]);
   }
 }
 
@@ -208,7 +208,7 @@ stringOccTable *populateTable(char *filename) {
 
     tmpChar = fgetc(inputFile);
     while (tmpChar != EOF) {
-      word[count] = toLower((char)tmpChar);
+      word[count] = tolower((char)tmpChar);
 
       // Re-use the tmpChar variable to store the result of checking the next character.
       tmpChar = isWordChar(word[count], word, count);
@@ -267,7 +267,7 @@ stringOccList *populateList(char *filename) {
 
     tmpChar = fgetc(inputFile);
     while (tmpChar != EOF) {
-      word[count] = toLower((char)tmpChar);
+      word[count] = tolower((char)tmpChar);
       
       // Re-use the tmpChar variable to store the result of checking the next character.
       tmpChar = isWordChar(word[count], word, count);
