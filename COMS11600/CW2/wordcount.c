@@ -246,7 +246,7 @@ stringOccTable *populateTable(char *filename) {
         }
 
 	// Insert the word into the hashtable.
-	tableInsert(newWord, hTable);
+	tableInsert(word, hTable);
 
 	// Reset the counter ready for the next word.
         count = 0;
