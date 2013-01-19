@@ -175,44 +175,8 @@ stringOccTable *createHashtable(unsigned int buckets) {
   return table;
 }
 
-// Inserts a value into the given hash table, incrementing it's counter if it already exists. hTable must be
-// initialised with createHashTable before being used as a parameter to this function.
-void tableInsert(char *value, stringOccTable *hTable) {
-  unsigned int hash = calcHash(value, hTable->bucketCount);
-  stringOccList *bucket = hTable->table[hash];
-  stringOccList *node; // TODO refactor insert/search to avoid this being necessary.
-
-  if (bucket == NULL) {
-    // The bucket is empty, thus we must decrease the count of empty buckets.
-    hTable->emptyBucketCount--;
-    bucket = listInsert(value, bucket);
-    hTable->table[hash] = bucket;
-  } else {
-    // The bucket already contains values, so we must check the overflow list for the actual key.
-    node = (listSearch(value, bucket))->node;
-
-    if (node == NULL) {
-      // The bucket does not hold the given key, so copy the string to a suitably sized array.
-      char *newWord = malloc((strlen(value) + 1) * sizeof(char));
-      strcpy(newWord, value);
-
-      // Insert the new value into the relevant bucket, and update the point in the table.
-      bucket = listInsert(newWord, bucket);
-      hTable->table[hash] = bucket;
-    } else {
-      // The word is already in the list, so we should just increase it's counter in the list.
-      node->occurrences++;
-    }
-
-    // The bucket already contains values, so we should increase the maxOverflowSize if necessary.
-    if (hTable->maxOverflowSize < bucket->length) {
-      hTable->maxOverflowSize = bucket->length;
-    }
-  }
-}
-
 // Searches the given hash table for the list node containing key.
-// Returns the stringOccList node containg the given key, else NULL if the key is not present.
+// Returns the stringOccList node containg the given key and a count of comparisons required, else NULL if the key is not present.
 comparisonReturn *tableSearch(char *key, stringOccTable *hTable) {
   unsigned int hash = calcHash(key, hTable->bucketCount);
   stringOccList *bucket = hTable->table[hash];
@@ -223,6 +187,27 @@ comparisonReturn *tableSearch(char *key, stringOccTable *hTable) {
   } else {
     return listSearch(key, bucket);
   }
+}
+
+// Inserts a value into the given hash table, incrementing it's counter if it already exists. hTable must be
+// initialised with createHashTable before being used as a parameter to this function.
+void tableInsert(char *value, stringOccTable *hTable) {
+  unsigned int hash = calcHash(value, hTable->bucketCount);
+  stringOccList *bucket = hTable->table[hash];
+
+  if (bucket == NULL) {
+    // The bucket is empty, thus we must decrease the count of empty buckets.
+    hTable->emptyBucketCount--;
+  } else {
+    // The bucket already contains values, so we should increase the maxOverflowSize if necessary.
+    if (hTable->maxOverflowSize < bucket->length) {
+      hTable->maxOverflowSize = bucket->length;
+    }
+  }
+
+  // Insert into the relevant bucket, and update the pointer in the table.
+  bucket = listInsert(value, bucket);
+  hTable->table[hash] = bucket;
 }
 
 
