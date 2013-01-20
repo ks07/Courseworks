@@ -225,6 +225,8 @@ typedef struct {
   } store;
 } stringOcc;   
 
+// Populates a given stringOcc struct with all the words found in the file represented by filename.
+// Returns the supplied struct with the new contents added, or NULL if no words could be read.
 stringOcc *populateStruct(char *filename, stringOcc *fill) {
   FILE *inputFile;
 
@@ -283,6 +285,7 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
   return fill;
 }
 
+// Prints the entire contents of a supplied string counting list.
 void printList(stringOccList *head) {
   while (head != NULL) {
     printf("'%s' %d\n", head->value, head->occurrences);
@@ -290,10 +293,16 @@ void printList(stringOccList *head) {
   }
 }
 
+// Prints some metadata about the state of a given string counting hashtable.
+void printTableMetadata(stringOccTable *hTable) {
+  printf("Table {empty: %d, maxOver: %d}\n", hTable->emptyBucketCount, hTable->maxOverflowSize);
+}
+
+// Prints the entire contents of a give string counting hashtable, including metadata.
 void printTable(stringOccTable *hTable) {
   int i;
 
-  printf("Table {empty: %d, maxOver: %d}\n", hTable->emptyBucketCount, hTable->maxOverflowSize);
+  printTableMetadata(hTable);
 
   for (i = 0; i < HASHTABLE_BUCKETS; i++) {
     printf("=Bucket %d:\n", i);
