@@ -214,6 +214,75 @@ void tableInsert(char *value, stringOccTable *hTable) {
 
 /* Main function and user interactions/control. */
 
+// A struct that can hold some kind of data structure than counts occurences of strings.
+typedef struct {
+  bool isTable;
+
+  // Wrap a union in struct, so we can store a tag that identifies the internal type.
+  union {
+    stringOccList *list;
+    stringOccTable *table;
+  } store;
+} stringOcc;   
+
+stringOcc *populateStruct(char *filename, stringOcc *fill) {
+  FILE *inputFile;
+
+  inputFile = fopen(filename, "r");
+
+  // Could not open the given file, perhaps it does not exist, or insufficient permissions.
+  if (inputFile != NULL) {
+    char word[100]; // TODO: Variable length
+    unsigned char count = 0;
+    int tmpChar;
+
+    // Store the output of fgetc into an int, so we can represent EOF.
+    tmpChar = fgetc(inputFile);
+
+    while (tmpChar != EOF) {
+      word[count] = tolower((char)tmpChar);
+
+      // Re-use the tmpChar variable to store the result of checking the next character.
+      tmpChar = isWordChar(word[count], word, count);
+
+      if (count == 99 || (count > 0 && !tmpChar)) {
+        // Reached the end of a word and gathered at least a single character, so add this word after adding a trailing '\0'.
+
+        if (count > 1 && !isalnum(word[count - 1])) {
+          // If both the final and penultimate characters are not alphanumeric, strip both.
+          word[count - 1] = '\0';
+        } else {
+          word[count] = '\0';
+        }
+
+        // Ascertain the type of the data structure, and add to it accordingly.
+	if (fill->isTable) {
+	  tableInsert(word, fill->store.table);
+	} else {
+	  fill->store.list = listInsert(word, fill->store.list);
+	}
+
+        // Reset the counter ready for the next word.
+        count = 0;
+      } else if (tmpChar) {
+        // Found a word character, increment counter.
+        count++;
+      }
+
+      tmpChar = fgetc(inputFile);
+    }
+
+    // Close the file descriptor
+    fclose(inputFile);
+  } else {
+    // Could not open the given file, perhaps it does not exist, or insufficient permissions.
+    return NULL; // TODO: Error messages.
+  }
+
+  // Return the pointer to the head of the list, or null if an error occurred.
+  return fill;
+}
+
 // Creates and populates a hashtable using the contents of the file represented by filename.
 // Returns a pointer to the newly created hashtable, or NULL if no words could be read, or the creation failed.
 stringOccTable *populateTable(char *filename) {
@@ -243,7 +312,7 @@ stringOccTable *populateTable(char *filename) {
         if (count > 1 && !isalnum(word[count - 1])) {
           // If both the final and penultimate characters are not alphanumeric, strip both.
           word[count - 1] = '\0';
-        } else {
+        } else { 
           word[count] = '\0';
         }
 
@@ -301,7 +370,7 @@ stringOccList *populateList(char *filename) {
 	} else {
 	  word[count] = '\0';
 	}
-	
+
 	// Insert the word into the linked list.
 	head = listInsert(word, head);
 
@@ -363,10 +432,22 @@ void printLookupResult(comparisonReturn *lookupResult) {
 }
 
 int main(int argc, char *argv[]) {
-  stringOccList *head;
-  stringOccTable *table;
+  stringOcc *listContainer = malloc(sizeof(stringOcc));
+  stringOcc *tableContainer = malloc(sizeof(stringOcc));
+
+  // Initialise the list container. The list pointer is null, as an empty list is merely a null pointer.
+  listContainer->isTable = false;
+  listContainer->store.list = NULL;
+
+  // Initialise the table container. The table must be created before first use.
+  tableContainer->isTable = true;
+  tableContainer->store.table = createHashtable(HASHTABLE_BUCKETS);
+
+  // Declare two timers for comparisons.
   clock_t listTimer;
   clock_t tableTimer;
+
+  // Declare some chars for use with control and user input/
   char *filename, choice[100], cont;
 
   // Take the filename from the command line argument if present, else try the default.
@@ -378,15 +459,15 @@ int main(int argc, char *argv[]) {
 
   // Populate the linked list from the file, and time how long it takes.
   listTimer = clock();
-  head = populateList(filename);
+  listContainer = populateStruct(filename, listContainer);
   listTimer = clock() - listTimer;
 
   // Populate the hashtable from the file, and time how long this takes.
   tableTimer = clock();
-  table = populateTable(filename);
+  tableContainer = populateStruct(filename, tableContainer);
   tableTimer = clock() - tableTimer;
 
-  if (head == NULL || table == NULL) {
+  if (listContainer == NULL || tableContainer == NULL || listContainer->store.list == NULL || tableContainer->store.table == NULL) {
     // If either populate returns null, print the error and end the program.
     printf("Failed to load the text file.\n");
 
@@ -394,7 +475,7 @@ int main(int argc, char *argv[]) {
     return 1;
   } else {
     // Print statistics on the population process.
-    printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", head->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
+    printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
 
     // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
     do {
@@ -403,10 +484,10 @@ int main(int argc, char *argv[]) {
       strToLower(choice);
 
       printf("List: ");
-      printLookupResult(listSearch(choice, head));
+      printLookupResult(listSearch(choice, listContainer->store.list));
 
       printf("Table: ");
-      printLookupResult(tableSearch(choice, table));
+      printLookupResult(tableSearch(choice, tableContainer->store.table));
 
       printf("Would you like to search again? [Y/n] ");
       cont = loopGetChar();
