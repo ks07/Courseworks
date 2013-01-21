@@ -150,8 +150,8 @@ unsigned int calculateHash(char *key) {
   }
 
   return hash;
-}*/
-
+}
+*/
 unsigned int calculateHash(char key[]) {
   unsigned int i, j, shift, hash = 0, mod, count;
 
@@ -409,8 +409,8 @@ int main(int argc, char *argv[]) {
   } else {
     // Print statistics on the population process.
     printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
-    printTableMetadata(tableContainer->store.table);
-
+    printTable(tableContainer->store.table);
+    
     // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
     do {
       printf("Enter word for retrieval: ");
