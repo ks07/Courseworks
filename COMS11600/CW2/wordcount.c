@@ -432,9 +432,14 @@ int main(int argc, char *argv[]) {
     // Print statistics on the population process.
     printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
     printTableMetadata(tableContainer->store.table);
-    
-    // Ask the user which words they would like to lookup.
-    doLookups(listContainer, tableContainer);
+
+    if (listContainer->store.list->length > 0) {
+      // Ask the user which words they would like to lookup.
+      doLookups(listContainer, tableContainer);
+    } else {
+      // We haven't got any words, so don't bother asking for lookup values.
+      printf("Found 0 words, quitting.\n");
+    }
   }
 
   // Return 0 to signify successful operation.
