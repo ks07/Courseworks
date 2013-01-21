@@ -7,6 +7,7 @@
 
 #define DEFAULT_FILENAME "a_portrait.txt"
 #define HASHTABLE_BUCKETS 1000
+#define RESIZE_FACTOR 1.33f
 
 /* General word handling functions. */
 
@@ -253,11 +254,69 @@ float getLoadFactor(stringOccTable *hTable) {
 
   // Calculate the total number of elements in the table.
   for (i = 0; i < hTable->bucketCount; i++) {
-    total += hTable->table[i]->length;
+    if (hTable->table[i] != NULL) {
+      total += hTable->table[i]->length;
+    }
   }
 
   // Load factor = Number of keys / Number of buckets
   return (float)total / (float)hTable->bucketCount;
+}
+
+// Increases the number of buckets in the given table, and rehashes and rearranges the keys inside.
+// Returns a new hashtable containg the contents of the original.
+stringOccTable *resizeRehashTable(stringOccTable *orig) {
+  unsigned int newBuckets = (unsigned int)(orig->bucketCount * RESIZE_FACTOR);
+
+  // Create a new hashTable with the increased bucket count.
+  stringOccTable *new = createHashtable(newBuckets);
+
+  // Loop through the buckets in orig.
+  unsigned int i, newHash;
+  stringOccList *node, *next;
+
+  for (i = 0; i < orig->bucketCount; ++i) {
+    node = orig->table[i];
+
+    // Loop through the nodes within the current bucket.
+    while (node != NULL) {
+      // Calculate the new hash of the key.
+      newHash = calcHash(node->value, newBuckets);
+
+      // Store the pointer to the next node so we don't lose it.
+      next = node->next;
+
+      // Add the node to it's new bucket. TODO: Refactor
+      node->next = new->table[newHash];
+
+      if (new->table[newHash] == NULL) {
+	// If the bucket was empty, we should adjust the counter and reset the length of the node.
+	new->emptyBucketCount--;
+	node->length = 1;
+      } else {
+	// The bucket was not empty, so we should set the length of the node to reflect the new bucket.
+	node->length = new->table[newHash]->length + 1;
+
+	// Set the new maxOverflowSize if necessary.
+	if (new->maxOverflowSize < node->length) {
+	  new->maxOverflowSize = node->length;
+	}
+      }
+
+      // Add the node as the head of it's new bucket.
+      new->table[newHash] = node;
+
+      // Advance through the list.
+      node = next;
+    }
+  }
+
+  // Free the memory used by the original table struct and it's internal array to prevent leaking memory.
+  free(orig->table);
+  free(orig);
+
+  // Return the newly resized table struct.
+  return new;
 }
 
 
@@ -345,7 +404,7 @@ void printList(stringOccList *head) {
 
 // Prints some metadata about the state of a given string counting hashtable.
 void printTableMetadata(stringOccTable *hTable) {
-  printf("Table {loadFactor: %.2f, empty: %d, maxOver: %d}\n", getLoadFactor(hTable), hTable->emptyBucketCount, hTable->maxOverflowSize);
+  printf("Table {loadFactor: %.2f, buckets: %d, empty: %d, maxOver: %d}\n", getLoadFactor(hTable), hTable->bucketCount, hTable->emptyBucketCount, hTable->maxOverflowSize);
 }
 
 // Prints the entire contents of a give string counting hashtable, including metadata.
@@ -435,6 +494,10 @@ int main(int argc, char *argv[]) {
   tableTimer = clock();
   tableContainer = populateStruct(filename, tableContainer);
   tableTimer = clock() - tableTimer;
+
+  if (getLoadFactor(tableContainer->store.table) > 3.0f) {
+    tableContainer->store.table = resizeRehashTable(tableContainer->store.table);
+  }
 
   if (listContainer == NULL || tableContainer == NULL || listContainer->store.list == NULL || tableContainer->store.table == NULL) {
     // If either populate returns null, print the error and end the program.
