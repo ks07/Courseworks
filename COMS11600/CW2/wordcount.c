@@ -364,6 +364,28 @@ void printLookupResult(comparisonReturn *lookupResult) {
   printf("  with %d comparisons.\n", lookupResult->comparisons);
 }
 
+void doLookups(stringOcc *listContainer, stringOcc *tableContainer) {
+  char choice[100]; // TODO: Match word limit in populate loop.
+
+  // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
+  do {
+    printf("Enter word for retrieval: ");
+    scanf("%99s", choice);
+    strToLower(choice);
+
+    printf("List: ");
+    printLookupResult(listSearch(choice, listContainer->store.list));
+
+    printf("Table: ");
+    printLookupResult(tableSearch(choice, tableContainer->store.table));
+
+    printf("Would you like to search again? [Y/n] ");
+    choice[0] = loopGetChar();
+
+    // Quit if choice[0] == ' ', as this means we received EOF.
+  } while (choice[0] != 'n' && choice[0] != 'N' && choice[0] != ' ');
+}
+
 int main(int argc, char *argv[]) {
   stringOcc *listContainer = malloc(sizeof(stringOcc));
   stringOcc *tableContainer = malloc(sizeof(stringOcc));
@@ -380,8 +402,8 @@ int main(int argc, char *argv[]) {
   clock_t listTimer;
   clock_t tableTimer;
 
-  // Declare some chars for use with control and user input/
-  char *filename, choice[100], cont;
+  // Declare a pointer to hold the filename to use.
+  char *filename;
 
   // Take the filename from the command line argument if present, else try the default.
   if (argc > 1) {
@@ -411,23 +433,8 @@ int main(int argc, char *argv[]) {
     printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
     printTableMetadata(tableContainer->store.table);
     
-    // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
-    do {
-      printf("Enter word for retrieval: ");
-      scanf("%99s", choice);
-      strToLower(choice);
-      
-      printf("List: ");
-      printLookupResult(listSearch(choice, listContainer->store.list));
-
-      printf("Table: ");
-      printLookupResult(tableSearch(choice, tableContainer->store.table));
-
-      printf("Would you like to search again? [Y/n] ");
-      cont = loopGetChar();
-
-      // Quit if cont == ' ', as this means we received EOF.
-    } while (cont != 'n' && cont != 'N' && cont != ' ');
+    // Ask the user which words they would like to lookup.
+    doLookups(listContainer, tableContainer);
   }
 
   // Return 0 to signify successful operation.
