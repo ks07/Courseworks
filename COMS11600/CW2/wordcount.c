@@ -246,6 +246,20 @@ void tableInsert(char *value, stringOccTable *hTable) {
   hTable->table[hash] = bucket;
 }
 
+// Calculates the load factor of the given hashtable.
+// Returns the load factor as a float.
+float getLoadFactor(stringOccTable *hTable) {
+  unsigned int i, total = 0;
+
+  // Calculate the total number of elements in the table.
+  for (i = 0; i < hTable->bucketCount; i++) {
+    total += hTable->table[i]->length;
+  }
+
+  // Load factor = Number of keys / Number of buckets
+  return (float)total / (float)hTable->bucketCount;
+}
+
 
 
 /* Main function and user interactions/control. */
@@ -331,7 +345,7 @@ void printList(stringOccList *head) {
 
 // Prints some metadata about the state of a given string counting hashtable.
 void printTableMetadata(stringOccTable *hTable) {
-  printf("Table {empty: %d, maxOver: %d}\n", hTable->emptyBucketCount, hTable->maxOverflowSize);
+  printf("Table {loadFactor: %.2f, empty: %d, maxOver: %d}\n", getLoadFactor(hTable), hTable->emptyBucketCount, hTable->maxOverflowSize);
 }
 
 // Prints the entire contents of a give string counting hashtable, including metadata.
