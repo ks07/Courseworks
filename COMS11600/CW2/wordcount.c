@@ -162,10 +162,10 @@ unsigned int calculateHash(char key[]) {
   mod = strlen(key) % intSize;
 
   // Calculate the limit of our loop.
-  count = (strlen(key) - mod) * 4;
+  count = (strlen(key) - mod) / intSize;
 
   // Loop through until we've constructed all possible ints.
-  for (i = 0; i < count; i = (i + 1) * 4) {
+  for (i = 0; i < count; i += 4) {
     hash += key[i] + (key[i + 1] << 8) + (key[i + 2] << 16) + (key[i + 3] << 24);
   }
 
@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
   } else {
     // Print statistics on the population process.
     printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
-    printTable(tableContainer->store.table);
+    printTableMetadata(tableContainer->store.table);
     
     // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
     do {
