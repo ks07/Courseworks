@@ -424,7 +424,7 @@ int main(int argc, char *argv[]) {
 
   if (listContainer == NULL || tableContainer == NULL || listContainer->store.list == NULL || tableContainer->store.table == NULL) {
     // If either populate returns null, print the error and end the program.
-    printf("Failed to load the text file.\n");
+    printf("Failed to load words from the file '%s'.\n", filename);
 
     // Return value > 0 indicates an error has occured.
     return 1;
