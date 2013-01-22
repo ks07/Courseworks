@@ -300,15 +300,15 @@ float getLoadFactor(stringOccTable *hTable) {
 // Increases the number of buckets in the given table, and rehashes and rearranges the keys inside.
 // Returns a new hashtable containg the contents of the original.
 stringOccTable *resizeRehashTable(stringOccTable *orig) {
-  unsigned int newBuckets = (unsigned int)(orig->bucketCount * RESIZE_FACTOR);
-
   // Create a new hashTable with the increased bucket count.
+  unsigned int newBuckets = (unsigned int)(orig->bucketCount * RESIZE_FACTOR);
   stringOccTable *new = createHashtable(newBuckets);
 
-  // Loop through the buckets in orig.
+  // Declare some variables to use when looping.
   unsigned int i, newHash;
   stringOccList *node, *next;
 
+  // Loop through the buckets in the original table.
   for (i = 0; i < orig->bucketCount; ++i) {
     node = orig->table[i];
 
