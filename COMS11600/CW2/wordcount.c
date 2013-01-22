@@ -417,7 +417,9 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
     fclose(inputFile);
   } else {
     // Could not open the given file, perhaps it does not exist, or insufficient permissions.
-    return NULL; // TODO: Error messages.
+    fprintf(stderr, "Could not open the file '%s'.\n", filename);
+
+    return NULL;
   }
 
   // Return the pointer to the head of the list, or null if an error occurred.
@@ -531,7 +533,7 @@ int main(int argc, char *argv[]) {
 
   if (listContainer == NULL || tableContainer == NULL || listContainer->store.list == NULL || tableContainer->store.table == NULL) {
     // If either populate returns null, print the error and end the program.
-    printf("Failed to load words from the file '%s'.\n", filename);
+    fprintf(stderr, "Failed to load words from the file '%s'.\n", filename);
 
     // Return value > 0 indicates an error has occured.
     return 1;
