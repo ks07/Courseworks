@@ -296,11 +296,11 @@ stringOccTable *resizeRehashTable(stringOccTable *orig) {
       } else {
 	// The bucket was not empty, so we should set the length of the node to reflect the new bucket.
 	node->length = new->table[newHash]->length + 1;
+      }
 
-	// Set the new maxOverflowSize if necessary.
-	if (new->maxOverflowSize < node->length) {
-	  new->maxOverflowSize = node->length;
-	}
+      // Set the new maxOverflowSize if necessary.
+      if (new->maxOverflowSize < node->length) {
+	new->maxOverflowSize = node->length;
       }
 
       // Add the node as the head of it's new bucket.
@@ -414,7 +414,7 @@ void printTable(stringOccTable *hTable) {
   printTableMetadata(hTable);
 
   for (i = 0; i < HASHTABLE_BUCKETS; i++) {
-    printf("=Bucket %d:\n", i);
+    printf("=Bucket %d (%d):\n", i, hTable->table[i] == NULL ? 0 : hTable->table[i]->length);
 
     printList(hTable->table[i]);
   }
@@ -508,7 +508,7 @@ int main(int argc, char *argv[]) {
   } else {
     // Print statistics on the population process.
     printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
-    printTableMetadata(tableContainer->store.table);
+    printTable(tableContainer->store.table);
 
     if (listContainer->store.list->length > 0) {
       // Ask the user which words they would like to lookup.
