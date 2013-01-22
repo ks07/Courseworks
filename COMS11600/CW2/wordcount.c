@@ -529,10 +529,6 @@ int main(int argc, char *argv[]) {
   tableContainer = populateStruct(filename, tableContainer);
   tableTimer = clock() - tableTimer;
 
-  if (getLoadFactor(tableContainer->store.table) > 3.0f) {
-    tableContainer->store.table = resizeRehashTable(tableContainer->store.table);
-  }
-
   if (listContainer == NULL || tableContainer == NULL || listContainer->store.list == NULL || tableContainer->store.table == NULL) {
     // If either populate returns null, print the error and end the program.
     fprintf(stderr, "Failed to load words from the file '%s'.\n", filename);
@@ -540,9 +536,15 @@ int main(int argc, char *argv[]) {
     // Return value > 0 indicates an error has occured.
     return 1;
   } else {
+
+    // Resize the hashtable if it is too full so that lookups take fewer comparisons.
+    if (getLoadFactor(tableContainer->store.table) > 3.0f) {
+      tableContainer->store.table = resizeRehashTable(tableContainer->store.table);
+    }
+
     // Print statistics on the population process.
     printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
-    printTable(tableContainer->store.table);
+    printTableMetadata(tableContainer->store.table);
 
     if (listContainer->store.list->length > 0) {
       // Ask the user which words they would like to lookup.
