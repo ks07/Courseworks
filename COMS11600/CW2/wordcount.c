@@ -89,6 +89,19 @@ comparisonReturn *listSearch(char *value, stringOccList *list) {
   return ret;
 }
 
+// Inserts a pre-existing node as the head of a given linked list.
+// Returns the supplied node as the head of the list.
+stringOccList *listInsertNode(stringOccList *node, stringOccList *list) {
+  // Set the node as the head of it's new list.
+  node->next = list;
+
+  // If the list is empty, set length to 1, else set the length to reflect the new list.
+  node->length = list == NULL ? 1 : list->length + 1;
+
+  // Return the node as head of the list.
+  return node;
+}
+
 // Inserts a new node as the head of a given linked list.
 // Returns the new node / the head of the list.
 stringOccList *listInsert(char *value, stringOccList *list) {
@@ -116,17 +129,6 @@ stringOccList *listInsert(char *value, stringOccList *list) {
     // Return the head of the list.
     return list;
   }
-}
-
-stringOccList *listInsertNode(stringOccList *node, stringOccList *list) {
-  // Set the node as the head of it's new list.
-  node->next = list;
-
-  // If the list is empty, set length to 1, else set the length to reflect the new list.
-  node->length = list == NULL ? 1 : list->length + 1;
-
-  // Return the node as head of the list.
-  return node;
 }
 
 
