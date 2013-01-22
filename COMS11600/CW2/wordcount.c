@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 
+// Define some constants with the preprocessor. These act like simple substitutions, and are seen as literals when compiling.
 #define DEFAULT_FILENAME "a_portrait.txt"
 #define HASHTABLE_BUCKETS 1000
 #define RESIZE_FACTOR 1.33f
@@ -471,6 +472,7 @@ void printLookupResult(comparisonReturn *lookupResult) {
   printf("  with %d comparisons.\n", lookupResult->comparisons);
 }
 
+// Ask the user for words they would like to lookup in a loop, displaying results.
 void doLookups(stringOcc *listContainer, stringOcc *tableContainer) {
   char choice[100]; // TODO: Match word limit in populate loop.
 
