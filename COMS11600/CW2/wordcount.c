@@ -106,17 +106,9 @@ stringOccList *listInsert(char *value, stringOccList *list) {
     next = malloc(sizeof(stringOccList));
     next->value = newWord;
     next->occurrences = 1;
-    next->next = list;
 
-    // Set the length of the list with the new element added.
-    if (list != NULL) {
-      next->length = list->length + 1;
-    } else {
-      next->length = 1;
-    }
-
-    // Return the new head of the list.
-    return next;
+    // Insert the node into the list and return it as the head of the list..
+    return listInsertNode(next, list);
   } else {
     // The word is already in the list, so we should just increase it's counter in the list.
     next->occurrences++;
@@ -124,6 +116,17 @@ stringOccList *listInsert(char *value, stringOccList *list) {
     // Return the head of the list.
     return list;
   }
+}
+
+stringOccList *listInsertNode(stringOccList *node, stringOccList *list) {
+  // Set the node as the head of it's new list.
+  node->next = list;
+
+  // If the list is empty, set length to 1, else set the length to reflect the new list.
+  node->length = list == NULL ? 1 : list->length + 1;
+
+  // Return the node as head of the list.
+  return node;
 }
 
 
@@ -317,16 +320,12 @@ stringOccTable *resizeRehashTable(stringOccTable *orig) {
       // Store the pointer to the next node so we don't lose it.
       next = node->next;
 
-      // Add the node to it's new bucket. TODO: Refactor
-      node->next = new->table[newHash];
+      // Add the node to it's new bucket.
+      listInsertNode(node, new->table[newHash]);
 
-      if (new->table[newHash] == NULL) {
-	// If the bucket was empty, we should adjust the counter and reset the length of the node.
+      // If the bucket was empty, the length will be 1, thus we should adjust the counter.
+      if (node->length == 1) {
 	new->emptyBucketCount--;
-	node->length = 1;
-      } else {
-	// The bucket was not empty, so we should set the length of the node to reflect the new bucket.
-	node->length = new->table[newHash]->length + 1;
       }
 
       // Set the new maxOverflowSize if necessary.
@@ -363,7 +362,7 @@ typedef struct {
     stringOccList *list;
     stringOccTable *table;
   } store;
-} stringOcc;   
+} stringOcc;
 
 // Populates a given stringOcc struct with all the words found in the file represented by filename.
 // Returns the supplied struct with the new contents added, or NULL if no words could be read.
