@@ -153,6 +153,37 @@ unsigned int calculateHash(char *key) {
   return hash;
 }
 */
+/*
+unsigned int calculateHash(char key[]) {
+  unsigned int i, j, shift, hash = 0, mod, count;
+
+  // Calculate the size of an int in terms of the size of a char.
+  const unsigned int intSize = sizeof(int) / sizeof(char);
+
+  // Calculate the number of chars in the string that do not form a complete int.
+  mod = strlen(key) % intSize;
+
+  // Calculate the limit of our loop.
+  count = (strlen(key) - mod) / intSize;
+
+  // Loop through until we've constructed all possible ints.
+  for (i = 0; i < count; i += 4) {
+    hash += key[i + 3] + (key[i + 2] << 8) + (key[i + 1] << 16) + (key[i] << 24);
+  }
+
+  // Initialise shift to 24 so that later chars are more significant
+  shift = 24;
+
+  // If we have outstanding chars, add them.
+  for (j = 0; j < mod; j++) {
+    i += j;
+    shift -= j * 8;
+    hash += key[i] << shift;
+  }
+
+  return hash;
+}
+*/
 unsigned int calculateHash(char key[]) {
   unsigned int i, j, shift, hash = 0, mod, count;
 
