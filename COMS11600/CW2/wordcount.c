@@ -12,21 +12,6 @@
 
 /* General word handling functions. */
 
-// Checks whether a given character should be considered part of the given word,
-// assuming the same for the last character of the word.
-// Returns 0 (false) if the character should not be considered.
-char isWordChar(char new, char *word, int currIndex) {
-  if (isalnum(new)) {
-    // All alphanumeric characters should be considered word characters.
-    return true;
-  } else if (currIndex > 0 && !isspace(new)) {
-    // If the word is not empty, the new char is not whitespace, and the previous char is alphanumeric, true.
-    return isalnum(word[currIndex - 1]);
-  } else {
-    return false;
-  }
-}
-
 // Changes all uppercase characters in the given string into their lowercase counterparts.
 // The change is performed in-place, thus a copy should be passed if the original must be preserved.
 void strToLower(char *str) {
@@ -37,13 +22,30 @@ void strToLower(char *str) {
   }
 }
 
+// Checks whether a given character should be considered part of the given word,
+// looking at the previous and next character, if they exist.
+// Returns 0 (false) if the character should not be considered.
+char isWordChar(char new, char prev, int next) {
+  if (isalnum(new)) {
+    // All alphanumeric characters should be considered word characters.
+    return true;
+  } else if (isalnum(prev) && (new == '-' || new = '\'')) {
+    // If the word is not empty, the new char is either - or ', and the next and previous chars are alphanumeric.
+
+    // If next is the null char, presume this char is valid, else return true if the next char is alphanumeric.
+    return (next == '\0' || (next != EOF && isalnum(next)));
+  } else {
+    return false;
+  }
+}
+
 // Reads in the next character from stdin that isn't whitespace.
 // Returns the next character, or a space (' ') if EOF was reached.
-char loopGetChar() {
+char loopGetChar(FILE *src) {
   int c;
 
   do {
-    c = getchar();
+    c = fgetc(src);
 
     if (c == EOF) {
       return ' ';
@@ -52,6 +54,75 @@ char loopGetChar() {
 
   return (char)c;
 }
+
+// Reads the next word from the given input stream. A word is any string of characters bounded by whitespace or a non-alphanumeric
+// character. A word may contain single - or ' characters.
+
+char *readWord(FILE *src, unsigned int size) {
+  if (size < 2) {
+    // The minimum size of the string must be 2.
+    size = 2;
+  }
+
+  unsigned int i = 1;
+  int tmpChar, readAhead;
+  char *input = calloc(size, sizeof(char));
+  char *tmpPtr;
+
+  // Use loopGetchar to consume all whitespace, and give us the first character.
+  input[0] = loopGetChar(src);
+
+  if (input[0] == ' ') {
+    // We reached EOF, so return NULL.
+    return NULL;
+  } else {
+    // Store the output of fgetc into an int, so we can represent EOF.
+    tmpChar = fgetc(src);
+
+    while (isWordChar(tmpChar, input[i - 1], readAhead)) {
+      input[i] = tolower((char)tmpChar);
+
+      // Check the array size then increment the counter.
+      if (i++ > size) {
+	// The next character, whether it is \0 or otherwise, will be out of bounds, so expand.
+	size = size * 2;
+
+	tmpPtr = realloc(input, size);
+
+	if (tmpPtr == NULL) {
+	  // Could not expand the array, so return the word so far and treat the remainder as a new word.
+	  fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
+
+	  // Attempt to increase by two characters so we don't lose the one we have kept in readAhead.
+	  size = (size / 2) + 2;
+	  tmpPtr = realloc(input, size);
+
+	  if (tmpPtr == NULL) {
+	    fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
+	    return NULL;
+	  } else {
+	    input = tmpPtr;
+
+	    input[i] = readAhead;
+	    input[i + 1] = '\0';
+
+	    fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
+
+	    return input;
+	  }
+	} else {
+	  input = tmpPtr;
+	}
+      }
+
+      tmpChar = readAhead;
+      readAhead = fgetc(src);
+    }
+
+    input[i] = '\0';
+  }
+}
+
 
 
 
