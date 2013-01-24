@@ -54,7 +54,7 @@ WordCharResult isWordChar(char new, char prev, int next) {
   }
 }
 
-// Reads in the next character from stdin that isn't whitespace.
+// Reads in the next alphanumeric character from stdin - i.e. the first letter of the word.
 // Returns the next character, or a space (' ') if EOF was reached.
 char loopGetChar(FILE *src) {
   int c;
@@ -65,7 +65,7 @@ char loopGetChar(FILE *src) {
     if (c == EOF) {
       return ' ';
     }
-  } while (isspace(c));
+  } while (!isalnum(c));
 
   return (char)c;
 }
@@ -151,7 +151,6 @@ char *readWord(FILE *src, unsigned int size) {
     input[i] = '\0';
   }
 
-  printf("Ret: '%s' len: %d\n", input, size);
   return input;
 }
 
