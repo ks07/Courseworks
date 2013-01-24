@@ -22,20 +22,35 @@ void strToLower(char *str) {
   }
 }
 
+// Define an enumerated type to signify the outcome of isWordChar. Match positive and negative outcomes to true and false values.
+typedef enum {
+  NO = 0, // False, stop reading.
+  YES = 1, // True, continue.
+  FINAL = 2 // True, but do not consume another character.
+} WordCharResult;
+
 // Checks whether a given character should be considered part of the given word,
 // looking at the previous and next character, if they exist.
 // Returns 0 (false) if the character should not be considered.
-char isWordChar(char new, char prev, int next) {
+WordCharResult isWordChar(char new, char prev, int next) {
   if (isalnum(new)) {
     // All alphanumeric characters should be considered word characters.
-    return true;
-  } else if (isalnum(prev) && (new == '-' || new = '\'')) {
+    if (isspace(next)) {
+      return FINAL;
+    } else {
+      return YES;
+    }
+  } else if (isalnum(prev) && (new == '-' || new == '\'')) {
     // If the word is not empty, the new char is either - or ', and the next and previous chars are alphanumeric.
 
     // If next is the null char, presume this char is valid, else return true if the next char is alphanumeric.
-    return (next == '\0' || (next != EOF && isalnum(next)));
+    if (next == '\0' || (next != EOF && isalnum(next))) {
+      return YES;
+    } else {
+      return NO;
+    }
   } else {
-    return false;
+    return NO;
   }
 }
 
@@ -63,11 +78,12 @@ char *readWord(FILE *src, unsigned int size) {
     // The minimum size of the string must be 2.
     size = 2;
   }
-
+  src = stdin;
   unsigned int i = 1;
   int tmpChar, readAhead;
   char *input = calloc(size, sizeof(char));
   char *tmpPtr;
+  WordCharResult wordChar;
 
   // Use loopGetchar to consume all whitespace, and give us the first character.
   input[0] = loopGetChar(src);
@@ -78,51 +94,62 @@ char *readWord(FILE *src, unsigned int size) {
   } else {
     // Store the output of fgetc into an int, so we can represent EOF.
     tmpChar = fgetc(src);
+    wordChar = isWordChar(input[0], '\0', tmpChar);
 
-    while (isWordChar(tmpChar, input[i - 1], readAhead)) {
-      input[i] = tolower((char)tmpChar);
+    if (wordChar == YES) {
+      readAhead = fgetc(src);
 
-      // Check the array size then increment the counter.
-      if (i++ > size) {
-	// The next character, whether it is \0 or otherwise, will be out of bounds, so expand.
-	size = size * 2;
+      while (wordChar == YES) {
+	input[i] = tolower((char)tmpChar);
 
-	tmpPtr = realloc(input, size);
+	// Check the array size then increment the counter.
+	if (i++ > size) {
+	  // The next character, whether it is \0 or otherwise, will be out of bounds, so expand.
+	  size = size * 2;
 
-	if (tmpPtr == NULL) {
-	  // Could not expand the array, so return the word so far and treat the remainder as a new word.
-	  fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
-
-	  // Attempt to increase by two characters so we don't lose the one we have kept in readAhead.
-	  size = (size / 2) + 2;
 	  tmpPtr = realloc(input, size);
 
 	  if (tmpPtr == NULL) {
+	    // Could not expand the array, so return the word so far and treat the remainder as a new word.
 	    fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
-	    return NULL;
+
+	    // Attempt to increase by two characters so we don't lose the one we have kept in readAhead.
+	    size = (size / 2) + 2;
+	    tmpPtr = realloc(input, size);
+
+	    if (tmpPtr == NULL) {
+	      fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
+	      return NULL;
+	    } else {
+	      input = tmpPtr;
+
+	      input[i] = readAhead;
+	      input[i + 1] = '\0';
+
+	      fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
+
+	      return input;
+	    }
 	  } else {
 	    input = tmpPtr;
-
-	    input[i] = readAhead;
-	    input[i + 1] = '\0';
-
-	    fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
-
-	    return input;
 	  }
-	} else {
-	  input = tmpPtr;
+	}
+
+	if (wordChar == YES) {
+	  tmpChar = readAhead;
+	  readAhead = fgetc(src);
+
+	  wordChar = isWordChar(tmpChar, input[i - 1], readAhead);
 	}
       }
-
-      tmpChar = readAhead;
-      readAhead = fgetc(src);
     }
 
     input[i] = '\0';
   }
-}
 
+  printf("Ret: '%s' len: %d\n", input, size);
+  return input;
+}
 
 
 
@@ -447,44 +474,19 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
 
   // Could not open the given file, perhaps it does not exist, or insufficient permissions.
   if (inputFile != NULL) {
-    char word[100]; // TODO: Variable length
-    unsigned char count = 0;
-    int tmpChar;
+    char *word;
 
-    // Store the output of fgetc into an int, so we can represent EOF.
-    tmpChar = fgetc(inputFile);
+    word = readWord(inputFile, 2);
 
-    while (tmpChar != EOF) {
-      word[count] = tolower((char)tmpChar);
-
-      // Re-use the tmpChar variable to store the result of checking the next character.
-      tmpChar = isWordChar(word[count], word, count);
-
-      if (count == 99 || (count > 0 && !tmpChar)) {
-        // Reached the end of a word and gathered at least a single character, so add this word after adding a trailing '\0'.
-
-        if (count > 1 && !isalnum(word[count - 1])) {
-          // If both the final and penultimate characters are not alphanumeric, strip both.
-          word[count - 1] = '\0';
-        } else {
-          word[count] = '\0';
-        }
-
-        // Ascertain the type of the data structure, and add to it accordingly.
-	if (fill->isTable) {
-	  tableInsert(word, fill->store.table);
-	} else {
-	  fill->store.list = listInsert(word, fill->store.list);
-	}
-
-        // Reset the counter ready for the next word.
-        count = 0;
-      } else if (tmpChar) {
-        // Found a word character, increment counter.
-        count++;
+    while (word != NULL) {
+      // Ascertain the type of the data structure, and add to it accordingly.
+      if (fill->isTable) {
+	tableInsert(word, fill->store.table);
+      } else {
+	fill->store.list = listInsert(word, fill->store.list);
       }
 
-      tmpChar = fgetc(inputFile);
+      word = readWord(inputFile, 2);
     }
 
     // Close the file descriptor
@@ -560,7 +562,7 @@ void doLookups(stringOcc *listContainer, stringOcc *tableContainer) {
     printLookupResult(tableSearch(choice, tableContainer->store.table));
 
     printf("Would you like to search again? [Y/n] ");
-    choice[0] = loopGetChar();
+    choice[0] = loopGetChar(stdin);
 
     // Quit if choice[0] == ' ', as this means we received EOF.
   } while (choice[0] != 'n' && choice[0] != 'N' && choice[0] != ' ');
