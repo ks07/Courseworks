@@ -21,7 +21,7 @@ course : G403
 So that we can calibrate and improve the assignment in the future, give us
 a rough idea how long you spent on it (in hours):
 
-effort : [...] hours
+effort : [20] hours
 
 -------------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ the style or efficiency of a solution.
 
 [X] Stage 3 : Implement encrypt_v2 module, iterative     design      ( 30%)
 
-[?] Stage 4 : Implement encrypt_v3 module, pipelined     design      ( 30%)
+[X] Stage 4 : Implement encrypt_v3 module, pipelined     design      ( 30%)
 
                                                                      ------
                                                                      (100%)
