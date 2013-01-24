@@ -86,7 +86,7 @@ char *readWord(FILE *src, unsigned int size) {
   WordCharResult wordChar;
 
   // Use loopGetchar to consume all whitespace, and give us the first character.
-  input[0] = loopGetChar(src);
+  input[0] = tolower(loopGetChar(src));
 
   if (input[0] == ' ') {
     // We reached EOF, so return NULL.
@@ -538,11 +538,11 @@ float clockToSeconds(clock_t clocks) {
 }
 
 // Prints the result of a lookup operation to stdout from a given comparisonReturn struct.
-void printLookupResult(comparisonReturn *lookupResult) {
+void printLookupResult(char *searched, comparisonReturn *lookupResult) {
   if (lookupResult->node != NULL) {
     printf("Found '%s' %d times\n", lookupResult->node->value, lookupResult->node->occurrences);
   } else {
-    printf("Not found\n");
+    printf("'%s' not found\n", searched);
   }
 
   printf("  with %d comparisons.\n", lookupResult->comparisons);
@@ -550,19 +550,22 @@ void printLookupResult(comparisonReturn *lookupResult) {
 
 // Ask the user for words they would like to lookup in a loop, displaying results.
 void doLookups(stringOcc *listContainer, stringOcc *tableContainer) {
-  char choice[100]; // TODO: Match word limit in populate loop.
+  char *choice = NULL;
 
   // Loop, asking the user to give a word to lookup, then asking whether they would like to search again.
   do {
-    printf("Enter word for retrieval: ");
-    scanf("%99s", choice);
+    // Free the memory location occupied by the last string lookup, if not already free.
+    free(choice);
+
+    printf("\nEnter word for retrieval: ");
+    choice = readWord(stdin, 2);
     strToLower(choice);
 
     printf("List: ");
-    printLookupResult(listSearch(choice, listContainer->store.list));
+    printLookupResult(choice, listSearch(choice, listContainer->store.list));
 
     printf("Table: ");
-    printLookupResult(tableSearch(choice, tableContainer->store.table));
+    printLookupResult(choice, tableSearch(choice, tableContainer->store.table));
 
     printf("Would you like to search again? [Y/n] ");
     choice[0] = loopGetChar(stdin);
