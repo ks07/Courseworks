@@ -78,7 +78,7 @@ char *readWord(FILE *src, unsigned int size) {
     // The minimum size of the string must be 2.
     size = 2;
   }
-  src = stdin;
+
   unsigned int i = 1;
   int tmpChar, readAhead;
   char *input = calloc(size, sizeof(char));
@@ -99,7 +99,9 @@ char *readWord(FILE *src, unsigned int size) {
     if (wordChar == YES) {
       readAhead = fgetc(src);
 
-      while (wordChar == YES) {
+      wordChar = isWordChar(tmpChar, input[0], readAhead);
+
+      while (wordChar != NO) {
 	input[i] = tolower((char)tmpChar);
 
 	// Check the array size then increment the counter.
@@ -140,6 +142,8 @@ char *readWord(FILE *src, unsigned int size) {
 	  readAhead = fgetc(src);
 
 	  wordChar = isWordChar(tmpChar, input[i - 1], readAhead);
+	} else if (wordChar == FINAL) {
+	  wordChar = NO;
 	}
       }
     }
