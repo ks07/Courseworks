@@ -11,10 +11,16 @@
 #define RESIZE_FACTOR 1.5f
 #define RESIZE_LIMIT 1.0f
 
-/* General word handling functions. */
+/*
+ * General word handling functions.
+ */
 
-// Changes all uppercase characters in the given string into their lowercase counterparts.
-// The change is performed in-place, thus a copy should be passed if the original must be preserved.
+/*
+ * Changes all uppercase characters in the given string into their lowercase counterparts.
+ * The change is performed in-place, thus a copy should be passed if the original must be preserved.
+ *
+ * char *str : A pointer to the string to modify.
+ */
 void strToLower(char *str) {
   int i;
 
@@ -23,16 +29,25 @@ void strToLower(char *str) {
   }
 }
 
-// Define an enumerated type to signify the outcome of isWordChar. Match positive and negative outcomes to true and false values.
+/*
+ * Define an enumerated type to represent the outcome of isWordChar.
+ */
 typedef enum {
   NO = 0, // False, stop reading.
   YES = 1, // True, continue.
   FINAL = 2 // True, but do not consume another character.
 } WordCharResult;
 
-// Checks whether a given character should be considered part of the given word,
-// looking at the previous and next character, if they exist.
-// Returns 0 (false) if the character should not be considered.
+/*
+ * Checks whether a given character should be considered part of the given word,
+ * looking at the previous and next character, if they exist.
+ *
+ * char new  : The character to decide whether it should be appended or not.
+ * char prev : The final character of the word we are appending to. Supply '\0' if empty.
+ * int next  : The next character in the input buffer. Supply '\0' if it should not be checked.
+ * 
+ * Returns a WordCharResult enum value defining the appropriate treatment of the new character.
+ */
 WordCharResult isWordChar(char new, char prev, int next) {
   if (isalnum(new)) {
     // All alphanumeric characters should be considered word characters.
@@ -55,8 +70,13 @@ WordCharResult isWordChar(char new, char prev, int next) {
   }
 }
 
-// Reads in the next alphanumeric character from stdin - i.e. the first letter of the word.
-// Returns the next character, or a space (' ') if EOF was reached.
+/*
+ * Reads in the next alphanumeric character from stdin - i.e. the first letter of the word.
+ *
+ * FILE *src : A pointer to the input stream we should read from. May be stdin.
+ *
+ * Returns the next character, or a space (' ') if EOF was reached.
+ */
 char loopGetChar(FILE *src) {
   int c;
 
@@ -71,9 +91,16 @@ char loopGetChar(FILE *src) {
   return (char)c;
 }
 
-// Reads the next word from the given input stream. A word is any string of characters bounded by whitespace or a non-alphanumeric
-// character. A word may contain single - or ' characters.
-
+/*
+ * Reads the next word from the given input stream. A word is any string of characters bounded by whitespace or a non-alphanumeric
+ * character. A word may contain single - or ' characters. The array will be automatically resized to fit the input if possible.
+ *
+ * FILE *src         : A pointer to the input stream we should read from. May be stdin.
+ * unsigned int size : The starting size of the char array to hold the string. Should be >= 2.
+ * 
+ * Returns NULL if no more words could be read, or if there was not enough memory to complete the word. Otherwise, returns a
+ * pointer to the string containing the word, or as much of the word as possible if memory limits are reached.
+ */
 char *readWord(FILE *src, unsigned int size) {
   if (size < 2) {
     // The minimum size of the string must be 2.
@@ -97,12 +124,17 @@ char *readWord(FILE *src, unsigned int size) {
     tmpChar = fgetc(src);
     wordChar = isWordChar(input[0], '\0', tmpChar);
 
+    // If wordChar is FINAL, then we should not read any more letters to avoid consuming more than necessary.
     if (wordChar == YES) {
+      // Read ahead one letter to help decide whether to keep the current.
       readAhead = fgetc(src);
 
+      // Check the input now that we have our first set of 3 characters.
       wordChar = isWordChar(tmpChar, input[0], readAhead);
 
+      // Loop until we've reached the final character and added it to the string.
       while (wordChar != NO) {
+	// Change the case, and cast to char.
 	input[i] = tolower((char)tmpChar);
 
 	// Check the array size then increment the counter.
@@ -110,70 +142,93 @@ char *readWord(FILE *src, unsigned int size) {
 	  // The next character, whether it is \0 or otherwise, will be out of bounds, so expand.
 	  size = size * 2;
 
+	  // Use realloc to resize the array without losing it's contents. Tries to resize in-place to avoid copying.
 	  tmpPtr = realloc(input, size);
 
 	  if (tmpPtr == NULL) {
 	    // Could not expand the array, so return the word so far and treat the remainder as a new word.
-	    fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
-
 	    // Attempt to increase by two characters so we don't lose the one we have kept in readAhead.
 	    size = (size / 2) + 2;
 	    tmpPtr = realloc(input, size);
 
 	    if (tmpPtr == NULL) {
-	      fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
+	      // Print an error message to stderr, so the user is aware of potential inaccuracy of results.
+	      fprintf(stderr, "Reached max word length, unable to split word.");
+
 	      return NULL;
 	    } else {
 	      input = tmpPtr;
 
+	      // The minimal resize was a success, so store both the consumed character and terminate the string.
 	      input[i] = readAhead;
 	      input[i + 1] = '\0';
 
 	      fprintf(stderr, "Reached max word length, splitting word after '%s'.", input);
 
+	      // Return the incomplete word, without losing characters.
 	      return input;
 	    }
 	  } else {
+	    // The resize was successful, so we can use the new memory location.
 	    input = tmpPtr;
 	  }
 	}
 
 	if (wordChar == YES) {
+	  // The current char, and the following char are accepted, so continue to consume characters.
 	  tmpChar = readAhead;
 	  readAhead = fgetc(src);
 
+	  // Decide on the new status.
 	  wordChar = isWordChar(tmpChar, input[i - 1], readAhead);
 	} else if (wordChar == FINAL) {
+	  // We should not read any more to avoid losing characters from the next word, so stop the loop.
 	  wordChar = NO;
 	}
       }
     }
 
+    // Terminate our string.
     input[i] = '\0';
   }
 
+  // Return the pointer to the string.
   return input;
 }
 
+/*
+ * Linked list functions and structs.
+*/
 
-
-/* Linked list functions and structs. */
-
+/*
+ * A struct that holds a linked list that counts occurrences of strings.
+ */
 typedef struct _stringOccList {
   struct _stringOccList *next;
   char *value;
   int occurrences;
   // Keep track of the length so that we do not need to iterate over the entire list to calculate the max overflow.
+  // This can give us the position in the list, and thus might be useful if we decided to improve upon the list approach.
   unsigned int length;
 } stringOccList;
 
+/*
+ * A struct that holds the result of searching the list.
+ */
 typedef struct _comparisonReturn {
   struct _stringOccList *node;
   unsigned int comparisons;
 } comparisonReturn;
 
-// Checks if a linked list beginning with *list contains the given value.
-// Returns the node containing the value if present, else NULL.
+/*
+ * Checks if a linked list beginning with *list contains the given value.
+ *
+ * char *value         : A pointer to the string to search the list for.
+ * stringOccList *list : A pointer to the head of the list to search within.
+ *
+ * Returns the node containing the value if present, else NULL, paired with a count of the string comparisons
+ * needed to find this result.
+ */
 comparisonReturn *listSearch(char *value, stringOccList *list) {
   comparisonReturn *ret = calloc(1, sizeof(comparisonReturn));
 
@@ -188,12 +243,20 @@ comparisonReturn *listSearch(char *value, stringOccList *list) {
     ret->comparisons++;
   }
 
+  // Set the list item we found as part of the return value. Will assign the null pointer if we found nothing.
   ret->node = list;
   return ret;
 }
 
-// Inserts a pre-existing node as the head of a given linked list.
-// Returns the supplied node as the head of the list.
+/*
+ * Inserts a pre-existing node as the head of a given linked list. This performs no check for uniqueness,
+ * so should only be used when modifying an already existing list (such as during a hashtable resize).
+ *
+ * stringOccList *node : A pointer to the node to add to the list.
+ * stringOccList *node : A pointer to the head of the list to add to.
+ *
+ * Returns the supplied node as the head of the list.
+ */
 stringOccList *listInsertNode(stringOccList *node, stringOccList *list) {
   // Set the node as the head of it's new list.
   node->next = list;
@@ -205,8 +268,15 @@ stringOccList *listInsertNode(stringOccList *node, stringOccList *list) {
   return node;
 }
 
-// Inserts a new node as the head of a given linked list.
-// Returns the new node / the head of the list.
+/*
+ * Inserts a new node as the head of a given linked list, if the string is new. Otherwise, increases the
+ * running total of that string within the list.
+ *
+ * char *value         : A pointer to the string to insert into the list.
+ * stringOccList *list : A pointer to the head of the list to insert into.
+ *
+ * Returns the new node / the head of the list.
+ */
 stringOccList *listInsert(char *value, stringOccList *list) {
   stringOccList *next;
 
@@ -234,7 +304,14 @@ stringOccList *listInsert(char *value, stringOccList *list) {
   }
 }
 
-// http://stackoverflow.com/questions/4475996/given-prime-number-n-compute-the-next-prime/5694432#5694432
+/*
+ * Determines whether a number is prime or not. Source:
+ * http://stackoverflow.com/questions/4475996/given-prime-number-n-compute-the-next-prime/5694432#5694432
+ *
+ * unsigned int number : The number to test.
+ *
+ * Returns true if the number is a prime number.
+ */
 bool isPrime(unsigned int number) {
   unsigned int i, div;
 
@@ -244,14 +321,24 @@ bool isPrime(unsigned int number) {
     if (div < i) {
       return true;
     } else if (number == div * i) {
-      // Checking if the reverse matches the input is quicker than calculating the modulus.
+      // Check if the reverse matches the input to see if the division result was exact, or truncated.
       return false;
     }
   }
 
+  // We should never reach this case, but this should silence compiler warnings.
   return true;
 }
 
+/*
+ * Gets the next prime after the given starting value, which is closest to the given target. Source:
+ * http://stackoverflow.com/questions/4475996/given-prime-number-n-compute-the-next-prime/5694432#5694432
+ *
+ * unsigned int start  : The number to begin searching after.
+ * unsigned int target : The number we must find the nearest prime to.
+ *
+ * Returns an unsigned int which is the closest prime to target.
+ */
 unsigned int nextPrime(unsigned int start, unsigned int target) {
   unsigned int prev = 0;
   bool loop = true;
@@ -264,6 +351,7 @@ unsigned int nextPrime(unsigned int start, unsigned int target) {
     start++;
   }
 
+  // Continually loop until we've got a prime either side of the target.
   while (loop) {
     if (isPrime(start)) {
       if (start < target) {
@@ -287,9 +375,13 @@ unsigned int nextPrime(unsigned int start, unsigned int target) {
 }
 
 
+/*
+ * Hashtable functions.
+ */
 
-/* Hashtable functions. */
-
+/*
+ * Define a structure to hold a hashtable. Reliant on the previously defined linked list implementation.
+ */
 typedef struct _stringOccTable {
   // Stores a pointer to an array of stringOccList pointers initialised to NULL. The array pointer is
   // not constant, and thus may be resized.
@@ -299,105 +391,39 @@ typedef struct _stringOccTable {
   unsigned int itemCount;
 } stringOccTable;
 
-
-/* // Calculates the hash of a give string key. */
-/* // Returns the hash value of the given key. */
-/* unsigned int calculateHash(char *key) { */
-/*   char current = key[0]; */
-/*   unsigned int i, hash = 0; */
-
-/*   for (i = 1; current != '\0'; i++) { */
-/*     hash += current; */
-/*     current = key[i]; */
-/*   } */
-
-/*   return hash; */
-/* } */
-
-
-/* unsigned int calculateHash(char key[]) { */
-/*   unsigned int i, j, shift, hash = 0, mod, count; */
-
-/*   // Calculate the size of an int in terms of the size of a char. */
-/*   const unsigned int intSize = sizeof(int) / sizeof(char); */
-
-/*   // Calculate the number of chars in the string that do not form a complete int. */
-/*   mod = strlen(key) % intSize; */
-
-/*   // Calculate the limit of our loop. */
-/*   count = (strlen(key) - mod) / intSize; */
-
-/*   // Loop through until we've constructed all possible ints. */
-/*   for (i = 0; i < count; i += 4) { */
-/*     hash += key[i] + (key[i + 1] << 8) + (key[i + 2] << 16) + (key[i + 3] << 24); */
-/*   } */
-
-/*   // If we have outstanding chars, add them. */
-/*   for (j = 0; j < mod; j++) { */
-/*     i += j; */
-/*     shift = j * 8; */
-/*     hash += key[i] << shift; */
-/*   } */
-
-/*   return hash; */
-/* } */
-
-/* // Modified Bernstein hash. */
-/* unsigned int calculateHash(char key[]) { */
-/*   unsigned int i, hash = 0; */
-
-/*   for (i = 0; key[i] != '\0'; i++) { */
-/*     hash = 33 * hash ^ key[i]; // ^ = XOR */
-/*   } */
-
-/*   return hash; */
-/* } */
-
-/* // One-at-a-Time hash */
-/* unsigned int calculateHash(char key[]) { */
-/*   unsigned int i, hash = 0; */
-
-/*   for (i = 0; key[i] != '\0'; i++) { */
-/*     hash += key[i]; */
-/*     hash += (hash << 10); */
-/*     hash ^= (hash >> 6); */
-/*   } */
-
-/*   hash += (hash << 3); */
-/*   hash ^= (hash >> 11); */
-/*   hash += (hash << 15); */
-
-/*   return hash; */
-/* } */
-
-// FNV-1a 32-bit hash
-unsigned int calculateHash(char key[]) {
+/*
+ * FNV-1a 32-bit hash function. Should be called via calcHash, to perform the modulus. Source:
+ * http://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV-1a_hash
+ *
+ * char *key : A pointer to the string key to hash.
+ *
+ * Returns the raw hash of the given key.
+ */
+unsigned int calculateHash(char *key) {
+  // Define some constants used in the hash generation.
   const unsigned int FNV_OFFSET_BASIS = 2166136261;
   const unsigned int FNV_PRIME = 16777619;
   
   unsigned int i, hash = FNV_OFFSET_BASIS;
 
+  // Perform the operation on all characters.
   for (i = 0; key[i] != '\0'; i++) {
     hash = hash ^ key[i];
     hash = hash * FNV_PRIME;
   }
 
+  // Return the finished hash.
   return hash;
 }
 
-/* // sdbm hash */
-/* unsigned int calculateHash(char key[]) { */
-/*   unsigned int i, hash = 0; */
-
-/*   for (i = 0; key[i] != '\0'; i++) { */
-/*     hash = key[i] + (hash << 6) + (hash << 16) - hash; */
-/*   } */
-
-/*   return hash; */
-/* } */
-
-// Calculate the hash of a given string key, assuring that the returned value is within the range of buckets.
-// Returns the hash value of the given key.
+/*
+ * Calculate the hash of a given string key, assuring that the returned value is within the range of buckets.
+ *
+ * char *key            : A pointer to the string key to hash.
+ * unsigned int buckets : The number of buckets currently in the hashtable we are inserting into.
+ *
+ * Returns the hash value of the given key.
+ */
 unsigned int calcHash(char *key, unsigned int buckets) {
   // Use the calculateHash function to produce the raw hash.
   unsigned int hash = calculateHash(key);
@@ -406,9 +432,14 @@ unsigned int calcHash(char *key, unsigned int buckets) {
   return hash % buckets;
 }
 
-// Creates a new hashtable struct.
-// Returns a pointer to a stringOccTable struct that holds an array of lists to act as overflow, and some
-// variables to store metadata. Returns NULL if allocation failed. See struct declaration for more information.
+/*
+ * Creates a new hashtable struct.
+ *
+ * unsigned int buckets : The initial number of buckets to use. A prime number may be beneficial, but is not necessary.
+ *
+ * Returns a pointer to a stringOccTable struct that holds an array of lists to act as overflow, and some
+ * variables to store metadata. Returns NULL if allocation failed. See struct declaration for more information.
+ */
 stringOccTable *createHashtable(unsigned int buckets) {
   // Use calloc so that variables are initialised to NULL, and check the allocation succeeded.
   stringOccTable *table = calloc(1, sizeof(stringOccTable));
@@ -422,28 +453,43 @@ stringOccTable *createHashtable(unsigned int buckets) {
     return NULL;
   }
 
+  // Initialise some of the metadata held about the new hashtable.
   table->bucketCount = buckets;
   table->emptyBucketCount = buckets;
 
   return table;
 }
 
-// Searches the given hash table for the list node containing key.
-// Returns the stringOccList node containg the given key and a count of comparisons required, else NULL if the key is not present.
+/*
+ * Searches the given hash table for the list node containing key.
+ *
+ * char *key              : A pointer to the string key to search for.
+ * stringOccTable *hTable : A pointer to the hashtable we should search inside of.
+ *
+ * Returns the stringOccList node containg the given key, else NULL if the key is not present, accompanied
+ * by a count of the number of string comparisons required to achieve the result.
+ */
 comparisonReturn *tableSearch(char *key, stringOccTable *hTable) {
   unsigned int hash = calcHash(key, hTable->bucketCount);
   stringOccList *bucket = hTable->table[hash];
 
   if (bucket == NULL) {
     // The bucket is empty, thus the table does not contain an entry corresponding to the given key.
+    // Use calloc so the pointer is NULL, and the counter is 0, as expected.
     return calloc(1, sizeof(comparisonReturn));
   } else {
+    // Re-use the list search method to traverse the bucket.
     return listSearch(key, bucket);
   }
 }
 
-// Inserts a value into the given hash table, incrementing it's counter if it already exists. hTable must be
-// initialised with createHashTable before being used as a parameter to this function.
+/*
+ * Inserts a value into the given hash table, incrementing it's counter if it already exists. hTable must be
+ * initialised with createHashTable before being used as a parameter to this function.
+ *
+ * char *value            : A pointer to the string to insert into the hashtable.
+ * stringOccTable *hTable : A pointer to the hashtable we should insert into.
+ */
 void tableInsert(char *value, stringOccTable *hTable) {
   unsigned int prevCount, hash = calcHash(value, hTable->bucketCount);
   stringOccList *bucket = hTable->table[hash];
@@ -453,6 +499,7 @@ void tableInsert(char *value, stringOccTable *hTable) {
     hTable->emptyBucketCount--;
     prevCount = 0;
   } else {
+    // We must store the previous length of the bucket, so we can determine whether a new key was added.
     prevCount = bucket->length;
   }
 
@@ -467,8 +514,13 @@ void tableInsert(char *value, stringOccTable *hTable) {
   hTable->table[hash] = bucket;
 }
 
-// Calculates the maximum overflow of the hashtable.
-// Returns the highest number of keys stored in a single bucket.
+/*
+ * Calculates the maximum overflow of the hashtable.
+ *
+ * stringOccTable *hTable : A pointer to the hashtable to use.
+ *
+ * Returns the highest number of keys stored in a single bucket.
+ */
 unsigned int getMaxOverflow(stringOccTable *hTable) {
   unsigned int i, over = 0;
 
@@ -481,15 +533,26 @@ unsigned int getMaxOverflow(stringOccTable *hTable) {
   return over;
 }
 
-// Calculates the load factor of the given hashtable.
-// Returns the load factor as a float.
+/*
+ * Calculates the load factor of the given hashtable.
+ *
+ * stringOccTable *hTable : A pointer to the hashtable to use.
+ *
+ * Returns the load factor as a float.
+ */
 float getLoadFactor(stringOccTable *hTable) {
   // Load factor = Number of keys / Number of buckets
   return (float)hTable->itemCount / (float)hTable->bucketCount;
 }
 
-// Increases the number of buckets in the given table, and rehashes and rearranges the keys inside.
-// Returns a new hashtable containg the contents of the original.
+/*
+ * Increases the number of buckets in the given table, and rehashes and rearranges the keys inside. 
+ *
+ * stringOccTable *orig : A pointer to the original hashtable that we should resize. Warning: The location
+ *                        pointed to will be freed by this function!
+ *
+ * Returns a new hashtable containg the contents of the original.
+ */
 stringOccTable *resizeRehashTable(stringOccTable *orig) {
   // Create a new hashTable with the increased bucket count.
   unsigned int newBuckets = nextPrime(orig->bucketCount, (unsigned int)(orig->bucketCount * RESIZE_FACTOR));
@@ -538,11 +601,15 @@ stringOccTable *resizeRehashTable(stringOccTable *orig) {
 }
 
 
+/*
+ * Main function and user interactions/control.
+ */
 
-/* Main function and user interactions/control. */
-
-// A struct that can hold some kind of data structure than counts occurences of strings.
+/*
+ * A struct that can hold some kind of data structure that counts occurences of strings.
+ */
 typedef struct {
+  // The tag that identifies which union member to access.
   bool isTable;
 
   // Wrap a union in struct, so we can store a tag that identifies the internal type.
@@ -552,8 +619,15 @@ typedef struct {
   } store;
 } stringOcc;
 
-// Populates a given stringOcc struct with all the words found in the file represented by filename.
-// Returns the supplied struct with the new contents added, or NULL if no words could be read.
+/*
+ * Populates a given stringOcc struct with all the words found in the file represented by filename.
+ *
+ * char *filename  : The filename of the text file to read from.
+ * stringOcc *fill : The string occurence counting struct to fill. The structure must be initialised
+ *                   if the type requires it. (i.e. if this is a hashtable)
+ *
+ * Returns the supplied struct with the new contents added, or NULL if no words could be read.
+ */
 stringOcc *populateStruct(char *filename, stringOcc *fill) {
   FILE *inputFile;
 
@@ -563,8 +637,10 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
   if (inputFile != NULL) {
     char *word;
 
+    // Read the next word from the text file.
     word = readWord(inputFile, 2);
 
+    // Loop until we reach the end of the file, or an error occurs that prevents reading a word.
     while (word != NULL) {
       // Ascertain the type of the data structure, and add to it accordingly.
       if (fill->isTable) {
@@ -578,6 +654,7 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
 	fill->store.list = listInsert(word, fill->store.list);
       }
 
+      // Read one more word.
       word = readWord(inputFile, 2);
     }
 
@@ -594,7 +671,11 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
   return fill;
 }
 
-// Prints the entire contents of a supplied string counting list.
+/*
+ * Prints the entire contents of a supplied string counting list.
+ *
+ * stringOccList *head : The head of the list to print values from.
+ */
 void printList(stringOccList *head) {
   while (head != NULL) {
     printf("'%s' %d\n", head->value, head->occurrences);
@@ -602,17 +683,27 @@ void printList(stringOccList *head) {
   }
 }
 
-// Prints some metadata about the state of a given string counting hashtable.
+/*
+ * Prints some metadata about the state of a given string counting hashtable.
+ *
+ * stringOccTable *hTable : A pointer to the hashtable to print information about.
+ */
 void printTableMetadata(stringOccTable *hTable) {
   printf("Table {loadFactor: %.2f, buckets: %d, empty: %d, maxOver: %d}\n", getLoadFactor(hTable), hTable->bucketCount, hTable->emptyBucketCount, getMaxOverflow(hTable));
 }
 
-// Prints the entire contents of a give string counting hashtable, including metadata.
+/*
+ * Prints the entire contents of a string counting hashtable, including metadata.
+ *
+ * stringOccTable *hTable : A pointer to the hashtable to print.
+ */
 void printTable(stringOccTable *hTable) {
   int i;
 
+  // Print the metadata first.
   printTableMetadata(hTable);
 
+  // Loop through all buckets, using the list printing function to print the nodes.
   for (i = 0; i < HASHTABLE_BUCKETS; i++) {
     printf("=Bucket %d (%d):\n", i, hTable->table[i] == NULL ? 0 : hTable->table[i]->length);
 
@@ -620,24 +711,41 @@ void printTable(stringOccTable *hTable) {
   }
 }
 
-// Converts a time created with clock() into a float representing the time in seconds.
-// Returns a float value representing the time in seconds.
+/*
+ * Converts a time created with clock() into a float representing the time in seconds.
+ *
+ * clock_t clocks : The time value as reported by time.h functions.
+ *
+ * Returns a float value representing the time in seconds.
+ */
 float clockToSeconds(clock_t clocks) {
   return ((float)clocks) / CLOCKS_PER_SEC;
 }
 
-// Prints the result of a lookup operation to stdout from a given comparisonReturn struct.
+/*
+ * Prints the result of a lookup operation to stdout from a given comparisonReturn struct.
+ *
+ * char *search                   : A pointer to the string of the value searched for.
+ * comparisonReturn *lookupResult : A pointer to the result of a lookup operation.
+ */
 void printLookupResult(char *searched, comparisonReturn *lookupResult) {
   if (lookupResult->node != NULL) {
     printf("Found '%s' %d times\n", lookupResult->node->value, lookupResult->node->occurrences);
   } else {
+    // We need the searched parameter so that we can print the interpreted string even if it doesn't exist.
     printf("'%s' not found\n", searched);
   }
 
+  // Show the number of comparisons we needed.
   printf("  with %d comparisons.\n", lookupResult->comparisons);
 }
 
-// Ask the user for words they would like to lookup in a loop, displaying results.
+/*
+ * Ask the user for words they would like to lookup in a loop, displaying results.
+ *
+ * stringOcc *listContainer  : The list we should search.
+ * stringOcc *tableContainer : The table we should search.
+ */ 
 void doLookups(stringOcc *listContainer, stringOcc *tableContainer) {
   char *choice = NULL;
 
@@ -646,6 +754,7 @@ void doLookups(stringOcc *listContainer, stringOcc *tableContainer) {
     // Free the memory location occupied by the last string lookup, if not already free.
     free(choice);
 
+    // Prefix a newline to group lookups.
     printf("\nEnter word for retrieval: ");
     choice = readWord(stdin, 2);
     strToLower(choice);
@@ -663,6 +772,10 @@ void doLookups(stringOcc *listContainer, stringOcc *tableContainer) {
   } while (choice[0] != 'n' && choice[0] != 'N' && choice[0] != ' ');
 }
 
+/*
+ * The main function of the program. A single optional argument is accepted, which is the filename
+ * of the text file that we should read from.
+ */
 int main(int argc, char *argv[]) {
   stringOcc *listContainer = malloc(sizeof(stringOcc));
   stringOcc *tableContainer = malloc(sizeof(stringOcc));
