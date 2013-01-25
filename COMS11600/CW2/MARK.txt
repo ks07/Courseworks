@@ -39,7 +39,7 @@ A:
 
 Tick any of the following if appropriate:
 
-B: _   5%   You have commented your code properly.  This means every
+B: X   5%   You have commented your code properly.  This means every
             function is clearly defined as an operation, an input and
             corresponding output set. As a rough guide, 30% of your
 	    submission must be comments.
@@ -65,7 +65,7 @@ E: X  10%   You do not use global variables, and functions and loops
 	    of your editor, than it is likely that you have duplicated
 	    code, and that you cannot tick this box.
  
-F: _  10%   You made an extensive analysis using various hash functions and 
+F: X  10%   You made an extensive analysis using various hash functions and 
             table sizes. You timed data organisation and retrieval using 
             the linked list and the hash table approach. The results are 
             documented and discussed in a report.
@@ -73,7 +73,7 @@ F: _  10%   You made an extensive analysis using various hash functions and
 
 Provisional mark (Add marks A to F)
 
- 80 %
+ 90 %
 
 Agreed mark (to be filled in by the lecturer; this is the only box you do
 not fill in):
