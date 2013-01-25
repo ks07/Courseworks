@@ -8,6 +8,6 @@ Lookups using the hashtable are also much less expensive than the linked list. A
 
 To conclude, I have seen that hashtables are incredibly efficient in terms of time, which is highlighted by the exact opposite nature of the linked list. On the downside, I have seen that finding a hashing algorithm for unknown data is incredibly difficult, and can result in a fair amount of wasted memory usage when many buckets remain unfilled. With modern personal computers, this is not an overwhelming problem, as RAM has decreased in price. However, perhaps when running on an embedded system, the linked list may be preferable, if time spent on lookups is not critical, while memory space is severley restricted.
 
-* See Table 1, comparison.txt
+* See Table 1, COMPARISONS.txt
 ** Note that all times are taken with GCC's optimisations (-O2) enabled, which is likely to be the case in real world scenarios. Without optimisations, the times are more varied, although the first two are still decidedly slower.
-*** See Table 2, comparison.txt
+*** See Table 2, COMPARISONS.txt
