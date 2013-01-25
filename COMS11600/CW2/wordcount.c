@@ -9,6 +9,7 @@
 #define DEFAULT_FILENAME "a_portrait.txt"
 #define HASHTABLE_BUCKETS 1000
 #define RESIZE_FACTOR 1.33f
+#define RESIZE_LIMIT 1.5f
 
 /* General word handling functions. */
 
@@ -243,7 +244,6 @@ typedef struct _stringOccTable {
   struct _stringOccList **table;
   unsigned int emptyBucketCount;
   unsigned int bucketCount;
-  unsigned int maxOverflowSize;
   unsigned int itemCount;
 } stringOccTable;
 
@@ -299,7 +299,7 @@ unsigned int calculateHash(char key[]) {
   }
 
   return hash;
-  }*/
+}*/
 
 // One-at-a-Time hash
 unsigned int calculateHash(char key[]) {
@@ -375,10 +375,6 @@ void tableInsert(char *value, stringOccTable *hTable) {
     hTable->emptyBucketCount--;
     prevCount = 0;
   } else {
-    // The bucket already contains values, so we should increase the maxOverflowSize if necessary.
-    if (hTable->maxOverflowSize < bucket->length) { //TODO: fixme
-      hTable->maxOverflowSize = bucket->length;
-    }
     prevCount = bucket->length;
   }
 
@@ -391,6 +387,20 @@ void tableInsert(char *value, stringOccTable *hTable) {
   }
 
   hTable->table[hash] = bucket;
+}
+
+// Calculates the maximum overflow of the hashtable.
+// Returns the highest number of keys stored in a single bucket.
+unsigned int getMaxOverflow(stringOccTable *hTable) {
+  unsigned int i, over = 0;
+
+  for (i = 0; i < hTable->bucketCount; i++) {
+    if (hTable->table[i] != NULL && hTable->table[i]->length > over) {
+      over = hTable->table[i]->length;
+    }
+  }
+
+  return over;
 }
 
 // Calculates the load factor of the given hashtable.
@@ -431,11 +441,6 @@ stringOccTable *resizeRehashTable(stringOccTable *orig) {
       // If the bucket was empty, the length will be 1, thus we should adjust the counter.
       if (node->length == 1) {
 	new->emptyBucketCount--;
-      }
-
-      // Set the new maxOverflowSize if necessary.
-      if (new->maxOverflowSize < node->length) {
-	new->maxOverflowSize = node->length;
       }
 
       // Add the node as the head of it's new bucket.
@@ -488,7 +493,7 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
 	tableInsert(word, fill->store.table);
 
 	// Resize the hashtable if it is too full so that lookups take fewer comparisons.
-	if (getLoadFactor(fill->store.table) > 1.5f) {
+	if (getLoadFactor(fill->store.table) > RESIZE_LIMIT) {
 	  fill->store.table = resizeRehashTable(fill->store.table);
 	}
       } else {
@@ -521,7 +526,7 @@ void printList(stringOccList *head) {
 
 // Prints some metadata about the state of a given string counting hashtable.
 void printTableMetadata(stringOccTable *hTable) {
-  printf("Table {loadFactor: %.2f, buckets: %d, empty: %d, maxOver: %d}\n", getLoadFactor(hTable), hTable->bucketCount, hTable->emptyBucketCount, hTable->maxOverflowSize);
+  printf("Table {loadFactor: %.2f, buckets: %d, empty: %d, maxOver: %d}\n", getLoadFactor(hTable), hTable->bucketCount, hTable->emptyBucketCount, getMaxOverflow(hTable));
 }
 
 // Prints the entire contents of a give string counting hashtable, including metadata.
