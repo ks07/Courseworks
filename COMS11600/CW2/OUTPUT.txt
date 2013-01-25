@@ -1,0 +1,53 @@
+$ ./a.out 
+Time for population with 9213 words:
+  List: 4.90 seconds Table: 0.02 seconds
+Table {loadFactor: 0.87, buckets: 10589, empty: 4391, maxOver: 6}
+
+Enter word for retrieval: looking
+List: Found 'looking' 22 times
+  with 8743 comparisons.
+Table: Found 'looking' 22 times
+  with 3 comparisons.
+Would you like to search again? [Y/n] y
+
+Enter word for retrieval: me
+List: Found 'me' 142 times
+  with 8287 comparisons.
+Table: Found 'me' 142 times
+  with 1 comparisons.
+Would you like to search again? [Y/n] y
+
+Enter word for retrieval: attractive
+List: 'attractive' not found
+  with 9213 comparisons.
+Table: 'attractive' not found
+  with 1 comparisons.
+Would you like to search again? [Y/n] y
+
+Enter word for retrieval: please
+List: Found 'please' 7 times
+  with 8062 comparisons.
+Table: Found 'please' 7 times
+  with 1 comparisons.
+Would you like to search again? [Y/n] y
+
+Enter word for retrieval: where
+List: Found 'where' 71 times
+  with 9163 comparisons.
+Table: Found 'where' 71 times
+  with 2 comparisons.
+Would you like to search again? [Y/n] y
+
+Enter word for retrieval: knock
+List: 'knock' not found
+  with 9213 comparisons.
+Table: 'knock' not found
+  with 1 comparisons.
+Would you like to search again? [Y/n] y
+
+Enter word for retrieval: computer
+List: 'computer' not found
+  with 9213 comparisons.
+Table: 'computer' not found
+  with 1 comparisons.
+Would you like to search again? [Y/n] n
