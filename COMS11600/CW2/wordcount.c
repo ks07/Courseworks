@@ -9,7 +9,7 @@
 #define DEFAULT_FILENAME "a_portrait.txt"
 #define HASHTABLE_BUCKETS 1009
 #define RESIZE_FACTOR 1.33f
-#define RESIZE_LIMIT 1.5f
+#define RESIZE_LIMIT 0.8f
 
 /* General word handling functions. */
 
