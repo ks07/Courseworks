@@ -7,7 +7,7 @@
 
 // Define some constants with the preprocessor. These act like simple substitutions, and are seen as literals when compiling.
 #define DEFAULT_FILENAME "a_portrait.txt"
-#define HASHTABLE_BUCKETS 1000
+#define HASHTABLE_BUCKETS 1009
 #define RESIZE_FACTOR 1.33f
 #define RESIZE_LIMIT 1.5f
 
@@ -234,6 +234,58 @@ stringOccList *listInsert(char *value, stringOccList *list) {
   }
 }
 
+// http://stackoverflow.com/questions/4475996/given-prime-number-n-compute-the-next-prime/5694432#5694432
+bool isPrime(unsigned int number) {
+  unsigned int i, div;
+
+  for (i = 3; true; i += 2) {
+    div = number / i;
+
+    if (div < i) {
+      return true;
+    } else if (number == div * i) {
+      // Checking if the reverse matches the input is quicker than calculating the modulus.
+      return false;
+    }
+  }
+
+  return true;
+}
+
+unsigned int nextPrime(unsigned int start, unsigned int target) {
+  unsigned int prev = 0;
+  bool loop = true;
+
+  if (start & 1) {
+    // If start is odd, add 2 before we start to loop.
+    start += 2;
+  } else {
+    // Else add 1 to make it odd.
+    start++;
+  }
+
+  while (loop) {
+    if (isPrime(start)) {
+      if (start < target) {
+	prev = start;
+	start += 2;
+      } else {
+	loop = false;
+      }
+    } else {
+      // Increment the number by 2, we should skip even numbers.
+      start += 2;
+    }
+  }
+
+  if (prev != 0 && (target - prev) < (start - target)) {
+    // Prev is the closer prime to target, so return it.
+    return prev;
+  } else {
+    return start;
+  }
+}
+
 
 
 /* Hashtable functions. */
@@ -300,7 +352,7 @@ unsigned int calculateHash(char key[]) {
 
   return hash;
 }*/
-
+/*
 // One-at-a-Time hash
 unsigned int calculateHash(char key[]) {
   unsigned int i, hash = 0;
@@ -314,6 +366,32 @@ unsigned int calculateHash(char key[]) {
   hash += (hash << 3);
   hash ^= (hash >> 11);
   hash += (hash << 15);
+
+  return hash;
+  }*/
+/*
+// FNV-1a 32-bit hash
+unsigned int calculateHash(char key[]) {
+  const unsigned int FNV_OFFSET_BASIS = 2166136261;
+  const unsigned int FNV_PRIME = 16777619;
+  
+  unsigned int i, hash = FNV_OFFSET_BASIS;
+
+  for (i = 0; key[i] != '\0'; i++) {
+    hash = hash ^ key[i];
+    hash = hash * FNV_PRIME;
+  }
+
+  return hash;
+}*/
+
+// sdbm hash
+unsigned int calculateHash(char key[]) {
+  unsigned int i, hash = 0;
+
+  for (i = 0; key[i] != '\0'; i++) {
+    hash = key[i] + (hash << 6) + (hash << 16) - hash;
+  }
 
   return hash;
 }
@@ -414,7 +492,7 @@ float getLoadFactor(stringOccTable *hTable) {
 // Returns a new hashtable containg the contents of the original.
 stringOccTable *resizeRehashTable(stringOccTable *orig) {
   // Create a new hashTable with the increased bucket count.
-  unsigned int newBuckets = (unsigned int)(orig->bucketCount * RESIZE_FACTOR);
+  unsigned int newBuckets = nextPrime(orig->bucketCount, (unsigned int)(orig->bucketCount * RESIZE_FACTOR));
   stringOccTable *new = createHashtable(newBuckets);
 
   // Declare some variables to use when looping.
