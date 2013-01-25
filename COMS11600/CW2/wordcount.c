@@ -244,6 +244,7 @@ typedef struct _stringOccTable {
   unsigned int emptyBucketCount;
   unsigned int bucketCount;
   unsigned int maxOverflowSize;
+  unsigned int itemCount;
 } stringOccTable;
 
 /*
@@ -366,38 +367,37 @@ comparisonReturn *tableSearch(char *key, stringOccTable *hTable) {
 // Inserts a value into the given hash table, incrementing it's counter if it already exists. hTable must be
 // initialised with createHashTable before being used as a parameter to this function.
 void tableInsert(char *value, stringOccTable *hTable) {
-  unsigned int hash = calcHash(value, hTable->bucketCount);
+  unsigned int prevCount, hash = calcHash(value, hTable->bucketCount);
   stringOccList *bucket = hTable->table[hash];
 
   if (bucket == NULL) {
     // The bucket is empty, thus we must decrease the count of empty buckets.
     hTable->emptyBucketCount--;
+    prevCount = 0;
   } else {
     // The bucket already contains values, so we should increase the maxOverflowSize if necessary.
-    if (hTable->maxOverflowSize < bucket->length) {
+    if (hTable->maxOverflowSize < bucket->length) { //TODO: fixme
       hTable->maxOverflowSize = bucket->length;
     }
+    prevCount = bucket->length;
   }
 
   // Insert into the relevant bucket, and update the pointer in the table.
   bucket = listInsert(value, bucket);
+
+  if (prevCount < bucket->length) {
+    // Insertion added a new node, so we must increment the item counter.
+    hTable->itemCount++;
+  }
+
   hTable->table[hash] = bucket;
 }
 
 // Calculates the load factor of the given hashtable.
 // Returns the load factor as a float.
 float getLoadFactor(stringOccTable *hTable) {
-  unsigned int i, total = 0;
-
-  // Calculate the total number of elements in the table.
-  for (i = 0; i < hTable->bucketCount; i++) {
-    if (hTable->table[i] != NULL) {
-      total += hTable->table[i]->length;
-    }
-  }
-
   // Load factor = Number of keys / Number of buckets
-  return (float)total / (float)hTable->bucketCount;
+  return (float)hTable->itemCount / (float)hTable->bucketCount;
 }
 
 // Increases the number of buckets in the given table, and rehashes and rearranges the keys inside.
@@ -410,6 +410,8 @@ stringOccTable *resizeRehashTable(stringOccTable *orig) {
   // Declare some variables to use when looping.
   unsigned int i, newHash;
   stringOccList *node, *next;
+
+  new->itemCount = orig->itemCount;
 
   // Loop through the buckets in the original table.
   for (i = 0; i < orig->bucketCount; ++i) {
@@ -484,6 +486,11 @@ stringOcc *populateStruct(char *filename, stringOcc *fill) {
       // Ascertain the type of the data structure, and add to it accordingly.
       if (fill->isTable) {
 	tableInsert(word, fill->store.table);
+
+	// Resize the hashtable if it is too full so that lookups take fewer comparisons.
+	if (getLoadFactor(fill->store.table) > 1.5f) {
+	  fill->store.table = resizeRehashTable(fill->store.table);
+	}
       } else {
 	fill->store.list = listInsert(word, fill->store.list);
       }
@@ -616,12 +623,6 @@ int main(int argc, char *argv[]) {
     // Return value > 0 indicates an error has occured.
     return 1;
   } else {
-
-    // Resize the hashtable if it is too full so that lookups take fewer comparisons.
-    if (getLoadFactor(tableContainer->store.table) > 3.0f) {
-      tableContainer->store.table = resizeRehashTable(tableContainer->store.table);
-    }
-
     // Print statistics on the population process.
     printf("Time for population with %d words:\n  List: %.2f seconds Table: %.2f seconds\n", listContainer->store.list->length, clockToSeconds(listTimer), clockToSeconds(tableTimer));
     printTableMetadata(tableContainer->store.table);
