@@ -15,12 +15,7 @@ module encrypt_v2( input  wire            clk,
    wire [ 63 : 0 ] 			    outWire;
    wire [ 63 : 0 ] 			    rndOutWire;
    wire [ 79 : 0 ] 			    ksOutWire;
-   
-   // Initial value of 0. Will be increased in the clock loop to achieve start value of 1.
-   //keyCounter = 5'b00000;
 
-   //rndOut[0] = M;
-   //ksOut[0] = K;
    initial begin:init0
       ackReg = 0;
       kaReg = 0;
@@ -34,10 +29,10 @@ module encrypt_v2( input  wire            clk,
       if( req == 1'b1 ) begin
 	 if ( keyCounter == 5'b11111 ) begin
 	    // Last iteration, output results.
-	    #10 rndOut = rndOutWire;
+	    #1 rndOut = rndOutWire;
 	    ksOut = ksOutWire;
 	    
-	    #10 kaReg = outWire;
+	    #1 kaReg = outWire;
 	    #1 ackReg = 1;
 	 end else if ( keyCounter == 5'b00000 ) begin
 	    // First iteration, get input.
@@ -46,7 +41,7 @@ module encrypt_v2( input  wire            clk,
 	    keyCounter = 5'b00001;
 	 end else begin
 	    // Set the input registers of the round and key_schedule modules to their next values.
-	    #10 rndOut = rndOutWire;
+	    #1 rndOut = rndOutWire;
 	    ksOut = ksOutWire;
 	    keyCounter = keyCounter + 5'b00001;
 	 end
