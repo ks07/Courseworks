@@ -8,6 +8,7 @@ class Grade {
 	    System.out.println(grade.getGradeDesc());
 	} catch (IllegalArgumentException iae) {
 	    System.err.println("Error: " + iae.getMessage());
+	    System.exit(1);
 	}
     }
 
