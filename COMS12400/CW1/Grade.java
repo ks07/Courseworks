@@ -32,20 +32,47 @@ class Grade {
 	    
 
     public Grade(String[] marks) throws IllegalArgumentException {
-	int i;
-	double parsedMark;
+	int i, creditPointSplit, avgDiv = marks.length;
+	double parsedMark, parsedUnit = 1;
+	boolean creditPoints = false;
 
 	// Sum all the marks given.
 	for (i = 0; i < marks.length; i++) {
 	    if (getDecimalPlaces(marks[i]) > 1) {
 		throw new IllegalArgumentException("The mark '" + marks[i] + "' contains too many decimal places.");
 	    } else {
+		creditPointSplit = marks[i].indexOf(':');
+		if (creditPointSplit != -1) {
+		    if (i > 0 && creditPoints == false) {
+			// The previous argument(s) did not use credit points, but this new argument does.
+			throw new IllegalArgumentException("Not all marks are provided with credit points!");
+		    } else if (i == 0) {
+			avgDiv = 0;
+			creditPoints = true;
+		    }
+		} else if (i > 0 && creditPoints) {
+		    // The previous argument(s) used credit points, but this new argument does not.
+		    throw new IllegalArgumentException("Not all marks are provided with credit points!");
+		}
+		    
+
 		try {
-		    parsedMark = Double.parseDouble(marks[i]);
+		    if (creditPoints) {
+			parsedMark = Double.parseDouble(marks[i].substring(creditPointSplit + 1));
+			parsedUnit = Double.parseDouble(marks[i].substring(0, creditPointSplit));
+
+			avgDiv += parsedUnit;
+		    } else {
+			parsedMark = Double.parseDouble(marks[i]);
+		    }
 
 		    if (parsedMark < 0 || parsedMark > 100) {
-			throw new IllegalArgumentException("The percentage mark '" + marks[i] + "' is outside of the acceptable range!");
+			throw new IllegalArgumentException("The mark '" + marks[i] + "' is outside of the acceptable range!");
 		    } else {
+			if (creditPoints) {
+			    parsedMark = parsedMark * parsedUnit;
+			}
+
 			rawMark += parsedMark;
 		    }
 
@@ -56,7 +83,7 @@ class Grade {
 	}
 
 	// Calculate the average mark.
-	rawMark = rawMark / marks.length;
+	rawMark = rawMark / avgDiv;
     }
 
     public String getGradeDesc() {
