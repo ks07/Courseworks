@@ -16,23 +16,42 @@ class Grade {
 	}
     }
 
+    // Gets the number of decimal places in a given string.
+    private static int getDecimalPlaces(String dbl) {
+	String[] split = dbl.split("\\.");
+
+	if (split.length == 1) {
+	    return 0;
+	} else if (split.length == 2) {
+	    return split[1].length();
+	} else {
+	    // Return -1 if there are multiple decimal points.
+	    return -1;
+	}
+    }
+	    
+
     public Grade(String[] marks) throws IllegalArgumentException {
 	int i;
 	double parsedMark;
 
 	// Sum all the marks given.
 	for (i = 0; i < marks.length; i++) {
-	    try {
-		parsedMark = Double.parseDouble(marks[i]);
+	    if (getDecimalPlaces(marks[i]) > 1) {
+		throw new IllegalArgumentException("The mark '" + marks[i] + "' contains too many decimal places.");
+	    } else {
+		try {
+		    parsedMark = Double.parseDouble(marks[i]);
 
-		if (parsedMark < 0 || parsedMark > 100) {
-		    throw new IllegalArgumentException("The percentage mark '" + marks[i] + "' is outside of the acceptable range!");
-		} else {
-		    rawMark += parsedMark;
+		    if (parsedMark < 0 || parsedMark > 100) {
+			throw new IllegalArgumentException("The percentage mark '" + marks[i] + "' is outside of the acceptable range!");
+		    } else {
+			rawMark += parsedMark;
+		    }
+
+		} catch (NumberFormatException nfe) {
+		    throw new IllegalArgumentException("The mark '" + marks[i] + "' is not a number!", nfe);
 		}
-
-	    } catch (NumberFormatException nfe) {
-		throw new IllegalArgumentException("The mark '" + marks[i] + "' is not a number!", nfe);
 	    }
 	}
 
