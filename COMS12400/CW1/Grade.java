@@ -1,12 +1,12 @@
 class Grade {
-    private int rawMark;
+    private int rawMark = 0;
 
     public static void main(String[] args) {
-	if (args.length != 1) {
-	    System.err.println("Usage: java Grade.class <percentage mark>");
+	if (args.length == 0) {
+	    System.err.println("Usage: java Grade.class <percentage mark> [percentage mark...]");
 	} else {
 	    try {
-		Grade grade = new Grade(args[0]);
+		Grade grade = new Grade(args);
 
 		System.out.println(grade.getGradeDesc());
 	    } catch (IllegalArgumentException iae) {
@@ -16,16 +16,27 @@ class Grade {
 	}
     }
 
-    public Grade(String mark) throws IllegalArgumentException {
-	try {
-	    rawMark = Integer.parseInt(mark);
-	} catch (NumberFormatException nfe) {
-	    throw new IllegalArgumentException("The mark given is not a number!", nfe);
+    public Grade(String[] marks) throws IllegalArgumentException {
+	int i, parsedMark;
+
+	// Sum all the marks given.
+	for (i = 0; i < marks.length; i++) {
+	    try {
+		parsedMark = Integer.parseInt(marks[i]);
+
+		if (parsedMark < 0 || parsedMark > 100) {
+		    throw new IllegalArgumentException("The percentage mark '" + marks[i] + "' is outside of the acceptable range!");
+		} else {
+		    rawMark += parsedMark;
+		}
+
+	    } catch (NumberFormatException nfe) {
+		throw new IllegalArgumentException("The mark '" + marks[i] + "' is not a number!", nfe);
+	    }
 	}
 
-	if (rawMark < 0 || rawMark > 100) {
-	    throw new IllegalArgumentException("Percentage mark is outside of the acceptable range!");
-	}
+	// Calculate the average mark.
+	rawMark = rawMark / marks.length;
     }
 
     public String getGradeDesc() {
