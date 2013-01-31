@@ -2,13 +2,17 @@ class Grade {
     private int rawMark;
 
     public static void main(String[] args) {
-	try {
-	    Grade grade = new Grade(args[0]);
+	if (args.length != 1) {
+	    System.err.println("Usage: java Grade.class <percentage mark>");
+	} else {
+	    try {
+		Grade grade = new Grade(args[0]);
 
-	    System.out.println(grade.getGradeDesc());
-	} catch (IllegalArgumentException iae) {
-	    System.err.println("Error: " + iae.getMessage());
-	    System.exit(1);
+		System.out.println(grade.getGradeDesc());
+	    } catch (IllegalArgumentException iae) {
+		System.err.println("Error: " + iae.getMessage());
+		System.exit(1);
+	    }
 	}
     }
 
