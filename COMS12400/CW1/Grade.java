@@ -1,5 +1,5 @@
 class Grade {
-    private int rawMark = 0;
+    private double rawMark = 0;
 
     public static void main(String[] args) {
 	if (args.length == 0) {
@@ -17,12 +17,13 @@ class Grade {
     }
 
     public Grade(String[] marks) throws IllegalArgumentException {
-	int i, parsedMark;
+	int i;
+	double parsedMark;
 
 	// Sum all the marks given.
 	for (i = 0; i < marks.length; i++) {
 	    try {
-		parsedMark = Integer.parseInt(marks[i]);
+		parsedMark = Double.parseDouble(marks[i]);
 
 		if (parsedMark < 0 || parsedMark > 100) {
 		    throw new IllegalArgumentException("The percentage mark '" + marks[i] + "' is outside of the acceptable range!");
