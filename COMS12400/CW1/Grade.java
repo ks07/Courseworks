@@ -1,14 +1,35 @@
+import java.text.DecimalFormat;
+import java.util.Arrays;
+
 class Grade {
     private double rawMark = 0;
 
     public static void main(String[] args) {
+	String description;
+	boolean gpa = false;
+
 	if (args.length == 0) {
 	    System.err.println("Usage: java Grade.class <percentage mark> [percentage mark...]");
 	} else {
 	    try {
+		if ("-gpa".equalsIgnoreCase(args[0])) {
+		    if (args.length == 1) {
+			throw new IllegalArgumentException("No marks were provided to calculate GPA.");
+		    } else {
+			args = Arrays.copyOfRange(args, 1, args.length);
+			gpa = true;
+		    }
+		}
+
 		Grade grade = new Grade(args);
 
-		System.out.println(grade.getGradeDesc());
+		if (gpa) {
+		    description = grade.getGPA();
+		} else {
+		    description = grade.getGradeDesc();
+		}
+
+		System.out.println(description);
 	    } catch (IllegalArgumentException iae) {
 		System.err.println("Error: " + iae.getMessage());
 		System.exit(1);
@@ -29,7 +50,6 @@ class Grade {
 	    return -1;
 	}
     }
-	    
 
     public Grade(String[] marks) throws IllegalArgumentException {
 	int i, creditPointSplit, avgDiv = marks.length;
@@ -104,5 +124,12 @@ class Grade {
 	} else {
 	    return "Perfect";
 	}
+    }
+
+    public String getGPA() {
+	DecimalFormat df = new DecimalFormat("#0.#");
+	double gpa = rawMark / 20;
+
+	return df.format(gpa).toString();
     }
 }
