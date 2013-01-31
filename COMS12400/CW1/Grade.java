@@ -8,10 +8,10 @@ class Grade {
 	String description;
 	boolean gpa = false;
 
-	if (args.length == 0) {
-	    System.err.println("Usage: java Grade.class <percentage mark> [percentage mark...]");
-	} else {
-	    try {
+	try {
+	    if (args.length == 0) {
+		throw new IllegalArgumentException("Usage: java Grade.class <percentage mark> [percentage mark...]");
+	    } else {
 		if ("-gpa".equalsIgnoreCase(args[0])) {
 		    if (args.length == 1) {
 			throw new IllegalArgumentException("No marks were provided to calculate GPA.");
@@ -30,10 +30,10 @@ class Grade {
 		}
 
 		System.out.println(description);
-	    } catch (IllegalArgumentException iae) {
-		System.err.println("Error: " + iae.getMessage());
-		System.exit(1);
 	    }
+	} catch (IllegalArgumentException iae) {
+	    System.err.println("Error: " + iae.getMessage());
+	    System.exit(1);
 	}
     }
 
