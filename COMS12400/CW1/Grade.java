@@ -82,6 +82,10 @@ class Grade {
 			parsedMark = Double.parseDouble(marks[i].substring(creditPointSplit + 1));
 			parsedUnit = Double.parseDouble(marks[i].substring(0, creditPointSplit));
 
+			if (parsedUnit <= 0) {
+			    throw new IllegalArgumentException("Credit points must be greater than 0.");
+			}
+
 			avgDiv += parsedUnit;
 		    } else {
 			parsedMark = Double.parseDouble(marks[i]);
