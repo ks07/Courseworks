@@ -3,6 +3,7 @@ import java.util.Arrays;
 
 class Grade {
     private double rawMark = 0;
+    private long roundedMark = 0;
 
     public static void main(String[] args) {
 	String description;
@@ -104,22 +105,23 @@ class Grade {
 
 	// Calculate the average mark.
 	rawMark = rawMark / avgDiv;
+	roundedMark = Math.round(rawMark);
     }
 
     public String getGradeDesc() {
-	if (rawMark < 40) {
+	if (roundedMark < 40) {
 	    return "Fail";
-	} else if (rawMark < 50) {
+	} else if (roundedMark < 50) {
 	    return "Third Class";
-	} else if (rawMark < 60) {
+	} else if (roundedMark < 60) {
 	    return "Lower Second Class";
-	} else if (rawMark < 70) {
+	} else if (roundedMark < 70) {
 	    return "Upper Second Class";
-	} else if (rawMark < 80) {
+	} else if (roundedMark < 80) {
 	    return "First";
-	} else if (rawMark < 90) {
+	} else if (roundedMark < 90) {
 	    return "Above and Beyond";
-	} else if (rawMark < 100) {
+	} else if (roundedMark < 100) {
 	    return "Publishable";
 	} else {
 	    return "Perfect";
@@ -128,7 +130,7 @@ class Grade {
 
     public String getGPA() {
 	DecimalFormat df = new DecimalFormat("#0.#");
-	double gpa = rawMark / 20;
+	double gpa = roundedMark / 20;
 
 	return df.format(gpa).toString();
     }
