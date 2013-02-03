@@ -130,7 +130,7 @@ class Grade {
 
     public String getGPA() {
 	DecimalFormat df = new DecimalFormat("#0.#");
-	double gpa = roundedMark / 20;
+	double gpa = (double)roundedMark / 20.0d;
 
 	return df.format(gpa).toString();
     }
