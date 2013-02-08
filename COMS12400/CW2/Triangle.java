@@ -2,27 +2,44 @@ public class Triangle {
     private long A, B, C;
 
     public static void main(String[] args) {
+	    
         try {
             Triangle tri = new Triangle();
-            tri.init(args);
 
-            System.out.println(tri.getType());
+	    if (args.length == 0) {
+		// Run tests if no arguments are supplied.
+		tri.doTests();
+	    } else {
+		tri.init(args);
+
+		System.out.println(tri.getType());
+	    }
         } catch (IllegalArgumentException iae) {
             System.err.println("Error: " + iae.getMessage());
+	    System.exit(1);
         }
     }
 
-    //    public static void doTests() {
-    //        Triangle test;
-    //
-    //        test = new Triangle(0, 0, 0);
-    //    }
-    //
-    //    public static boolean check(String args[], String expect) {
-    //        Triangle test;
-    //
-    //        test = new Triangle(0, 0, 0);
-    //    }
+    void doTests() throws  {
+        check("0 0 0", false, "Lengths must be at least 1.");
+    }
+
+    void check(String line, boolean ok, String expect) {
+        String args[] = line.split(" ");
+
+	try {
+	    init(args);
+
+	    if (!getType().equals(expect)) {
+		throw new Error(line);
+	    }
+	} catch (IllegalArgumentException iae) {
+	    if (ok) {
+		// This should not have resulted in an error.
+		throw new Error(line);
+	    }
+	}
+    }
 
     void init(String[] args) throws IllegalArgumentException {
         long lengths[] = parseSides(args);
