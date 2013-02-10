@@ -20,8 +20,16 @@ public class Triangle {
         }
     }
 
-    void doTests() throws  {
+    void doTests() {
         check("0 0 0", false, "Lengths must be at least 1.");
+	check("3 4 5", true, "Right-Angled");
+	check("10 10 10", true, "Equilateral");
+	check("10 10 9", true, "Isosceles");
+	check("7 8 9", true, "Scalene");
+	check("a b c", false, "Side lengths not integers.");
+	check("345", false, "Not given three sides.");
+	check("1.2 3.4 5.6", false, "Side lengths not integers.");
+	check("1 15 100", false, "Not a triangle.");
     }
 
     void check(String line, boolean ok, String expect) {
@@ -34,10 +42,9 @@ public class Triangle {
 		throw new Error(line);
 	    }
 	} catch (IllegalArgumentException iae) {
-	    if (ok) {
-		// This should not have resulted in an error.
+	    if (ok || !iae.getMessage().equals(expect)) {
 		throw new Error(line);
-	    }
+	    }	
 	}
     }
 
