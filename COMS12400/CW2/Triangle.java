@@ -2,50 +2,50 @@ public class Triangle {
     private long A, B, C;
 
     public static void main(String[] args) {
-	    
+
         try {
             Triangle tri = new Triangle();
 
-	    if (args.length == 0) {
-		// Run tests if no arguments are supplied.
-		tri.doTests();
-	    } else {
-		tri.init(args);
+            if (args.length == 0) {
+                // Run tests if no arguments are supplied.
+                tri.doTests();
+            } else {
+                tri.init(args);
 
-		System.out.println(tri.getType());
-	    }
+                System.out.println(tri.getType());
+            }
         } catch (IllegalArgumentException iae) {
             System.err.println("Error: " + iae.getMessage());
-	    System.exit(1);
+            System.exit(1);
         }
     }
 
     void doTests() {
         check("0 0 0", false, "Lengths must be at least 1.");
-	check("3 4 5", true, "Right-Angled");
-	check("10 10 10", true, "Equilateral");
-	check("10 10 9", true, "Isosceles");
-	check("7 8 9", true, "Scalene");
-	check("a b c", false, "Side lengths not integers.");
-	check("345", false, "Not given three sides.");
-	check("1.2 3.4 5.6", false, "Side lengths not integers.");
-	check("1 15 100", false, "Not a triangle.");
+        check("3 4 5", true, "Right-Angled");
+        check("10 10 10", true, "Equilateral");
+        check("10 10 9", true, "Isosceles");
+        check("7 8 9", true, "Scalene");
+        check("a b c", false, "Side lengths not integers.");
+        check("345", false, "Not given three sides.");
+        check("1.2 3.4 5.6", false, "Side lengths not integers.");
+        check("1 15 100", false, "Not a triangle.");
     }
 
     void check(String line, boolean ok, String expect) {
         String args[] = line.split(" ");
 
-	try {
-	    init(args);
+        try {
+            init(args);
 
-	    if (!getType().equals(expect)) {
-		throw new Error(line);
-	    }
-	} catch (IllegalArgumentException iae) {
-	    if (ok || !iae.getMessage().equals(expect)) {
-		throw new Error(line);
-	    }	
-	}
+            if (!getType().equals(expect)) {
+                throw new Error(line);
+            }
+        } catch (IllegalArgumentException iae) {
+            if (ok || !iae.getMessage().equals(expect)) {
+                throw new Error(line);
+            }
+        }
     }
 
     void init(String[] args) throws IllegalArgumentException {
