@@ -30,4 +30,9 @@ class Position
     {
         return col;
     }
+
+    @Override
+    public String toString() {
+        return "(" + Integer.toString(row) + ", " + Integer.toString(col) + ")";
+    }
 }

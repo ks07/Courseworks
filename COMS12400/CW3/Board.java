@@ -1,5 +1,7 @@
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Board {
 
@@ -9,26 +11,180 @@ public class Board {
     private final Player[][] grid;
 
     private Player turn;
-    private Player gameState = Player.None;
+    private Player gameState;
 
     public Board() {
 	posRegex = Pattern.compile("([abc])([123])");
 	grid = new Player[DIMENSIONS][DIMENSIONS];
+
+        // Initialise the grid.
+        for (int i = 0; i < DIMENSIONS; i++) {
+            for (int j = 0; j < DIMENSIONS; j++) {
+                grid[i][j] = Player.None;
+            }
+        }
+
 	turn = Player.X;
+        gameState = Player.None;
     }
 
     public Position position(String s) {
 	Matcher match = posRegex.matcher(s);
 
 	if (match.matches()) {
-	    int let = letterToIndex(match.group(1));
-	    int num = Integer.parseInt(match.group(2));
+	    int col = letterToIndex(match.group(1));
+	    int row = Integer.parseInt(match.group(2));
 
-	    return new Position(let, num);
+            // Rows are 1 based to the user, 0 based internally.
+            row = row - 1;
+
+	    Position ret = new Position(row, col);
+
+            if (isOccupied(ret)) {
+                // The space is not free, return null.
+                return null;
+            } else {
+                return ret;
+            }
 	} else {
-	    println("null");
 	    return null;
 	}
+    }
+
+    public void move(Position pos) {
+        grid[pos.row()][pos.col()] = this.turn;
+
+        // Switch to the next players turn.
+        if (this.turn == Player.X) {
+            this.turn = Player.O;
+        } else {
+            this.turn = Player.X;
+        }
+    }
+
+    public Player winner() {
+        int r, c;
+        Player curr;
+
+        // Check vertical.
+        for (r = 0; r < DIMENSIONS; r++) {
+            curr = grid[r][0];
+
+            if (curr == Player.X || curr == Player.O) {
+                for (c = 1; c < DIMENSIONS; c++) {
+                    if (curr != grid[r][c]) {
+                        curr = Player.None;
+                    }
+                }
+
+                if (curr == Player.X || curr == Player.O) {
+                    // Found a vertical line, return the player.
+                    return curr;
+                }
+            }
+        }
+
+        // Check horizontal.
+        for (c = 0; c < DIMENSIONS; c++) {
+            curr = grid[0][c];
+
+            if (curr == Player.X || curr == Player.O) {
+                for (r = 1; r < DIMENSIONS; r++) {
+                    if (curr != grid[r][c]) {
+                        curr = Player.None;
+                    }
+                }
+
+                if (curr == Player.X || curr == Player.O) {
+                    // Found a vertical line, return the player.
+                    return curr;
+                }
+            }
+        }
+
+        // Check diagonal.
+        curr = grid[0][0];
+        c = 1;
+        for (r = 1; r < DIMENSIONS; r++) {
+            if (curr != grid[r][c]) {
+                curr = Player.None;
+            }
+
+            c++;
+        }
+        if (curr == Player.X || curr == Player.O) {
+            // Found a vertical line, return the player.
+            return curr;
+        }
+
+        curr = grid[0][2];
+        r = 1;
+        c = 1;
+        while (r < DIMENSIONS) {
+            if (curr != grid[r][c]) {
+                curr = Player.None;
+            }
+
+            r++;
+            c--;
+        }
+        if (curr == Player.X || curr == Player.O) {
+            // Found a vertical line, return the player.
+            return curr;
+        }
+
+        if (blanks().length == 0) {
+            return Player.Both;
+        } else {
+            return Player.None;
+        }
+    }
+
+    public Position[] blanks() {
+        ArrayList<Position> arr = new ArrayList<Position>();
+
+        for (int i = 0; i < DIMENSIONS; i++) {
+            for (int j = 0; j < DIMENSIONS; j++) {
+                if (grid[i][j] == Player.None) {
+                    arr.add(new Position(i, j));
+                }
+            }
+        }
+
+        return arr.toArray(new Position[0]);
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder(DIMENSIONS * DIMENSIONS);
+
+        for (int i = 0; i < DIMENSIONS; i++) {
+            for (int j = 0; j < DIMENSIONS; j++) {
+                switch (grid[j][i]) {
+                case X:
+                    sb.append('X');
+                    break;
+                case O:
+                    sb.append('O');
+                    break;
+                default:
+                    sb.append('.');
+                }
+            }
+
+            sb.append('\n');
+        }
+
+        return sb.toString();
+    }
+
+    private boolean isOccupied(Position pos) {
+        switch (grid[pos.row()][pos.col()]) {
+        case X:
+        case O:
+            return true;
+        default:
+            return false;
+        }
     }
 
     private int letterToIndex(String l) {
@@ -40,9 +196,27 @@ public class Board {
     public static void main(String[] args) {
 	// Run tests.
 	Board b = new Board();
-	println(b.position("a0").toString());
-	println(b.position("b2").toString());
-	println(b.position("c1").toString());
+	println(b.position("a2").toString());
+	println(b.position("b1").toString());
+	println(b.position("c3").toString());
+        println(Arrays.toString(b.blanks()));
+        println(b.winner().toString());
+        println(b.toString());
+        b.move(b.position("a2"));
+        b.move(b.position("c3"));
+        b.move(b.position("b1"));
+        
+        b.move(b.position("b2"));
+        b.move(b.position("b3"));
+        b.move(b.position("c2"));
+
+        b.move(b.position("a1"));
+        b.move(b.position("c1"));
+        //        b.move(b.position("a3"));
+
+        println(b.toString());
+        
+        println(b.winner().toString());
     }
 
     public static void println(String s) {
