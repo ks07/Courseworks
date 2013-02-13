@@ -26,6 +26,7 @@ public class Board {
 
 	    return new Position(let, num);
 	} else {
+	    println("null");
 	    return null;
 	}
     }
@@ -36,14 +37,15 @@ public class Board {
 	return val - 97;
     }
 
-    public static int main(String[] args) {
+    public static void main(String[] args) {
 	// Run tests.
 	Board b = new Board();
-	println(b.position("a0"));
-	println(b.position("b2"));
-	println(b.position("c1"));
+	println(b.position("a0").toString());
+	println(b.position("b2").toString());
+	println(b.position("c1").toString());
     }
 
     public static void println(String s) {
 	System.out.println(s);
     }
+}
