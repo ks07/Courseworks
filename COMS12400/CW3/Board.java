@@ -155,9 +155,23 @@ public class Board {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder(DIMENSIONS * DIMENSIONS);
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("     1   2   3\n\n");
 
         for (int i = 0; i < DIMENSIONS; i++) {
+            switch (i) {
+            case 0:
+                sb.append(" a   ");
+                break;
+            case 1:
+                sb.append(" b   ");
+                break;
+            case 2:
+                sb.append(" c   ");
+                break;
+            }
+
             for (int j = 0; j < DIMENSIONS; j++) {
                 switch (grid[j][i]) {
                 case X:
@@ -167,11 +181,19 @@ public class Board {
                     sb.append('O');
                     break;
                 default:
-                    sb.append('.');
+                    sb.append(' ');
+                }
+
+                if (j < DIMENSIONS - 1) {
+                    sb.append(" | ");
                 }
             }
 
             sb.append('\n');
+
+            if (i < DIMENSIONS - 1) {
+                sb.append("    ---+---+---\n");
+            }
         }
 
         return sb.toString();
