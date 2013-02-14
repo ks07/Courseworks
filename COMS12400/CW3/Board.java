@@ -152,6 +152,10 @@ public class Board {
         return arr.toArray(new Position[0]);
     }
 
+    public Position suggest() {
+        return null;
+    }
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
