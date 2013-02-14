@@ -8,7 +8,7 @@ public class Board {
     private static final int DIMENSIONS = 3;
 
     private final Pattern posRegex;
-    private final Player[][] grid;
+    public final Player[][] grid;
 
     private Player turn;
     private Player gameState;
@@ -52,13 +52,11 @@ public class Board {
     }
 
     public void move(Position pos) {
-        grid[pos.row()][pos.col()] = this.turn;
+        if (this.turn == Player.X || this.turn == Player.O) {
+            grid[pos.row()][pos.col()] = this.turn;
 
-        // Switch to the next players turn.
-        if (this.turn == Player.X) {
-            this.turn = Player.O;
-        } else {
-            this.turn = Player.X;
+            // Switch to the next players turn.
+            this.turn = Player.other();
         }
     }
 
@@ -162,30 +160,32 @@ public class Board {
         for (int i = 0; i < DIMENSIONS; i++) {
             switch (i) {
             case 0:
-                sb.append(" a   ");
+                sb.append(" a  ");
                 break;
             case 1:
-                sb.append(" b   ");
+                sb.append(" b  ");
                 break;
             case 2:
-                sb.append(" c   ");
+                sb.append(" c  ");
                 break;
             }
 
             for (int j = 0; j < DIMENSIONS; j++) {
                 switch (grid[j][i]) {
                 case X:
-                    sb.append('X');
+                    sb.append(" X");
                     break;
                 case O:
-                    sb.append('O');
+                    sb.append(" O");
                     break;
                 default:
-                    sb.append(' ');
+                    if (j < DIMENSIONS - 1) {
+                        sb.append("  ");
+                    }
                 }
 
                 if (j < DIMENSIONS - 1) {
-                    sb.append(" | ");
+                    sb.append(" |");
                 }
             }
 
@@ -218,26 +218,21 @@ public class Board {
     public static void main(String[] args) {
 	// Run tests.
 	Board b = new Board();
-	println(b.position("a2").toString());
-	println(b.position("b1").toString());
-	println(b.position("c3").toString());
-        println(Arrays.toString(b.blanks()));
-        println(b.winner().toString());
-        println(b.toString());
+
         b.move(b.position("a2"));
-        b.move(b.position("c3"));
+        b.move(b.position("a3"));
         b.move(b.position("b1"));
-        
         b.move(b.position("b2"));
-        b.move(b.position("b3"));
-        b.move(b.position("c2"));
-
-        b.move(b.position("a1"));
-        b.move(b.position("c1"));
-        //        b.move(b.position("a3"));
+        
+        b.grid[1][2] = Player.O;
 
         println(b.toString());
-        
+        if ("     1   2   3\n\n a     | X | O\n    ---+---+---\n b   X | O |\n    ---+---+---\n c     | O |\n".equals(b.toString())) {
+            println("yes");
+        } else {
+            println("no");
+        }
+
         println(b.winner().toString());
     }
 
