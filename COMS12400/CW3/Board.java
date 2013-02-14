@@ -8,6 +8,7 @@ public class Board {
     private static final int DIMENSIONS = 3;
 
     private final Pattern posRegex;
+    // grid[row][col] / grid[y][x]
     public final Player[][] grid;
 
     private Player turn;
@@ -242,5 +243,105 @@ public class Board {
 
     public static void println(String s) {
 	System.out.println(s);
+    }
+
+    private class aiProvider {
+
+        // Finds the first pair belonging to ply that could allow a win.
+        private Position[] findPair(Player ply) {
+            // Need to check a diagonal line on the 3 by 3 grid.
+            Player pos = grid[0][0];
+            Player adj, next;
+            // 0 = empty slot
+            Position[] ret = new Position[3];
+
+            if (pos == ply) {
+                adj = grid[0][1];
+
+                if (adj == pos) {
+                    next = grid[0][2];
+                    
+                    if (next == Player.None) {
+                        ret[0] = new Position(0, 2);
+                        ret[1] = new Position(0, 1);
+                        ret[2] = new Position(0, 0);
+
+                        return ret;
+                    }
+                }
+
+                adj = grid[1][0];
+
+                if (adj == pos) {
+                    next = grid[2][0];
+
+                    if (next == Player.None) {
+                        ret[0] = new Position(2, 0);
+                        ret[1] = new Position(1, 0);
+                        ret[2] = new Position(0, 0);
+
+                        return ret;
+                    }
+                }
+            }
+
+            pos = grid[1][1];
+
+            if (pos == ply) {
+                adj = grid[1][0];
+
+                if (adj == pos) {
+                    next = grid[1][2];
+
+                    if (next == Player.None) {
+                        ret[0] = new Position(1, 2);
+                        ret[1] = new Position(1, 0);
+                        ret[2] = new Position(1, 1);
+
+                        return ret;
+                    }
+                }
+            }
+        }
+
+        private Position checkHV(Player ply, Position inc) {
+            // Check H.
+            for (int col = 0; col < DIMENSIONS; col++) {
+            }
+        }
+
+        private Position checkDiag(Player ply) {
+
+        }
+
+        // Checks for a player's pair in a given direction including a point.
+        private Position checkDirection(Player ply, Position orig, Direction dir) {
+            int plyCount = 0;
+            int colDiff = 0;
+            int rowDiff = 0;
+
+            switch (dir) {
+            case V:
+                rowDiff = 1;
+                break;
+            case H:
+                colDiff = 1;
+                break;
+            case DR:
+                colDiff = 1;
+                rowDiff = 1;
+                break;
+            case DL:
+                colDiff = -1;
+                rowDiff = 1;
+            }
+
+            return null;
+        }
+
+        enum Direction {
+            // Horizontal, Vertical, DownRight, DownLeft
+            H, V, DR, DL;
+        }
     }
 }
