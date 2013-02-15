@@ -14,6 +14,10 @@ public class Board {
     private Player turn;
     private Player gameState;
 
+    // Store a map of pairs. Keys are the 'win spot', values are an occupied spot in that pair.
+    private HashMap<Position, Position> xPairs = new HashMap<Position, Position>();
+    private HashMap<Position, Position> oPairs = new HashMap<Position, Position>();
+
     public Board() {
 	posRegex = Pattern.compile("([abc])([123])");
 	grid = new Player[DIMENSIONS][DIMENSIONS];
@@ -56,8 +60,107 @@ public class Board {
         if (this.turn == Player.X || this.turn == Player.O) {
             grid[pos.row()][pos.col()] = this.turn;
 
+            // Check if we have made any pairs horizontally.
+            int found = 0;
+            int col = 0;
+            int row = pos.row();
+
+            for (col = 0; col < DIMENSIONS; col++) {
+                if (grid[row][col] == this.turn) {
+                    found++;
+                } else if (grid[row][col] == Player.other()) {
+                    found = -3;
+                }
+            }
+
+            if (found == 2) {
+                if (this.turn == Player.X) {
+                    xPairs.add(new Position(row, col), pos);
+                } else {
+                    oPairs.add(new Position(row, col), pos);
+                }
+            }
+
+            // Check vertically.
+            col = pos.col();
+            found = 0;
+
+            for (row = 0; row < DIMENSIONS; row++) {
+                if (grid[row][col] == this.turn) {
+                    found++;
+                } else if (grid[row][col] == Player.other()) {
+                    found = -3;
+                }
+            }
+
+            if (found == 2) {
+                      oPairs.add(new Position(row, col), pos);
+                }
+            }
+
+            // Check down right if applicable.
+            if (isDR(pos)) {
+                col = 0;
+                found = 0;
+                for (row = 0; row < DIMENSIONS; row++) {
+                    if (grid[row][col] == this.turn) {
+                        found++;
+                    } else if (grid[row][col] == Player.other()) {
+                        found = -3;
+                    }
+
+                    col++;
+                }
+
+                if (found == 2) {
+                    if (this.turn == Player.X) {
+                        xPairs.add(new Position(row, col), pos);
+                    } else {
+                        oPairs.add(new Position(row, col), pos);
+                    }
+                }
+            }
+
+            if (isDR(pos)) {
+                col = 0;
+                found = 0;
+                for (row = 0; row < DIMENSIONS; row++) {
+                    if (grid[row][col] == this.turn) {
+                        found++;
+                    } else if (grid[row][col] == Player.other()) {
+                        found = -3;
+                    }
+
+                    col++;
+                }
+
+                if (found == 2) {
+                    if (this.turn == Player.X) {
+                        xPairs.add(new Position(row, col), pos);
+                    } else {
+                        oPairs.add(new Position(row, col), pos);
+                    }
+                }
+            }
+
             // Switch to the next players turn.
             this.turn = Player.other();
+        }
+    }
+
+    private boolean isDR(Position pos) {
+        if (pos.row() == pos.col()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isDL(Position pos) {
+        if ((pos.row() == 0 && pos.col() == 2) || (pos.row() == 1 && pos.col() == 1) || (pos.row() == 2 && pos.col() == 0)) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -243,105 +346,5 @@ public class Board {
 
     public static void println(String s) {
 	System.out.println(s);
-    }
-
-    private class aiProvider {
-
-        // Finds the first pair belonging to ply that could allow a win.
-        private Position[] findPair(Player ply) {
-            // Need to check a diagonal line on the 3 by 3 grid.
-            Player pos = grid[0][0];
-            Player adj, next;
-            // 0 = empty slot
-            Position[] ret = new Position[3];
-
-            if (pos == ply) {
-                adj = grid[0][1];
-
-                if (adj == pos) {
-                    next = grid[0][2];
-                    
-                    if (next == Player.None) {
-                        ret[0] = new Position(0, 2);
-                        ret[1] = new Position(0, 1);
-                        ret[2] = new Position(0, 0);
-
-                        return ret;
-                    }
-                }
-
-                adj = grid[1][0];
-
-                if (adj == pos) {
-                    next = grid[2][0];
-
-                    if (next == Player.None) {
-                        ret[0] = new Position(2, 0);
-                        ret[1] = new Position(1, 0);
-                        ret[2] = new Position(0, 0);
-
-                        return ret;
-                    }
-                }
-            }
-
-            pos = grid[1][1];
-
-            if (pos == ply) {
-                adj = grid[1][0];
-
-                if (adj == pos) {
-                    next = grid[1][2];
-
-                    if (next == Player.None) {
-                        ret[0] = new Position(1, 2);
-                        ret[1] = new Position(1, 0);
-                        ret[2] = new Position(1, 1);
-
-                        return ret;
-                    }
-                }
-            }
-        }
-
-        private Position checkHV(Player ply, Position inc) {
-            // Check H.
-            for (int col = 0; col < DIMENSIONS; col++) {
-            }
-        }
-
-        private Position checkDiag(Player ply) {
-
-        }
-
-        // Checks for a player's pair in a given direction including a point.
-        private Position checkDirection(Player ply, Position orig, Direction dir) {
-            int plyCount = 0;
-            int colDiff = 0;
-            int rowDiff = 0;
-
-            switch (dir) {
-            case V:
-                rowDiff = 1;
-                break;
-            case H:
-                colDiff = 1;
-                break;
-            case DR:
-                colDiff = 1;
-                rowDiff = 1;
-                break;
-            case DL:
-                colDiff = -1;
-                rowDiff = 1;
-            }
-
-            return null;
-        }
-
-        enum Direction {
-            // Horizontal, Vertical, DownRight, DownLeft
-            H, V, DR, DL;
-        }
     }
 }
