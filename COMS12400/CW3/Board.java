@@ -32,11 +32,11 @@ public class Board {
 	Matcher match = posRegex.matcher(s);
 
 	if (match.matches()) {
-	    int col = letterToIndex(match.group(1));
-	    int row = Integer.parseInt(match.group(2));
+	    int row = letterToIndex(match.group(1));
+	    int col = Integer.parseInt(match.group(2));
 
-            // Rows are 1 based to the user, 0 based internally.
-            row = row - 1;
+            // Cols are 1 based to the user, 0 based internally.
+            col = col - 1;
 
 	    Position ret = new Position(row, col);
 
@@ -54,9 +54,16 @@ public class Board {
     public void move(Position pos) {
         if (this.turn == Player.X || this.turn == Player.O) {
             grid[pos.row()][pos.col()] = this.turn;
-
+            println("Setting: " + pos.toString());
             // Switch to the next players turn.
             this.turn = this.turn.other();
+
+            Position p = findPair(this.turn);
+            if (p != null) {
+                println(p.toString());
+            } else {
+                println("No pairs");
+            }
         }
     }
 
@@ -104,6 +111,40 @@ public class Board {
         }
     }
 
+    private Position checkDiag(int row, int col, int rD, int cD, Player ply) {
+        int count = 0;
+        Position empty = null;
+
+        for (; row >= 0 && row < DIMENSIONS; row = row + rD) {
+            if (grid[row][col] == ply) {
+                count++;
+            } else if (grid[row][col] == ply.other()) {
+                return null;
+            } else {
+                empty = new Position(row, col);
+            }
+
+            col = col + cD;
+        }
+
+        if (count == 2) {
+            return empty;
+        } else {
+            return null;
+        }
+    }
+
+    // Returns the empty
+    private Position checkDiagonals(Player ply) {
+        Position empty = checkDiag(0, 0, 1, 1, ply);
+
+        if (empty != null) {
+            return empty;
+        } else {
+            return checkDiag(0, 2, 1, -1, ply);
+        }
+    }
+
     // Finds the first empty spot from a position horiz or vertically.
     // Returns null if neither contain a suitable pair.
     private Position findPairFromPos(Position pos, Player ply) {
@@ -135,48 +176,6 @@ public class Board {
 
         // If we haven't returned yet, the only remaining possible spots are diagonals.
         return checkDiagonals(ply);
-    }
-
-    // Returns the empty 
-    private Position checkDiagonals(Player ply) {
-        int row, col = 0, count = 0;
-        Position empty = null;
-
-        for (row = 0; row < DIMENSIONS; row++) {
-            if (grid[row][col] == ply) {
-                count++;
-            } else if (grid[row][col] == ply.other()) {
-                return null;
-            } else {
-                empty = new Position(row, col);
-            }
-
-            col++;
-        }
-
-        if (count == 2) {
-            return empty;
-        } else {
-            col = 2;
-
-            for (row = 0; row < DIMENSIONS; row++) {
-                if (grid[row][col] == ply) {
-                    count++;
-                } else if (grid[row][col] == ply.other()) {
-                    return null;
-                } else {
-                    empty = new Position(row, col);
-                }
-
-                col--;
-            }
-
-            if (count == 2) {
-                return empty;
-            } else {
-                return null;
-            }
-        }
     }
 
     public Player winner() {
@@ -280,8 +279,8 @@ public class Board {
 
         sb.append("     1   2   3\n\n");
 
-        for (int i = 0; i < DIMENSIONS; i++) {
-            switch (i) {
+        for (int row = 0; row < DIMENSIONS; row++) {
+            switch (row) {
             case 0:
                 sb.append(" a  ");
                 break;
@@ -293,8 +292,8 @@ public class Board {
                 break;
             }
 
-            for (int j = 0; j < DIMENSIONS; j++) {
-                switch (grid[j][i]) {
+            for (int col = 0; col < DIMENSIONS; col++) {
+                switch (grid[row][col]) {
                 case X:
                     sb.append(" X");
                     break;
@@ -302,19 +301,19 @@ public class Board {
                     sb.append(" O");
                     break;
                 default:
-                    if (j < DIMENSIONS - 1) {
+                    if (col < DIMENSIONS - 1) {
                         sb.append("  ");
                     }
                 }
 
-                if (j < DIMENSIONS - 1) {
+                if (col < DIMENSIONS - 1) {
                     sb.append(" |");
                 }
             }
 
             sb.append('\n');
 
-            if (i < DIMENSIONS - 1) {
+            if (row < DIMENSIONS - 1) {
                 sb.append("    ---+---+---\n");
             }
         }
