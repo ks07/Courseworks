@@ -70,52 +70,33 @@ public class Board {
     // Returns the empty slot in the horizontal line covering pos, if this is a pair for the player.
     // Returns null if this line is full, contains only 1 mark, or contains both players.
     private Position checkHoriz(Position pos, Player ply) {
-        int col, count = 0;
-        Position empty = null;
-
-        for (col = 0; col < DIMENSIONS; col++) {
-            if (grid[pos.row()][col] == ply) {
-                count++;
-            } else if (grid[pos.row()][col] == ply.other()) {
-                return null;
-            } else {
-                empty = new Position(pos.row(), col);
-            }
-        }
-
-        if (count == 2) {
-            return empty;
-        } else {
-            return null;
-        }
+        return checkDir(pos.row(), 0, 0, 1, ply);
     }
 
     private Position checkVert(Position pos, Player ply) {
-        int row, count = 0;
-        Position empty = null;
+        return checkDir(0, pos.col(), 1, 0, ply);
+    }
 
-        for (row = 0; row < DIMENSIONS; row++) {
-            if (grid[row][pos.col()] == ply) {
-                count++;
-            } else if (grid[row][pos.col()] == ply.other()) {
-                return null;
-            } else {
-                empty = new Position(row, pos.col());
-            }
-        }
+    // Returns the empty
+    private Position checkDiagonals(Player ply) {
+        Position empty = checkDir(0, 0, 1, 1, ply);
 
-        if (count == 2) {
+        if (empty != null) {
             return empty;
         } else {
-            return null;
+            return checkDir(0, 2, 1, -1, ply);
         }
     }
 
-    private Position checkDiag(int row, int col, int rD, int cD, Player ply) {
+    private boolean checkBounds(int row, int col) {
+        return row >= 0 && col >= 0 && row < DIMENSIONS && col < DIMENSIONS;
+    }
+
+    private Position checkDir(int row, int col, int rD, int cD, Player ply) {
         int count = 0;
         Position empty = null;
 
-        for (; row >= 0 && row < DIMENSIONS; row = row + rD) {
+        for (; checkBounds(row, col); row = row + rD) {
             if (grid[row][col] == ply) {
                 count++;
             } else if (grid[row][col] == ply.other()) {
@@ -131,17 +112,6 @@ public class Board {
             return empty;
         } else {
             return null;
-        }
-    }
-
-    // Returns the empty
-    private Position checkDiagonals(Player ply) {
-        Position empty = checkDiag(0, 0, 1, 1, ply);
-
-        if (empty != null) {
-            return empty;
-        } else {
-            return checkDiag(0, 2, 1, -1, ply);
         }
     }
 
