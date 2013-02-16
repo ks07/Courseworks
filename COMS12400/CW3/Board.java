@@ -2,6 +2,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ListIterator;
 
 public class Board {
 
@@ -15,8 +16,8 @@ public class Board {
     private Player gameState;
 
     // Store a map of pairs. Keys are the 'win spot', values are an occupied spot in that pair.
-    private HashMap<Position, Position> xPairs = new HashMap<Position, Position>();
-    private HashMap<Position, Position> oPairs = new HashMap<Position, Position>();
+    public ArrayList<PositionPair> xPairs = new ArrayList<PositionPair>();
+    public ArrayList<PositionPair> oPairs = new ArrayList<PositionPair>();
 
     public Board() {
 	posRegex = Pattern.compile("([abc])([123])");
@@ -56,28 +57,76 @@ public class Board {
 	}
     }
 
+    private void addPair(int emptyRow, int emptyCol, int dRow, int dCol, Player ply) {
+        PositionPair pp = new PositionPair(emptyRow, emptyCol, dRow, dCol);
+
+        if (ply == Player.X) {
+            xPairs.add(pp);
+        } else {
+            oPairs.add(pp);
+        }
+    }
+
+    private boolean isPair(int row, int col, Player ply) {
+        ArrayList search;
+
+        if (ply == Player.x) {
+            search = xPairs;
+        } else {
+            search = oPairs;
+        }
+
+        for (PositionPair pp : search) {
+            if (pp.empty.row() == row && pp.empty.col() == col) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void rmPair(int row, int col, Player ply) {
+        ArrayList search;
+
+        if (ply == Player.x) {
+            search = xPairs;
+        } else {
+            search = oPairs;
+        }
+
+        ListIterator it = search.listIterator();
+
+        while (it) {
+            if (pp.empty.row() == row && pp.empty.col() == col) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void move(Position pos) {
         if (this.turn == Player.X || this.turn == Player.O) {
             grid[pos.row()][pos.col()] = this.turn;
 
             // Check if we have made any pairs horizontally.
             int found = 0;
-            int col = 0;
+            int col;
             int row = pos.row();
 
             for (col = 0; col < DIMENSIONS; col++) {
                 if (grid[row][col] == this.turn) {
                     found++;
-                } else if (grid[row][col] == Player.other()) {
+                } else if (grid[row][col] == this.turn.other()) {
                     found = -3;
                 }
             }
 
             if (found == 2) {
                 if (this.turn == Player.X) {
-                    xPairs.add(new Position(row, col), pos);
+                    xPairs.put(new Position(row, col), pos);
                 } else {
-                    oPairs.add(new Position(row, col), pos);
+                    oPairs.put(new Position(row, col), pos);
                 }
             }
 
@@ -88,63 +137,185 @@ public class Board {
             for (row = 0; row < DIMENSIONS; row++) {
                 if (grid[row][col] == this.turn) {
                     found++;
-                } else if (grid[row][col] == Player.other()) {
+                } else if (grid[row][col] == this.turn.other()) {
                     found = -3;
                 }
             }
 
             if (found == 2) {
-                      oPairs.add(new Position(row, col), pos);
+                if (this.turn == Player.X) {
+                    xPairs.put(new Position(row, col), pos);
+                } else {
+                    oPairs.put(new Position(row, col), pos);
                 }
             }
 
             // Check down right if applicable.
             if (isDR(pos)) {
-                col = 0;
+                col = -1;
                 found = 0;
                 for (row = 0; row < DIMENSIONS; row++) {
+                    col++;
+
                     if (grid[row][col] == this.turn) {
                         found++;
-                    } else if (grid[row][col] == Player.other()) {
+                    } else if (grid[row][col] == this.turn.other()) {
                         found = -3;
                     }
-
-                    col++;
                 }
 
                 if (found == 2) {
                     if (this.turn == Player.X) {
-                        xPairs.add(new Position(row, col), pos);
+                        xPairs.put(new Position(row, col), pos);
                     } else {
-                        oPairs.add(new Position(row, col), pos);
+                        oPairs.put(new Position(row, col), pos);
                     }
                 }
             }
 
-            if (isDR(pos)) {
-                col = 0;
+            if (isDL(pos)) {
+                col = 3;
                 found = 0;
                 for (row = 0; row < DIMENSIONS; row++) {
+                    col--;
+
                     if (grid[row][col] == this.turn) {
                         found++;
-                    } else if (grid[row][col] == Player.other()) {
+                    } else if (grid[row][col] == this.turn.other()) {
                         found = -3;
                     }
-
-                    col++;
                 }
 
                 if (found == 2) {
                     if (this.turn == Player.X) {
-                        xPairs.add(new Position(row, col), pos);
+                        xPairs.put(new Position(row, col), pos);
                     } else {
-                        oPairs.add(new Position(row, col), pos);
+                        oPairs.put(new Position(row, col), pos);
                     }
                 }
             }
 
             // Switch to the next players turn.
-            this.turn = Player.other();
+            this.turn = this.turn.other();
+        }
+    }
+
+    // Returns the empty slot in the horizontal line covering pos, if this is a pair for the player.
+    // Returns null if this line is full, contains only 1 mark, or contains both players.
+    private Position checkHoriz(Position pos, Player ply) {
+        int col, count = 0;
+        Position empty = null;
+
+        for (col = 0; col < DIMENSIONS; col++) {
+            if (grid[pos.row()][col] == ply) {
+                count++;
+            } else if (grid[pos.row()][col] == ply.other()) {
+                return null;
+            } else {
+                empty = new Position(pos.row(), col);
+            }
+        }
+
+        if (count == 2) {
+            return empty;
+        } else {
+            return null;
+        }
+    }
+
+    private Position checkVert(Position pos, Player ply) {
+        int row, count = 0;
+        Position empty = null;
+
+        for (row = 0; row < DIMENSIONS; row++) {
+            if (grid[row][pos.col()] == ply) {
+                count++;
+            } else if (grid[row][pos.col()] == ply.other()) {
+                return null;
+            } else {
+                empty = new Position(row, pos.col());
+            }
+        }
+
+        if (count == 2) {
+            return empty;
+        } else {
+            return null;
+        }
+    }
+
+    // Finds the first empty spot from a position horiz or vertically.
+    // Returns null if neither contain a suitable pair.
+    private Position findPairFromPos(Position pos, Player ply) {
+        Position empty = checkHoriz(pos, ply);
+
+        if (empty != null) {
+            return empty;
+        } else {
+            empty = checkVert(pos, ply);
+            return empty;
+        }
+    }
+
+    // Finds the first empty spot suitable for a pair for the given player.
+    // Returns null if all are empty.
+    private Position findPair(Player ply) {
+        int row = 0, col = 0;
+        Position empty;
+
+        for (; row < DIMENSIONS; row++) {
+            empty = findPairFromPos(new Position(row, col), ply);
+
+            if (empty != null) {
+                return empty;
+            }
+
+            col++;
+        }
+
+        // If we haven't returned yet, the only remaining possible spots are diagonals.
+        return checkDiagonals(ply);
+    }
+
+    // Returns the empty 
+    private Position checkDiagonals(Player ply) {
+        int row, col = 0, count = 0;
+        Position empty = null;
+
+        for (row = 0; row < DIMENSIONS; row++) {
+            if (grid[row][col] == ply) {
+                count++;
+            } else if (grid[row][col] == ply.other()) {
+                return null;
+            } else {
+                empty = new Position(row, col);
+            }
+
+            col++;
+        }
+
+        if (count == 2) {
+            return empty;
+        } else {
+            col = 2;
+
+            for (row = 0; row < DIMENSIONS; row++) {
+                if (grid[row][col] == ply) {
+                    count++;
+                } else if (grid[row][col] == ply.other()) {
+                    return null;
+                } else {
+                    empty = new Position(row, col);
+                }
+
+                col--;
+            }
+
+            if (count == 2) {
+                return empty;
+            } else {
+                return null;
+            }
         }
     }
 
@@ -331,7 +502,11 @@ public class Board {
         b.move(b.position("a3"));
         b.move(b.position("b1"));
         b.move(b.position("b2"));
-        
+  
+        println(b.oPairs.toString());
+        println(b.xPairs.toString());
+
+        /*      
         b.grid[1][2] = Player.O;
 
         println(b.toString());
@@ -340,11 +515,22 @@ public class Board {
         } else {
             println("no");
         }
+        */
 
         println(b.winner().toString());
     }
 
     public static void println(String s) {
 	System.out.println(s);
+    }
+
+    private class PositionPair {
+        public final Position empty;
+        public final Position dir;
+
+        public PositionPair(int emptyRow, int emptyCol, int dRow, int dCol) {
+            empty = new Position(emptyRow, emptyCol);
+            dir = new Position(dRow, dCol);
+        }
     }
 }
