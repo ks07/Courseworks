@@ -18,9 +18,9 @@ public class Board {
 	grid = new Player[DIMENSIONS][DIMENSIONS];
 
         // Initialise the grid.
-        for (int i = 0; i < DIMENSIONS; i++) {
-            for (int j = 0; j < DIMENSIONS; j++) {
-                grid[i][j] = Player.None;
+        for (int row = 0; row < DIMENSIONS; row++) {
+            for (int col = 0; col < DIMENSIONS; col++) {
+                grid[row][col] = Player.None;
             }
         }
 
@@ -54,10 +54,11 @@ public class Board {
     public void move(Position pos) {
         if (this.turn == Player.X || this.turn == Player.O) {
             grid[pos.row()][pos.col()] = this.turn;
-            println("Setting: " + pos.toString());
+
             // Switch to the next players turn.
             this.turn = this.turn.other();
 
+            // TODO: Delete me
             Position p = findPair(this.turn);
             if (p != null) {
                 println(p.toString());
