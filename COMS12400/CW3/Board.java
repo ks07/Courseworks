@@ -1,8 +1,5 @@
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.ListIterator;
 
 public class Board {
 
@@ -14,10 +11,6 @@ public class Board {
 
     private Player turn;
     private Player gameState;
-
-    // Store a map of pairs. Keys are the 'win spot', values are an occupied spot in that pair.
-    public ArrayList<PositionPair> xPairs = new ArrayList<PositionPair>();
-    public ArrayList<PositionPair> oPairs = new ArrayList<PositionPair>();
 
     public Board() {
 	posRegex = Pattern.compile("([abc])([123])");
@@ -57,143 +50,9 @@ public class Board {
 	}
     }
 
-    private void addPair(int emptyRow, int emptyCol, int dRow, int dCol, Player ply) {
-        PositionPair pp = new PositionPair(emptyRow, emptyCol, dRow, dCol);
-
-        if (ply == Player.X) {
-            xPairs.add(pp);
-        } else {
-            oPairs.add(pp);
-        }
-    }
-
-    private boolean isPair(int row, int col, Player ply) {
-        ArrayList search;
-
-        if (ply == Player.x) {
-            search = xPairs;
-        } else {
-            search = oPairs;
-        }
-
-        for (PositionPair pp : search) {
-            if (pp.empty.row() == row && pp.empty.col() == col) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void rmPair(int row, int col, Player ply) {
-        ArrayList search;
-
-        if (ply == Player.x) {
-            search = xPairs;
-        } else {
-            search = oPairs;
-        }
-
-        ListIterator it = search.listIterator();
-
-        while (it) {
-            if (pp.empty.row() == row && pp.empty.col() == col) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public void move(Position pos) {
         if (this.turn == Player.X || this.turn == Player.O) {
             grid[pos.row()][pos.col()] = this.turn;
-
-            // Check if we have made any pairs horizontally.
-            int found = 0;
-            int col;
-            int row = pos.row();
-
-            for (col = 0; col < DIMENSIONS; col++) {
-                if (grid[row][col] == this.turn) {
-                    found++;
-                } else if (grid[row][col] == this.turn.other()) {
-                    found = -3;
-                }
-            }
-
-            if (found == 2) {
-                if (this.turn == Player.X) {
-                    xPairs.put(new Position(row, col), pos);
-                } else {
-                    oPairs.put(new Position(row, col), pos);
-                }
-            }
-
-            // Check vertically.
-            col = pos.col();
-            found = 0;
-
-            for (row = 0; row < DIMENSIONS; row++) {
-                if (grid[row][col] == this.turn) {
-                    found++;
-                } else if (grid[row][col] == this.turn.other()) {
-                    found = -3;
-                }
-            }
-
-            if (found == 2) {
-                if (this.turn == Player.X) {
-                    xPairs.put(new Position(row, col), pos);
-                } else {
-                    oPairs.put(new Position(row, col), pos);
-                }
-            }
-
-            // Check down right if applicable.
-            if (isDR(pos)) {
-                col = -1;
-                found = 0;
-                for (row = 0; row < DIMENSIONS; row++) {
-                    col++;
-
-                    if (grid[row][col] == this.turn) {
-                        found++;
-                    } else if (grid[row][col] == this.turn.other()) {
-                        found = -3;
-                    }
-                }
-
-                if (found == 2) {
-                    if (this.turn == Player.X) {
-                        xPairs.put(new Position(row, col), pos);
-                    } else {
-                        oPairs.put(new Position(row, col), pos);
-                    }
-                }
-            }
-
-            if (isDL(pos)) {
-                col = 3;
-                found = 0;
-                for (row = 0; row < DIMENSIONS; row++) {
-                    col--;
-
-                    if (grid[row][col] == this.turn) {
-                        found++;
-                    } else if (grid[row][col] == this.turn.other()) {
-                        found = -3;
-                    }
-                }
-
-                if (found == 2) {
-                    if (this.turn == Player.X) {
-                        xPairs.put(new Position(row, col), pos);
-                    } else {
-                        oPairs.put(new Position(row, col), pos);
-                    }
-                }
-            }
 
             // Switch to the next players turn.
             this.turn = this.turn.other();
@@ -316,22 +175,6 @@ public class Board {
             } else {
                 return null;
             }
-        }
-    }
-
-    private boolean isDR(Position pos) {
-        if (pos.row() == pos.col()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private boolean isDL(Position pos) {
-        if ((pos.row() == 0 && pos.col() == 2) || (pos.row() == 1 && pos.col() == 1) || (pos.row() == 2 && pos.col() == 0)) {
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -502,11 +345,8 @@ public class Board {
         b.move(b.position("a3"));
         b.move(b.position("b1"));
         b.move(b.position("b2"));
-  
-        println(b.oPairs.toString());
-        println(b.xPairs.toString());
 
-        /*      
+
         b.grid[1][2] = Player.O;
 
         println(b.toString());
@@ -515,22 +355,11 @@ public class Board {
         } else {
             println("no");
         }
-        */
 
         println(b.winner().toString());
     }
 
     public static void println(String s) {
 	System.out.println(s);
-    }
-
-    private class PositionPair {
-        public final Position empty;
-        public final Position dir;
-
-        public PositionPair(int emptyRow, int emptyCol, int dRow, int dCol) {
-            empty = new Position(emptyRow, emptyCol);
-            dir = new Position(dRow, dCol);
-        }
     }
 }
