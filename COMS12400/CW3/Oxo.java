@@ -7,16 +7,19 @@ import java.util.Random;
 class Oxo
 {
     // The current state of the game is represented by a board object.  A
-    // random number generator is used to pick the computer's moves.
+    // random number generator is used to pick the computer's moves.  If the
+    // flag -ai is given, then the suggest method is used instead.
 
     private Board board;
     private Random gen;
+    private boolean ai;
 
     // Start the game.
 
     public static void main(String[] args)
     {
         Oxo program = new Oxo();
+        program.ai = (args.length > 0 && args[0].equals("-ai"));
         program.run(args);
     }
 
@@ -75,6 +78,12 @@ class Oxo
 
     void computerMove(Board board)
     {
+        if (ai)
+        {
+            Position position = board.suggest();
+            board.move(position);
+            return;
+        }
         Position[] blanks = board.blanks();
         int index = gen.nextInt(blanks.length);
         Position position = blanks[index];
