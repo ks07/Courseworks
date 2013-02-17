@@ -448,28 +448,81 @@ public class Board {
         return val - 97;
     }
 
-    public static void main(String[] args) {
-        // Run tests.
+    private static void checkToString() {
         Board b = new Board();
 
         b.move(b.position("a2"));
         b.move(b.position("a3"));
         b.move(b.position("b1"));
         b.move(b.position("b2"));
-
-
-        b.grid[1][2] = Player.O;
+        b.grid[2][1] = Player.O;
 
         String testOutput = "     1   2   3\n\n a     | X | O\n    ---+---+-" +
             "--\n b   X | O |\n    ---+---+---\n c     | O |\n";
 
-        if (testOutput.equals(b.toString())) {
-            println("yes");
-        } else {
-            println("no");
+        if (!testOutput.equals(b.toString())) {
+            throw new Error("toString test failed.");
+        }
+    }
+
+    private static void checkConBlanks() {
+        Board b = new Board();
+        if (b.blanks().length != 9) {
+            throw new Error("New Board not empty.");
         }
 
-        println(b.winner().toString());
+        b.move(new Position(0, 0));
+        if (b.blanks().length != 8) {
+            throw new Error("Move not removed from blanks.");
+        }
+    }
+
+    private static void checkPosition() {
+        Board b = new Board();
+        String arg = "a3";
+        Position pos = b.position(arg);
+
+        if (pos.row() != 0 || pos.col() != 2) {
+            throw new Error("position check failed.");
+        }
+    }
+
+    private static void checkMove() {
+        Board b = new Board();
+        Position pos = new Position(1, 1);
+        b.move(pos);
+
+        if (b.grid[1][1] != Player.X) {
+            throw new Error("move check failed.");
+        }
+    }
+
+    private static void checkWinner() {
+        Board b = new Board();
+        b.move(b.position("a2"));
+        b.move(b.position("a3"));
+        b.move(b.position("b1"));
+
+        if (b.winner() != Player.None) {
+            throw new Error("winner declared prematurely.");
+        }
+
+        b.move(b.position("b2"));
+        b.move(b.position("c3"));
+        b.move(b.position("c1"));
+
+        if (b.winner() != Player.O) {
+            throw new Error("winner check failed.");
+        }
+    }
+
+    public static void main(String[] args) {
+        // Run tests.
+        checkConBlanks();
+        checkToString();
+        checkPosition();
+        checkMove();
+        checkWinner();
     }
 
     public static void println(String s) {
