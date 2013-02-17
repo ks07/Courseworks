@@ -16,7 +16,6 @@ public class Board {
     private Player gameState;
 
     public Board() {
-	posRegex = Pattern.compile("([abc])([123])");
 	grid = new Player[DIMENSIONS][DIMENSIONS];
 
         // Initialise the grid.
@@ -26,8 +25,16 @@ public class Board {
             }
         }
 
-	turn = Player.X;
+        posRegex = Pattern.compile("([abc])([123])");
+        turn = Player.X;
         gameState = Player.None;
+    }
+
+    private Board(Player[][] orig, Player first) {
+	posRegex = Pattern.compile("([abc])([123])");
+        grid = orig;
+        turn = first;
+        gameState = Player.None;        
     }
 
     public Position position(String s) {
@@ -61,11 +68,12 @@ public class Board {
             this.turn = this.turn.other();
 
             // TODO: Delete me
-            Position[] p = findPairs(this.turn);
-            if (p != null && p.length != 0) {
-                println(Arrays.toString(p));
+            Position p = tryFork(this.turn);
+            println("Checking forks for " + this.turn.toString());
+            if (p != null) {
+                println(p.toString());
             } else {
-                println("No pairs");
+                println("No forks.");
             }
         }
     }
@@ -167,6 +175,44 @@ public class Board {
         }
 
         return empty.toArray(new Position[0]);
+    }
+
+    // Returns true if the given player has a fork. (2 or more win conditions)
+    private boolean hasFork(Player ply) {
+        Position[] pairs = findPairs(ply);
+
+        return pairs.length > 1;
+    } 
+
+    private Player[][] copyGrid() {
+        Player[][] newGrid = new Player[DIMENSIONS][DIMENSIONS];
+
+        for (int row = 0; row < DIMENSIONS; row++) {
+            for (int col = 0; col < DIMENSIONS; col++) {
+                newGrid[row][col] = grid[row][col];
+            }
+        }
+
+        return newGrid;
+    }
+
+    // Returns the position to play on to create a fork for the given player.
+    private Position tryFork(Player ply) {
+        // Brute force this step, create a new Board to try each possible next move.
+        Board trial;
+        Player[][] newGrid;
+
+        for (Position pos : blanks()) {
+            newGrid = copyGrid();
+            newGrid[pos.row()][pos.col()] = ply;
+
+            trial = new Board(newGrid, ply.other());
+            if (trial.hasFork(ply)) {
+                return pos;
+            }
+        }
+
+        return null;
     }
 
     public Player winner() {
