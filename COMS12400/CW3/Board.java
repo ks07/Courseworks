@@ -530,6 +530,18 @@ public class Board {
         }
     }
 
+    private static void checkSuggest() {
+        Board b = new Board();
+
+        while (b.winner() == Player.None) {
+            b.move(b.suggest());
+        }
+
+        if (b.winner() != Player.Both) {
+            throw new Error("AI check failed.");
+        }
+    }
+
     public static void main(String[] args) {
         // Run tests.
         checkConBlanks();
@@ -537,5 +549,6 @@ public class Board {
         checkPosition();
         checkMove();
         checkWinner();
+        checkSuggest();
     }
 }
