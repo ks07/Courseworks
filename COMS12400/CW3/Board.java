@@ -524,8 +524,4 @@ public class Board {
         checkMove();
         checkWinner();
     }
-
-    public static void println(String s) {
-        System.out.println(s);
-    }
 }
