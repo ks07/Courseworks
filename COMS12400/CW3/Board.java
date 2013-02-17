@@ -161,7 +161,7 @@ public class Board {
             empty.addAll(checkDiagonals(ply));
         }
 
-        return empty.toArray(new Position[0]);
+        return empty.toArray(new Position[empty.size()]);
     }
 
     // Returns true if the given player has a fork. (2 or more win conditions)
@@ -271,15 +271,15 @@ public class Board {
     public Position[] blanks() {
         ArrayList<Position> arr = new ArrayList<Position>();
 
-        for (int i = 0; i < DIMENSIONS; i++) {
-            for (int j = 0; j < DIMENSIONS; j++) {
-                if (grid[i][j] == Player.None) {
-                    arr.add(new Position(i, j));
+        for (int row = 0; row < DIMENSIONS; row++) {
+            for (int col = 0; col < DIMENSIONS; col++) {
+                if (grid[row][col] == Player.None) {
+                    arr.add(new Position(row, col));
                 }
             }
         }
 
-        return arr.toArray(new Position[0]);
+        return arr.toArray(new Position[arr.size()]);
     }
 
     private Position findOppositeCorner(Player other) {
