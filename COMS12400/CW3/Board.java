@@ -295,25 +295,29 @@ public class Board {
         return corners;
     }
 
-    private Position findOppositeCorner(Player other) {
+    private Position checkOppositeCorner(Player a, Player other) {
         int row, col;
         int[][] corners = getCorners();
 
         for (int[] corner : corners) {
-            if (grid[corner[0]][corner[1]] == other) {
+            if (grid[corner[0]][corner[1]] == a) {
                 // If 0, set 2, or vice versa.
                 row = (corner[0] == 0) ? 2 : 0;
                 col = (corner[1] == 0) ? 2 : 0;
 
-                // If the opposite is free, return it.
-                if (grid[row][col] == Player.None) {
+                // If the opposite is other, return it.
+                if (grid[row][col] == other) {
                     return new Position(row, col);
                 }
             }
         }
 
-        // If no opposite corners exist or none are free, return null.
+        // If the opposite doesn't match, return null.
         return null;
+    }
+
+    private Position findOppositeCorner(Player other) {
+        return checkOppositeCorner(other, Player.None);
     }
 
     private Position findFreeCorner() {
@@ -327,6 +331,18 @@ public class Board {
 
         return null;
     }
+
+    private Position blockFork(Player other) {
+        boolean ownOpp = checkOppositeCorner(other, other) != null;
+        boolean ownCenter = grid[1][1] == other.other();
+        if (ownOpp && ownCenter && blanks().length == 6) {
+            // Play an edge if X owns two corners..
+            return new Position(0, 1);
+        } else {
+            return tryFork(other);
+        }
+    }
+
 
     public Position suggest() {
         Position[] opts;
@@ -351,7 +367,7 @@ public class Board {
         }
 
         // Block the opponent's fork.
-        opt = tryFork(this.turn.other());
+        opt = blockFork(this.turn.other());
         if (opt != null) {
             return opt;
         }
