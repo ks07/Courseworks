@@ -1,6 +1,8 @@
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Board {
 
@@ -59,9 +61,9 @@ public class Board {
             this.turn = this.turn.other();
 
             // TODO: Delete me
-            Position p = findPair(this.turn);
-            if (p != null) {
-                println(p.toString());
+            Position[] p = findPairs(this.turn);
+            if (p != null && p.length != 0) {
+                println(Arrays.toString(p));
             } else {
                 println("No pairs");
             }
@@ -79,14 +81,21 @@ public class Board {
     }
 
     // Returns the empty
-    private Position checkDiagonals(Player ply) {
-        Position empty = checkDir(0, 0, 1, 1, ply);
+    private List<Position> checkDiagonals(Player ply) {
+        ArrayList<Position> empty = new ArrayList<Position>();
+        Position free = checkDir(0, 0, 1, 1, ply);
 
-        if (empty != null) {
-            return empty;
-        } else {
-            return checkDir(0, 2, 1, -1, ply);
+        if (free != null) {
+            empty.add(free);
         }
+        
+        free = checkDir(0, 2, 1, -1, ply);
+        
+        if (free != null) {
+            empty.add(free);
+        }
+
+        return empty;
     }
 
     private boolean checkBounds(int row, int col) {
@@ -118,35 +127,46 @@ public class Board {
 
     // Finds the first empty spot from a position horiz or vertically.
     // Returns null if neither contain a suitable pair.
-    private Position findPairFromPos(Position pos, Player ply) {
-        Position empty = checkHoriz(pos, ply);
+    private List<Position> findPairsFromPos(Position pos, Player ply) {
+        ArrayList<Position> empty = new ArrayList<Position>();
+        Position free = checkHoriz(pos, ply);
 
-        if (empty != null) {
-            return empty;
-        } else {
-            empty = checkVert(pos, ply);
-            return empty;
+        if (free != null) {
+            empty.add(free);
         }
+
+        free = checkVert(pos, ply);
+
+        if (free != null) {
+            empty.add(free);
+        }
+
+        return empty;
     }
 
     // Finds the first empty spot suitable for a pair for the given player.
     // Returns null if all are empty.
-    private Position findPair(Player ply) {
+    private Position[] findPairs(Player ply) {
         int row = 0, col = 0;
-        Position empty;
+        List<Position> empty = null;
 
         for (; row < DIMENSIONS; row++) {
-            empty = findPairFromPos(new Position(row, col), ply);
-
-            if (empty != null) {
-                return empty;
+            if (empty == null || empty.isEmpty()) {
+                empty = findPairsFromPos(new Position(row, col), ply);
+            } else {
+                empty.addAll(findPairsFromPos(new Position(row, col), ply));
             }
 
             col++;
         }
 
-        // If we haven't returned yet, the only remaining possible spots are diagonals.
-        return checkDiagonals(ply);
+        if (empty == null || empty.isEmpty()) {
+            empty = checkDiagonals(ply);
+        } else {
+            empty.addAll(checkDiagonals(ply));
+        }
+
+        return empty.toArray(new Position[0]);
     }
 
     public Player winner() {
