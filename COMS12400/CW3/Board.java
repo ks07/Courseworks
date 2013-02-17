@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Board {
-
     private static final int DIMENSIONS = 3;
 
     private final Pattern posRegex;
@@ -42,11 +41,8 @@ public class Board {
 
 	if (match.matches()) {
 	    int row = letterToIndex(match.group(1));
-	    int col = Integer.parseInt(match.group(2));
-
             // Cols are 1 based to the user, 0 based internally.
-            col = col - 1;
-
+	    int col = Integer.parseInt(match.group(2)) - 1;
 	    Position ret = new Position(row, col);
 
             if (isOccupied(ret)) {
@@ -307,8 +303,92 @@ public class Board {
         return arr.toArray(new Position[0]);
     }
 
-    public Position suggest() {
+    private Position findOppositeCorner(Player other) {
+        int[][] corners = {{0, 0}, {2, 2}, {0, 2}, {2, 0}};
+        int row, col;
+
+        for (int[] corner : corners) {
+            if (grid[corner[0]][corner[1]] == other) {
+                // If 0, set 2, or vice versa.
+                row = (corner[0] == 0) ? 2 : 0;
+                col = (corner[1] == 0) ? 2 : 0;
+                
+                // If the opposite is free, return it.
+                if (grid[row][col] == Player.None) {
+                    return new Position(row, col);
+                }
+            }
+        }
+
+        // If no opposite corners exist or none are free, return null.
         return null;
+    }
+
+    private Position findFreeCorner() {
+        int[][] corners = {{0, 0}, {2, 2}, {0, 2}, {2, 0}};
+
+        for (int[] corner : corners) {
+            if (grid[corner[0]][corner[1]] == Player.None) {
+                return new Position(corner[0], corner[1]);
+            }
+        }
+
+        return null;
+    }
+
+    public Position suggest() {
+        Position[] opts;
+        Position opt;
+
+        // First, try to win.
+        opts = findPairs(this.turn);
+        if (opts.length > 0) {
+            return opts[0];
+        }
+
+        // Next, block the win of the other player.
+        opts = findPairs(this.turn.other());
+        if (opts.length > 0) {
+            return opts[0];
+        }
+
+        // Try to create a fork for ourself.
+        opt = tryFork(this.turn);
+        if (opt != null) {
+            return opt;
+        }
+
+        // Block the opponent's fork.
+        opt = tryFork(this.turn.other());
+        if (opt != null) {
+            return opt;
+        }
+
+        // Take center.
+        if (grid[1][1] == Player.None) {
+            return new Position(1, 1);
+        }
+
+        // Take the corner opposite the opponent.
+        opt = findOppositeCorner(this.turn.other());
+        if (opt != null) {
+            return opt;
+        }
+
+        // Take a free corner.
+        opt = findFreeCorner();
+        if (opt != null) {
+            return opt;
+        }
+
+        // Finally, take the first free spot.
+        opts = blanks();
+        if (opts.length > 0) {
+            return opts[0];
+        } else {
+            // This will only be the case if the game is over.
+            return null;
+        }
     }
 
     public String toString() {
