@@ -343,7 +343,9 @@ public class Board {
         }
     }
 
-
+    // Suggests the best move for the current player. Currently follows the
+    // specific tic-tac-toe strategy, though could also use a tree to try
+    // all possible moves and find the outcome, with minimax algorithm.
     public Position suggest() {
         Position[] opts;
         Position opt;
