@@ -4,17 +4,18 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Board {
-    private static final int DIMENSIONS = 3;
+    private static final int ROWS = 3;
+    private static final int COLS = 3;
     private final Pattern posRegex = Pattern.compile("([abc])([123])");
     private final Player[][] grid;
     private Player turn;
 
     public Board() {
-        grid = new Player[DIMENSIONS][DIMENSIONS];
+        grid = new Player[ROWS][COLS];
 
         // Initialise the grid.
-        for (int row = 0; row < DIMENSIONS; row++) {
-            for (int col = 0; col < DIMENSIONS; col++) {
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
                 grid[row][col] = Player.None;
             }
         }
@@ -85,7 +86,7 @@ public class Board {
     }
 
     private boolean checkBounds(int row, int col) {
-        return row >= 0 && col >= 0 && row < DIMENSIONS && col < DIMENSIONS;
+        return row >= 0 && col >= 0 && row < ROWS && col < COLS;
     }
 
     private Position checkDir(int row, int col, int rD, int cD, Player ply) {
@@ -136,7 +137,7 @@ public class Board {
         int row = 0, col = 0;
         List<Position> empty = null;
 
-        for (; row < DIMENSIONS; row++) {
+        for (; checkBounds(row, col); row++) {
             if (empty == null || empty.isEmpty()) {
                 empty = findPairsFromPos(new Position(row, col), ply);
             } else {
@@ -162,10 +163,10 @@ public class Board {
     }
 
     private Player[][] copyGrid() {
-        Player[][] newGrid = new Player[DIMENSIONS][DIMENSIONS];
+        Player[][] newGrid = new Player[ROWS][COLS];
 
-        for (int row = 0; row < DIMENSIONS; row++) {
-            for (int col = 0; col < DIMENSIONS; col++) {
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
                 newGrid[row][col] = grid[row][col];
             }
         }
@@ -260,8 +261,8 @@ public class Board {
     public Position[] blanks() {
         ArrayList<Position> arr = new ArrayList<Position>();
 
-        for (int row = 0; row < DIMENSIONS; row++) {
-            for (int col = 0; col < DIMENSIONS; col++) {
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
                 if (grid[row][col] == Player.None) {
                     arr.add(new Position(row, col));
                 }
@@ -386,7 +387,7 @@ public class Board {
         StringBuilder sb = new StringBuilder();
         sb.append("     1   2   3\n\n");
 
-        for (int row = 0; row < DIMENSIONS; row++) {
+        for (int row = 0; row < ROWS; row++) {
             switch (row) {
             case 0:
                 sb.append(" a  ");
@@ -399,7 +400,7 @@ public class Board {
                 break;
             }
 
-            for (int col = 0; col < DIMENSIONS; col++) {
+            for (int col = 0; col < COLS; col++) {
                 switch (grid[row][col]) {
                 case X:
                     sb.append(" X");
@@ -408,19 +409,19 @@ public class Board {
                     sb.append(" O");
                     break;
                 default:
-                    if (col < DIMENSIONS - 1) {
+                    if (col < COLS - 1) {
                         sb.append("  ");
                     }
                 }
 
-                if (col < DIMENSIONS - 1) {
+                if (col < COLS - 1) {
                     sb.append(" |");
                 }
             }
 
             sb.append('\n');
 
-            if (row < DIMENSIONS - 1) {
+            if (row < ROWS - 1) {
                 sb.append("    ---+---+---\n");
             }
         }
