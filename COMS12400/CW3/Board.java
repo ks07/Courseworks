@@ -65,8 +65,8 @@ public class Board {
         }
     }
 
-    // Returns the empty slot in the horizontal line covering pos, if this is a pair for the player.
-    // Returns null if this line is full, contains only 1 mark, or contains both players.
+    // Returns the empty slot in the horizontal line covering pos with a pair.
+    // Returns null if this does not contain exactly 2 marks for the player.
     private Position checkHoriz(Position pos, Player ply) {
         return checkDir(pos.row(), 0, 0, 1, ply);
     }
@@ -185,7 +185,7 @@ public class Board {
 
     // Returns the position to play on to create a fork for the given player.
     private Position tryFork(Player ply) {
-        // Brute force this step, create a new Board to try each possible next move.
+        // Brute force this step, try each possible next move.
         Board trial;
         Player[][] newGrid;
 
@@ -202,78 +202,66 @@ public class Board {
         return null;
     }
 
+    public Player checkWinnerDir(int row, int col, int rD, int cD) {
+        Player prev = grid[row][col];
+        Player ply;
+
+        row = row + rD;
+        col = col + cD;
+
+        if (prev == Player.X || prev == Player.O) {
+            for (; checkBounds(row, col); row = row + rD) {
+                ply = grid[row][col];
+
+                if (ply != prev) {
+                    return Player.None;
+                }
+ 
+                col = col + cD;
+            }
+
+            return prev;
+        } else {
+            return Player.None;
+        }
+    }
+
+    private Player checkWinnerFromPos(int row, int col) {
+        // Look horizontally.
+        Player winner = checkWinnerDir(row, 0, 0, 1);
+
+        if (winner == Player.None) {
+            // Look vertically.
+            winner = checkWinnerDir(0, col, 1, 0);
+        }
+
+        return winner;
+    }
+
     public Player winner() {
-        int r, c;
-        Player curr;
+        int row = 0, col = 0;
+        Player winner = Player.None;
 
-        // Check vertical.
-        for (r = 0; r < DIMENSIONS; r++) {
-            curr = grid[r][0];
+        for (; checkBounds(row, col); row++) {
+            if (winner == Player.None) {
+                winner = checkWinnerFromPos(row, col);
+            }
 
-            if (curr == Player.X || curr == Player.O) {
-                for (c = 1; c < DIMENSIONS; c++) {
-                    if (curr != grid[r][c]) {
-                        curr = Player.None;
-                    }
-                }
+            col++;
+        }
 
-                if (curr == Player.X || curr == Player.O) {
-                    // Found a vertical line, return the player.
-                    return curr;
-                }
+        // Check diagonals.
+        if (winner == Player.None) {
+            winner = checkWinnerDir(0, 0, 1, 1);
+
+            if (winner == Player.None) {
+                winner = checkWinnerDir(0, 2, 1, -1);
             }
         }
 
-        // Check horizontal.
-        for (c = 0; c < DIMENSIONS; c++) {
-            curr = grid[0][c];
-
-            if (curr == Player.X || curr == Player.O) {
-                for (r = 1; r < DIMENSIONS; r++) {
-                    if (curr != grid[r][c]) {
-                        curr = Player.None;
-                    }
-                }
-
-                if (curr == Player.X || curr == Player.O) {
-                    // Found a vertical line, return the player.
-                    return curr;
-                }
-            }
-        }
-
-        // Check diagonal.
-        curr = grid[0][0];
-        c = 1;
-        for (r = 1; r < DIMENSIONS; r++) {
-            if (curr != grid[r][c]) {
-                curr = Player.None;
-            }
-
-            c++;
-        }
-        if (curr == Player.X || curr == Player.O) {
-            // Found a vertical line, return the player.
-            return curr;
-        }
-
-        curr = grid[0][2];
-        r = 1;
-        c = 1;
-        while (r < DIMENSIONS) {
-            if (curr != grid[r][c]) {
-                curr = Player.None;
-            }
-
-            r++;
-            c--;
-        }
-        if (curr == Player.X || curr == Player.O) {
-            // Found a vertical line, return the player.
-            return curr;
-        }
-
-        if (blanks().length == 0) {
+        if (winner == Player.X || winner == Player.O) {
+            return winner;
+        } else if (blanks().length == 0) {
             return Player.Both;
         } else {
             return Player.None;
