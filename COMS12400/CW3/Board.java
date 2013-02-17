@@ -62,15 +62,6 @@ public class Board {
 
             // Switch to the next players turn.
             this.turn = this.turn.other();
-
-            // TODO: Delete me
-            Position p = tryFork(this.turn);
-            println("Checking forks for " + this.turn.toString());
-            if (p != null) {
-                println(p.toString());
-            } else {
-                println("No forks.");
-            }
         }
     }
 
@@ -343,46 +334,54 @@ public class Board {
         // First, try to win.
         opts = findPairs(this.turn);
         if (opts.length > 0) {
+            println("1");
             return opts[0];
         }
 
         // Next, block the win of the other player.
         opts = findPairs(this.turn.other());
         if (opts.length > 0) {
+            println("2");
             return opts[0];
         }
 
         // Try to create a fork for ourself.
         opt = tryFork(this.turn);
         if (opt != null) {
+            println("3");
             return opt;
         }
 
         // Block the opponent's fork.
         opt = tryFork(this.turn.other());
         if (opt != null) {
+            println("4");
             return opt;
         }
 
         // Take center.
         if (grid[1][1] == Player.None) {
+            println("5");
             return new Position(1, 1);
         }
 
         // Take the corner opposite the opponent.
         opt = findOppositeCorner(this.turn.other());
         if (opt != null) {
+            println("6");
             return opt;
         }
 
         // Take a free corner.
         opt = findFreeCorner();
         if (opt != null) {
+            println("7");
             return opt;
         }
 
         // Finally, take the first free spot.
         opts = blanks();
+        println("8");
         if (opts.length > 0) {
             return opts[0];
         } else {
