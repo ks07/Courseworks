@@ -2,7 +2,6 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Board {
     private static final int DIMENSIONS = 3;
@@ -159,7 +158,6 @@ public class Board {
     // Returns true if the given player has a fork. (2 or more win conditions)
     private boolean hasFork(Player ply) {
         Position[] pairs = findPairs(ply);
-
         return pairs.length > 1;
     }
 
@@ -195,8 +193,7 @@ public class Board {
     }
 
     public Player checkWinnerDir(int row, int col, int rD, int cD) {
-        Player prev = grid[row][col];
-        Player ply;
+        Player ply, prev = grid[row][col];
 
         row = row + rD;
         col = col + cD;
@@ -387,7 +384,6 @@ public class Board {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-
         sb.append("     1   2   3\n\n");
 
         for (int row = 0; row < DIMENSIONS; row++) {
@@ -443,9 +439,7 @@ public class Board {
     }
 
     private int letterToIndex(String l) {
-        char val = l.toLowerCase().charAt(0);
-
-        return val - 97;
+        return l.toLowerCase().charAt(0) - 97;
     }
 
     private static void checkToString() {
@@ -479,10 +473,13 @@ public class Board {
 
     private static void checkPosition() {
         Board b = new Board();
-        String arg = "a3";
-        Position pos = b.position(arg);
-
+        Position pos = b.position("a3");
         if (pos.row() != 0 || pos.col() != 2) {
+            throw new Error("position check failed.");
+        }
+
+        pos = b.position("g1");
+        if (pos != null) {
             throw new Error("position check failed.");
         }
     }
