@@ -6,13 +6,9 @@ import java.util.Arrays;
 
 public class Board {
     private static final int DIMENSIONS = 3;
-
-    private final Pattern posRegex;
-    // grid[row][col] / grid[y][x]
-    public final Player[][] grid;
-
+    private final Pattern posRegex = Pattern.compile("([abc])([123])");
+    private final Player[][] grid;
     private Player turn;
-    private Player gameState;
 
     public Board() {
         grid = new Player[DIMENSIONS][DIMENSIONS];
@@ -24,16 +20,12 @@ public class Board {
             }
         }
 
-        posRegex = Pattern.compile("([abc])([123])");
         turn = Player.X;
-        gameState = Player.None;
     }
 
     private Board(Player[][] orig, Player first) {
-        posRegex = Pattern.compile("([abc])([123])");
         grid = orig;
         turn = first;
-        gameState = Player.None;
     }
 
     public Position position(String s) {
@@ -216,7 +208,7 @@ public class Board {
                 if (ply != prev) {
                     return Player.None;
                 }
- 
+
                 col = col + cD;
             }
 
@@ -282,9 +274,32 @@ public class Board {
         return arr.toArray(new Position[arr.size()]);
     }
 
+    private int[][] getCorners() {
+        // The style checker may cause aneurysms.
+        int[][] corners = {
+            {
+                0, 0
+            }
+            ,
+            {
+                2, 2
+            }
+            ,
+            {
+                0, 2
+            }
+            ,
+            {
+                2, 0
+            }
+        };
+
+        return corners;
+    }
+
     private Position findOppositeCorner(Player other) {
-        int[][] corners = {{0, 0}, {2, 2}, {0, 2}, {2, 0}};
         int row, col;
+        int[][] corners = getCorners();
 
         for (int[] corner : corners) {
             if (grid[corner[0]][corner[1]] == other) {
@@ -304,7 +319,7 @@ public class Board {
     }
 
     private Position findFreeCorner() {
-        int[][] corners = {{0, 0}, {2, 2}, {0, 2}, {2, 0}};
+        int[][] corners = getCorners();
 
         for (int[] corner : corners) {
             if (grid[corner[0]][corner[1]] == Player.None) {
@@ -322,54 +337,46 @@ public class Board {
         // First, try to win.
         opts = findPairs(this.turn);
         if (opts.length > 0) {
-            println("1");
             return opts[0];
         }
 
         // Next, block the win of the other player.
         opts = findPairs(this.turn.other());
         if (opts.length > 0) {
-            println("2");
             return opts[0];
         }
 
         // Try to create a fork for ourself.
         opt = tryFork(this.turn);
         if (opt != null) {
-            println("3");
             return opt;
         }
 
         // Block the opponent's fork.
         opt = tryFork(this.turn.other());
         if (opt != null) {
-            println("4");
             return opt;
         }
 
         // Take center.
         if (grid[1][1] == Player.None) {
-            println("5");
             return new Position(1, 1);
         }
 
         // Take the corner opposite the opponent.
         opt = findOppositeCorner(this.turn.other());
         if (opt != null) {
-            println("6");
             return opt;
         }
 
         // Take a free corner.
         opt = findFreeCorner();
         if (opt != null) {
-            println("7");
             return opt;
         }
 
         // Finally, take the first free spot.
         opts = blanks();
-        println("8");
         if (opts.length > 0) {
             return opts[0];
         } else {
@@ -453,8 +460,10 @@ public class Board {
 
         b.grid[1][2] = Player.O;
 
-        println(b.toString());
-        if ("     1   2   3\n\n a     | X | O\n    ---+---+---\n b   X | O |\n    ---+---+---\n c     | O |\n".equals(b.toString())) {
+        String testOutput = "     1   2   3\n\n a     | X | O\n    ---+---+-" +
+            "--\n b   X | O |\n    ---+---+---\n c     | O |\n";
+
+        if (testOutput.equals(b.toString())) {
             println("yes");
         } else {
             println("no");
