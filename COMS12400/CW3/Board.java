@@ -15,7 +15,7 @@ public class Board {
     private Player gameState;
 
     public Board() {
-	grid = new Player[DIMENSIONS][DIMENSIONS];
+        grid = new Player[DIMENSIONS][DIMENSIONS];
 
         // Initialise the grid.
         for (int row = 0; row < DIMENSIONS; row++) {
@@ -30,20 +30,20 @@ public class Board {
     }
 
     private Board(Player[][] orig, Player first) {
-	posRegex = Pattern.compile("([abc])([123])");
+        posRegex = Pattern.compile("([abc])([123])");
         grid = orig;
         turn = first;
-        gameState = Player.None;        
+        gameState = Player.None;
     }
 
     public Position position(String s) {
-	Matcher match = posRegex.matcher(s);
+        Matcher match = posRegex.matcher(s);
 
-	if (match.matches()) {
-	    int row = letterToIndex(match.group(1));
+        if (match.matches()) {
+            int row = letterToIndex(match.group(1));
             // Cols are 1 based to the user, 0 based internally.
-	    int col = Integer.parseInt(match.group(2)) - 1;
-	    Position ret = new Position(row, col);
+            int col = Integer.parseInt(match.group(2)) - 1;
+            Position ret = new Position(row, col);
 
             if (isOccupied(ret)) {
                 // The space is not free, return null.
@@ -51,9 +51,9 @@ public class Board {
             } else {
                 return ret;
             }
-	} else {
-	    return null;
-	}
+        } else {
+            return null;
+        }
     }
 
     public void move(Position pos) {
@@ -83,9 +83,9 @@ public class Board {
         if (free != null) {
             empty.add(free);
         }
-        
+
         free = checkDir(0, 2, 1, -1, ply);
-        
+
         if (free != null) {
             empty.add(free);
         }
@@ -169,7 +169,7 @@ public class Board {
         Position[] pairs = findPairs(ply);
 
         return pairs.length > 1;
-    } 
+    }
 
     private Player[][] copyGrid() {
         Player[][] newGrid = new Player[DIMENSIONS][DIMENSIONS];
@@ -303,7 +303,7 @@ public class Board {
                 // If 0, set 2, or vice versa.
                 row = (corner[0] == 0) ? 2 : 0;
                 col = (corner[1] == 0) ? 2 : 0;
-                
+
                 // If the opposite is free, return it.
                 if (grid[row][col] == Player.None) {
                     return new Position(row, col);
@@ -448,14 +448,14 @@ public class Board {
     }
 
     private int letterToIndex(String l) {
-	char val = l.toLowerCase().charAt(0);
+        char val = l.toLowerCase().charAt(0);
 
-	return val - 97;
+        return val - 97;
     }
 
     public static void main(String[] args) {
-	// Run tests.
-	Board b = new Board();
+        // Run tests.
+        Board b = new Board();
 
         b.move(b.position("a2"));
         b.move(b.position("a3"));
@@ -476,6 +476,6 @@ public class Board {
     }
 
     public static void println(String s) {
-	System.out.println(s);
+        System.out.println(s);
     }
 }
