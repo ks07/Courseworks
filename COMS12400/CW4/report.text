@@ -1,0 +1,48 @@
+====================
+The Database Program
+====================
+
+by George Field (gf12815) & Alistair Wick (aw12700)
+
+Analysis
+==========
+We are providing a number of components which can be used in other programs to store and retrieve records in a database with one or more tables. Records added to a table are a collection of Strings. Empty strings are allowed, but the number of fields in a record must always match the number of columns. A table must contain at least one column, to act as the key. A table stores a type for each column. Every field in every record stored in a table must match the format described by the corresponding type.
+
+We are also providing a small program (Program.java) that provides a command line interface for viewing tables in the current directory. This program can be used by end-users to view the data, but is also useful for developers to test the program as a whole.
+
+Design
+==========
+The program can be split into several components: Table, Record, and Database. Record will simply wrap an array of strings, and provide public methods to allow access to the data it contains. The table class will use store a collection of these Record objects, as well as headers describing each field found in the records with a name and type. Methods will be added to allow access to get the names of these columns, as well as methods that will allow adding and removing records from the table.
+
+Access to stored records will be index based, with the indexes generated sequentially as rows are inserted. Rows may also be selected through use of a key, a value that should be unique for each record. Rows are deleted by passing the row object to be removed to the delete method. The Table will then search the list of records for the given object using reference equality, and once found will remove it's reference from the list.
+
+The Table class will allowsloading from a text file created by the program in the current working directory. This file will essentially be a CSV file with some added conventions. A malformed file will cause an error and prevent the program from loading, so it is not expected to be edited by the user. Our format will have to support literal characters that are used as delimiters, i.e. comma and newline. Therefore, we will use backslash to escape these characters, and allow chains of backslashes to represent them.
+
+Implementation
+==========
+The program will use Java, and use a class to represent a Record, another to represent a Table, and a final for the overall Database. The record class will have a private field to store the String array, and will provide public methods that allow modifying and accessing elements within the array. The array will be copied when the record is created so that it cannot be modified without using the methods provided by Record.
+
+The Table class will store the records that form the table. Programs using this database will create a Record object, then insert into the Table uisng the insert method. The record will be checked at this point that it matches the format of the Table it is being added to. The user can then later access all rows in the table using the select method, and modify the returned record to update it in the table. Once a record has been retrieved with select, it is possible to remove it from the table with the delete method.
+
+The Database class will wrap a hashmap that maps table names to the table object. It will load all .txt files in the current directory as tables when it is initialised.
+
+The type class will have a private constructor, and will provide a method that should cache type objects. Types that can be re-used will be returned by this method - e.g. the String type, as it holds no data specific to the table it is associated with.
+
+The Program class will simply use the API provided by the above classes to allow simple operations to be performed on stored data.
+
+Tests
+==========
+We tested cases covering the following possibilities:
+
+* Mismatching records inserting into tables.
+* Null fields and records being provided.
+* Inserting the same record multiple times.
+* Saving and loading a table to a file containing characters that must be escaped.
+* Printing a file and checking the output is exact.
+* Normal operation of functions and the public api.
+
+As well as built-in unit testing, we have also built the Program class to help in testing. We have used the Program to test the public api methods, and it's interactive nature allows us to test almost all the features provided by the system. While this is no substitute for the automated tests, it allows us to perform some final testing before shipping our product without having to edit any code, which could introduce regressions.
+
+Deployment
+==========
+The program should be included as part of another, larger program to act as a storage backend. We can provide the accompanying program to allow the developer of the new application to eaily check that their system is interacting with ours correctly. It could also act as a reference implementation.
