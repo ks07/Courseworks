@@ -4,3 +4,8 @@
 *.vcd
 *.class
 *.jar
+nbproject
+dist
+build.xml
+build
+manifest.mf
