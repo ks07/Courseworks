@@ -9,3 +9,6 @@ dist
 build.xml
 build
 manifest.mf
+*.emu
+*.list
+*.s
