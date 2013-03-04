@@ -24,17 +24,17 @@ module emu() ;
 
       begin
 	 // do the move operation.
-	 //r[rd] = imm8;
-	 r[rd] = 8'b00000000;
+	 r[rd] = imm8;
       end
    endtask // movi
 
    
    // initialise emulator, e.g., memory content
    initial begin
+      $readmemh("input.asm", memory);
    end
 
-   
+
    // simulate the clock
    always #1 clock = !clock;
 
