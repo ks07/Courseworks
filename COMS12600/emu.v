@@ -1,4 +1,5 @@
 `define PC 15
+`define LR 14
 `define SP 13
 //`define 0NIB 4'b0000
 //`define 0BYTE 8'b00000000
