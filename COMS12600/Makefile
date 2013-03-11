@@ -23,3 +23,6 @@ run: $(EMU_OUT)
 
 compile:
 	$(AASM) -l $(ASM_LST) -v $(ASM_OUT) $(AFLAGS) $(ASM_SRC)
+
+clean:
+	rm -f $(EMU_OUT) $(ASM_OUT) $(ASM_LST)
