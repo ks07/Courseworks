@@ -326,8 +326,7 @@ module emu() ;
 
    task strspi;
       input [3:0] rt;
-      input [3:0] rn;
-      input [3:0] rm;
+      input [7:0] imm8;
 
       begin
 
@@ -355,6 +354,7 @@ module emu() ;
    endtask // bu
 
    task b;
+      input [3:0] cond;
       input [10:0] imm11;
 
       begin
