@@ -16,6 +16,7 @@ module emu() ;
    reg 		  N;
    reg 		  V;
    reg [ 15 : 0 ] fetched;
+   reg [ 15 : 0 ] executing;
    // TODO: Remove me
    integer 	  dbg;
    
@@ -392,12 +393,33 @@ module emu() ;
       end
    endtask // pop
 
-   task bu;
-      input [10:0] imm11;
+   task BranchWritePC;
+      input [31:0] addr;
 
       begin
-	 r[15] = r[15] + imm11;
+	 BranchTo({addr[31:1], 1'b0});
+      end
+   endtask // BranchWritePC
+
+   task BranchTo;
+      input [31:0] addr;
+
+      begin
+	 r[15] = addr;
+      end
+   endtask // BranchTo
+   
+   task bu;
+      input [10:0] imm11;
+      reg signed [31:0]   imm32;
+      
+      begin
+	 imm32 = {{20{imm11[10]}}, imm11, 1'b0};
+	 BranchWritePC(r[15] + imm32);
+	 fetched = 16'bxxxxxxxxxxxxxxxx;
+	 
 	 $display(" Decoded instruction: bu with imm11=%d", imm11);
+	 $display("emptied fetch %b", fetched);
       end
    endtask // bu
 
@@ -458,7 +480,7 @@ module emu() ;
    endtask // bl2
 */
    task bl_32;
-      input [9:0] imm10;
+      input [9:0]  imm10;
       input [10:0] imm11;
       integer 	   imm32;
       
@@ -537,6 +559,8 @@ module emu() ;
       reg [15:0] addr;
       
       begin
+	 executing = fetched;
+	 
 	 // PC counts in bytes, each instruction is 2 bytes, each memory location is 2 instructions.
 	 // If divisable by 4, then MSB, else LSB. Increment by 2 each step.
 	 addr = r[15] >> 2;
@@ -629,8 +653,6 @@ module emu() ;
       C = 0;
       V = 0;
 
-      fetch();
-
       dbg = 0;
    end
 
@@ -639,16 +661,22 @@ module emu() ;
 
    // perform a fetch-decode-execute cycle
    always @ ( posedge clock ) begin
-      // Fetch stage:
-      $display(" Executing instruction @ %h: '%b'", r[15] - 2, fetched);
-      decode(fetched);
-      fetch();
-      printTrace();
-
-      dbg = dbg + 1;
-      if (dbg == 6) begin
-	 $finish;
+      $display("fetched is: %b", fetched);
+      
+      if (fetched === 16'bxxxxxxxxxxxxxxxx) begin
+	 $display("Pipeline empty.");
+	 fetch();
+      end else begin	 
+	 $display(" Executing instruction @ %h: '%b'", r[15] - 2, fetched);
+	 fetch();
+	 decode(executing);
+	 //printTrace();
       end
+
+//      dbg = dbg + 1;
+//      if (dbg == 6) begin
+//	 $finish;
+//      end
       
    end
 
