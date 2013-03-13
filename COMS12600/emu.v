@@ -440,16 +440,52 @@ module emu() ;
       begin
 	 casez (in)
 	   //  15   10 7 5  2 0
+	   16'b1011010100000000: push();
+	   16'b1011110100000000: pop();
+	   16'b0100011010zzz101: movrsp(in[5:3]);
+	   16'b0100011100zzz000: br(in[5:3]);
+	   16'b0100000000zzzzzz: andr(in[2:0], in[5:3]);
+	   //  15   10 7 5  2 0
+	   16'b0100000001zzzzzz: eorr(in[2:0], in[5:3]);
+	   16'b0100000010zzzzzz: lslr(in[2:0], in[5:3]);
+	   16'b0100000011zzzzzz: lsrr(in[2:0], in[5:3]);
+	   16'b0100001001zzzzzz: negr(in[2:0], in[5:3]);
+	   16'b0100001100zzzzzz: orr(in[2:0], in[5:3]);
+	   //  15   10 7 5  2 0
+	   16'b0100001101zzzzzz: mulr(in[2:0], in[5:3]);
+	   16'b0100001111zzzzzz: movnr(in[2:0], in[5:3]);
+	   16'b101100000zzzzzzz: incsp(in[6:0]);
+	   16'b101100001zzzzzzz: decsp(in[6:0]);
+	   16'b11011111zzzzzzzz: svc(in[7:0]);
+	   //  15   10 7 5  2 0
+	   16'b0101000zzzzzzzzz: strr(in[2:0], in[5:3], in[8:6]);
+	   16'b0001100zzzzzzzzz: addr(in[2:0], in[5:3], in[8:6]);
+	   16'b0001101zzzzzzzzz: subr(in[2:0], in[5:3], in[8:6]);
+	   16'b0101100zzzzzzzzz: ldrr(in[2:0], in[5:3], in[8:6]);
+	   16'b111100zzzzzzzzzz: bl(in[9:0]);
+	   //  15   10 7 5  2 0
 	   16'b00000zzzzzzzzzzz: lsli(in[2:0], in[5:3], in[10:6]);
 	   16'b00001zzzzzzzzzzz: lsri(in[2:0], in[5:3], in[10:6]);
 	   16'b00010zzzzzzzzzzz: asri(in[2:0], in[5:3], in[10:6]);
-	   16'b0001100zzzzzzzzz: addr(in[2:0], in[5:3], in[8:6]);
 	   16'b00100zzzzzzzzzzz: movi(in[10:8], in[7:0]);
 	   16'b00110zzzzzzzzzzz: addi(in[10:8], in[7:0]);
-	   16'b11011111zzzzzzzz: svc(in[7:0]);
-	   
+	   //  15   10 7 5  2 0
+	   16'b00111zzzzzzzzzzz: subi(in[10:8], in[7:0]);
+	   16'b01001zzzzzzzzzzz: ldrpci(in[10:8], in[7:0]);
+	   16'b01100zzzzzzzzzzz: stri(in[2:0], in[5:3], in[10:6]);
+	   16'b01101zzzzzzzzzzz: ldri(in[2:0], in[5:3], in[10:6]);
+	   16'b10010zzzzzzzzzzz: strspi(in[10:8], in[7:0]);
+	   //  15   10 7 5  2 0
+	   16'b10011zzzzzzzzzzz: ldrspi(in[10:8], in[7:0]);
+	   16'b10100zzzzzzzzzzz: addpci(in[10:8], in[7:0]);
+	   16'b10101zzzzzzzzzzz: addspi(in[10:8], in[7:0]);
+	   16'b11100zzzzzzzzzzz: bu(in[10:0]);
+	   16'b11111zzzzzzzzzzz: bl2(in[10:0]);
+	   //  15   10 7 5  2 0
+	   16'b1101zzzzzzzzzzzz: b(in[11:8], in[7:0]);
 	   default: begin
 	      $display("Unrecognised instruction: %h", in);
+	      $finish;
 	   end
 	 endcase // casez (in)
       end
