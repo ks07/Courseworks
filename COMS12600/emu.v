@@ -1,8 +1,6 @@
 `define PC 15
 `define LR 14
 `define SP 13
-//`define 0NIB 4'b0000
-//`define 0BYTE 8'b00000000
 
 module emu() ;
 
@@ -17,72 +15,85 @@ module emu() ;
    reg 		  C;
    reg 		  N;
    reg 		  V;
+   reg [ 32 : 0 ] temp;
    
 
    // Fill in the instruction implementations here.
    // You can use 'tasks' and 'procedures' here to
    // contain your code and allow re-use.
    task addi;
-      input [3:0] rdn;
+      input [2:0] rdn;
       input [7:0] imm8;
 
       begin
+	 temp = r[rdn] + imm8;
 
+	 if (temp[32] == 1 && r[rdn][31] == 1) begin
+	    C = 1;
+	 end else begin
+	    C = 0;
+	 end
+
+	 r[rdn] = temp;
       end
    endtask // addi
 
    task addr;
-      input [3:0] rd;
-      input [3:0] rn;
-      input [3:0] rm;
+      input [2:0] rd;
+      input [2:0] rn;
+      input [2:0] rm;
 
       begin
-
+	 r[rd] = r[rn] + r[rm];
       end
    endtask // addr
 
    task addspi;
-      input [3:0] rdn;
+      input [2:0] rdn;
       input [7:0] imm8;
 
       begin
-
+	 r[rdn] = r[13] + imm8;
+	 
       end
-   endtask; // addspi
+   endtask // addspi
 
    task incsp;
       input [6:0] imm7;
 
       begin
-
+	 r[13] = r[13] + imm7;
+	 
       end
    endtask // incsp
 
    task addpci;
-      input [3:0] rd;
+      input [2:0] rd;
       input [7:0] imm8;
 
       begin
-
+	 r[rd] = r[15] + imm8;
+	 
       end
    endtask // addpci
 
    task subi;
-      input [3:0] rdn;
+      input [2:0] rdn;
       input [7:0] imm8;
 
       begin
-
+	 r[rdn] = r[rdn] - imm8;
       end
    endtask // subi
 
    task subr;
-      input [3:0] rd;
-      input [3:0] rn;
-      input [3:0] rm;
+      input [2:0] rd;
+      input [2:0] rn;
+      input [2:0] rm;
 
       begin
-
+	 r[rd] = r[rn] - r[rm];
+	 
       end
    endtask // subr
 
@@ -90,99 +101,141 @@ module emu() ;
       input [6:0] imm7;
 
       begin
-
+	 r[13] = r[13] - imm7;
+	 
       end
    endtask // decsp
 
    task mulr;
-      input [3:0] rdm;
-      input [3:0] rn;
+      input [2:0] rdm;
+      input [2:0] rn;
 
       begin
-
+	 r[rdm] = r[rdm] * r[rn];
       end
    endtask // mulr
 
    task andr;
-      input [3:0] rdn;
-      input [3:0] rm;
+      input [2:0] rdn;
+      input [2:0] rm;
 
       begin
-
+	 r[rdn] = r[rdn] & r[rm];
+	 
       end
    endtask // andr
 
    task orr;
-      input [3:0] rdn;
-      input [3:0] rm;
+      input [2:0] rdn;
+      input [2:0] rm;
 
       begin
-
+	 r[rdn] = r[rm] | r[rdn];
+	 
       end
    endtask // orr
 
    task eorr;
-      input [3:0] rdn;
-      input [3:0] rm;
+      input [2:0] rdn;
+      input [2:0] rm;
 
       begin
-
+	 r[rdn] = r[rm] ^ r[rdn];
+	 
       end
    endtask // eorr
 
    task negr;
-      input [3:0] rd;
-      input [3:0] rn;
+      input [2:0] rd;
+      input [2:0] rn;
 
       begin
+	 r[rd] = 0 - r[rn];
 
+	 N = r[rd][31];
+	 setZ(r[rd]);
+	 if (r[rd][31] == r[rn][31]) begin
+	    V = 1;
+	 end else begin
+	    V = 0;
+	 end
+	 C = 0;
       end
    endtask // negr
 
    task lsli;
-      input [3:0] rd;
-      input [3:0] rm;
+      input [2:0] rd;
+      input [2:0] rm;
       input [4:0] imm5;
 
       begin
-
+	 r[rd] = r[rm] << imm5;
+	 N = r[rd][31];
+	 setZ(r[rd]);
+	 C = r[rm][32 - imm5];
+	 // V unchanged
       end
    endtask // lsli
 
    task lslr;
-      input [3:0] rdn;
-      input [3:0] rm;
+      input [2:0] rdn;
+      input [2:0] rm;
+      integer 	  shift;
 
       begin
-
+	 shift = r[rm][7:0];
+	 // TODO: C, shift when 0
+	 C = r[rdn][32 - shift];
+	 r[rdn] = r[rdn] << shift;
+	 N = r[rdn][31];
+	 setZ(r[rdn]);
+	 // V unchanged
       end
    endtask // lslr
 
    task lsri;
-      input [3:0] rd;
-      input [3:0] rm;
+      input [2:0] rd;
+      input [2:0] rm;
       input [4:0] imm5;
 
       begin
-
+         r[rd] = r[rm] >> imm5;
+	 N = r[rd][31];
+	 setZ(r[rd]);
+	 C = r[rm][imm5 - 1];
+	 // V unchanged
       end
    endtask // lsri
 
    task lsrr;
-      input [3:0] rdn;
-      input [3:0] rm;
+      input [2:0] rdn;
+      input [2:0] rm;
+      integer 	  shift;
       
       begin
-
+	 shift = r[rm][7:0];
+	 // TODO: C, shift when 0
+	 C = r[rdn][shift - 1];
+	 r[rdn] = r[rdn] >> shift;
+	 N = r[rdn][31];
+	 setZ(r[rdn]);
+	 // V unchanged
       end
    endtask // lsrr
 
    task asri;
-      input [3:0] rd;
-      input [3:0] rm;
+      input [2:0] rd;
+      input [2:0] rm;
+      input [4:0] imm5;
+      integer 	  toShift;
 
       begin
-
+	 toShift = r[rm];
+	 
+	 r[rd] = toShift >>> imm5;
+	 N = r[rd][31];
+	 setZ(r[rd]);
+	 // TODO: Set C
       end
    endtask // asri
    
@@ -197,19 +250,19 @@ module emu() ;
    endtask // movi
 
    task movnr;
-      input [3:0] rd;
-      input [3:0] rm;
+      input [2:0] rd;
+      input [2:0] rm;
 
       begin
-
+	 r[rd] = ~r[rm];
       end
    endtask // movnr
 
    task movrsp;
-      input [3:0] rm;
+      input [2:0] rm;
 
       begin
-
+	 r[15] = r[rm];
       end
    endtask // movrsp
 
@@ -331,7 +384,7 @@ module emu() ;
       begin
 
       end
-   endtask; // br
+   endtask // br
 
    task svc;
       input [7:0] imm8;
@@ -350,8 +403,18 @@ module emu() ;
       end
    endtask // svc
 
-   //integer addr;
-   
+   task setZ;
+      input [31:0] num;
+
+      begin
+	 if (num == 0) begin
+	    Z = 1;
+	 end else begin
+	    Z = 0;
+	 end
+      end
+   endtask // setZ
+
    task dumpMemory ;
       integer addr;
       
@@ -370,11 +433,50 @@ module emu() ;
 	 $display("r12=%h, r13=%h, r14=%h, r15=%h", r[12], r[13], r[14], r[15]);
       end
    endtask // printRegisters
+
+   task decode;
+      input [15:0] in;
+
+      begin
+	 casez (in)
+	   //  15   10 7 5  2 0
+	   16'b00000zzzzzzzzzzz: lsli(in[2:0], in[5:3], in[10:6]);
+	   16'b00001zzzzzzzzzzz: lsri(in[2:0], in[5:3], in[10:6]);
+	   16'b00010zzzzzzzzzzz: asri(in[2:0], in[5:3], in[10:6]);
+	   16'b0001100zzzzzzzzz: addr(in[2:0], in[5:3], in[8:6]);
+	   16'b00100zzzzzzzzzzz: movi(in[10:8], in[7:0]);
+	   16'b00110zzzzzzzzzzz: addi(in[10:8], in[7:0]);
+	   16'b11011111zzzzzzzz: svc(in[7:0]);
+	   
+	   default: begin
+	      $display("Unrecognised instruction: %h", in);
+	   end
+	 endcase // casez (in)
+      end
+   endtask // decode
    
+	   
    
    // initialise emulator, e.g., memory content
    initial begin
-      $readmemh("input.asm", memory);
+      /*r[0] = 10;
+      r[1] = 1;
+      r[2] = 2;
+      r[3] = 3;
+      r[4] = 4;
+      addr(0, 4, 3);
+      
+      $display("%d", r[0]);*/
+      clock = 0;
+
+      printRegisters();
+      decode(16'b0010000000000010);
+      printRegisters();
+      decode(16'b0011000000000001);
+      printRegisters();
+      
+      
+      //$readmemh("input.asm", memory);
    end
 
 
