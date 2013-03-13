@@ -15,7 +15,7 @@ module emu() ;
    reg 		  C;
    reg 		  N;
    reg 		  V;
-   reg [ 16 : 0 ] fetched;
+   reg [ 15 : 0 ] fetched;
    
 
    // Fill in the instruction implementations here.
@@ -36,6 +36,7 @@ module emu() ;
 	 end
 
 	 r[rdn] = temp;
+	 $display(" Decoded instruction: addi with rdn=%d, imm8=%d", rdn, imm8);
       end
    endtask // addi
 
@@ -46,6 +47,7 @@ module emu() ;
 
       begin
 	 r[rd] = r[rn] + r[rm];
+	 $display(" Decoded instruction: addr with rd=%d, rn=%d, rm=%d", rd, rn, rm);
       end
    endtask // addr
 
@@ -55,7 +57,7 @@ module emu() ;
 
       begin
 	 r[rdn] = r[13] + imm8;
-	 
+	 $display(" Decoded instruction: addspi with rdn=%d, imm8=%d", rdn, imm8);
       end
    endtask // addspi
 
@@ -64,7 +66,7 @@ module emu() ;
 
       begin
 	 r[13] = r[13] + imm7;
-	 
+	 $display(" Decoded instruction: incsp with imm7=%d", imm7);
       end
    endtask // incsp
 
@@ -74,7 +76,7 @@ module emu() ;
 
       begin
 	 r[rd] = r[15] + imm8;
-	 
+	 $display(" Decoded instruction: addpci with rd=%d, imm8=%d", rd, imm8);
       end
    endtask // addpci
 
@@ -84,6 +86,7 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rdn] - imm8;
+	 $display(" Decoded instruction: subi with rdn=%d, imm8=%d", rdn, imm8);
       end
    endtask // subi
 
@@ -94,7 +97,7 @@ module emu() ;
 
       begin
 	 r[rd] = r[rn] - r[rm];
-	 
+	 $display(" Decoded instruction: subr with rd=%d, rn=%d, rm=%d", rd, rn, rm);
       end
    endtask // subr
 
@@ -103,7 +106,7 @@ module emu() ;
 
       begin
 	 r[13] = r[13] - imm7;
-	 
+	 $display(" Decoded instruction: decsp with imm7=%d", imm7);
       end
    endtask // decsp
 
@@ -113,6 +116,7 @@ module emu() ;
 
       begin
 	 r[rdm] = r[rdm] * r[rn];
+	 $display(" Decoded instruction: mulr with rdm=%d, rn=%d", rdm, rn);
       end
    endtask // mulr
 
@@ -122,7 +126,7 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rdn] & r[rm];
-	 
+	 $display(" Decoded instruction: andr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // andr
 
@@ -132,7 +136,7 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rm] | r[rdn];
-	 
+	 $display(" Decoded instruction: orr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // orr
 
@@ -142,7 +146,7 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rm] ^ r[rdn];
-	 
+	 $display(" Decoded instruction: eorr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // eorr
 
@@ -161,6 +165,7 @@ module emu() ;
 	    V = 0;
 	 end
 	 C = 0;
+	 $display(" Decoded instruction: negr with rd=%d, rn=%d", rd, rn);
       end
    endtask // negr
 
@@ -175,6 +180,7 @@ module emu() ;
 	 setZ(r[rd]);
 	 C = r[rm][32 - imm5];
 	 // V unchanged
+	 $display(" Decoded instruction: lsli with rd=%d, rm=%d, imm5=%d", rd, rm, imm5);
       end
    endtask // lsli
 
@@ -191,6 +197,7 @@ module emu() ;
 	 N = r[rdn][31];
 	 setZ(r[rdn]);
 	 // V unchanged
+	 $display(" Decoded instruction: lslr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // lslr
 
@@ -205,6 +212,7 @@ module emu() ;
 	 setZ(r[rd]);
 	 C = r[rm][imm5 - 1];
 	 // V unchanged
+	 $display(" Decoded instruction: lsri with rd=%d, rm=%d, imm5=%d", rd, rm, imm5);
       end
    endtask // lsri
 
@@ -221,6 +229,7 @@ module emu() ;
 	 N = r[rdn][31];
 	 setZ(r[rdn]);
 	 // V unchanged
+	 $display(" Decoded instruction: lsrr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // lsrr
 
@@ -237,6 +246,7 @@ module emu() ;
 	 N = r[rd][31];
 	 setZ(r[rd]);
 	 // TODO: Set C
+	 $display(" Decoded instruction: asri with rd=%d, rm=%d, imm5=%d", rd, rm, imm5);
       end
    endtask // asri
    
@@ -247,6 +257,7 @@ module emu() ;
       begin
 	 // do the move operation.
 	 r[rd] = imm8;
+	 $display(" Decoded instruction: movi with rd=%d, imm8=%d", rd, imm8);
       end
    endtask // movi
 
@@ -256,6 +267,7 @@ module emu() ;
 
       begin
 	 r[rd] = ~r[rm];
+	 $display(" Decoded instruction: movnr with rd=%d, rm=%d", rd, rm);
       end
    endtask // movnr
 
@@ -264,6 +276,7 @@ module emu() ;
 
       begin
 	 r[15] = r[rm];
+	 $display(" Decoded instruction: movrsp with rm=%d", rm);
       end
    endtask // movrsp
 
@@ -276,6 +289,7 @@ module emu() ;
       begin
 	 offset_addr = r[rn] + imm5;
 	 r[rt] = memory[offset_addr];
+	 $display(" Decoded instruction: ldri with rt=%d, rn=%d, imm5=%d", rt, rn, imm5);
       end
    endtask // ldri
 
@@ -288,6 +302,7 @@ module emu() ;
       begin
 	 offset_addr = r[rn] + r[rm];
 	 r[rt] = memory[offset_addr];
+	 $display(" Decoded instruction: ldrr with rt=%d, rn=%d, rm=%d", rt, rn, rm);
       end
    endtask // ldrr
 
@@ -300,6 +315,7 @@ module emu() ;
 	 offset_addr = imm8 * 4;
 	 offset_addr = offset_addr + r[13];
 	 r[rt] = memory[offset_addr];
+	 $display(" Decoded instruction: ldrspi with rt=%d, imm8=%d", rt, imm8);
       end
    endtask // ldrspi
 
@@ -312,6 +328,7 @@ module emu() ;
 	 addr = imm8 * 4;
 	 addr = addr + r[15];
 	 r[rd] = memory[addr];
+	 $display(" Decoded instruction: ldrpci with rd=%d, imm8=%d", rd, imm8);
       end
    endtask // ldrpci
 
@@ -324,6 +341,7 @@ module emu() ;
       begin
 	 offset_addr = r[rn] + imm5;
 	 memory[offset_addr] = r[rt];
+	 $display(" Decoded instruction: stri with rt=%d, rn=%d, imm5=%d", rt, rn, imm5);
       end
    endtask // stri
 
@@ -336,6 +354,7 @@ module emu() ;
       begin
 	 offset_addr = r[rn] + r[rm];
 	 memory[offset_addr] = r[rt];
+	 $display(" Decoded instruction: strr with rt=%d, rn=%d, rm=%d", rt, rn, rm);
       end
    endtask // strr
 
@@ -348,6 +367,7 @@ module emu() ;
 	 offset_addr = imm8 * 4;
 	 offset_addr = offset_addr + r[13];
 	 memory[offset_addr] = r[rt];
+	 $display(" Decoded instruction: strspi with rt=%d, imm8=%d", rt, imm8);
       end
    endtask // strspi
 
@@ -358,6 +378,7 @@ module emu() ;
 	 addr = r[13] - 1;
 	 memory[addr] = r[14];
 	 r[13] = addr;
+	 $display(" Decoded instruction: push");
       end
    endtask // push
 
@@ -365,6 +386,7 @@ module emu() ;
       begin
 	 r[15] = memory[r[13]];
 	 r[13] = r[13] + 1;
+	 $display(" Decoded instruction: pop");
       end
    endtask // pop
 
@@ -373,6 +395,7 @@ module emu() ;
 
       begin
 	 r[15] = r[15] + imm11;
+	 $display(" Decoded instruction: bu with imm11=%d", imm11);
       end
    endtask // bu
 
@@ -387,7 +410,7 @@ module emu() ;
 	   4'b101z: pass = (N == V);
 	   4'b110z: pass = (N == V && Z == 0);
 	   default: begin
-	      $display("Unsupported condition code: %h", cond);
+	      $display("Error: Unsupported condition code: %h", cond);
 	      $finish;
 	   end
 	 endcase // casez (cond)
@@ -411,6 +434,8 @@ module emu() ;
 	 if (condT == 1) begin
 	    r[15] = r[15] + imm8;
 	 end
+	 // Print cond as binary - more useful.
+	 $display(" Decoded instruction: b with cond=%b, imm8=%d", cond, imm8);
       end
    endtask // b
 
@@ -442,6 +467,7 @@ module emu() ;
 	 //TODO: sign extensions
 	 imm32 = {imm10, imm11, 1'b0};
 	 r[15] = r[15] + imm32;
+	 $display(" Decoded instruction: bl(2) with imm10=%d, imm11=%d", imm10, imm11);
       end
    endtask // bl_32
    
@@ -451,6 +477,7 @@ module emu() ;
       begin
 	 //branch to reg
 	 r[15] = r[rm];
+	 $display(" Decoded instruction: br with rm=%d", rm);
       end
    endtask // br
 
@@ -458,6 +485,8 @@ module emu() ;
       input [7:0] imm8;
 
       begin
+	 $display(" Decoded instruction: svc with imm8=%d", imm8);
+	 
 	 if (imm8 < 8) begin
 	    $display (r[imm8]);
 	 end else if (imm8 == 16) begin
@@ -582,7 +611,7 @@ module emu() ;
    
    task printTrace;
       begin
-	 $display("pc=%h,  Z = %b, N = %b, C = %b, V = %b", r[15], Z, N, C, V);
+	 $display(" pc=%h,  Z = %b, N = %b, C = %b, V = %b", r[15], Z, N, C, V);
 	 printRegisters();
       end
    endtask // printTrace
