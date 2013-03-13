@@ -15,7 +15,7 @@ module emu() ;
    reg 		  C;
    reg 		  N;
    reg 		  V;
-   reg [ 32 : 0 ] temp;
+   reg [ 16 : 0 ] fetched;
    
 
    // Fill in the instruction implementations here.
@@ -24,7 +24,8 @@ module emu() ;
    task addi;
       input [2:0] rdn;
       input [7:0] imm8;
-
+      reg [32:0]  temp;
+      
       begin
 	 temp = r[rdn] + imm8;
 
@@ -501,6 +502,27 @@ module emu() ;
       end
    endtask // printRegisters
 
+   task fetch;
+      reg [15:0] addr;
+      
+      begin
+	 // PC counts in bytes, each instruction is 2 bytes, each memory location is 2 instructions.
+	 // If divisable by 4, then MSB, else LSB. Increment by 2 each step.
+	 addr = r[15] >> 2;
+	 
+	 if (r[15][1] == 0) begin
+	    // Use LSBs.
+	    fetched = memory[addr][15:0];
+	 end else begin
+	    // MSBs.
+	    fetched = memory[addr][31:16];
+	 end
+
+	 // Increment PC
+	 r[15] = r[15] + 2;
+      end
+   endtask // fetch
+   
    task decode;
       input [15:0] in;
 
@@ -582,13 +604,13 @@ module emu() ;
       //$readmemh("input.asm", memory);
    end
 
-
    // simulate the clock
    always #1 clock = !clock;
 
    // perform a fetch-decode-execute cycle
    always @ ( posedge clock ) begin
-      r[0] = r[0] + 1;
+      // Fetch stage:
+      fetched = memory
 
       $finish;
       
