@@ -16,6 +16,8 @@ module emu() ;
    reg 		  N;
    reg 		  V;
    reg [ 15 : 0 ] fetched;
+   // TODO: Remove me
+   integer 	  dbg;
    
 
    // Fill in the instruction implementations here.
@@ -618,14 +620,18 @@ module emu() ;
    
    // initialise emulator, e.g., memory content
    initial begin
+      $readmemh("example.emu", memory);
+      
       clock = 0;
       r[15] = 0;
       Z = 0;
       N = 0;
       C = 0;
       V = 0;
-      
-      $readmemh("example.emu", memory);
+
+      fetch();
+
+      dbg = 0;
    end
 
    // simulate the clock
@@ -634,12 +640,15 @@ module emu() ;
    // perform a fetch-decode-execute cycle
    always @ ( posedge clock ) begin
       // Fetch stage:
-      fetch();
-      $display("Executing instruction @ %h: '%b'", r[15] - 4, fetched);
+      $display(" Executing instruction @ %h: '%b'", r[15] - 2, fetched);
       decode(fetched);
+      fetch();
       printTrace();
 
-      //$finish;
+      dbg = dbg + 1;
+      if (dbg == 6) begin
+	 $finish;
+      end
       
    end
 
