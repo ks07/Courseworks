@@ -270,9 +270,11 @@ module emu() ;
       input [3:0] rt;
       input [3:0] rn;
       input [4:0] imm5;
+      integer 	  offset_addr;
 
       begin
-
+	 offset_addr = r[rn] + imm5;
+	 r[rt] = memory[offset_addr];
       end
    endtask // ldri
 
@@ -280,27 +282,35 @@ module emu() ;
       input [3:0] rt;
       input [3:0] rn;
       input [3:0] rm;
+      integer 	  offset_addr;
 
       begin
-
+	 offset_addr = r[rn] + r[rm];
+	 r[rt] = memory[offset_addr];
       end
    endtask // ldrr
 
    task ldrspi;
       input [3:0] rt;
       input [7:0] imm8;
+      integer 	  offset_addr;
 
       begin
-
+	 offset_addr = imm8 * 4;
+	 offset_addr = offset_addr + r[13];
+	 r[rt] = memory[offset_addr];
       end
    endtask // ldrspi
 
    task ldrpci;
       input [3:0] rd;
       input [7:0] imm8;
+      integer 	  addr;
 
       begin
-
+	 addr = imm8 * 4;
+	 addr = addr + r[15];
+	 r[rd] = memory[addr];
       end
    endtask // ldrpci
 
@@ -308,9 +318,11 @@ module emu() ;
       input [3:0] rt;
       input [3:0] rn;
       input [4:0] imm5;
-
+      integer 	  offset_addr;
+      
       begin
-
+	 offset_addr = r[rn] + imm5;
+	 memory[offset_addr] = r[rt];
       end
    endtask // stri
 
@@ -318,30 +330,40 @@ module emu() ;
       input [3:0] rt;
       input [3:0] rn;
       input [3:0] rm;
-
+      integer 	  offset_addr;
+      
       begin
-
+	 offset_addr = r[rn] + r[rm];
+	 memory[offset_addr] = r[rt];
       end
    endtask // strr
 
    task strspi;
       input [3:0] rt;
       input [7:0] imm8;
-
+      integer 	  offset_addr;
+      
       begin
-
+	 offset_addr = imm8 * 4;
+	 offset_addr = offset_addr + r[13];
+	 memory[offset_addr] = r[rt];
       end
    endtask // strspi
 
    task push;
+      integer addr;
+      
       begin
-
+	 addr = r[13] - 1;
+	 memory[addr] = r[14];
+	 r[13] = addr;
       end
    endtask // push
 
    task pop;
       begin
-
+	 r[15] = memory[r[13]];
+	 r[13] = r[13] + 1;
       end
    endtask // pop
 
@@ -349,16 +371,45 @@ module emu() ;
       input [10:0] imm11;
 
       begin
-
+	 r[15] = r[15] + imm11;
       end
    endtask // bu
 
+   task conditionPassed;
+      input [3:0] cond;
+      output 	  result;
+      reg 	  pass;
+      
+      begin
+	 casez (cond)
+	   4'b000z: pass = (Z == 1);
+	   4'b101z: pass = (N == V);
+	   4'b110z: pass = (N == V && Z == 0);
+	   default: begin
+	      $display("Unsupported condition code: %h", cond);
+	      $finish;
+	   end
+	 endcase // casez (cond)
+
+	 if (cond[0] == 1) begin
+	    result = ~pass;
+	 end else begin
+	    result = pass;
+	 end
+      end
+   endtask // conditionPassed
+   
    task b;
       input [3:0] cond;
-      input [10:0] imm11;
-
+      input [7:0] imm8;
+      reg 	   condT;
+      
       begin
+	 conditionPassed(cond, condT);
 
+	 if (condT == 1) begin
+	    r[15] = r[15] + imm8;
+	 end
       end
    endtask // b
 
