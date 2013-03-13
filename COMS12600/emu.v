@@ -495,9 +495,9 @@ module emu() ;
    
    task printRegisters ;
       begin
-	 $display("r0=%h, r1=%h, r2=%h, r3=%h", r[0], r[1], r[2], r[3]);
-	 $display("r4=%h, r5=%h, r6=%h, r7=%h", r[4], r[5], r[6], r[7]);
-	 $display("r8=%h, r9=%h, r10=%h, r11=%h", r[8], r[9], r[10], r[11]);
+	 $display(" r0=%h,  r1=%h,  r2=%h,  r3=%h", r[0], r[1], r[2], r[3]);
+	 $display(" r4=%h,  r5=%h,  r6=%h,  r7=%h", r[4], r[5], r[6], r[7]);
+	 $display(" r8=%h,  r9=%h, r10=%h, r11=%h", r[8], r[9], r[10], r[11]);
 	 $display("r12=%h, r13=%h, r14=%h, r15=%h", r[12], r[13], r[14], r[15]);
       end
    endtask // printRegisters
@@ -580,28 +580,23 @@ module emu() ;
       end
    endtask // decode
    
-	   
+   task printTrace;
+      begin
+	 $display("pc=%h,  Z = %b, N = %b, C = %b, V = %b", r[15], Z, N, C, V);
+	 printRegisters();
+      end
+   endtask // printTrace
    
    // initialise emulator, e.g., memory content
    initial begin
-      /*r[0] = 10;
-      r[1] = 1;
-      r[2] = 2;
-      r[3] = 3;
-      r[4] = 4;
-      addr(0, 4, 3);
-      
-      $display("%d", r[0]);*/
       clock = 0;
-
-      printRegisters();
-      decode(16'b0010000000000010);
-      printRegisters();
-      decode(16'b0011000000000001);
-      printRegisters();
+      r[15] = 0;
+      Z = 0;
+      N = 0;
+      C = 0;
+      V = 0;
       
-      
-      //$readmemh("input.asm", memory);
+      $readmemh("example.emu", memory);
    end
 
    // simulate the clock
@@ -610,9 +605,12 @@ module emu() ;
    // perform a fetch-decode-execute cycle
    always @ ( posedge clock ) begin
       // Fetch stage:
-      fetched = memory
+      fetch();
+      $display("Executing instruction @ %h: '%b'", r[15] - 4, fetched);
+      decode(fetched);
+      printTrace();
 
-      $finish;
+      //$finish;
       
    end
 
