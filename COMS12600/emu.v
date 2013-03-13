@@ -16,14 +16,9 @@ module emu() ;
    reg 		  N;
    reg 		  V;
    reg [ 15 : 0 ] fetched;
-   reg [ 15 : 0 ] executing;
-   // TODO: Remove me
-   integer 	  dbg;
-   
+   reg [ 15 : 0 ] executing;   
 
-   // Fill in the instruction implementations here.
-   // You can use 'tasks' and 'procedures' here to
-   // contain your code and allow re-use.
+
    task addi;
       input [2:0] rdn;
       input [7:0] imm8;
@@ -417,9 +412,7 @@ module emu() ;
 	 imm32 = {{20{imm11[10]}}, imm11, 1'b0};
 	 BranchWritePC(r[15] + imm32);
 	 fetched = 16'bxxxxxxxxxxxxxxxx;
-	 
 	 $display(" Decoded instruction: bu with imm11=%d", imm11);
-	 $display("emptied fetch %b", fetched);
       end
    endtask // bu
 
@@ -477,8 +470,8 @@ module emu() ;
       begin
 
       end
-   endtask // bl2
-*/
+   endtask // bl2*/
+
    task bl_32;
       input [9:0]  imm10;
       input [10:0] imm11;
@@ -652,8 +645,6 @@ module emu() ;
       N = 0;
       C = 0;
       V = 0;
-
-      dbg = 0;
    end
 
    // simulate the clock
@@ -664,19 +655,14 @@ module emu() ;
       $display("fetched is: %b", fetched);
       
       if (fetched === 16'bxxxxxxxxxxxxxxxx) begin
-	 $display("Pipeline empty.");
+	 $display("Pipeline empty, fetching.");
 	 fetch();
       end else begin	 
 	 $display(" Executing instruction @ %h: '%b'", r[15] - 2, fetched);
 	 fetch();
 	 decode(executing);
-	 //printTrace();
+	 printTrace();
       end
-
-//      dbg = dbg + 1;
-//      if (dbg == 6) begin
-//	 $finish;
-//      end
       
    end
 
