@@ -267,8 +267,8 @@ module emu() ;
    endtask // movrsp
 
    task ldri;
-      input [3:0] rt;
-      input [3:0] rn;
+      input [2:0] rt;
+      input [2:0] rn;
       input [4:0] imm5;
       integer 	  offset_addr;
 
@@ -279,9 +279,9 @@ module emu() ;
    endtask // ldri
 
    task ldrr;
-      input [3:0] rt;
-      input [3:0] rn;
-      input [3:0] rm;
+      input [2:0] rt;
+      input [2:0] rn;
+      input [2:0] rm;
       integer 	  offset_addr;
 
       begin
@@ -291,7 +291,7 @@ module emu() ;
    endtask // ldrr
 
    task ldrspi;
-      input [3:0] rt;
+      input [2:0] rt;
       input [7:0] imm8;
       integer 	  offset_addr;
 
@@ -303,7 +303,7 @@ module emu() ;
    endtask // ldrspi
 
    task ldrpci;
-      input [3:0] rd;
+      input [2:0] rd;
       input [7:0] imm8;
       integer 	  addr;
 
@@ -315,8 +315,8 @@ module emu() ;
    endtask // ldrpci
 
    task stri;
-      input [3:0] rt;
-      input [3:0] rn;
+      input [2:0] rt;
+      input [2:0] rn;
       input [4:0] imm5;
       integer 	  offset_addr;
       
@@ -327,9 +327,9 @@ module emu() ;
    endtask // stri
 
    task strr;
-      input [3:0] rt;
-      input [3:0] rn;
-      input [3:0] rm;
+      input [2:0] rt;
+      input [2:0] rn;
+      input [2:0] rm;
       integer 	  offset_addr;
       
       begin
@@ -339,7 +339,7 @@ module emu() ;
    endtask // strr
 
    task strspi;
-      input [3:0] rt;
+      input [2:0] rt;
       input [7:0] imm8;
       integer 	  offset_addr;
       
@@ -413,8 +413,8 @@ module emu() ;
       end
    endtask // b
 
-   task bl;
-      input [9:0] imm10;
+   /*task bl;
+      signed input [9:0] imm10;
 
       begin
 
@@ -428,12 +428,28 @@ module emu() ;
 
       end
    endtask // bl2
-
+*/
+   task bl_32;
+      input [9:0] imm10;
+      input [10:0] imm11;
+      integer 	   imm32;
+      
+      begin
+	 r[14] = r[15];
+	 r[14][0] = 1;
+	 //TODO: branchwritepc
+	 //TODO: sign extensions
+	 imm32 = {imm10, imm11, 1'b0};
+	 r[15] = r[15] + imm32;
+      end
+   endtask // bl_32
+   
    task br;
-      input [3:0] rm;
+      input [2:0] rm;
 
       begin
-
+	 //branch to reg
+	 r[15] = r[rm];
       end
    endtask // br
 
@@ -513,7 +529,7 @@ module emu() ;
 	   16'b0001100zzzzzzzzz: addr(in[2:0], in[5:3], in[8:6]);
 	   16'b0001101zzzzzzzzz: subr(in[2:0], in[5:3], in[8:6]);
 	   16'b0101100zzzzzzzzz: ldrr(in[2:0], in[5:3], in[8:6]);
-	   16'b111100zzzzzzzzzz: bl(in[9:0]);
+//	   16'b111100zzzzzzzzzz: bl(in[9:0]);
 	   //  15   10 7 5  2 0
 	   16'b00000zzzzzzzzzzz: lsli(in[2:0], in[5:3], in[10:6]);
 	   16'b00001zzzzzzzzzzz: lsri(in[2:0], in[5:3], in[10:6]);
@@ -531,7 +547,7 @@ module emu() ;
 	   16'b10100zzzzzzzzzzz: addpci(in[10:8], in[7:0]);
 	   16'b10101zzzzzzzzzzz: addspi(in[10:8], in[7:0]);
 	   16'b11100zzzzzzzzzzz: bu(in[10:0]);
-	   16'b11111zzzzzzzzzzz: bl2(in[10:0]);
+//	   16'b11111zzzzzzzzzzz: bl2(in[10:0]);
 	   //  15   10 7 5  2 0
 	   16'b1101zzzzzzzzzzzz: b(in[11:8], in[7:0]);
 	   default: begin
