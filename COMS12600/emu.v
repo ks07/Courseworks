@@ -221,28 +221,26 @@ module emu() ;
 	 r[rdn] = r[rm] ^ r[rdn];
 
 	 N = r[rdn][31];
-	 Z = (r[rdn] == 0);
+	 setZ(r[rdn]);
 	 C = 0;
 	 $display(" Decoded instruction: eorr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // eorr
-
+   
    task negr;
       input [2:0] rd;
       input [2:0] rn;
-
+      reg [31:0]  res;
+      
       begin
-	 r[rd] = 0 - r[rn];
-
-	 N = r[rd][31];
-	 setZ(r[rd]);
-	 if (r[rd][31] == r[rn][31]) begin
-	    V = 1;
-	 end else begin
-	    V = 0;
-	 end
-	 C = 0;
+	 AddWithCarry(~r[rn], 0, 1, res, C, V);
+	 
+	 N = res[31];
+	 setZ(res);
+	 r[rd] = res;
 	 $display(" Decoded instruction: negr with rd=%d, rn=%d", rd, rn);
+	 $finish;
+	 
       end
    endtask // negr
 
