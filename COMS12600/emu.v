@@ -16,24 +16,54 @@ module emu() ;
    reg 		  N;
    reg 		  V;
    reg [ 15 : 0 ] fetched;
-   reg [ 15 : 0 ] executing;   
+   reg [ 15 : 0 ] executing;
 
-
+   task AddWithCarry;
+      input [31:0] x;
+      input [31:0] y;
+      input 	   carry_in;
+      output [31:0] result;
+      output 	    carry_out;
+      output 	    overflow;
+      reg [31:0]    res;
+      reg [32:0]    usum;
+      reg [32:0]    ssum;
+      
+      begin	 
+	 usum = x + y;
+	 usum = usum + carry_in;
+	 ssum = $signed(x) + $signed(y);
+	 ssum = ssum + carry_in;
+	 res = usum[31:0];
+	 
+	 if (res == usum) begin
+	    carry_out = 0;
+	 end else begin
+	    carry_out = 1;
+	 end
+	 
+	 if ($signed(res) == ssum) begin
+	    overflow = 0;
+	 end else begin
+	    overflow = 1;
+	 end
+	 
+	 result = res;
+      end
+   endtask // AddWithCarry
+	   
    task addi;
       input [2:0] rdn;
       input [7:0] imm8;
-      reg [32:0]  temp;
+      reg [31:0]  res;
       
       begin
-	 temp = r[rdn] + imm8;
+	 AddWithCarry(r[rdn], imm8, 1'b0, res, C, V);
 
-	 if (temp[32] == 1 && r[rdn][31] == 1) begin
-	    C = 1;
-	 end else begin
-	    C = 0;
-	 end
-
-	 r[rdn] = temp;
+	 N = res[31];
+	 Z = (res == 0);
+	 
+	 r[rdn] = res;
 	 $display(" Decoded instruction: addi with rdn=%d, imm8=%d", rdn, imm8);
       end
    endtask // addi
@@ -42,9 +72,15 @@ module emu() ;
       input [2:0] rd;
       input [2:0] rn;
       input [2:0] rm;
-
+      reg [31:0]  res;
+      
       begin
-	 r[rd] = r[rn] + r[rm];
+	 AddWithCarry(r[rn], r[rm], 1'b0, res, C, V);
+
+	 N = res[31];
+	 Z = (res == 0);
+	 
+	 r[rd] = res;
 	 $display(" Decoded instruction: addr with rd=%d, rn=%d, rm=%d", rd, rn, rm);
       end
    endtask // addr
@@ -52,18 +88,20 @@ module emu() ;
    task addspi;
       input [2:0] rdn;
       input [7:0] imm8;
-
+      reg 	  ign;
+      
       begin
-	 r[rdn] = r[13] + imm8;
+	 AddWithCarry(r[13], imm8, 0, r[rdn], ign, ign);
 	 $display(" Decoded instruction: addspi with rdn=%d, imm8=%d", rdn, imm8);
       end
    endtask // addspi
 
    task incsp;
       input [6:0] imm7;
-
+      reg 	  ign;
+      
       begin
-	 r[13] = r[13] + imm7;
+	 AddWithCarry(r[13], imm7, 0, r[13], ign, ign);
 	 $display(" Decoded instruction: incsp with imm7=%d", imm7);
       end
    endtask // incsp
@@ -73,6 +111,7 @@ module emu() ;
       input [7:0] imm8;
 
       begin
+	 // TODO: Align(PC,4) ?
 	 r[rd] = r[15] + imm8;
 	 $display(" Decoded instruction: addpci with rd=%d, imm8=%d", rd, imm8);
       end
@@ -81,9 +120,17 @@ module emu() ;
    task subi;
       input [2:0] rdn;
       input [7:0] imm8;
-
+      reg [31:0]  imm32;
+      reg [31:0]  res;
+      
       begin
-	 r[rdn] = r[rdn] - imm8;
+	 imm32 = {24'b000000000000000000000000, imm8};
+	 AddWithCarry(r[rdn], ~imm32, 1'b1, res, C, V);
+	 
+	 N = res[31];
+	 Z = (res == 0);
+	 
+	 r[rdn] = res;
 	 $display(" Decoded instruction: subi with rdn=%d, imm8=%d", rdn, imm8);
       end
    endtask // subi
@@ -92,18 +139,28 @@ module emu() ;
       input [2:0] rd;
       input [2:0] rn;
       input [2:0] rm;
-
+      reg [31:0]  res;
+      
       begin
-	 r[rd] = r[rn] - r[rm];
+	 AddWithCarry(r[rn], ~r[rm], 1, res, C, V);
+
+	 N = res[31];
+	 Z = (res == 0);
+
+	 r[rd] = res;
 	 $display(" Decoded instruction: subr with rd=%d, rn=%d, rm=%d", rd, rn, rm);
       end
    endtask // subr
 
    task decsp;
       input [6:0] imm7;
-
+      reg [31:0]  imm32;
+      reg [31:0]  res;
+      reg 	  ign;
+      
       begin
-	 r[13] = r[13] - imm7;
+	 imm32 = {25'b0000000000000000000000000, imm7};
+	 AddWithCarry(r[13], ~imm32, 1, r[13], ign, ign);
 	 $display(" Decoded instruction: decsp with imm7=%d", imm7);
       end
    endtask // decsp
@@ -111,9 +168,12 @@ module emu() ;
    task mulr;
       input [2:0] rdm;
       input [2:0] rn;
-
+      
       begin
 	 r[rdm] = r[rdm] * r[rn];
+	 N = r[rdm][31];
+	 Z = (r[rdm] == 0);
+	 // C, V not updated.
 	 $display(" Decoded instruction: mulr with rdm=%d, rn=%d", rdm, rn);
       end
    endtask // mulr
@@ -401,6 +461,8 @@ module emu() ;
 
       begin
 	 r[15] = addr;
+	 // Clear the pipeline.
+	 fetched = 16'bxxxxxxxxxxxxxxxx;
       end
    endtask // BranchTo
    
@@ -411,7 +473,6 @@ module emu() ;
       begin
 	 imm32 = {{20{imm11[10]}}, imm11, 1'b0};
 	 BranchWritePC(r[15] + imm32);
-	 fetched = 16'bxxxxxxxxxxxxxxxx;
 	 $display(" Decoded instruction: bu with imm11=%d", imm11);
       end
    endtask // bu
@@ -443,13 +504,15 @@ module emu() ;
    task b;
       input [3:0] cond;
       input [7:0] imm8;
-      reg 	   condT;
+      reg 	  condT;
+      reg signed [31:0] imm32;
       
       begin
 	 conditionPassed(cond, condT);
 
 	 if (condT == 1) begin
-	    r[15] = r[15] + imm8;
+	    imm32 = {{23{imm8[7]}}, imm8, 1'b0};
+	    BranchWritePC(r[15] + imm32);
 	 end
 	 // Print cond as binary - more useful.
 	 $display(" Decoded instruction: b with cond=%b, imm8=%d", cond, imm8);
