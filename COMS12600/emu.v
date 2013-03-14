@@ -562,6 +562,7 @@ module emu() ;
       input [10:0] imm11;
 
       begin
+	 $display(" Decoded instruction: bl1 with imm11=%d", imm11);
 	 // When executing, BL2 should be in fetched.
 	 if (fetched[15:11] != 5'b11111) begin
 	    // Shouldn't happen unless memory has been tampered with.
@@ -570,24 +571,24 @@ module emu() ;
 	    $finish;
 	 end else begin
 	    // Decode BL2 and combine.
-	    bl_32(imm11, fetched[10:0]);
+	    bl_32(imm11[10], imm11[9:0], fetched[10:0]);
 	 end
       end
    endtask
 
    task bl_32;
-      input [10:0] bl1_imm11;
+      input        S;
+      input [9:0]  bl1_imm10;
       input [10:0] bl2_imm11;
-      integer 	   imm32;
+      reg [31:0]   imm32;
       
       begin
-	 $display(" Decoded instruction: bl(2) with imm10=%d, imm11=%d", bl1_imm11, bl2_imm11);
-	 r[14] = r[15];
-	 r[14][0] = 1;
-	 //TODO: branchwritepc
-	 //TODO: sign extensions
-	 imm32 = {bl1_imm11, bl2_imm11, 1'b0};
-	 r[15] = r[15] + imm32;
+	 $display(" Decoded instruction: bl(2) with bl1_imm11=%d, bl2_imm11=%d", {S, bl1_imm10}, bl2_imm11);
+	 imm32 = {{{10{S}}}, bl1_imm10, bl2_imm11, 1'b0};
+
+	 // Set LR
+	 r[14] = {r[15][31:1], 1'b1};
+	 BranchWritePC(r[15] + imm32);
       end
    endtask // bl_32
    
