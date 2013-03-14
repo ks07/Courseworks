@@ -15,21 +15,21 @@ Note that the marks allocated for each stage are *rough guidelines* and *maximum
  
 ----8<--------8<--------8<---- General Information ---8<--------8<--------8<---
 
-name   : [...]
-email  : [...]
-year   : [...]
-course : [...]
+name   : George Field
+email  : gf12815@my.bristol.ac.uk
+year   : 1
+course : G403
 
 ----8<--------8<--------8<-------- Mark Sheet --------8<--------8<--------8<---
 
 
 Emulator core functionality:
-[_]	(  20%)	Fetches and decodes instructions correctly (identifies correctly in trace)
-[_]	(  20%)  Executes instructions correctly (correct results in traced registers)
+[X]	(  20%)	Fetches and decodes instructions correctly (identifies correctly in trace)
+[X]	(  20%)  Executes instructions correctly (correct results in traced registers)
                   
 Debug functionality:
-[_]	(  5%)	SVC debug formats working        
-[_]	(  5%)	Detect errant/ill-formed input files or bad instructions with a useful error message                        
+[X]	(  5%)	SVC debug formats working        
+[X]	(  5%)	Detect errant/ill-formed input files or bad instructions with a useful error message                        
 
 Tests (note to get these components, you need to include a text file showing your working trace output. Name these e.g. ALUTest.trace and so on: 
 [_]	( 10%)	ALUTest execution correct
