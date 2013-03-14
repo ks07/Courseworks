@@ -90,10 +90,12 @@ module emu() ;
    task addspi;
       input [2:0] rdn;
       input [7:0] imm8;
+      reg [31:0]  imm32;
       reg 	  ign;
       
       begin
-	 AddWithCarry(r[13], imm8, 0, r[rdn], ign, ign);
+	 imm32 = {{22{1'b0}}, imm8, 2'b00};
+	 AddWithCarry(r[13], imm32, 0, r[rdn], ign, ign);
 	 $display(" Decoded instruction: addspi with rdn=%d, imm8=%d", rdn, imm8);
       end
    endtask // addspi
@@ -431,12 +433,22 @@ module emu() ;
 	 $display(" Decoded instruction: strspi with rt=%d, imm8=%d", rt, imm8);
       end
    endtask // strspi
+   
+   task SPToAddress;
+      input [31:0] SP;
+      output [9:0] memAdd;
 
+      begin
+	 // SP counts in bytes, memory addresses are 4 bytes wide.
+	 memAdd = SP >> 2;
+      end
+   endtask // SPToAddress
+   
    task push;
       integer addr;
       
       begin
-	 addr = r[13] - 1;
+	 SPToAddress(r[13] - 4, addr);
 	 memory[addr] = r[14];
 	 r[13] = addr;
 	 $display(" Decoded instruction: push");
@@ -444,9 +456,13 @@ module emu() ;
    endtask // push
 
    task pop;
+      integer addr;
+      
       begin
-	 r[15] = memory[r[13]];
-	 r[13] = r[13] + 1;
+	 SPToAddress(r[13], addr);
+	 r[15] = memory[addr];
+	 SPToAddress(r[13] + 4, addr);
+	 r[13] = addr;
 	 $display(" Decoded instruction: pop");
       end
    endtask // pop
