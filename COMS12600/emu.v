@@ -196,6 +196,7 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rm] | r[rdn];
+	 // TODO: Set flags
 	 $display(" Decoded instruction: orr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // orr
@@ -556,10 +557,13 @@ module emu() ;
    
    task br;
       input [2:0] rm;
-
+      reg [31:0]  addr;
+      
       begin
 	 //branch to reg
-	 r[15] = r[rm];
+	 addr = r[rm];
+	 addr[0] = 1'b0;
+	 BranchTo(r[rm]);
 	 $display(" Decoded instruction: br with rm=%d", rm);
       end
    endtask // br
