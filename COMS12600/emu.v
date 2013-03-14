@@ -528,7 +528,6 @@ module emu() ;
 	 end else begin
 	    result = pass;
 	 end
-	 $display("Condition Passed? %b", result);
       end
    endtask // conditionPassed
    
@@ -578,7 +577,7 @@ module emu() ;
 	 //TODO: sign extensions
 	 imm32 = {bl1_imm11, bl2_imm11, 1'b0};
 	 r[15] = r[15] + imm32;
-	 $display(" Decoded instruction: bl(2) with imm10=%d, imm11=%d", imm10, imm11);
+	 $display(" Decoded instruction: bl(2) with imm10=%d, imm11=%d", bl1_imm11, bl2_imm11);
       end
    endtask // bl_32
    
@@ -718,7 +717,7 @@ module emu() ;
 	   //  15   10 7 5  2 0
 	   16'b1101zzzzzzzzzzzz: b(in[11:8], in[7:0]);
 	   default: begin
-	      $display("Unrecognised instruction: %h", in);
+	      $display("Error: Unrecognised instruction: %h", in);
 	      $finish;
 	   end
 	 endcase // casez (in)
@@ -752,6 +751,10 @@ module emu() ;
       if (fetched === 16'bxxxxxxxxxxxxxxxx) begin
 	 $display("Pipeline empty, fetching.");
 	 fetch();
+      end else if (executing[15:11] == 5'b11110 && fetched[15:11] != 5'b11111) begin
+	 $display("Error: Found BL1, but it was not followed by BL2.");
+	 $display("       Actually fetched: %b", fetched);
+	 $finish;
       end else begin	 
 	 $display(" Executing instruction @ %h: '%b'", r[15] - 2, fetched);
 	 fetch();
