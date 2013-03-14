@@ -351,7 +351,7 @@ module emu() ;
 	 $display(" Decoded instruction: movrsp with rm=%d", rm);
       end
    endtask // movrsp
-
+     
    task ldri;
       input [2:0] rt;
       input [2:0] rn;
@@ -362,7 +362,6 @@ module emu() ;
 	 offset_addr = {{25{1'b0}}, imm5, 2'b00};
 	 offset_addr = offset_addr + r[rn];
 	 offset_addr = offset_addr >> 2;
-	 $display("addr %d (%h)", offset_addr, offset_addr);
 	 
 	 r[rt] = memory[offset_addr];
 	 $display(" Decoded instruction: ldri with rt=%d, rn=%d, imm5=%d", rt, rn, imm5);
@@ -373,10 +372,11 @@ module emu() ;
       input [2:0] rt;
       input [2:0] rn;
       input [2:0] rm;
-      integer 	  offset_addr;
+      reg [31:0]  offset_addr;
 
       begin
 	 offset_addr = r[rn] + r[rm];
+	 offset_addr = offset_addr >> 2;
 	 r[rt] = memory[offset_addr];
 	 $display(" Decoded instruction: ldrr with rt=%d, rn=%d, rm=%d", rt, rn, rm);
       end
@@ -385,11 +385,13 @@ module emu() ;
    task ldrspi;
       input [2:0] rt;
       input [7:0] imm8;
-      integer 	  offset_addr;
+      reg [31:0]  offset_addr;
 
       begin
-	 offset_addr = imm8 * 4;
+	 offset_addr = {{22{1'b0}}, imm8, 2'b00};
 	 offset_addr = offset_addr + r[13];
+	 offset_addr = offset_addr >> 2;
+	 
 	 r[rt] = memory[offset_addr];
 	 $display(" Decoded instruction: ldrspi with rt=%d, imm8=%d", rt, imm8);
       end
@@ -398,10 +400,10 @@ module emu() ;
    task ldrpci;
       input [2:0] rd;
       input [7:0] imm8;
-      integer 	  addr;
+      reg [31:0]  addr;
 
       begin
-	 addr = imm8 * 4;
+	 addr = {{22{1'b0}}, imm8, 2'b00};
 	 addr = addr + r[15];
 	 r[rd] = memory[addr];
 	 $display(" Decoded instruction: ldrpci with rd=%d, imm8=%d", rd, imm8);
@@ -412,10 +414,13 @@ module emu() ;
       input [2:0] rt;
       input [2:0] rn;
       input [4:0] imm5;
-      integer 	  offset_addr;
+      reg [31:0]  offset_addr;
       
       begin
-	 offset_addr = r[rn] + imm5;
+	 offset_addr = {{25{1'b0}}, imm5, 2'b00};
+	 offset_addr = offset_addr + r[rn];
+	 offset_addr >> 2;
+	 
 	 memory[offset_addr] = r[rt];
 	 $display(" Decoded instruction: stri with rt=%d, rn=%d, imm5=%d", rt, rn, imm5);
       end
@@ -425,10 +430,11 @@ module emu() ;
       input [2:0] rt;
       input [2:0] rn;
       input [2:0] rm;
-      integer 	  offset_addr;
+      reg [31:0]  offset_addr;
       
       begin
 	 offset_addr = r[rn] + r[rm];
+	 offset_addr = offset_addr >> 2;
 	 memory[offset_addr] = r[rt];
 	 $display(" Decoded instruction: strr with rt=%d, rn=%d, rm=%d", rt, rn, rm);
       end
@@ -440,8 +446,9 @@ module emu() ;
       integer 	  offset_addr;
       
       begin
-	 offset_addr = imm8 * 4;
+	 offset_addr = {{22{1'b0}}, imm8, 2'b00};
 	 offset_addr = offset_addr + r[13];
+	 offset_addr = offset_addr >> 2;
 	 memory[offset_addr] = r[rt];
 	 $display(" Decoded instruction: strspi with rt=%d, imm8=%d", rt, imm8);
       end
