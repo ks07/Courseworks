@@ -212,12 +212,12 @@ module emu() ;
       input [2:0] rm;
 
       begin
-	 $display(" Decoded instruction: eorr with rdn=%d, rm=%d", rdn, rm)
+	 $display(" Decoded instruction: eorr with rdn=%d, rm=%d", rdn, rm);
 	 r[rdn] = r[rm] ^ r[rdn];
 
 	 N = r[rdn][31];
 	 setZ(r[rdn]);
-	 C = 0;;
+	 C = 0;
       end
    endtask // eorr
    
@@ -544,7 +544,7 @@ module emu() ;
       input [3:0] cond;
       input [7:0] imm8;
       reg 	  condT;
-      reg signed [31:0] imm32;
+      reg [31:0]  imm32;
       
       begin
 	 // Print cond as binary - more useful.
@@ -558,21 +558,22 @@ module emu() ;
       end
    endtask // b
 
-   /*task bl;
-      signed input [10:0] imm11;
-
-      begin
-
-      end
-   endtask // bl
-
-   task bl2;
+   task bl;
       input [10:0] imm11;
 
       begin
-
+	 // When executing, BL2 should be in fetched.
+	 if (fetched[15:11] != 5'b11111) begin
+	    // Shouldn't happen unless memory has been tampered with.
+	    $display("Error: Found BL1, but it was not followed by BL2.");
+	    $display("       Actually fetched: %b", fetched);
+	    $finish;
+	 end else begin
+	    // Decode BL2 and combine.
+	    bl_32(imm11, fetched[10:0]);
+	 end
       end
-   endtask // bl2*/
+   endtask
 
    task bl_32;
       input [10:0] bl1_imm11;
@@ -721,10 +722,13 @@ module emu() ;
 	   16'b10100zzzzzzzzzzz: addpci(in[10:8], in[7:0]);
 	   16'b10101zzzzzzzzzzz: addspi(in[10:8], in[7:0]);
 	   16'b11100zzzzzzzzzzz: bu(in[10:0]);
-//	   16'b11110zzzzzzzzzzz: bl(in[10:0]);
-//	   16'b11111zzzzzzzzzzz: bl2(in[10:0]);
-	   //  15   10 7 5  2 0
+	   16'b11110zzzzzzzzzzz: bl(in[10:0]);
 	   16'b1101zzzzzzzzzzzz: b(in[11:8], in[7:0]);
+	   //  15   10 7 5  2 0
+	   16'b11111zzzzzzzzzzz: begin
+	      $display("Error: Found BL2 without preceeding BL1");
+	      $finish;
+	   end
 	   default: begin
 	      $display("Error: Unrecognised instruction: %h", in);
 	      $finish;
@@ -760,11 +764,6 @@ module emu() ;
       if (fetched === 16'bxxxxxxxxxxxxxxxx) begin
 	 $display("Pipeline empty, fetching.");
 	 fetch();
-      end else if (executing[15:11] == 5'b11110 && fetched[15:11] != 5'b11111) begin
-	 // Shouldn't happen unless memory has been tampered with.
-	 $display("Error: Found BL1, but it was not followed by BL2.");
-	 $display("       Actually fetched: %b", fetched);
-	 $finish;
       end else begin	 
 	 $display(" Executing instruction @ %h: '%b'", r[15] - 2, fetched);
 	 fetch();
