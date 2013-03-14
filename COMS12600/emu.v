@@ -205,7 +205,6 @@ module emu() ;
 	 N = r[rdn][31];
 	 setZ(r[rdn]);
 	 C = 0;
-	 // TODO: Set flags
 	 $display(" Decoded instruction: orr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // orr
@@ -552,7 +551,7 @@ module emu() ;
    endtask // b
 
    /*task bl;
-      signed input [9:0] imm10;
+      signed input [10:0] imm11;
 
       begin
 
@@ -568,8 +567,8 @@ module emu() ;
    endtask // bl2*/
 
    task bl_32;
-      input [9:0]  imm10;
-      input [10:0] imm11;
+      input [10:0] bl1_imm11;
+      input [10:0] bl2_imm11;
       integer 	   imm32;
       
       begin
@@ -577,7 +576,7 @@ module emu() ;
 	 r[14][0] = 1;
 	 //TODO: branchwritepc
 	 //TODO: sign extensions
-	 imm32 = {imm10, imm11, 1'b0};
+	 imm32 = {bl1_imm11, bl2_imm11, 1'b0};
 	 r[15] = r[15] + imm32;
 	 $display(" Decoded instruction: bl(2) with imm10=%d, imm11=%d", imm10, imm11);
       end
@@ -697,24 +696,24 @@ module emu() ;
 	   16'b0001100zzzzzzzzz: addr(in[2:0], in[5:3], in[8:6]);
 	   16'b0001101zzzzzzzzz: subr(in[2:0], in[5:3], in[8:6]);
 	   16'b0101100zzzzzzzzz: ldrr(in[2:0], in[5:3], in[8:6]);
-//	   16'b111100zzzzzzzzzz: bl(in[9:0]);
-	   //  15   10 7 5  2 0
 	   16'b00000zzzzzzzzzzz: lsli(in[2:0], in[5:3], in[10:6]);
+	   //  15   10 7 5  2 0
 	   16'b00001zzzzzzzzzzz: lsri(in[2:0], in[5:3], in[10:6]);
 	   16'b00010zzzzzzzzzzz: asri(in[2:0], in[5:3], in[10:6]);
 	   16'b00100zzzzzzzzzzz: movi(in[10:8], in[7:0]);
 	   16'b00110zzzzzzzzzzz: addi(in[10:8], in[7:0]);
-	   //  15   10 7 5  2 0
 	   16'b00111zzzzzzzzzzz: subi(in[10:8], in[7:0]);
+	   //  15   10 7 5  2 0
 	   16'b01001zzzzzzzzzzz: ldrpci(in[10:8], in[7:0]);
 	   16'b01100zzzzzzzzzzz: stri(in[2:0], in[5:3], in[10:6]);
 	   16'b01101zzzzzzzzzzz: ldri(in[2:0], in[5:3], in[10:6]);
 	   16'b10010zzzzzzzzzzz: strspi(in[10:8], in[7:0]);
-	   //  15   10 7 5  2 0
 	   16'b10011zzzzzzzzzzz: ldrspi(in[10:8], in[7:0]);
+	   //  15   10 7 5  2 0
 	   16'b10100zzzzzzzzzzz: addpci(in[10:8], in[7:0]);
 	   16'b10101zzzzzzzzzzz: addspi(in[10:8], in[7:0]);
 	   16'b11100zzzzzzzzzzz: bu(in[10:0]);
+//	   16'b11110zzzzzzzzzzz: bl(in[10:0]);
 //	   16'b11111zzzzzzzzzzz: bl2(in[10:0]);
 	   //  15   10 7 5  2 0
 	   16'b1101zzzzzzzzzzzz: b(in[11:8], in[7:0]);
