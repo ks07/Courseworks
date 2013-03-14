@@ -1,10 +1,6 @@
-`define PC 15
-`define LR 14
-`define SP 13
-
 module emu() ;
-
-   // register file.
+   // register file
+   // PC = 15, LR = 14, SP = 13
    reg [ 31 : 0 ] r [ 0 : 15 ];
    // memory.
    reg [ 31 : 0 ] memory [ 0 : 1023 ];
