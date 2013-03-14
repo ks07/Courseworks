@@ -189,6 +189,11 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rdn] & r[rm];
+
+	 N = r[rdn][31];
+	 Z = (r[rdn] == 0);
+	 C = 0;
+	 // V not updated.
 	 $display(" Decoded instruction: andr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // andr
@@ -199,6 +204,10 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rm] | r[rdn];
+
+	 N = r[rdn][31];
+	 Z = (r[rdn] == 0);
+	 C = 0;
 	 // TODO: Set flags
 	 $display(" Decoded instruction: orr with rdn=%d, rm=%d", rdn, rm);
       end
@@ -210,6 +219,10 @@ module emu() ;
 
       begin
 	 r[rdn] = r[rm] ^ r[rdn];
+
+	 N = r[rdn][31];
+	 Z = (r[rdn] == 0);
+	 C = 0;
 	 $display(" Decoded instruction: eorr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // eorr
