@@ -1,0 +1,138 @@
+Script started on Thu 14 Mar 2013 10:53:10 PM GMT
+gf12815:~/Dev/COMS12600 $ ./aasm/aasm -l example.list -v example.emu [1000] ConditionalTests.s
+Input file: ConditionalTests.s
+List file in: example.list
+Verilog file in: example.emu  size: 1000 (decimal 4096) words
+
+Complete.  2 passes performed.
+gf12815:~/Dev/COMS12600 $ vvp emu.vvp
+Pipeline empty, fetching.
+ Executing instruction @ 000000000: '0010000000010000'
+ Decoded instruction: movi with rd=0, imm8= 16
+ pc=00000004,  Z = 0, N = 0, C = 0, V = 0
+ r0=00000010,  r1=xxxxxxxx,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000004
+ Executing instruction @ 000000002: '1101111100000000'
+ Decoded instruction: svc with imm8=  0
+        16
+ pc=00000006,  Z = 0, N = 0, C = 0, V = 0
+ r0=00000010,  r1=xxxxxxxx,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000006
+ Executing instruction @ 000000004: '0010000100001000'
+ Decoded instruction: movi with rd=1, imm8=  8
+ pc=00000008,  Z = 0, N = 0, C = 0, V = 0
+ r0=00000010,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000008
+ Executing instruction @ 000000006: '1101111100000001'
+ Decoded instruction: svc with imm8=  1
+         8
+ pc=0000000a,  Z = 0, N = 0, C = 0, V = 0
+ r0=00000010,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000000a
+ Executing instruction @ 000000008: '0001101001000000'
+ Decoded instruction: subr with rd=0, rn=0, rm=1
+ pc=0000000c,  Z = 0, N = 0, C = 1, V = 0
+ r0=00000008,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000000c
+ Executing instruction @ 00000000a: '1101101100000001'
+ Decoded instruction: b with cond=1011, imm8=  1
+ pc=0000000e,  Z = 0, N = 0, C = 1, V = 0
+ r0=00000008,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000000e
+ Executing instruction @ 00000000c: '1101110000000011'
+ Decoded instruction: b with cond=1100, imm8=  3
+ pc=00000016,  Z = 0, N = 0, C = 1, V = 0
+ r0=00000008,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000016
+Pipeline empty, fetching.
+ Executing instruction @ 000000016: '0010000000101010'
+ Decoded instruction: movi with rd=0, imm8= 42
+ pc=0000001a,  Z = 0, N = 0, C = 1, V = 0
+ r0=0000002a,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000001a
+ Executing instruction @ 000000018: '1101111100000000'
+ Decoded instruction: svc with imm8=  0
+        42
+ pc=0000001c,  Z = 0, N = 0, C = 1, V = 0
+ r0=0000002a,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000001c
+ Executing instruction @ 00000001a: '0011100000101010'
+ Decoded instruction: subi with rdn=0, imm8= 42
+ pc=0000001e,  Z = 1, N = 0, C = 1, V = 0
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000001e
+ Executing instruction @ 00000001c: '1101111100000000'
+ Decoded instruction: svc with imm8=  0
+         0
+ pc=00000020,  Z = 1, N = 0, C = 1, V = 0
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000020
+ Executing instruction @ 00000001e: '1101000111110111'
+ Decoded instruction: b with cond=0001, imm8=247
+ pc=00000022,  Z = 1, N = 0, C = 1, V = 0
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000022
+ Executing instruction @ 000000020: '1101110011110110'
+ Decoded instruction: b with cond=1100, imm8=246
+ pc=00000024,  Z = 1, N = 0, C = 1, V = 0
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000024
+ Executing instruction @ 000000022: '1101101111110101'
+ Decoded instruction: b with cond=1011, imm8=245
+ pc=00000026,  Z = 1, N = 0, C = 1, V = 0
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000026
+ Executing instruction @ 000000024: '1101000000000000'
+ Decoded instruction: b with cond=0000, imm8=  0
+ pc=00000028,  Z = 1, N = 0, C = 1, V = 0
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=00000028
+Pipeline empty, fetching.
+ Executing instruction @ 000000028: '1101111100010000'
+ Decoded instruction: svc with imm8= 16
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000002c
+ pc=0000002c,  Z = 1, N = 0, C = 1, V = 0
+ r0=00000000,  r1=00000008,  r2=xxxxxxxx,  r3=xxxxxxxx
+ r4=xxxxxxxx,  r5=xxxxxxxx,  r6=xxxxxxxx,  r7=xxxxxxxx
+ r8=xxxxxxxx,  r9=xxxxxxxx, r10=xxxxxxxx, r11=xxxxxxxx
+r12=xxxxxxxx, r13=xxxxxxxx, r14=xxxxxxxx, r15=0000002c
+ Executing instruction @ 00000002a: '1101111101100100'
+ Decoded instruction: svc with imm8=100
+Simulation stopped, SVC 100
+gf12815:~/Dev/COMS12600 $ exit
+exit
+
+Script done on Thu 14 Mar 2013 10:53:30 PM GMT
