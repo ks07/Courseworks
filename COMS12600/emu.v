@@ -113,10 +113,11 @@ module emu() ;
    task addpci;
       input [2:0] rd;
       input [7:0] imm8;
-
+      reg [31:0]  imm32;
+      
       begin
-	 // TODO: Align(PC,4) ?
-	 r[rd] = r[15] + imm8;
+	 imm32 = {{22{1'b0}}, imm8, 2'b00};
+	 r[rd] = r[15] + imm32;
 	 $display(" Decoded instruction: addpci with rd=%d, imm8=%d", rd, imm8);
       end
    endtask // addpci
