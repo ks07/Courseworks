@@ -10,13 +10,14 @@ module emu() ;
    reg [ 31 : 0 ] memory [ 0 : 1023 ];
    // other state and variable declarations
    reg 		  clock;
+   // pipeline registers
+   reg [ 15 : 0 ] fetched;
+   reg [ 15 : 0 ] executing;
    // flags
    reg 		  Z;
    reg 		  C;
    reg 		  N;
    reg 		  V;
-   reg [ 15 : 0 ] fetched;
-   reg [ 15 : 0 ] executing;
 
    task AddWithCarry;
       input [31:0] x;
