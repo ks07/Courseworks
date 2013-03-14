@@ -164,7 +164,7 @@ module emu() ;
       reg 	  ign;
       
       begin
-	 imm32 = {25'b0000000000000000000000000, imm7};
+	 imm32 = {{23{1'b0}}, imm7, 2'b00};
 	 AddWithCarry(r[13], ~imm32, 1, r[13], ign, ign);
 	 $display(" Decoded instruction: decsp with imm7=%d", imm7);
       end
