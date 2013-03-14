@@ -14,7 +14,9 @@ module emu() ;
    reg 		  C;
    reg 		  N;
    reg 		  V;
-
+   // simulator loop count
+   integer 	  blankFetch;
+   
    task AddWithCarry;
       input [31:0] x;
       input [31:0] y;
@@ -755,6 +757,9 @@ module emu() ;
       N = 0;
       C = 0;
       V = 0;
+
+      // Set the anti loop counter. Simulator specific.
+      blankFetch = 0;
    end
 
    // simulate the clock
@@ -763,13 +768,23 @@ module emu() ;
    // perform a fetch-decode-execute cycle
    always @ ( posedge clock ) begin
       if (fetched === 16'bxxxxxxxxxxxxxxxx) begin
-	 $display("Pipeline empty, fetching.");
-	 fetch();
+	 if (blankFetch > 2) begin
+	    // Protect against infinite loops if branch destination/input is bad.
+	    $display("Error: Stopping emulator, it appears execution has left the program.");
+	    $finish;
+	 end else begin
+	    $display("Pipeline empty, fetching.");
+	    fetch();
+
+	    blankFetch = blankFetch + 1;
+	 end
       end else begin	 
 	 $display(" Executing instruction @ %h: '%b'", r[15] - 2, fetched);
 	 fetch();
 	 decode(executing);
 	 printTrace();
+
+	 blankFetch = 0;
       end
       
    end
