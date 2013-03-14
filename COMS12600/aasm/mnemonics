@@ -85,7 +85,7 @@ ldri	0249F100	;        [Rn, Rm] always allowed
 ldrr	0249F100	;        [Rn, Rm] always allowed
 ldrspi	0249F100	;        = ldr rd, [sp, #i]
 ldrpci	0249F100	;        = ldr rd, [pc, #i]
-;adr     000B0100
+adr     000B0100
 
 stri	02095100	; <14>   [Rn, #]
 strr	02095100	; <14>   [Rn, #]
@@ -96,7 +96,7 @@ bu	00E40100
 beq	00040100
 bne	00140100
 blt	00B40100
-bgt	00A40100
+bgt	00C40100
 br	00050100
 bl	00068100	; Marked as "variable length" because
 svc	0DF70100

@@ -1,10 +1,14 @@
     ; Example test file of all COMS12600 assignemnt instructions
     ; with their assembly syntax
+    ; Note: this program is not supposed to make sense ---
+    ; it is simply an example of how to use each instruction
+    ; 
     ; Simon Hollis (simon@cs.bris.ac.uk)
     ; 01 March 2013
  
     THUMB
 
+    ORIGIN 0x20000000
 
     ADDI r0, #1
     ADDR r1, r2, r3
