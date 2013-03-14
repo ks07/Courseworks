@@ -323,6 +323,10 @@ module emu() ;
       begin
 	 // do the move operation.
 	 r[rd] = imm8;
+	 // Should always be positive, as we only have an 8 bit immediate.
+	 N = 0;
+	 setZ(r[rd]);
+	 // C and V unchanged
 	 $display(" Decoded instruction: movi with rd=%d, imm8=%d", rd, imm8);
       end
    endtask // movi
@@ -333,6 +337,11 @@ module emu() ;
 
       begin
 	 r[rd] = ~r[rm];
+	 N = r[rd][31];
+	 setZ(r[rd]);
+	 // Never shifted
+	 C = 0;
+	 // V unchanged
 	 $display(" Decoded instruction: movnr with rd=%d, rm=%d", rd, rm);
       end
    endtask // movnr
