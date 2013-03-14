@@ -236,8 +236,6 @@ module emu() ;
 	 setZ(res);
 	 r[rd] = res;
 	 $display(" Decoded instruction: negr with rd=%d, rn=%d", rd, rn);
-	 $finish;
-	 
       end
    endtask // negr
 
@@ -259,11 +257,10 @@ module emu() ;
    task lslr;
       input [2:0] rdn;
       input [2:0] rm;
-      integer 	  shift;
+      reg [7:0]   shift;
 
       begin
 	 shift = r[rm][7:0];
-	 // TODO: C, shift when 0
 	 C = r[rdn][32 - shift];
 	 r[rdn] = r[rdn] << shift;
 	 N = r[rdn][31];
