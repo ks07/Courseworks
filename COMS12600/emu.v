@@ -35,6 +35,8 @@ module emu() ;
 	 ssum = $signed(x) + $signed(y);
 	 ssum = ssum + carry_in;
 	 res = usum[31:0];
+
+	 $display("res %b %b usum", res, usum);
 	 
 	 if (res == usum) begin
 	    carry_out = 0;
@@ -498,6 +500,7 @@ module emu() ;
 	 end else begin
 	    result = pass;
 	 end
+	 $display("Condition Passed? %b", result);
       end
    endtask // conditionPassed
    
