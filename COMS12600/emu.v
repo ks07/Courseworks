@@ -747,7 +747,7 @@ module emu() ;
    
    // initialise emulator, e.g., memory content
    initial begin
-      $readmemh("example.emu", memory);
+      $readmemh("bubble.emu", memory);
       
       clock = 0;
       r[15] = 0;

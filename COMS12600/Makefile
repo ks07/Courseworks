@@ -8,7 +8,7 @@ AFLAGS	= [1000]
 EMU_SRC	= emu.v
 EMU_OUT	= emu.vvp
 
-ASM_IN	= example
+ASM_IN	= bubble
 ASM_SRC = $(ASM_IN).s
 ASM_OUT = $(ASM_IN).emu
 ASM_LST	= $(ASM_IN).list
