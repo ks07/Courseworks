@@ -419,7 +419,7 @@ module emu() ;
       begin
 	 offset_addr = {{25{1'b0}}, imm5, 2'b00};
 	 offset_addr = offset_addr + r[rn];
-	 offset_addr >> 2;
+	 offset_addr = offset_addr >> 2;
 	 
 	 memory[offset_addr] = r[rt];
 	 $display(" Decoded instruction: stri with rt=%d, rn=%d, imm5=%d", rt, rn, imm5);
