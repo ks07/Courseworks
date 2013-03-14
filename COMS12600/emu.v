@@ -32,8 +32,6 @@ module emu() ;
 	 ssum = $signed(x) + $signed(y);
 	 ssum = ssum + carry_in;
 	 res = usum[31:0];
-
-	 $display("res %b %b usum", res, usum);
 	 
 	 if (res == usum) begin
 	    carry_out = 0;
@@ -349,7 +347,7 @@ module emu() ;
       input [2:0] rm;
 
       begin
-	 r[15] = r[rm];
+	 r[13] = r[rm];
 	 $display(" Decoded instruction: movrsp with rm=%d", rm);
       end
    endtask // movrsp
@@ -358,10 +356,14 @@ module emu() ;
       input [2:0] rt;
       input [2:0] rn;
       input [4:0] imm5;
-      integer 	  offset_addr;
+      reg [31:0]  offset_addr;
 
       begin
-	 offset_addr = r[rn] + imm5;
+	 offset_addr = {{25{1'b0}}, imm5, 2'b00};
+	 offset_addr = offset_addr + r[rn];
+	 offset_addr = offset_addr >> 2;
+	 $display("addr %d (%h)", offset_addr, offset_addr);
+	 
 	 r[rt] = memory[offset_addr];
 	 $display(" Decoded instruction: ldri with rt=%d, rn=%d, imm5=%d", rt, rn, imm5);
       end
