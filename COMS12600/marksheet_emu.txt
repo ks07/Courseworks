@@ -1,0 +1,47 @@
+*******************************************
+* COMS12600 Emulator Assignment Marksheet *
+*          Semester 2, 2013               *
+*******************************************
+
+Please complete the three parts below and submit on SAFE with your assignment:
+
+- Replace any [...] with free text.
+- Replace the [_] with an X if you have completed that stage
+- Replace the [_] with an * if you have attempted that stage, but you know
+  it doesn't work completely.  Note the reasons why you think it doesn't
+  work and what you would do to fix the problem.
+
+Note that the marks allocated for each stage are *rough guidelines* and *maximums* only.  At least some marks will be set aside for hard to quantify features such as the quality and style of work with the marks below being mainly for functional correctness. Therefore, do not assume that if you have ticked a component you will necessarily get all of the marks for it!
+ 
+----8<--------8<--------8<---- General Information ---8<--------8<--------8<---
+
+name   : [...]
+email  : [...]
+year   : [...]
+course : [...]
+
+----8<--------8<--------8<-------- Mark Sheet --------8<--------8<--------8<---
+
+
+Emulator core functionality:
+[_]	(  20%)	Fetches and decodes instructions correctly (identifies correctly in trace)
+[_]	(  20%)  Executes instructions correctly (correct results in traced registers)
+                  
+Debug functionality:
+[_]	(  5%)	SVC debug formats working        
+[_]	(  5%)	Detect errant/ill-formed input files or bad instructions with a useful error message                        
+
+Tests (note to get these components, you need to include a text file showing your working trace output. Name these e.g. ALUTest.trace and so on: 
+[_]	( 10%)	ALUTest execution correct
+[_]     ( 10%)  Control flow test execution correct
+[_]     ( 10%)  Conditional execution test correct
+[_]     ( 20%)  Bubble sort completed (with bubble.s submitted) and correct execution
+
+
+
+----8<--------8<--------8<------- Anything Else ------8<--------8<--------8<---
+
+Any other notes or comments that you think are important should go in this
+section: make sure you include instructions on how to compile and run your
+submission.  Don't feel you need to make this a million word essay!
+
