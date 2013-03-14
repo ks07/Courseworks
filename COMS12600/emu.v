@@ -269,7 +269,7 @@ module emu() ;
 	 $display(" Decoded instruction: lslr with rdn=%d, rm=%d", rdn, rm);
       end
    endtask // lslr
-
+   
    task lsri;
       input [2:0] rd;
       input [2:0] rm;
@@ -288,11 +288,10 @@ module emu() ;
    task lsrr;
       input [2:0] rdn;
       input [2:0] rm;
-      integer 	  shift;
+      reg [7:0]   shift;
       
       begin
 	 shift = r[rm][7:0];
-	 // TODO: C, shift when 0
 	 C = r[rdn][shift - 1];
 	 r[rdn] = r[rdn] >> shift;
 	 N = r[rdn][31];
@@ -306,15 +305,13 @@ module emu() ;
       input [2:0] rd;
       input [2:0] rm;
       input [4:0] imm5;
-      integer 	  toShift;
 
       begin
-	 toShift = r[rm];
-	 
-	 r[rd] = toShift >>> imm5;
+	 // Sign extension handled by icarus, i.e. pad with MSB.
+	 r[rd] = $signed(r[rm]) >>> imm5;
 	 N = r[rd][31];
 	 setZ(r[rd]);
-	 // TODO: Set C
+	 C = r[rm][imm5 - 1];
 	 $display(" Decoded instruction: asri with rd=%d, rm=%d, imm5=%d", rd, rm, imm5);
       end
    endtask // asri
