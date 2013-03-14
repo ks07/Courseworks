@@ -715,8 +715,6 @@ module emu() ;
 
    // perform a fetch-decode-execute cycle
    always @ ( posedge clock ) begin
-      $display("fetched is: %b", fetched);
-      
       if (fetched === 16'bxxxxxxxxxxxxxxxx) begin
 	 $display("Pipeline empty, fetching.");
 	 fetch();
