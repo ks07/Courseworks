@@ -63,7 +63,7 @@ module emu() ;
 	 AddWithCarry(r[rdn], imm8, 1'b0, res, C, V);
 
 	 N = res[31];
-	 Z = (res == 0);
+	 setZ(res);
 	 
 	 r[rdn] = res;
 	 $display(" Decoded instruction: addi with rdn=%d, imm8=%d", rdn, imm8);
@@ -80,7 +80,7 @@ module emu() ;
 	 AddWithCarry(r[rn], r[rm], 1'b0, res, C, V);
 
 	 N = res[31];
-	 Z = (res == 0);
+	 setZ(res);
 	 
 	 r[rd] = res;
 	 $display(" Decoded instruction: addr with rd=%d, rn=%d, rm=%d", rd, rn, rm);
@@ -133,7 +133,7 @@ module emu() ;
 	 AddWithCarry(r[rdn], ~imm32, 1'b1, res, C, V);
 	 
 	 N = res[31];
-	 Z = (res == 0);
+	 setZ(res);
 	 
 	 r[rdn] = res;
 	 $display(" Decoded instruction: subi with rdn=%d, imm8=%d", rdn, imm8);
@@ -150,7 +150,7 @@ module emu() ;
 	 AddWithCarry(r[rn], ~r[rm], 1, res, C, V);
 
 	 N = res[31];
-	 Z = (res == 0);
+	 setZ(res);
 
 	 r[rd] = res;
 	 $display(" Decoded instruction: subr with rd=%d, rn=%d, rm=%d", rd, rn, rm);
@@ -177,7 +177,7 @@ module emu() ;
       begin
 	 r[rdm] = r[rdm] * r[rn];
 	 N = r[rdm][31];
-	 Z = (r[rdm] == 0);
+	 setZ(r[rdm]);
 	 // C, V not updated.
 	 $display(" Decoded instruction: mulr with rdm=%d, rn=%d", rdm, rn);
       end
@@ -191,7 +191,7 @@ module emu() ;
 	 r[rdn] = r[rdn] & r[rm];
 
 	 N = r[rdn][31];
-	 Z = (r[rdn] == 0);
+	 setZ(r[rdn]);
 	 C = 0;
 	 // V not updated.
 	 $display(" Decoded instruction: andr with rdn=%d, rm=%d", rdn, rm);
@@ -206,7 +206,7 @@ module emu() ;
 	 r[rdn] = r[rm] | r[rdn];
 
 	 N = r[rdn][31];
-	 Z = (r[rdn] == 0);
+	 setZ(r[rdn]);
 	 C = 0;
 	 // TODO: Set flags
 	 $display(" Decoded instruction: orr with rdn=%d, rm=%d", rdn, rm);
