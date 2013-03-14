@@ -32,9 +32,9 @@ Debug functionality:
 [X]	(  5%)	Detect errant/ill-formed input files or bad instructions with a useful error message                        
 
 Tests (note to get these components, you need to include a text file showing your working trace output. Name these e.g. ALUTest.trace and so on: 
-[_]	( 10%)	ALUTest execution correct
-[_]     ( 10%)  Control flow test execution correct
-[_]     ( 10%)  Conditional execution test correct
+[X]	( 10%)	ALUTest execution correct
+[X]     ( 10%)  Control flow test execution correct
+[X]     ( 10%)  Conditional execution test correct
 [_]     ( 20%)  Bubble sort completed (with bubble.s submitted) and correct execution
 
 
