@@ -28,29 +28,22 @@ DataStart
 DataEnd
 
 StartSort
-	MOVI r1, #DataStart  	; load start address for the data values
+	SVC 101		      	; print out starting memory values
+	MOVI r1, #DataStart 	; load start address for the data values
 MainLoop
 	BL OnePass		; perform a single pass of bubble sort
-	SVC 101
-	;; MOVNR r3, r3			; if (r3 == 1)
-	SUBI r3, #1
+	SUBI r3, #1		; if (r3 == 1)
 	BEQ MainLoop		;   goto MainLoop
-	SVC 101			; print memory
-	SVC 100
-	
-	
-	
+	BU Stop
 
+	; **** Sub-routines Below ****
 
-
-	
 OnePass				; subroutine for performing a single loop through the data
 	PUSH {lr}
 	;; Assumes that r1 is the first element, and that (r2, r3, r4, r5, r7) are safe to modify.
 	MOVI r2, #0 		; r2 holds the array index. r2 = 0.
 	MOVI r3, #0		; r3 holds the boolean swapped flag.
 	MOVI r6, #DataEnd	; r6 = r1 + length(array)
-	;; SUBI r6, #DataStart	 r6 holds the length of the array (in bytes). r6 = r6 - r1 = length(array)
 OPLoop
 	LDRR r4, [r1, r2] 	; r4 = array[r2]. r4 holds the current item to compare
 	ADDI r2, #4 		; r2++
@@ -70,31 +63,17 @@ NoSwap
 	ADDI r2, #4		; r2++. Increment loop counter.
 	SUBR r7, r2, r6		; if (r2 < r6)
 	BLT OPLoop		;   goto OPLoop
+	POP {pc}		; return from the subroutine
+	;; End of Sub: OnePass
 
-OPLoopEnd
-	POP {pc}
-
-	
-EndSort
-	BU Stop
-
-	
-	; **** One way to use the SVCs 
-	; **** (as sub-routine calls to the SVCs)
-	
-DumpRegs 
-        PUSH {lr} ; save return address onto stack
-	SVC 16 ; debug command to dump all registers
-	POP {pc} ; return to calling sub-routine
-	
-PrintR0
-        PUSH {lr} ; save return address onto stack
-	SVC 0 ; debug command to printR0
-	POP {pc} ; return to calling sub-routine
+DumpRegs
+        PUSH {lr} 		; save return address onto stack
+	SVC 101			; print memory after finishing sort
+	SVC 16 			; debug command to dump all registers
+	POP {pc} 		; return to calling sub-routine
 	
 Stop
-	BL DumpRegs ; print all the registers
-	SVC 100 ; stop the emulator
-	
+	BL DumpRegs 		; print all the registers
+	SVC 100 		; stop the emulator
 	
 	END
