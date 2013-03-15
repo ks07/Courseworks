@@ -18,27 +18,38 @@ module emu() ;
    integer 	  blankFetch;
    
    task AddWithCarry;
-      input [31:0] x;
-      input [31:0] y;
-      input 	   carry_in;
-      output [31:0] result;
+      input [31:0]  x_in;
+      input [31:0]  y_in;
+      input 	    c_in;
+      output [31:0] res;
       output 	    carry_out;
       output 	    overflow;
-      reg [31:0]    res;
+      // Verilog makes me do strange things.
+      reg [32:0]    x;
+      reg [32:0]    y;
+      reg [32:0]    carry_in;
       reg [32:0]    usum;
-      reg [32:0]    ssum;
+      reg signed [32:0] ssum;
       
-      begin	 
-	 usum = x + y;
-	 usum = usum + carry_in;
-	 ssum = $signed(x) + $signed(y);
-	 ssum = ssum + carry_in;
+      begin
+	 x = {x_in[31], x_in};
+	 y = {y_in[31], y_in};
+	 carry_in = {{32{1'b0}}, c_in};
+	 $display("x: %d y: %d %b carry_in: %d", x, y, y, carry_in);
+	 
+	 usum = x + y + carry_in;
+	 $display("usum %h %b", usum, usum);
+	 ssum = $signed(x) + $signed(y) + carry_in;
+	 $display("ssum %h %b", ssum, ssum);
+	 
 	 res = usum[31:0];
 	 
 	 if (res == usum) begin
-	    carry_out = 0;
+	    $display("res %d == %d usum", res, usum);
+	    carry_out = 1'b0;
 	 end else begin
-	    carry_out = 1;
+	    $display("res %d != %d usum", res, usum);
+	    carry_out = 1'b1;
 	 end
 	 
 	 if ($signed(res) == ssum) begin
@@ -46,8 +57,6 @@ module emu() ;
 	 end else begin
 	    overflow = 1;
 	 end
-	 
-	 result = res;
       end
    endtask // AddWithCarry
 	   
@@ -145,7 +154,7 @@ module emu() ;
       
       begin
 	 $display(" Decoded instruction: subr with rd=%d, rn=%d, rm=%d", rd, rn, rm);
-	 AddWithCarry(r[rn], ~r[rm], 1, res, C, V);
+	 AddWithCarry(r[rn], ~r[rm], 1'b1, res, C, V);
 
 	 N = res[31];
 	 setZ(res);
