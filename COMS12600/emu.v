@@ -456,36 +456,33 @@ module emu() ;
       end
    endtask // strspi
    
-   task SPToAddress;
-      input [31:0] SP;
-      output [9:0] memAdd;
-
-      begin
-	 // SP counts in bytes, memory addresses are 4 bytes wide.
-	 memAdd = SP >> 2;
-      end
-   endtask // SPToAddress
-   
    task push;
-      integer addr;
+      reg [31:0] addr;
       
       begin
 	 $display(" Decoded instruction: push");
-	 SPToAddress(r[13] - 4, addr);
+	 // SP counts in bytes, so divide by 4. Something about wizards.
+	 addr = r[13] >> 2;
+	 addr = addr - 1;
 	 memory[addr] = r[14];
-	 r[13] = addr;
+	 r[13] = addr << 2;
       end
    endtask // push
 
    task pop;
-      integer addr;
+      reg [31:0] addr;
       
       begin
 	 $display(" Decoded instruction: pop");
-	 SPToAddress(r[13], addr);
-	 r[15] = memory[addr];
-	 SPToAddress(r[13] + 4, addr);
-	 r[13] = addr;
+	 addr = r[13] >> 2;
+	 BranchWritePC(memory[addr]);
+	 addr = addr + 1;
+	 r[13] = addr << 2;
+	 
+	 if (r[13] > 32'h1000) begin
+	    $display("Error: Tried to pop an empty stack.");
+	    $finish;
+	 end
       end
    endtask // pop
 
@@ -642,8 +639,8 @@ module emu() ;
       integer addr;
       
       begin
-	 for (addr = 0; addr < 1023; addr = addr + 4) begin
-	    $display("%h:  %h", addr, memory[addr]);
+	 for (addr = 0; addr < 4096; addr = addr + 4) begin
+	    $display("%h:  %h", addr, memory[addr / 4]);
 	 end
       end
    endtask // dumpMemory
