@@ -29,23 +29,59 @@ DataEnd
 
 StartSort
 	MOVI r1, #DataStart  ; load start address for the data values
-	MOVI r2, #0 ; array index being sorted
-	LDRR r4, [r1, r2] ; get first data item
-	ADDI r2, #4 ;
-	LDRR r5, [r1, r2] ; get second data item
-
 	
 	; *** INSERT YOUR SORTING CODE HERE ***
-	SUBR r7, r5, r4		; subtract 2nd from 1st to compare
-	BGT Swap
-	BU NoSwap
+
+
+
+
+
+
+	
+OnePass				; subroutine for performing a single loop through the data
+	;; Assumes that r1 is the first element, and that (r2, r3, r4, r5, r7) are safe to modify.
+	MOVI r2, #0 		; r2 holds the array index. r2 = 0.
+	MOVI r3, #0		; r3 holds the loop counter. r3 = 0.
+	MOVI r6, #DataEnd	; r6 = r1 + length(array)
+	SUBI r6, #DataStart	; r6 holds the length of the array (in bytes). r6 = r6 - r1 = length(array)
+OPLoop
+	LDRR r4, [r1, r2] 	; r4 = array[r2]. r4 holds the current item to compare
+	ADDI r2, #4 		; r2++
+	LDRR r5, [r1, r2] 	; r5 = array[r2]. r5 holds the item to compare with
+
+	SUBR r7, r5, r4		; if (r5 > r4)
+	BLT NoSwap		;   goto NoSwap
 Swap
 	EORR r4, r5		; use the XOR trick to swap variables.
-	EORR r5, r4		;
-	EORR r5, r4		; r5 and r4 are now swapped
+	EORR r5, r4		; r4 <=> r5 s.t. r5 > r4
+	EORR r4, r5		; r5 is now the greater of the two.
 NoSwap
-	BU EndSort
+	STRR r5, [r1, r2]	; array[r2] = r5
+	SUBI r2, #4		; r2--
+	STRR r4, [r1, r2]	; array[r2] = r4
 
+	ADDI r2, #4		; r2++. Increment loop counter.
+	SUBR r7, r2, r6		; if (r2 < r6)
+	BLT OPLoop		;   goto OPLoop
+	BU OPLoopEnd		; else goto OPLoopEnd
+
+OPLoopEnd
+	SVC 101
+	SVC 100
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 EndSort
 	BU Stop
 
