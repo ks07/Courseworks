@@ -31,13 +31,21 @@ StartSort
 	MOVI r1, #DataStart  ; load start address for the data values
 	MOVI r2, #0 ; array index being sorted
 	LDRR r4, [r1, r2] ; get first data item
-	ADDI r2, #1 ;
+	ADDI r2, #4 ;
 	LDRR r5, [r1, r2] ; get second data item
 
 	
 	; *** INSERT YOUR SORTING CODE HERE ***
+	SUBR r7, r5, r4		; subtract 2nd from 1st to compare
+	BGT Swap
+	BU NoSwap
+Swap
+	EORR r4, r5		; use the XOR trick to swap variables.
+	EORR r5, r4		;
+	EORR r5, r4		; r5 and r4 are now swapped
+NoSwap
+	BU EndSort
 
-	
 EndSort
 	BU Stop
 

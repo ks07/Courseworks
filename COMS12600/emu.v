@@ -378,12 +378,9 @@ module emu() ;
 
       begin
 	 $display(" Decoded instruction: ldrr with rt=%d, rn=%d, rm=%d", rt, rn, rm);
-	 offset_addr = r[rm] << 2;
-	 offset_addr = offset_addr + r[rn];
+	 offset_addr = r[rm] + r[rn];
 	 offset_addr = offset_addr >> 2;
 	 r[rt] = memory[offset_addr];
-	 $display("LOADING: %h %h", offset_addr, r[rn] + r[rm]);
-	 
       end
    endtask // ldrr
 
