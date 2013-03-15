@@ -531,8 +531,11 @@ module emu() ;
       
       begin
 	 casez (cond)
+	   // EQ (NE)
 	   4'b000z: pass = (Z == 1);
+	   // GE (LT)
 	   4'b101z: pass = (N == V);
+	   // GT (LE)
 	   4'b110z: pass = (N == V && Z == 0);
 	   default: begin
 	      $display("Error: Unsupported condition code: %h", cond);
