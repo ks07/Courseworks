@@ -44,6 +44,7 @@ OnePass				; subroutine for performing a single loop through the data
 	MOVI r2, #0 		; r2 holds the array index. r2 = 0.
 	MOVI r3, #0		; r3 holds the boolean swapped flag.
 	MOVI r6, #DataEnd	; r6 = r1 + length(array)
+	SUBI r6, #12		; r6 = r6 - 3
 OPLoop
 	LDRR r4, [r1, r2] 	; r4 = array[r2]. r4 holds the current item to compare
 	ADDI r2, #4 		; r2++
