@@ -7,11 +7,11 @@
 	THUMB
 	
 Start
-       MOVI r0, #1 
-       LSLI r0, r0, #12 ; load largest memory address
-       MOVRSP sp, r0 ; set stack pointer to largest value
-       
-       BU StartSort  ; start the work
+	MOVI r0, #1
+	LSLI r0, r0, #12	; load largest memory address 
+	MOVRSP sp, r0 		; set stack pointer to largest value
+
+	BU StartSort  		; start the work
 
 
 ; *** The data values to be sorted
@@ -28,22 +28,29 @@ DataStart
 DataEnd
 
 StartSort
-	MOVI r1, #DataStart  ; load start address for the data values
+	MOVI r1, #DataStart  	; load start address for the data values
+MainLoop
+	BL OnePass		; perform a single pass of bubble sort
+	SVC 101
+	;; MOVNR r3, r3			; if (r3 == 1)
+	SUBI r3, #1
+	BEQ MainLoop		;   goto MainLoop
+	SVC 101			; print memory
+	SVC 100
 	
-	; *** INSERT YOUR SORTING CODE HERE ***
-
-
-
+	
+	
 
 
 
 	
 OnePass				; subroutine for performing a single loop through the data
+	PUSH {lr}
 	;; Assumes that r1 is the first element, and that (r2, r3, r4, r5, r7) are safe to modify.
 	MOVI r2, #0 		; r2 holds the array index. r2 = 0.
-	MOVI r3, #0		; r3 holds the loop counter. r3 = 0.
+	MOVI r3, #0		; r3 holds the boolean swapped flag.
 	MOVI r6, #DataEnd	; r6 = r1 + length(array)
-	SUBI r6, #DataStart	; r6 holds the length of the array (in bytes). r6 = r6 - r1 = length(array)
+	;; SUBI r6, #DataStart	 r6 holds the length of the array (in bytes). r6 = r6 - r1 = length(array)
 OPLoop
 	LDRR r4, [r1, r2] 	; r4 = array[r2]. r4 holds the current item to compare
 	ADDI r2, #4 		; r2++
@@ -51,7 +58,7 @@ OPLoop
 
 	SUBR r7, r5, r4		; if (r5 > r4)
 	BLT NoSwap		;   goto NoSwap
-Swap
+	MOVI r3, #1		; swapped = true
 	EORR r4, r5		; use the XOR trick to swap variables.
 	EORR r5, r4		; r4 <=> r5 s.t. r5 > r4
 	EORR r4, r5		; r5 is now the greater of the two.
@@ -63,23 +70,9 @@ NoSwap
 	ADDI r2, #4		; r2++. Increment loop counter.
 	SUBR r7, r2, r6		; if (r2 < r6)
 	BLT OPLoop		;   goto OPLoop
-	BU OPLoopEnd		; else goto OPLoopEnd
 
 OPLoopEnd
-	SVC 101
-	SVC 100
-
-
-
-
-
-
-
-
-
-
-
-
+	POP {pc}
 
 	
 EndSort
