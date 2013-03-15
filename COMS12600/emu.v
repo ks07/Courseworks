@@ -35,20 +35,15 @@ module emu() ;
 	 x = {x_in[31], x_in};
 	 y = {y_in[31], y_in};
 	 carry_in = {{32{1'b0}}, c_in};
-	 $display("x: %d y: %d %b carry_in: %d", x, y, y, carry_in);
 	 
 	 usum = x + y + carry_in;
-	 $display("usum %h %b", usum, usum);
 	 ssum = $signed(x) + $signed(y) + carry_in;
-	 $display("ssum %h %b", ssum, ssum);
 	 
 	 res = usum[31:0];
 	 
 	 if (res == usum) begin
-	    $display("res %d == %d usum", res, usum);
 	    carry_out = 1'b0;
 	 end else begin
-	    $display("res %d != %d usum", res, usum);
 	    carry_out = 1'b1;
 	 end
 	 
