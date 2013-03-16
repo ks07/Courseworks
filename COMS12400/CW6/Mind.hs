@@ -45,3 +45,7 @@ total secret guess =
 -- Find the silver score for a given secret and guess
 silver :: String -> String -> Integer
 silver secret guess = total secret guess - gold secret guess
+
+-- Generate a score message from the secret and guess
+score :: String -> String -> String
+answer =  12 :O :O
