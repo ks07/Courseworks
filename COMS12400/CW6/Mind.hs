@@ -23,11 +23,11 @@ contains needle (next : haystack) =
   if needle == next then True else contains needle haystack
 
 -- Remove the first occurence of a character from a string
-remove :: Char -> String -> String
+remove :: (Eq a) => a -> [a] -> [a]
 remove needle [] = error "Needle does not exist inside haystack."
 remove needle haystack = remove2 needle haystack []
   where            
-    remove2 :: Char -> String -> String -> String
+    remove2 :: (Eq a) => a -> [a] -> [a] -> [a]
     remove2 needle [] previous = error "Needle does not exist in haystack."
     remove2 needle (next : haystack) previous =
       if needle == next then previous ++ haystack else remove2 needle haystack (previous ++ [next])
