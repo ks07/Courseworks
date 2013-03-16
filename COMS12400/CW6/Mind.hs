@@ -41,3 +41,7 @@ total secret guess =
     total2 secret (gC : guess) =
       if contains gC secret then 1 + total2 secret guess else total2 secret guess
     total2 secret [] = 0
+
+-- Find the silver score for a given secret and guess
+silver :: String -> String -> Integer
+silver secret guess = total secret guess - gold secret guess
