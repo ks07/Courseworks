@@ -16,8 +16,18 @@ gold (gC : guess) (sC : secret) =
   if gC == sC then 1 + gold guess secret else gold guess secret
 gold guess secret = error "Length mismatch."
 
--- Test whether a character is contained in a string
-contains :: Char -> String -> Bool
+-- Test whether an element is contained in a list
+contains :: (Eq a) => a -> [a] -> Bool
 contains needle [] = False
 contains needle (next : haystack) =
   if needle == next then True else contains needle haystack
+
+-- Remove the first occurence of a character from a string
+remove :: Char -> String -> String
+remove needle [] = error "Needle does not exist inside haystack."
+remove needle haystack = remove2 needle haystack []
+  where            
+    remove2 :: Char -> String -> String -> String
+    remove2 needle [] previous = error "Needle does not exist in haystack."
+    remove2 needle (next : haystack) previous =
+      if needle == next then previous ++ haystack else remove2 needle haystack (previous ++ [next])
