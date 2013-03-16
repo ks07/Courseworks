@@ -48,4 +48,5 @@ silver secret guess = total secret guess - gold secret guess
 
 -- Generate a score message from the secret and guess
 score :: String -> String -> String
-answer =  12 :O :O
+score secret guess =
+  if valid 4 guess then "Golds " ++ show (gold secret guess) ++ ", silvers " ++ show (silver secret guess) else "Bad guess"
