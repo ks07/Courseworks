@@ -88,4 +88,12 @@ test =
   gold "0000" "1234" == 0 &&
   contains 's' "she" == True &&
   contains 'z' "she" == False &&
-  (remove 's' "she") == "he" 
+  (remove 's' "she") == "he" &&
+  (remove 7 [0, 2, 5, 8, 7, 9]) == [0, 2, 5, 8, 9] &&
+  total "1243" "1234" == 4 &&
+  total "2134" "1111" == 1 &&
+  silver "1243" "1234" == 2 &&
+  silver "0000" "8999" == 0 && 
+  score "1234" "abcd" == "Bad guess" &&
+  score "1234" "1746" == "Golds 1, silvers 1"
+  
