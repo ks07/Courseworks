@@ -76,3 +76,16 @@ main = do sA <- randomRIO ('0', '9')
           play secret
           putStr "The secret was "
           putStrLn secret
+          
+-- Run tests
+test :: Bool
+test =
+  digits "1234" == True &&
+  digits "abcd" == False &&
+  valid 4 "0987" == True &&
+  valid 4 "123" == False &&
+  gold "0000" "9087" == 1 &&
+  gold "0000" "1234" == 0 &&
+  contains 's' "she" == True &&
+  contains 'z' "she" == False &&
+  (remove 's' "she") == "he" 
