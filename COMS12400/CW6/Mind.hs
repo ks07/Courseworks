@@ -1,4 +1,5 @@
 import Data.Char
+import System.IO
 
 -- Checks whether a guess consists of just digits
 digits :: String -> Bool 
@@ -50,3 +51,9 @@ silver secret guess = total secret guess - gold secret guess
 score :: String -> String -> String
 score secret guess =
   if valid 4 guess then "Golds " ++ show (gold secret guess) ++ ", silvers " ++ show (silver secret guess) else "Bad guess"
+
+-- Repeatedly read in a guess and respond
+play :: String -> IO()
+play secret = do l <- getLine
+                 let guessRes = score secret l
+                 putStrLn guessRes
