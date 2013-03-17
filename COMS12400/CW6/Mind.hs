@@ -54,6 +54,9 @@ score secret guess =
 
 -- Repeatedly read in a guess and respond
 play :: String -> IO()
-play secret = do l <- getLine
+play secret = do putStr "> "
+                 l <- getLine
                  let guessRes = score secret l
                  putStrLn guessRes
+                 --let golds = gold secret guessRes
+                 if l == secret then return () else play secret
