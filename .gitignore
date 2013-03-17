@@ -12,3 +12,5 @@ manifest.mf
 *.emu
 *.list
 *.s
+*.hi
+*.o
