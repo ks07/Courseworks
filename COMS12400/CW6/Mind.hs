@@ -1,3 +1,4 @@
+module Main (main) where
 import Data.Char
 import System.IO
 import System.Random
