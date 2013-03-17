@@ -72,6 +72,6 @@ main = do sA <- randomRIO ('0', '9')
           sD <- randomRIO ('0', '9')
           let secret = (sA : sB : sC : [sD]);
           putStrLn "Guess the 4 digit secret, press Enter to give up"
-          play (sA : sB : sC : [sD])
+          play secret
           putStr "The secret was "
-          putStrLn (sA : sB : sC : [sD])
+          putStrLn secret
