@@ -1,5 +1,6 @@
 import Data.Char
 import System.IO
+import System.Random
 
 -- Checks whether a guess consists of just digits
 digits :: String -> Bool 
@@ -63,4 +64,11 @@ play secret = do putStr "> "
                       hFlush stdout
                       play secret
                    
-                   
+-- Generate a random secret, and print it out after playing
+main :: IO()
+main = do sA <- randomRIO ('0', '9')
+          sB <- randomRIO ('0', '9')
+          sC <- randomRIO ('0', '9')
+          sD <- randomRIO ('0', '9')
+          play ([sA] ++ [sB] ++ [sC] ++ [sD])
+          
