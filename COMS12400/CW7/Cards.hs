@@ -1,6 +1,8 @@
 module Cards where
 import System.Random
-import Data.Array
+import Data.Array.ST
+import Control.Monad.ST
+import Control.Monad
 
 -- A suit type. Derives enum so we can use range notation.
 data Suit = Club | Diamond | Heart | Spade
@@ -58,10 +60,20 @@ deal hands list =
     deal2 :: Int -> Int -> [a] -> [[a]] -> [[a]]
     deal2 hand hands remaining dealt =
       deal2 ((hand + 1) `mod` hands) hands (tail remaining) (addnested hand (head remaining) dealt)
-
+ 
 addnested :: Int -> a -> [[a]] -> [[a]]
 addnested into new hands =
---  error (show into)
   let left = take into hands
       right = drop into hands
-  in  left ++ [(new : (head right))] ++ (tail right)
+  in  left ++ [new : (head right)] ++ (tail right)
+
+-- I would try and use the Fisher-Yates shuffle, but I can't figure out
+-- how to pass a mutable STArray in and out of functions in order to loop...
+shufflest :: [Int] -> [Int]
+shufflest list = runST $ do
+  arr <- newListArray (1,(length list)) list :: ST s (STArray s Int Int)
+  tmpa <- readArray arr 1
+  tmpb <- readArray arr 2
+  writeArray arr 1 tmpb
+  writeArray arr 2 tmpa
+  getElems arr
