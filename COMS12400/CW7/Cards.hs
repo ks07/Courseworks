@@ -46,3 +46,21 @@ shuffle seed list = shuffle2 (mkStdGen seed) list []
         let right = drop n list
         in (head right, ((take n list) ++ tail right))
       else error "Tried to extract element outside of list."
+
+deal :: Int -> [Card] -> [[Card]]
+deal number [] = error "Tried to deal an empty list."
+deal hands list =
+  if hands < 1 then
+    error "Must deal to at least 1 hand."
+  else
+    deal2 0 hands list (take (hands + 1) (cycle [[]]))
+  where
+    deal2 :: Int -> Int -> [Card] -> [[Card]] -> [[Card]]
+    deal2 hand hands remaining dealt =
+      deal2 ((hand + 1) `mod` hands) hands (tail remaining) (addnested hand (head remaining) dealt) 
+      
+addnested :: Int -> Card -> [[Card]] -> [[Card]]
+addnested into new hands =
+  let left = take into hands
+      right = drop into hands
+  in  left ++ (new : (head right)) ++ (tail right)
