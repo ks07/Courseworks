@@ -57,10 +57,11 @@ deal hands list =
   where
     deal2 :: Int -> Int -> [Card] -> [[Card]] -> [[Card]]
     deal2 hand hands remaining dealt =
-      deal2 ((hand + 1) `mod` hands) hands (tail remaining) (addnested hand (head remaining) dealt) 
-      
+      deal2 ((hand + 1) `mod` hands) hands (tail remaining) (addnested hand (head remaining) dealt)
+
 addnested :: Int -> Card -> [[Card]] -> [[Card]]
 addnested into new hands =
+--  error (show into)
   let left = take into hands
       right = drop into hands
-  in  left ++ (new : (head right)) ++ (tail right)
+  in  left ++ [(new : (head right))] ++ (tail right)
