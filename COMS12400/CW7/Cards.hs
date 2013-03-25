@@ -69,11 +69,16 @@ addnested into new hands =
 
 -- I would try and use the Fisher-Yates shuffle, but I can't figure out
 -- how to pass a mutable STArray in and out of functions in order to loop...
-shufflest :: [Int] -> [Int]
-shufflest list = runST $ do
-  arr <- newListArray (1,(length list)) list :: ST s (STArray s Int Int)
-  tmpa <- readArray arr 1
-  tmpb <- readArray arr 2
-  writeArray arr 1 tmpb
-  writeArray arr 2 tmpa
-  getElems arr
+shufflest :: Int -> [Int] -> [Int]
+shufflest seed list = runST $ do
+    rand <- return (mkStdGen seed)
+    arr <- newListArray (1,(length list)) list :: ST s (STArray s Int Int)
+    forM [1..(length list)] $ \i -> do
+      rnext <- return (randomR (0, (length list)) rand)
+      rand <- return (snd rnext)
+      rpos <- return (fst rnext)
+      tmpa <- readArray arr i
+      tmpb <- readArray arr rpos
+      writeArray arr rpos tmpa
+      return tmpb
+    getElems arr
