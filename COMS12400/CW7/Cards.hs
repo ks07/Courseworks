@@ -4,6 +4,7 @@ import Data.Array.ST
 import Control.Monad.ST
 import Control.Monad
 import Data.STRef
+import System.IO
 
 -- A suit type. Derives enum so we can use range notation.
 data Suit = Club | Diamond | Heart | Spade
@@ -90,3 +91,76 @@ addnested into new hands =
   let left = take into hands
       right = drop into hands
   in  left ++ [(head right) ++ [new]] ++ (tail right)
+
+play :: Bool -> (Bool,Bool) -> [[Card]] -> [Card] -> IO()
+play bankturn stuck hands deck = do
+  if bankturn then do
+    if (fst stuck) then do
+      if (snd stuck) then do
+        if (getHandTotal (hands!!0)) > (getHandTotal (hands!!1)) then do
+          putStrLn "You lose!"
+        else do
+          putStrLn "You win!"
+      else do
+        play False stuck hands deck
+    else do
+      let bank = getHandTotal (hands!!0)
+      -- Simple AI
+      if bank < 17 then do
+        let newHands = addnested 0 (head deck) hands
+	let newDeck = tail deck
+	let newbank = getHandTotal (newHands!!0)
+	if newbank > 21 then do
+	  putStrLn "Bank is bust - you win!"
+	else do
+	  putStrLn "Bank hit, next"
+	  play False stuck newHands newDeck
+      else do
+        putStrLn "Bank sticking, next"
+        let newstuck = (True,(snd stuck))
+        play False newstuck hands deck
+  else do
+    if (snd stuck) then do
+      play True stuck hands deck
+    else do
+      putStr "Your hand: "
+      putStrLn (show (hands!!1))
+      putStrLn "(H)it or (S)tick?"
+      hFlush stdout
+      l <- getLine
+      if (l == "H") then do
+       	putStrLn "Hit"
+        let newHands = addnested 1 (head deck) hands
+        let newDeck = tail deck
+	putStrLn (show (newHands!!1))
+	let total = getHandTotal (newHands!!1)
+	putStrLn (show total)
+	if (total > 21) then do
+	  putStrLn "Bust - You lose!"
+	else do
+	  play True stuck newHands newDeck
+      else do
+        if (l == "S") then do
+          putStrLn "Stick"
+          let newstuck = ((fst stuck),True)
+          play True newstuck hands deck
+	else do
+          error "Incorrect command."
+  return ()
+
+getHandTotal :: [Card] -> Int
+getHandTotal hand = handtot hand 0
+  where
+    handtot :: [Card] -> Int -> Int
+    handtot [] total = total
+    handtot (c : hand) total =
+      if (rank c) /= Ace then
+        handtot hand ((fromEnum (rank c)) + total + 1)
+      else
+        if (total + 11) > 21 then
+	  handtot hand (total + 1)
+	else
+	  handtot hand (total + 11)
+
+rank :: Card -> Rank
+rank (Card rank suit) = rank
