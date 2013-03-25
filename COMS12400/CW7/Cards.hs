@@ -131,16 +131,16 @@ play bankturn stuck hands deck = do
       play True stuck hands deck
     else do
       putStr "Your hand: "
-      putStrLn (show (hands!!1))
+      putStrLn (show (displayAll (hands!!1)))
       putStr "Bank: "
-      putStrLn (show (head (hands!!0)))
+      putStrLn (display (head (hands!!0)))
       putStrLn "(H)it or (S)tick?"
       hFlush stdout
       l <- getLine
       if (l == "H") then do
         let newHands = addnested 1 (head deck) hands
         let newDeck = tail deck
-	putStrLn (show (newHands!!1))
+	putStrLn (show (displayAll (newHands!!1)))
 	let total = getHandTotal (newHands!!1)
         putStr "Your hand is worth: "
 	putStrLn (show total)
