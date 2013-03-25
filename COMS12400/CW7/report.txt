@@ -1,0 +1,1 @@
+I have added a main function, along with some supporting functions that allow a user to play a simplified version of blackjack against a rudimentary AI banker. This game can be played by invoking 'main' in Cards.hs.
