@@ -1,4 +1,4 @@
-module Cards where
+module Cards (main) where
 import System.Random
 import Data.Array.ST
 import Control.Monad.ST
@@ -92,6 +92,15 @@ addnested into new hands =
       right = drop into hands
   in  left ++ [(head right) ++ [new]] ++ (tail right)
 
+main :: IO()
+main = do
+  putStrLn "Starting a new singleplayer blackjack game."
+  s <- randomRIO (1,9999999)
+  let seed = s
+  let deck = shuffle seed pack
+  play False (False,False) (deal 2 (take 2 deck)) (drop 2 deck)
+  return ()
+
 play :: Bool -> (Bool,Bool) -> [[Card]] -> [Card] -> IO()
 play bankturn stuck hands deck = do
   if bankturn then do
@@ -113,10 +122,8 @@ play bankturn stuck hands deck = do
 	if newbank > 21 then do
 	  putStrLn "Bank is bust - you win!"
 	else do
-	  putStrLn "Bank hit, next"
 	  play False stuck newHands newDeck
       else do
-        putStrLn "Bank sticking, next"
         let newstuck = (True,(snd stuck))
         play False newstuck hands deck
   else do
@@ -125,15 +132,17 @@ play bankturn stuck hands deck = do
     else do
       putStr "Your hand: "
       putStrLn (show (hands!!1))
+      putStr "Bank: "
+      putStrLn (show (head (hands!!0)))
       putStrLn "(H)it or (S)tick?"
       hFlush stdout
       l <- getLine
       if (l == "H") then do
-       	putStrLn "Hit"
         let newHands = addnested 1 (head deck) hands
         let newDeck = tail deck
 	putStrLn (show (newHands!!1))
 	let total = getHandTotal (newHands!!1)
+        putStr "Your hand is worth: "
 	putStrLn (show total)
 	if (total > 21) then do
 	  putStrLn "Bust - You lose!"
@@ -141,7 +150,6 @@ play bankturn stuck hands deck = do
 	  play True stuck newHands newDeck
       else do
         if (l == "S") then do
-          putStrLn "Stick"
           let newstuck = ((fst stuck),True)
           play True newstuck hands deck
 	else do
