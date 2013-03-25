@@ -3,6 +3,7 @@ import System.Random
 import Data.Array.ST
 import Control.Monad.ST
 import Control.Monad
+import Data.STRef
 
 -- A suit type. Derives enum so we can use range notation.
 data Suit = Club | Diamond | Heart | Spade
@@ -31,23 +32,28 @@ pack = [Card r s | s <- [Club ..Spade], r <- [Ace ..King]]
 
 -- Shuffles a list of cards.
 shuffle :: Int -> [a] -> [a]
-shuffle seed list = shuffle2 (mkStdGen seed) list []
+shuffle seed list = fst $ shuffle' list (mkStdGen seed)
+
+shuffle' :: [a] -> StdGen -> ([a],StdGen)
+shuffle' xs gen = runST (do
+        g <- newSTRef gen
+        let randomRST lohi = do
+              (a,s') <- liftM (randomR lohi) (readSTRef g)
+              writeSTRef g s'
+              return a
+        ar <- newArray n xs
+        xs' <- forM [1..n] $ \i -> do
+                j <- randomRST (i,n)
+                vi <- readArray ar i
+                vj <- readArray ar j
+                writeArray ar j vi
+                return vj
+        gen' <- readSTRef g
+        return (xs',gen'))
   where
--- Inner loop function to keep track of both lists.
-    shuffle2 :: StdGen -> [a] -> [a] -> [a]
-    shuffle2 rand [] shuffled = shuffled
-    shuffle2 rand input shuffled =
-      let rnext = randomR (0, (length input) - 1) rand
-          extracted = extract (fst rnext) input
-      in  shuffle2 (snd rnext) (snd extracted) ((fst extracted) : shuffled)
--- Extracts the nth item from a list, where elements start at 0.
-    extract :: Int -> [a] -> (a, [a])
-    extract n [] = error ("Empty List")
-    extract n list =
-      if n >= 0 && n < (length list) then
-        let right = drop n list
-        in (head right, ((take n list) ++ tail right))
-      else error "Tried to extract element outside of list."
+    n = length xs
+    newArray :: Int -> [a] -> ST s (STArray s Int a)
+    newArray n xs =  newListArray (1,n) xs
 
 deal :: Int -> [a] -> [[a]]
 deal number [] = error "Tried to deal an empty list."
@@ -55,9 +61,10 @@ deal hands list =
   if hands < 1 then
     error "Must deal to at least 1 hand."
   else
-    deal2 0 hands list (take (hands + 1) (cycle [[]]))
+    deal2 0 hands list (take hands (cycle [[]]))
   where
     deal2 :: Int -> Int -> [a] -> [[a]] -> [[a]]
+    deal2 hand hands [] dealt = dealt
     deal2 hand hands remaining dealt =
       deal2 ((hand + 1) `mod` hands) hands (tail remaining) (addnested hand (head remaining) dealt)
  
@@ -65,20 +72,4 @@ addnested :: Int -> a -> [[a]] -> [[a]]
 addnested into new hands =
   let left = take into hands
       right = drop into hands
-  in  left ++ [new : (head right)] ++ (tail right)
-
--- I would try and use the Fisher-Yates shuffle, but I can't figure out
--- how to pass a mutable STArray in and out of functions in order to loop...
-shufflest :: Int -> [Int] -> [Int]
-shufflest seed list = runST $ do
-    rand <- return (mkStdGen seed)
-    arr <- newListArray (1,(length list)) list :: ST s (STArray s Int Int)
-    forM [1..(length list)] $ \i -> do
-      rnext <- return (randomR (0, (length list)) rand)
-      rand <- return (snd rnext)
-      rpos <- return (fst rnext)
-      tmpa <- readArray arr i
-      tmpb <- readArray arr rpos
-      writeArray arr rpos tmpa
-      return tmpb
-    getElems arr
+  in  left ++ [(head right) ++ [new]] ++ (tail right)
