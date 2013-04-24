@@ -55,7 +55,33 @@ calcPostfix (next : input) stack =
         calcPostfix input (show (doOperation next (take (getOperatorArgs next) stack)) :  (drop (getOperatorArgs next) stack))
     else
       error "Unexpected string in tokens."
-          
+
+precedence :: [[String]]
+precedence = [["/", "*"], ["+", "-"]]
+
+-- Assuming left-assoc for now. True if op1 >= op0
+checkPrec :: String -> String -> Bool
+checkPrec op0 op1 = cP op0 op1 precedence
+  where
+    cP :: String -> String -> [[String]] -> Bool
+    cP op0 op1 prec
+      | elem op0 (head prec) && notElem op1 (head prec) = False
+      | elem op0 (head prec) && elem op1 (head prec) = True
+      | notElem op0 (head prec) && elem op1 (head prec) = True
+      | notElem op0 (head prec) && notElem op1 (head prec) = cP op0 op1 (tail prec)
+
+convertInfix :: [String] -> [String]
+convertInfix input = convInfix input [] []
+  where
+    convInfix :: [String] -> [String] -> [String] -> [String]
+    convInfix (next : input) queue stack
+      | isNumeric next = convInfix input (next : queue) stack
+      | isOperator next && (length stack) == 0 = convInfix input queue (next : stack)
+      | isOperator next && isOperator (head stack) && checkPrec next (head stack) = convInfix (next : input) ((head stack) : queue) (tail stack)
+     
+    convInfix [] queue [] = reverse queue
+    convInfix [] queue stack = convInfix [] ((head stack) : queue) (tail stack)
+
 main :: IO()
 main = do
   putStrLn "Please enter your equation in postfix (RPN):"
