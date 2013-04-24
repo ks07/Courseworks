@@ -1,4 +1,4 @@
-module Calc where
+module Calc (main) where
 import Data.Char
 
 stringToTokens :: String -> [String]
@@ -56,5 +56,8 @@ calcPostfix (next : input) stack =
     else
       error "Unexpected string in tokens."
           
-    
-    
+main :: IO()
+main = do
+  putStrLn "Please enter your equation in postfix (RPN):"
+  line <- getLine
+  putStrLn (show (calcPostfix (stringToTokens line) [])) 
