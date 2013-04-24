@@ -83,3 +83,9 @@ main = do
   putStrLn "Please enter your equation in infix notation:"
   line <- getLine
   putStrLn (show (calcPostfix (convertInfix (stringToTokens line)) []))
+  putStrLn "Again? [y/n]"
+  cont <- getLine
+  if cont == "y" then
+    main
+  else
+    putStrLn "end"
