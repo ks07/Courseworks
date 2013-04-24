@@ -4,12 +4,11 @@ import Data.Char
 stringToTokens :: String -> [String]
 stringToTokens expr = words expr
 
+precedence :: [[String]]
+precedence = [["/", "*"], ["+", "-"]]
+
 isOperator :: String -> Bool
-isOperator "+" = True
-isOperator "-" = True
-isOperator "*" = True
-isOperator "/" = True
-isOperator other = False
+isOperator op = any (elem op) precedence
 
 isNumeric :: String -> Bool
 isNumeric [] = False
@@ -56,9 +55,6 @@ calcPostfix (next : input) stack =
     else
       error "Unexpected string in tokens."
 
-precedence :: [[String]]
-precedence = [["/", "*"], ["+", "-"]]
-
 -- Assuming left-assoc for now. True if op1 >= op0
 checkPrec :: String -> String -> Bool
 checkPrec op0 op1 = cP op0 op1 precedence
@@ -84,6 +80,6 @@ convertInfix input = convInfix input [] []
 
 main :: IO()
 main = do
-  putStrLn "Please enter your equation in postfix (RPN):"
+  putStrLn "Please enter your equation in infix notation:"
   line <- getLine
-  putStrLn (show (calcPostfix (stringToTokens line) [])) 
+  putStrLn (show (calcPostfix (convertInfix (stringToTokens line)) []))
