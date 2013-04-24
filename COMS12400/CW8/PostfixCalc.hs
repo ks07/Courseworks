@@ -78,7 +78,7 @@ convertInfix input = convInfix input [] []
       | isNumeric next = convInfix input (next : queue) stack
       | isOperator next && (length stack) == 0 = convInfix input queue (next : stack)
       | isOperator next && isOperator (head stack) && checkPrec next (head stack) = convInfix (next : input) ((head stack) : queue) (tail stack)
-     
+      | isOperator next && isOperator (head stack) && not (checkPrec next (head stack)) = convInfix input queue (next : stack)
     convInfix [] queue [] = reverse queue
     convInfix [] queue stack = convInfix [] ((head stack) : queue) (tail stack)
 
