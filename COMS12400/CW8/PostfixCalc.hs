@@ -25,6 +25,7 @@ getOperatorArgs "+" = 2
 getOperatorArgs "-" = 2
 getOperatorArgs "*" = 2
 getOperatorArgs "/" = 2
+--getOperatorArgs "^" = 2
 getOperatorArgs op = error "Unrecognised operator."
 
 toNum :: String -> Rational
@@ -35,6 +36,7 @@ doOperation "+" (arg1 : arg0 : args) = toNum arg0 + toNum arg1
 doOperation "-" (arg1 : arg0 : args) = toNum arg0 - toNum arg1
 doOperation "*" (arg1 : arg0 : args) = toNum arg0 * toNum arg1
 doOperation "/" (arg1 : arg0 : args) = toNum arg0 / toNum arg1
+--doOperation "^" (arg1 : arg0 : args) = toNum arg0 ** toNum arg1
 
 -- input tokens -> stack -> result
 calcPostfix :: [String] -> [String] -> Rational
