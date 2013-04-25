@@ -63,6 +63,7 @@ checkPrec :: String -> String -> Bool
 checkPrec op0 op1 = cP op0 op1 precedence
   where
     cP :: String -> String -> [[String]] -> Bool
+    cP op0 op1 [] = error "Operator does not have a precedence value."
     cP op0 op1 prec
       | elem op0 (head prec) && notElem op1 (head prec) = False
       | elem op0 (head prec) && elem op1 (head prec) = True
@@ -78,6 +79,12 @@ convertInfix input = convInfix input [] []
       | isOperator next && (length stack) == 0 = convInfix input queue (next : stack)
       | isOperator next && isOperator (head stack) && checkPrec next (head stack) = convInfix (next : input) ((head stack) : queue) (tail stack)
       | isOperator next && isOperator (head stack) && not (checkPrec next (head stack)) = convInfix input queue (next : stack)
+      | isOperator next = convInfix input queue (next : stack)
+      | next == "(" = convInfix input queue (next : stack)
+      | next == ")" && (length stack) == 0 = error "Mismatched parentheses in the input equation."
+      | next == ")" && (head stack) == "(" = convInfix input queue (tail stack)
+      | next == ")" = convInfix (next : input) ((head stack) : queue) (tail stack)
+      | otherwise = error ((show (next : input)) ++ " <=> "  ++ (show queue) ++ " <=> "  ++ (show stack))
     convInfix [] queue [] = reverse queue
     convInfix [] queue stack = convInfix [] ((head stack) : queue) (tail stack)
 
