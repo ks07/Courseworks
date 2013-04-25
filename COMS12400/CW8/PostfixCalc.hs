@@ -5,8 +5,15 @@ import Numeric
 stringToTokens :: String -> [String]
 stringToTokens expr = words expr
 
+-- TODO: List of list of tuples for arg count
 precedence :: [[String]]
 precedence = [["/", "*"], ["+", "-"]]
+
+functions :: [String]
+functions = ["round", "floor", "ceil", "abs"]
+
+isFunction :: String -> Bool
+isFunction func = elem func functions
 
 isOperator :: String -> Bool
 isOperator op = any (elem op) precedence
@@ -26,6 +33,10 @@ getOperatorArgs "-" = 2
 getOperatorArgs "*" = 2
 getOperatorArgs "/" = 2
 --getOperatorArgs "^" = 2
+getOperatorArgs "round" = 1
+getOperatorArgs "floor" = 1
+getOperatorArgs "ceil" = 1
+getOperatorArgs "abs" = 1
 getOperatorArgs op = error "Unrecognised operator."
 
 toNum :: String -> Rational
@@ -37,6 +48,10 @@ doOperation "-" (arg1 : arg0 : args) = toNum arg0 - toNum arg1
 doOperation "*" (arg1 : arg0 : args) = toNum arg0 * toNum arg1
 doOperation "/" (arg1 : arg0 : args) = toNum arg0 / toNum arg1
 --doOperation "^" (arg1 : arg0 : args) = toNum arg0 ** toNum arg1
+doOperation "round" (arg0 : args) = fromIntegral (round (toNum arg0))
+doOperation "floor" (arg0 : args) = fromIntegral (floor (toNum arg0))
+doOperation "ceil" (arg0 : args) = fromIntegral (ceiling (toNum arg0))
+doOperation "abs" (arg0 : args) = abs (toNum arg0)
 
 -- input tokens -> stack -> result
 calcPostfix :: [String] -> [String] -> Rational
@@ -50,11 +65,12 @@ calcPostfix (next : input) stack =
     -- push onto stack
     calcPostfix input (next : stack) 
   else
-    if isOperator next then
+    if isOperator next || isFunction next then
       if (length stack) < (getOperatorArgs next) then
-        error "Not enough values for operation."
+        --error "Not enough values for operation."
+        error (show (getOperatorArgs next))
       else
-        calcPostfix input (show (doOperation next (take (getOperatorArgs next) stack)) :  (drop (getOperatorArgs next) stack))
+        calcPostfix input (show (doOperation next (take (getOperatorArgs next) stack)) : (drop (getOperatorArgs next) stack))
     else
       error "Unexpected string in tokens."
 
