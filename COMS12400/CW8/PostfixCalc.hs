@@ -1,5 +1,6 @@
 module Calc (main) where
 import Data.Char
+import Numeric
 
 stringToTokens :: String -> [String]
 stringToTokens expr = words expr
@@ -26,20 +27,20 @@ getOperatorArgs "*" = 2
 getOperatorArgs "/" = 2
 getOperatorArgs op = error "Unrecognised operator."
 
-toNum :: String -> Double
-toNum num = read num :: Double
+toNum :: String -> Rational
+toNum num = fst (head (readSigned readFloat num)) :: Rational
 
-doOperation :: String -> [String] -> Double
+doOperation :: String -> [String] -> Rational
 doOperation "+" (arg1 : arg0 : args) = toNum arg0 + toNum arg1
 doOperation "-" (arg1 : arg0 : args) = toNum arg0 - toNum arg1
 doOperation "*" (arg1 : arg0 : args) = toNum arg0 * toNum arg1
 doOperation "/" (arg1 : arg0 : args) = toNum arg0 / toNum arg1
 
 -- input tokens -> stack -> result
-calcPostfix :: [String] -> [String] -> Double
+calcPostfix :: [String] -> [String] -> Rational
 calcPostfix [] stack =
   if (length stack) == 1 then
-    read (head stack) :: Double
+    toNum (head stack)
   else
     error "Multiple values remain in stack."
 calcPostfix (next : input) stack =
@@ -78,11 +79,14 @@ convertInfix input = convInfix input [] []
     convInfix [] queue [] = reverse queue
     convInfix [] queue stack = convInfix [] ((head stack) : queue) (tail stack)
 
+showAsDouble :: Rational -> String
+showAsDouble val = show (fromRational val)
+
 main :: IO()
 main = do
   putStrLn "Please enter your equation in infix notation:"
   line <- getLine
-  putStrLn (show (calcPostfix (convertInfix (stringToTokens line)) []))
+  putStrLn (showAsDouble (calcPostfix (convertInfix (stringToTokens line)) []))
   putStrLn "Again? [y/n]"
   cont <- getLine
   if cont == "y" then
