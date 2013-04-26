@@ -1,22 +1,23 @@
 module Calc (main) where
 import Data.Char
+import Data.List
+import Data.Maybe
 import Numeric
 
 stringToTokens :: String -> [String]
 stringToTokens expr = words expr
 
--- TODO: List of list of tuples for arg count
-precedence :: [[String]]
-precedence = [["/", "*"], ["+", "-"]]
+precedence :: [[(String, Int)]]
+precedence = [[("/", 2), ("*", 2)], [("+", 2), ("-", 2)]]
 
-functions :: [String]
-functions = ["round", "floor", "ceil", "abs"]
+functions :: [(String, Int)]
+functions = [("round", 1), ("floor", 1), ("ceil", 1), ("abs", 1)]
 
 isFunction :: String -> Bool
-isFunction func = elem func functions
+isFunction func = elem func (map fst functions)
 
 isOperator :: String -> Bool
-isOperator op = any (elem op) precedence
+isOperator op = elem op (map fst (foldl (++) [] precedence))
 
 isNumeric :: String -> Bool
 isNumeric [] = False
@@ -28,16 +29,16 @@ isNumeric tkn = isNumeric2 tkn False
     isNumeric2 [] dp = True
 
 getOperatorArgs :: String -> Int
-getOperatorArgs "+" = 2
-getOperatorArgs "-" = 2
-getOperatorArgs "*" = 2
-getOperatorArgs "/" = 2
---getOperatorArgs "^" = 2
-getOperatorArgs "round" = 1
-getOperatorArgs "floor" = 1
-getOperatorArgs "ceil" = 1
-getOperatorArgs "abs" = 1
-getOperatorArgs op = error "Unrecognised operator."
+getOperatorArgs op = getOA op precedence
+  where
+    getOA :: String -> [[(String, Int)]] -> Int
+    getOA op [] = error "Unrecognised operation."
+    getOA op list =
+      let sndVal = find ((op ==) . fst) (head list)
+      in if isNothing sndVal then
+           getOA op (tail list)
+         else
+           snd (fromJust sndVal)
 
 toNum :: String -> Rational
 toNum num = fst (head (readSigned readFloat num)) :: Rational
@@ -78,14 +79,19 @@ calcPostfix (next : input) stack =
 checkPrec :: String -> String -> Bool
 checkPrec op0 op1 = cP op0 op1 precedence
   where
-    cP :: String -> String -> [[String]] -> Bool
+    cP :: String -> String -> [[(String, Int)]] -> Bool
     cP op0 op1 [] = error "Operator does not have a precedence value."
     cP op0 op1 prec
-      | elem op0 (head prec) && notElem op1 (head prec) = False
-      | elem op0 (head prec) && elem op1 (head prec) = True
-      | notElem op0 (head prec) && elem op1 (head prec) = True
-      | notElem op0 (head prec) && notElem op1 (head prec) = cP op0 op1 (tail prec)
+      | fstElem op0 (head prec) && not (fstElem op1 (head prec)) = False
+      | fstElem op0 (head prec) && fstElem op1 (head prec) = True
+      | not (fstElem op0 (head prec)) && fstElem op1 (head prec) = True
+      | not (fstElem op0 (head prec)) && not (fstElem op1 (head prec)) = cP op0 op1 (tail prec)
 
+fstElem :: Eq a => a -> [(a, b)] -> Bool
+fstElem needle [] = False
+fstElem needle list = any ((needle ==) . fst) list
+
+-- Shunting-yard algorithm http://en.wikipedia.org/wiki/Shunting_yard_algorithm
 convertInfix :: [String] -> [String]
 convertInfix input = convInfix input [] []
   where
