@@ -2,6 +2,7 @@ module Calc (main) where
 import Data.Char
 import Data.List
 import Data.Maybe
+import Data.Ratio
 import Numeric
 
 stringToTokens :: String -> [String]
