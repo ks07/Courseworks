@@ -4,15 +4,15 @@ import Data.List
 import Data.Maybe
 import Data.Ratio
 import Numeric
-
+import Debug.Trace
 stringToTokens :: String -> [String]
 stringToTokens expr = words expr
 
 precedence :: [[(String, Int)]]
-precedence = [[("/", 2), ("*", 2)], [("+", 2), ("-", 2)]]
+precedence = [[("^", 2)], [("/", 2), ("*", 2)], [("+", 2), ("-", 2)]]
 
 functions :: [(String, Int)]
-functions = [("round", 1), ("floor", 1), ("ceil", 1), ("abs", 1), ("dbg", 1)]
+functions = [("round", 1), ("floor", 1), ("ceil", 1), ("abs", 1), ("dbg", 1), ("sqrt", 1)]
 
 isFunction :: String -> Bool
 isFunction func = elem func (map fst functions)
@@ -57,7 +57,8 @@ doOperation "+" (arg1 : arg0 : args) = arg0 + arg1
 doOperation "-" (arg1 : arg0 : args) = arg0 - arg1
 doOperation "*" (arg1 : arg0 : args) = arg0 * arg1
 doOperation "/" (arg1 : arg0 : args) = arg0 / arg1
---doOperation "^" (arg1 : arg0 : args) = arg0 ** arg1
+doOperation "^" (arg1 : arg0 : args) = rationalPow arg0 arg1
+doOperation "sqrt" (arg0 : args) = rationalSqrt arg0
 doOperation "round" (arg0 : args) = fromIntegral (round arg0)
 doOperation "floor" (arg0 : args) = fromIntegral (floor arg0)
 doOperation "ceil" (arg0 : args) = fromIntegral (ceiling arg0)
@@ -68,6 +69,60 @@ doOperation "abs" (arg0 : args) =
     arg0
 doOperation "dbg" (arg0 : args) = error $ show arg0
 
+rationalPow :: Rational -> Rational -> Rational
+rationalPow val power
+  | power == 0 = 1
+  | power == 0.5 = rationalSqrt val
+  | power == 1 = val
+  | (denominator power) == 1 && power < 0 = 1 / (rationalPow val (power * (-1)))
+  | (denominator power) == 1 = val * (rationalPow val (power - 1))
+  | otherwise = toRational ((fromRational val) ** (fromRational power))
+--  | otherwise = error "Fractional powers are not supported currently." 
+
+rationalSqrt :: Rational -> Rational
+rationalSqrt square = newtonRaphsonSqrt square (roughSqrt square) 0.000000001 10
+  where
+    newtonRaphsonSqrt :: Rational -> Rational -> Rational -> Integer -> Rational
+    newtonRaphsonSqrt square approx epsilon maxIter =
+      if maxIter < 0 then
+        approx
+      else
+        if (2 * approx) < epsilon then
+          error (show maxIter)
+          --newtonRaphsonIter square approx
+        else
+          trace (show maxIter) (newtonRaphsonIter square (newtonRaphsonSqrt square approx epsilon (maxIter - 1)))
+    newtonRaphsonIter :: Rational -> Rational -> Rational
+    newtonRaphsonIter square approx = approx - (approx * approx - square) / (2 * approx)
+    roughSqrt :: Rational -> Rational
+    roughSqrt square
+      | square >= 1 =
+        let d = length (show (floor square))
+        in if odd d then
+             (2 :: Rational) * (fromIntegral (10 ^ ((d - 1) `div` 2)))
+           else
+             (6 :: Rational) * (fromIntegral (10 ^ ((d - 2) `div` 2)))
+      | square < 1 =
+        let d = (-1) * (countImmZ (showAsDouble square) False)
+        in if odd d then
+             (2 :: Rational) * (toRational (10.0 ^^ ((d - 1) `div` 2)))
+           else
+             (6 :: Rational) * (toRational (10.0 ^^ ((d - 2) `div` 2)))             
+      where
+        countImmZ :: String -> Bool -> Integer
+        countImmZ (dig : digr) seenDP =
+          if seenDP then
+            if dig == '0' then
+              1 + (countImmZ digr seenDP)
+            else
+              0
+          else
+            if dig == '.' then
+              countImmZ digr True
+            else
+              countImmZ digr False
+              
+  
 -- input tokens -> stack -> result
 calcPostfix :: [String] -> [Rational] -> Rational
 calcPostfix [] stack =
@@ -114,18 +169,19 @@ convertInfix input = convInfix input [] []
   where
     convInfix :: [String] -> [String] -> [String] -> [String]
     convInfix (next : input) queue stack
-      | isNumeric next = convInfix input (next : queue) stack
-      | isFunction next = convInfix input queue (next : stack)
+      | isNumeric next = trace "1" $ convInfix input (next : queue) stack
+      | isFunction next = trace "2" $ convInfix input queue (next : stack)
       | next == "," && (length stack) == 0 = error "Mismatched parentheses in the input equation." 
-      | next == "," && (head stack) == "(" = convInfix input queue stack
-      | next == "," = convInfix (next : input) ((head stack) : queue) (tail stack)
-      | isOperator next && (length stack) == 0 = convInfix input queue (next : stack)
-      | isOperator next && isOperator (head stack) && checkPrec next (head stack) = convInfix (next : input) ((head stack) : queue) (tail stack)
-      | isOperator next = convInfix input queue (next : stack)
-      | next == "(" = convInfix input queue (next : stack)
+      | next == "," && (head stack) == "(" = trace "3" $ convInfix input queue stack
+      | next == "," = trace "4" $ convInfix (next : input) ((head stack) : queue) (tail stack)
+      | isOperator next && (length stack) == 0 = trace "5" $ convInfix input queue (next : stack)
+      | isOperator next && isOperator (head stack) && checkPrec next (head stack) = trace "6" $ convInfix (next : input) ((head stack) : queue) (tail stack)
+      | isOperator next = trace "7" $ convInfix input queue (next : stack)
+      | next == "(" = trace "8" $ convInfix input queue (next : stack)
       | next == ")" && (length stack) == 0 = error "Mismatched parentheses in the input equation."
-      | next == ")" && (head stack) == "(" = convInfix input queue (tail stack)
-      | next == ")" = convInfix (next : input) ((head stack) : queue) (tail stack)
+      | next == ")" && (head stack) == "(" && (length stack) > 1 && isFunction (head (tail stack)) = trace "9" $ convInfix input ((head (tail stack)) : queue) (tail (tail stack))
+      | next == ")" && (head stack) == "(" = trace "10" $ convInfix input queue (tail stack)
+      | next == ")" = trace ("11 " ++ (show queue)) $ convInfix (next : input) ((head stack) : queue) (tail stack)
       | otherwise = error ((show (next : input)) ++ " <=> "  ++ (show queue) ++ " <=> "  ++ (show stack))
     convInfix [] queue [] = reverse queue
     convInfix [] queue stack = convInfix [] ((head stack) : queue) (tail stack)
