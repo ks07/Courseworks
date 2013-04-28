@@ -4,13 +4,9 @@ import Data.List
 import Data.Maybe
 import Data.Ratio
 import Numeric
-import Debug.Trace
 
-stringToTokens :: String -> [String]
-stringToTokens expr = words expr
-
-infixToTokens :: String -> String
-infixToTokens expr = infixToTokens2 (stripSpaces expr) Nothing
+infixToTokens :: String -> [String]
+infixToTokens expr = words $ infixToTokens2 (stripSpaces expr) Nothing
   where
     infixToTokens2 :: [Char] -> Maybe Char -> String
     infixToTokens2 [] prev = ""
@@ -39,13 +35,15 @@ isOperator op = elem op (map fst (foldl (++) [] precedence))
 
 isNumeric :: String -> Bool
 isNumeric [] = False
-isNumeric tkn = isNumeric2 tkn False True
+isNumeric tkn = isNumeric2 tkn False True False
   where
-    isNumeric2 :: String -> Bool -> Bool -> Bool
-    isNumeric2 tkn True isFirst = all isDigit tkn 
-    isNumeric2 (c : tkn) False isFirst = ((c == '-' && isFirst) || c == '.' || isDigit c) && isNumeric2 tkn (c == '.') False
-    isNumeric2 [] dp False = True
-    isNumeric2 [] dp True = False
+    -- isNumeric2 :: token -> seenDecimalPoint -> isFirst -> seenAnyDigits
+    isNumeric2 :: String -> Bool -> Bool -> Bool -> Bool
+    isNumeric2 tkn True isFirst seenDig = all isDigit tkn
+    isNumeric2 (c : tkn) False True seenDig = (c == '-' || c == '.' || isDigit c) && isNumeric2 tkn (c == '.') False (isDigit c)
+    isNumeric2 (c : tkn) False False seenDig = (c == '.' || isDigit c) && isNumeric2 tkn (c == '.') False (isDigit c)
+    isNumeric2 [] dp False seenDigit = seenDigit
+    isNumeric2 [] dp True seenDigit = False
 
 getOperatorArgs :: String -> Int
 getOperatorArgs op = getOA op precedence
@@ -95,7 +93,6 @@ rationalPow val power
   | (denominator power) == 1 && power < 0 = 1 / (rationalPow val (power * (-1)))
   | (denominator power) == 1 = val * (rationalPow val (power - 1))
   | otherwise = toRational ((fromRational val) ** (fromRational power))
---  | otherwise = error "Fractional powers are not supported currently." 
 
 rationalSqrt :: Rational -> Rational
 rationalSqrt square = newtonRaphsonSqrt square (roughSqrt square) 0.000000001 10
@@ -187,20 +184,20 @@ convertInfix input = convInfix input [] []
   where
     convInfix :: [String] -> [String] -> [String] -> [String]
     convInfix (next : input) queue stack
-      | isNumeric next = trace "1" $ convInfix input (next : queue) stack
-      | isFunction next = trace "2" $ convInfix input queue (next : stack)
+      | isNumeric next = convInfix input (next : queue) stack
+      | isFunction next = convInfix input queue (next : stack)
       | next == "," && (length stack) == 0 = error "Mismatched parentheses in the input equation." 
-      | next == "," && (head stack) == "(" = trace "3" $ convInfix input queue stack
-      | next == "," = trace "4" $ convInfix (next : input) ((head stack) : queue) (tail stack)
-      | isOperator next && (length stack) == 0 = trace "5" $ convInfix input queue (next : stack)
-      | isOperator next && isOperator (head stack) && checkPrec next (head stack) = trace "6" $ convInfix (next : input) ((head stack) : queue) (tail stack)
-      | isOperator next = trace "7" $ convInfix input queue (next : stack)
-      | next == "(" = trace "8" $ convInfix input queue (next : stack)
+      | next == "," && (head stack) == "(" = convInfix input queue stack
+      | next == "," = convInfix (next : input) ((head stack) : queue) (tail stack)
+      | isOperator next && (length stack) == 0 = convInfix input queue (next : stack)
+      | isOperator next && isOperator (head stack) && checkPrec next (head stack) = convInfix (next : input) ((head stack) : queue) (tail stack)
+      | isOperator next = convInfix input queue (next : stack)
+      | next == "(" = convInfix input queue (next : stack)
       | next == ")" && (length stack) == 0 = error "Mismatched parentheses in the input equation."
-      | next == ")" && (head stack) == "(" && (length stack) > 1 && isFunction (head (tail stack)) = trace "9" $ convInfix input ((head (tail stack)) : queue) (tail (tail stack))
-      | next == ")" && (head stack) == "(" = trace "10" $ convInfix input queue (tail stack)
-      | next == ")" = trace ("11 " ++ (show queue)) $ convInfix (next : input) ((head stack) : queue) (tail stack)
-      | otherwise = error ((show (next : input)) ++ " <=> "  ++ (show queue) ++ " <=> "  ++ (show stack))
+      | next == ")" && (head stack) == "(" && (length stack) > 1 && isFunction (head (tail stack)) = convInfix input ((head (tail stack)) : queue) (tail (tail stack))
+      | next == ")" && (head stack) == "(" = convInfix input queue (tail stack)
+      | next == ")" = convInfix (next : input) ((head stack) : queue) (tail stack)
+      | otherwise = error "Unknown characters in input equation."
     convInfix [] queue [] = reverse queue
     convInfix [] queue stack = convInfix [] ((head stack) : queue) (tail stack)
 
@@ -211,7 +208,7 @@ main :: IO()
 main = do
   putStrLn "Please enter your equation in infix notation:"
   line <- getLine
-  putStrLn (showAsDouble (calcPostfix (convertInfix (stringToTokens line)) []))
+  putStrLn (showAsDouble (calcPostfix (convertInfix (infixToTokens line)) []))
   putStrLn "Again? [y/n]"
   cont <- getLine
   if cont == "y" then
