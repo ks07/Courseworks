@@ -8,7 +8,9 @@ import Numeric
 infixToTokens :: String -> [String]
 infixToTokens expr = words $ infixToTokens2 (stripSpaces expr) Nothing
   where
-    infixToTokens2 :: [Char] -> Maybe Char -> String
+    stripSpaces :: String -> String
+    stripSpaces str = filter (not . isSpace) str
+    infixToTokens2 :: String -> Maybe Char -> String
     infixToTokens2 [] prev = ""
     infixToTokens2 (next : expr) prev
       | isDigit next || next == '.' = (next : (infixToTokens2 expr (Just next)))
@@ -17,9 +19,6 @@ infixToTokens expr = words $ infixToTokens2 (stripSpaces expr) Nothing
       | isLower next && isLower (fromMaybe ' ' prev) = next : (infixToTokens2 expr (Just next))
       | isLower next = ' ' : next : (infixToTokens2 expr (Just next))
       | otherwise = error "fail"
-
-stripSpaces :: String -> String
-stripSpaces str = filter (not . isSpace) str
   
 precedence :: [[(String, Int)]]
 precedence = [[("^", 2)], [("/", 2), ("*", 2)], [("+", 2), ("-", 2)]]
@@ -103,10 +102,9 @@ rationalSqrt square = newtonRaphsonSqrt square (roughSqrt square) 0.000000001 10
         approx
       else
         if (2 * approx) < epsilon then
-          error (show maxIter)
-          --newtonRaphsonIter square approx
+          approx
         else
-          trace (show maxIter) (newtonRaphsonIter square (newtonRaphsonSqrt square approx epsilon (maxIter - 1)))
+          newtonRaphsonIter square (newtonRaphsonSqrt square approx epsilon (maxIter - 1))
     newtonRaphsonIter :: Rational -> Rational -> Rational
     newtonRaphsonIter square approx = approx - (approx * approx - square) / (2 * approx)
     roughSqrt :: Rational -> Rational
