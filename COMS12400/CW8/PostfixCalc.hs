@@ -39,12 +39,13 @@ isOperator op = elem op (map fst (foldl (++) [] precedence))
 
 isNumeric :: String -> Bool
 isNumeric [] = False
-isNumeric tkn = isNumeric2 tkn False
+isNumeric tkn = isNumeric2 tkn False True
   where
-    isNumeric2 :: String -> Bool -> Bool
-    isNumeric2 tkn True = all isDigit tkn 
-    isNumeric2 (c : tkn) False = (c == '.' || isDigit c) && isNumeric2 tkn (c == '.')
-    isNumeric2 [] dp = True
+    isNumeric2 :: String -> Bool -> Bool -> Bool
+    isNumeric2 tkn True isFirst = all isDigit tkn 
+    isNumeric2 (c : tkn) False isFirst = ((c == '-' && isFirst) || c == '.' || isDigit c) && isNumeric2 tkn (c == '.') False
+    isNumeric2 [] dp False = True
+    isNumeric2 [] dp True = False
 
 getOperatorArgs :: String -> Int
 getOperatorArgs op = getOA op precedence
