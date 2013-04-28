@@ -18,6 +18,8 @@ infixToTokens expr = infixToTokens2 (stripSpaces expr) Nothing
       | isDigit next || next == '.' = (next : (infixToTokens2 expr (Just next)))
       | next == '-' && isOperator [(fromMaybe '+' prev)] = ' ' : next : (infixToTokens2 expr (Just next))
       | next == '(' || next == ')' || isOperator [next] = ' ' : next : ' ' : (infixToTokens2 expr (Just next))
+      | isLower next && isLower (fromMaybe ' ' prev) = next : (infixToTokens2 expr (Just next))
+      | isLower next = ' ' : next : (infixToTokens2 expr (Just next))
       | otherwise = error "fail"
 
 stripSpaces :: String -> String
