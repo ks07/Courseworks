@@ -1,0 +1,34 @@
+I decided to create an infix calculator that uses Rationals to represent
+numbers. Numbers are displayed as Double approximations to the user. The
+calculator supports the 4 standard operations, with exact results provided
+thanks to the Rational type in Haskell. I have also implemented the exponent
+operator, which is exact for all integer powers. Fractional powers are
+supported, but approximated. I decided to convert to a Double, and use the
+power function supported by Doubles to obtain the approximate result. This is
+not the most elegant solution, but it works in practice and is sufficiently
+accurate.
+
+I have also added support for functions. These are round, floor, ceil, abs,
+sqrt, and dbg. Dbg, or debug, is a special function which will throw an error
+to show the given value. This was useful during development. The sqrt function
+is implemented without the use of converting to doubles. I have used the
+Newton-Raphson method for refining an approximate value of the root, obtained
+by a very rough method beforehand.
+
+Parsing equations is done in 2 steps. When an infix expression is read in, it is
+stripped of all whitespace, and then whitespace is inserted where appropriate.
+This newly formatted string can then be split into the list of tokens simply by
+using the 'words' function. I used the shunting-yard algorithm to convert a list
+of strings representing an infix equation into postfix/RPN format. After parsing
+into postfix, calculation is very easy.
+
+The user interface of my calculator is a very simple text based UI. You can
+compile my calculator with the command:
+
+`ghc -main-is Calc --make Calc.hs`
+
+I have tried to make my calculator fairly easy to extend with more operators and
+functions. For example, operators are stored in a list of lists of tuples. Each
+list within the outer list holds the operators with equivalent precedences. The
+outer list is sorted in terms of precedence. Each tuple contains the operator
+symbol and the number of operands it takes.
