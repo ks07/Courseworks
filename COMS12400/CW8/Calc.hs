@@ -18,8 +18,8 @@ infixToTokens expr = words $ infixToTokens2 (stripSpaces expr) Nothing
       | next == '(' || next == ')' || isOperator [next] = ' ' : next : ' ' : (infixToTokens2 expr (Just next))
       | isLower next && isLower (fromMaybe ' ' prev) = next : (infixToTokens2 expr (Just next))
       | isLower next = ' ' : next : (infixToTokens2 expr (Just next))
-      | otherwise = error "fail"
-  
+      | otherwise = error "Unable to parse infix equation."
+
 precedence :: [[(String, Int)]]
 precedence = [[("^", 2)], [("/", 2), ("*", 2)], [("+", 2), ("-", 2)]]
 
@@ -135,30 +135,33 @@ rationalSqrt square = newtonRaphsonSqrt square (roughSqrt square) 0.000000001 10
             else
               countImmZ digr False
               
-  
--- input tokens -> stack -> result
-calcPostfix :: [String] -> [Rational] -> Rational
-calcPostfix [] stack =
-  if (length stack) == 1 then
-    head stack
-  else
-    error "Multiple values remain in stack."
-calcPostfix (next : input) stack =
-  if isNumeric next then
-    -- push onto stack
-    calcPostfix input ((toNum next) : stack) 
-  else
-    if isOperator next || isFunction next then
-      let argCount = if isOperator next then
-                       getOperatorArgs next
-                     else
-                       getFunctionArgs next
-      in if (length stack) < argCount then
-           error "Not enough values for operation."
-         else
-           calcPostfix input (doOperation next (take argCount stack) : (drop argCount stack))
-    else
-      error "Unexpected string in tokens."
+calculatePostfix :: [String] -> Rational
+calculatePostfix [] = error "Empty equation."
+calculatePostfix tokens = calcPostfix tokens []
+  where
+    -- input tokens -> stack -> result
+    calcPostfix :: [String] -> [Rational] -> Rational
+    calcPostfix [] stack =
+      if (length stack) == 1 then
+        head stack
+      else
+        error "Malformed expression: Multiple values remain in stack."
+    calcPostfix (next : input) stack =
+      if isNumeric next then
+        -- push onto stack
+        calcPostfix input ((toNum next) : stack) 
+      else
+        if isOperator next || isFunction next then
+          let argCount = if isOperator next then
+                           getOperatorArgs next
+                         else
+                           getFunctionArgs next
+          in if (length stack) < argCount then
+               error "Not enough values for operation."
+             else
+               calcPostfix input (doOperation next (take argCount stack) : (drop argCount stack))
+        else
+          error "Unexpected string in tokens."
 
 -- Assuming left-assoc for now. True if op1 >= op0
 checkPrec :: String -> String -> Bool
@@ -168,13 +171,18 @@ checkPrec op0 op1 = cP op0 op1 precedence
     cP op0 op1 [] = error "Operator does not have a precedence value."
     cP op0 op1 prec
       | fstElem op0 (head prec) && not (fstElem op1 (head prec)) = False
-      | fstElem op0 (head prec) && fstElem op1 (head prec) = True
+      | fstElem op0 (head prec) && fstElem op1 (head prec) && not (isRightAssoc op0) = True
+      | fstElem op0 (head prec) && fstElem op1 (head prec) && isRightAssoc op0 = False
       | not (fstElem op0 (head prec)) && fstElem op1 (head prec) = True
       | not (fstElem op0 (head prec)) && not (fstElem op1 (head prec)) = cP op0 op1 (tail prec)
 
 fstElem :: Eq a => a -> [(a, b)] -> Bool
 fstElem needle [] = False
 fstElem needle list = any ((needle ==) . fst) list
+
+isRightAssoc :: String -> Bool
+isRightAssoc "^" = True
+isRightAssoc op = False
 
 -- Shunting-yard algorithm http://en.wikipedia.org/wiki/Shunting_yard_algorithm
 convertInfix :: [String] -> [String]
@@ -202,14 +210,25 @@ convertInfix input = convInfix input [] []
 showAsDouble :: Rational -> String
 showAsDouble val = show (fromRational val)
 
+calc :: String -> Rational
+calc eq = calculatePostfix $ convertInfix $ infixToTokens eq
+
 main :: IO()
 main = do
   putStrLn "Please enter your equation in infix notation:"
   line <- getLine
-  putStrLn (showAsDouble (calcPostfix (convertInfix (infixToTokens line)) []))
+  putStrLn $ showAsDouble $ calc line
   putStrLn "Again? [y/n]"
   cont <- getLine
   if cont == "y" then
     main
   else
-    putStrLn "end"
+    putStrLn "Goodbye!"
+
+test :: Bool
+test = calc "5 + ((1 + 2) * 4) - 3" == 14 &&
+       calc "2 ^ 6 - 4.5" == 59.5 &&
+       calc "1+2*3-4/5" == 6.2 &&
+       calc "sqrt(2)" == calc "2^0.5" &&
+       approxRational (calc "sqrt(9)") 1 == 3 &&
+       calc "round((20 + 2)/(49/7))" == 3
