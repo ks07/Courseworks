@@ -5,9 +5,24 @@ import Data.Maybe
 import Data.Ratio
 import Numeric
 import Debug.Trace
+
 stringToTokens :: String -> [String]
 stringToTokens expr = words expr
 
+infixToTokens :: String -> String
+infixToTokens expr = infixToTokens2 (stripSpaces expr) Nothing
+  where
+    infixToTokens2 :: [Char] -> Maybe Char -> String
+    infixToTokens2 [] prev = ""
+    infixToTokens2 (next : expr) prev
+      | isDigit next || next == '.' = (next : (infixToTokens2 expr (Just next)))
+      | next == '-' && isOperator [(fromMaybe '+' prev)] = ' ' : next : (infixToTokens2 expr (Just next))
+      | next == '(' || next == ')' || isOperator [next] = ' ' : next : ' ' : (infixToTokens2 expr (Just next))
+      | otherwise = error "fail"
+
+stripSpaces :: String -> String
+stripSpaces str = filter (not . isSpace) str
+  
 precedence :: [[(String, Int)]]
 precedence = [[("^", 2)], [("/", 2), ("*", 2)], [("+", 2), ("-", 2)]]
 
