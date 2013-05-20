@@ -1,0 +1,11 @@
+#! /bin/bash
+
+echo -e "\n**********************\nThumb V1 assembly for ST Discovery Board code generation.\nSimon Hollis (simon@cs.bris.ac.uk) 12/05/2012.\nWith hex conversion code from James Pallister.\n\nPlease note that this script is run by giving an assembly input file with NO \".s\" suffix,\n***********************"
+
+INPUT=$1.s
+echo -e "\nRunning aasm assembler to generate listing file"
+./aasm -l $1.list -h $1.hexa $INPUT
+echo -e "\nConverting aasm hex to Intel hex format to download to ST Discovery board."
+python convert_hex.py $1.hexa $1.hex
+rm $1.hexa
+echo -e "\nAll done. Use SCP to copy the $1.hex file to Windows for downloading to the development board."

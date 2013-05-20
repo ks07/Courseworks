@@ -1,0 +1,219 @@
+	THUMB
+
+	ORIGIN 0x08000000
+	
+__Vectors
+	DCD 0x20001000
+	DCD Reset_Handler
+
+
+Reset_Handler
+LEDInit
+	
+	;LDR r2, =0x40023830 ; RCC AHB1 register
+	; load 0x40023830 into r2
+	MOVI r1, #0x40
+	LSLI r2, r1, #8
+	MOVI r1, #0x02
+	ORR r2, r1
+	
+	MOVI r1, #0x38
+	LSLI r2, r2, #8
+	ORR r2, r1
+	MOVI r1, #0x30
+	LSLI r2, r2, #8
+	ORR r2, r1
+	
+	; LDR r0, =0x00100008 ; Set GPIOD bus (8) + GPIOA bus (1) clock enable on
+	MOVI r1, #0x00
+	LSLI r0, r1, #8
+	MOVI r1, #0x10
+	ORR r0, r1
+	MOVI r1, #0x00
+	LSLI r0, r0, #8
+	ORR r0, r1
+	MOVI r1, #0x09
+	LSLI r0, r0, #8
+	ORR r0, r1
+
+	STRR r0, [r2]   ; do it
+	
+	;---
+
+	;LDR r2, =0x40020c00 ; GPIOD control register start address
+	MOVI r1, #0x40
+	LSLI r2, r1, #8
+	MOVI r1, #0x02
+	ORR r2, r1
+	MOVI r1, #0x0c
+	LSLI r2, r2, #8
+	ORR r2, r1
+	MOVI r1, #0x00
+	LSLI r2, r2, #8
+	ORR r2, r1 ;redundant
+	
+	
+	;LDR r0, =0x55000000 ; PORTD[15:12] := output
+	MOVI r1, #0x55
+	LSLI r0, r1, #24
+	
+	STRR r0, [r2]	; write config
+
+	; ----
+	; ADD r1, r2, #4 ; GPIOD_OTYPER pointer in r1
+	MOVI r3, #4
+	ADDR r1, r2, r3
+	
+	MOVI r0, #0 ; all outputs 'push-pull' style
+	STRR r0, [r1] ; write config
+	;--
+	;ADD r1, r2, #8 ; GPIOD_OPEEDR pointer in r1
+	MOVI r3, #8
+	ADDR r1, r2, r3
+	
+	STRR r0, [r1] ; write config; all 2MHz outputs
+	
+	
+	;ADD r1, r2, #0xc ; GPIOD_PUPDR pointer in r1
+	MOVI r3, #0xc
+	ADDR r1, r2, r3
+	STRR r0, [r1] ; set all pull ups off
+	
+	
+; 0x4002 0000 is GPIOA base
+; 0x4002 0c00 is GPIOD
+;
+;LOCK key write sequence:
+;WR LCKR[16] = 1 + LCKR[15:0]
+;WR LCKR[16] = 0 + LCKR[15:0]
+;WR LCKR[16] = 1 + LCKR[15:0]
+;RD LCKR
+;RD LCKR[16] = 1 (this read operation is optional but it confirms that the lock is active)
+;Note: During the LOCK key write sequence, the value of LCK[15:0] must not change.
+;Any error in the lock sequence aborts the lock.
+;After the first lock sequence on any bit of the port, any read access on the LCKK bit will
+;return 1 until the next CPU reset.
+		
+	
+doLockD
+	MOVI r3, #0x1c
+	MOVI r0, #0xff
+	MOVI r1, #0xff
+	LSLI r0, r0, #8
+	ORR  r0, r1 ; r0 has 0x0000ffff
+	MOVI r1, #0x1
+	LSLI r1, r1, #16
+	ORR r1, r0  ; r1 has 0x0001ffff
+	
+	; now apply the lock sequence
+	STRR r1, [r2, r3]
+	STRR r0, [r2, r3]
+	STRR r1, [r2, r3]
+	LDRR r0, [r2, r3]
+	; sequence ended
+	LDRR r0, [r2, r3] ; optional verification
+	SUBR r0, r0, r1 ; expect 0x0001ffff
+	BNE doLockD ; try again if it failed.
+	
+	
+	; now onto the button port
+
+doLockA
+		; equivalent to LDR r2, =0x4002001c
+	MOVI r1, #0x40
+	LSLI r2, r1, #8
+	MOVI r1, #0x02
+	ORR r2, r1
+	
+	MOVI r1, #0x00
+	LSLI r2, r2, #8
+	ORR r2, r1
+	MOVI r1, #0x1c
+	LSLI r2, r2, #8
+	ORR r2, r1
+	
+		; equivalent to LDR r0, =0xffff
+		; equivalent to LDR r1, =0x1ffff
+	MOVI r3, #0x1c
+	MOVI r0, #0xff
+	MOVI r1, #0xff
+	LSLI r0, r0, #8
+	ORR  r0, r1 ; r0 has 0x0000ffff
+	MOVI r1, #0x1
+	LSLI r1, r1, #16
+	ORR r1, r0  ; r1 has 0x0001ffff
+	
+	
+	; now apply the lock sequence
+	STRR r1, [r2]
+	STRR r0, [r2]
+	STRR r1, [r2]
+	LDRR r0, [r2]
+	LDRR r0, [r2] ; optional verification
+	; sequence ended
+	SUBR r0, r0, r1 ; expect 0x0001ffff
+	BNE doLockA ; try again if it failed.
+
+
+
+
+
+	; Load GPIOD data out register
+	;LDR r2, =0x40020c14 ;
+	MOVI r1, #0x40
+	LSLI r2, r1, #8
+	MOVI r1, #0x02
+	ORR r2, r1
+	MOVI r1, #0x0c
+	LSLI r2, r2, #8
+	ORR r2, r1
+	MOVI r1, #0x14
+	LSLI r2, r2, #8
+	ORR r2, r1
+	
+	; Load GPIOA data in register
+	;LDR r3, =0x40020010 ;
+	MOVI r1, #0x40
+	LSLI r3, r1, #8
+	MOVI r1, #0x02
+	ORR r3, r1
+	MOVI r1, #0x00
+	LSLI r3, r3, #8
+	ORR r3, r1
+	MOVI r1, #0x10
+	LSLI r3, r3, #8
+	ORR r3, r1
+
+
+	
+	
+	;=== TICK 1 code start ====================
+	; Registers are preloaded as follows:
+	; r2 = 0x40020c14 (GPIOD data out register)
+	; r3 = 0x40020010 (GPIOA data in register)
+	;==========================================
+StartProg
+	MOVI r5, #0xF
+	LSLI r5, r5, #12
+	STRR r5, [r2]
+
+	MOVI r6, #0
+	MOVI r7, #1
+	LSLI r7, r7, #19
+CountLoop
+	ADDI r6, #1
+	SUBR r4, r6, r7
+	BLT CountLoop
+	
+	MOVI r5, #0
+	LSLI r5, r5, #12
+	STRR r5, [r2]
+
+	MOVI r6, #0
+CountLoop2
+	ADDI r6, #1
+	SUBR r4, r6, r7
+	BLT CountLoop2
+	
+	BU StartProg
+	

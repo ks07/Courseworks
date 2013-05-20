@@ -1,0 +1,105 @@
+; Directives
+equ	F8000000		; <31-28> = F is directive flag
+org	F8010000		; <27> indicates can redefine label
+origin	F8010000		; <26> indicates can define non-label
+align	F8020000
+def	F8030000
+record	F8040000
+structure F8040000
+struct	F8040000
+rec_align	F8050000
+struct_align	F8050000
+
+alias	F8100000		; Encodes size of operation
+byte	F8110000
+halfword F8120000
+half	F8120000
+word	F8140000
+double	F8180000
+doubleword F8180000
+
+rn	F4000000
+cn	F4010000
+cp	F4020000
+
+defb	F0000000
+dcb	F0000000
+defh	F0010000
+dcw	F0010000
+defw	F0020000
+dcd	F0020000
+defs	F0030000
+export	F0040000
+include	F0050000
+get	F0050000
+literal	F0060000
+literals F0060000
+pool	F0060000
+ltorg	F0060000
+arch	F0070000
+architecture F0070000
+entry	F0080000
+arm	F0090000
+thumb	F00A0000
+set	F00B0000
+define	F00B0000
+if	F00C0000
+endif	F00D0000
+fi	F00D0000
+else	F00E0000
+import	F00F0000
+
+nop	00000000		; <31> indicates "just condition F"
+undef	40100000		; <30> indicates "all conditions"
+undefined 40100000
+
+
+;*****************************************************
+; SJH list of Thumb instructions for COMS12600 course
+;*****************************************************
+
+addi	00020100  ; Thumb mnemonics
+addr	00020100
+addspi	00020100  ; add rn, sp, #i
+incsp	00020100  ; add sp, #1
+addpci	00020100  ; add rn, pc, #i
+
+
+subi	00120100
+subr	00120100
+decsp	00120100
+mulr	00D00100
+andr	00000100
+orr	00C00100
+eorr	00100100
+negr	00900100
+lsli	00010100
+lslr	00010100
+lsri	00110100
+lsrr	00110100
+asri	00210100
+movi	00030100
+movrsp	00030100
+movnr	00F00100
+ldri	0249F100	;        [Rn, Rm] always allowed
+ldrr	0249F100	;        [Rn, Rm] always allowed
+ldrspi	0249F100	;        = ldr rd, [sp, #i]
+ldrpci	0249F100	;        = ldr rd, [pc, #i]
+adr     000B0100
+
+stri	02095100	; <14>   [Rn, #]
+strr	02095100	; <14>   [Rn, #]
+strspi	02095100	; = str rd, [sp, #i]
+push	0B4A0100
+pop	0BCA0100
+bu	00E40100
+beq	00040100
+bne	00140100
+blt	00B40100
+bgt	00C40100
+br	00050100
+bl	00068100	; Marked as "variable length" because
+svc	0DF70100
+
+
+
