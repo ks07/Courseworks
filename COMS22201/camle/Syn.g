@@ -19,28 +19,65 @@ options {
 }
 
 program :
-    compoundstatement
+        ( ARRAY declaration ( COMMA declaration )* SEMICOLON! )? compoundstatement
   ;
+
+declaration :
+    IDENTIFIER OPENSQ! constant CLOSESQ!
+    ;
 
 compoundstatement :
     BEGIN^ ( statement SEMICOLON! )* END!
   ;
 
+// ! = dont show in tree
+// ^ = make root
 statement :
     WRITE^ OPENPAREN! ( expression | string ) CLOSEPAREN!
   | WRITELN
+  | READ^ OPENPAREN! variable CLOSEPAREN!
+  | IF^ boolcmp compoundstatement ( ELSE compoundstatement )?
+  | REPEAT^ compoundstatement UNTIL boolcmp
+  | variable ASSIGN^ expression
   ;
 
+relation :
+        ( GT | LT | GTE | LTE | EQ | NEQ )^
+    ;
+
+
 expression:
-    constant
+    unaryop term ( AOP^ term )*
   ;
+
+unaryop :
+        ( AOP^ )?
+    ;
+
+term: 
+    factor ( FOP^ factor )*
+    ;
+
+factor :
+    OPENPAREN! expression^ CLOSEPAREN!
+    | constant
+    | variable
+    ;
 
 constant:
     REALNUM 
   ;
+
+variable :
+    IDENTIFIER^ ( OPENSQ! expression CLOSESQ! )?
+    ;
 
 string
     scope { String tmp;}
     :
     s=STRING { $string::tmp = cleanString($s.text); }-> STRING[$string::tmp]
   ;
+
+boolcmp :
+    expression relation expression;
+

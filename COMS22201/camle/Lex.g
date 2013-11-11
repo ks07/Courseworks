@@ -23,10 +23,13 @@ SEMICOLON    : ';'  ;
 OPENPAREN    : '('  ;
 CLOSEPAREN   : ')'  ;
 ASSIGN       : ':=' ;
+AOP          : ( '+' | '-' ) ;
+FOP          : ( '*' | '/' ) ;
+OPENSQ       : '['  ;
+CLOSESQ      : ']'  ;
+COMMA        : ','  ;
 
-CONSTANT     : REALNUM ;
-
-REALNUM      : INT '.' INT (EXPONENT)?;
+REALNUM      : INT '.' INT (EXPONENT)? ;
 
 fragment 
 EXPONENT     : 'e' ('-')? INT ;
@@ -34,52 +37,22 @@ EXPONENT     : 'e' ('-')? INT ;
 fragment 
 INT          : ('0'..'9')+ ;
 
-STRING       : '\'' ('\'' '\'' | ~'\'')* '\'';
+STRING       : '\'' ('\'' '\'' | ~'\'')* '\'' ;
 
 COMMENT      : '{' (~'}')* '}' {skip();} ;
 
 WS           : (' ' | '\t' | '\r' | '\n' )+ {skip();} ;
 
-RELATION     : ('<' | '<=' | '!=' | '=' | '>=' | '>') ;
+LT : '<' ;
+LTE : '<=' ;
+GT : '>' ;
+GTE : '>=' ;
+EQ : '=' ;
+NEQ : '!=' ;
 
-EXPRESSION   : UNARYOP TERM ( ( '+' | '-' ) TERM )* ;
+//RELATION     : ('<' | '<=' | '!=' | '=' | '>=' | '>') ;
 
-fragment
-UNARYOP      : ( '+' | '-' )? ;
-
-fragment
-TERM         : FACTOR ( ( '*' | '/' ) FACTOR )* ;
-
-fragment
-FACTOR       : ( VARIABLE | CONSTANT | OPENPAREN EXPRESSION CLOSEPAREN ) ;
-
-fragment
-VARIABLE     : IDENTIFIER ( '[' EXPRESSION ']' )? ;
-
-CMPSTATEMENT : BEGIN ( STATEMENT SEMICOLON )* END ;
-
-STATEMENT    : ( ASSIGNMENT
-               | READ OPENPAREN VARIABLE CLOSEPAREN
-               | WRITE OPENPAREN OPENPAREN ( EXPRESSION | STRING ) CLOSEPAREN
-               | WRITELN
-               | BRANCH
-               | LOOP ) ;
-
-fragment
-ASSIGNMENT   : VARIABLE ASSIGN EXPRESSION ;
-
-fragment
-BRANCH       : IF BOOLCMP
-               CMPSTATEMENT
-               ( ELSE CMPSTATEMENT )? ;
-
-fragment
-LOOP         : REPEAT CMPSTATEMENT
-               UNTIL BOOLCMP ;
-
-fragment
-BOOLCMP      : EXPRESSION RELATION EXPRESSION ;
+//UNARYOP      : ( '+' | '-' )? ;
 
 IDENTIFIER
-@init { int N = 1; }
-    : ( 'a'..'z' | 'A'..'Z' )( { N < 9 }?=> ( 'a'..'z' | 'A'..'Z' | '0'..'9' ) { N++; } )* ;
+    : ( 'a'..'z' | 'A'..'Z' )( ( 'a'..'z' | 'A'..'Z' | '0'..'9' ) )* ;
