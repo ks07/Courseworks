@@ -5,11 +5,16 @@
 // We will treat the heap as starting from index 1, to simplify the maths!
 // heap[0] will thus be spare, we can use it's 'pos' to store heapSize.
 
+//TODO: Use a union for element 0
 typedef struct QueueEle {
   void *data; // Pointer to 'user' data. Must be cast before use.
   int pos; // Position in the heap (or size for element 0).
   int key; // The key, aka the priority.
 } QueueEle;
+
+inline int parent_i(int i) {
+  return i >> 1;
+}
 
 int parent(QueueEle *node) {
   // Right shift will truncate any bits lost off the end, performing the floor op.
@@ -79,25 +84,42 @@ void printHeap(QueueEle arr[], int lim) {
   printf("\n");
 }
 
+void decreaseKey(QueueEle heap[], int node, int k) {
+  if (k > heap[node].key) {
+    printf("ERROR: decreaseKey called with larger key value!");
+  } else {
+    heap[node].key = k;
+    while (node > 1 && heap[parent_i(node)].key > heap[node].key) {
+      swapEle(heap, node, parent_i(node));
+      node = parent_i(node);
+    }
+  }
+}
+
+void insert(QueueEle heap[], QueueEle new) {
+  // TODO: RESIZE ARRAY
+  heap[0].pos++;
+  new.pos = heapSize(heap);
+  heap[heapSize(heap)] = new;
+  decreaseKey(heap, heapSize(heap), new.key);
+}
+
 // Test main
 #ifndef NO_MAIN
 int main() {
-//int arr[] = {0, 1, 16, 10, 8, 2, 9, 14, 7, 3};
-//int arr[] = {0, 16, 14, 10, 8, 7, 9, 3, 2, 1};
-//int arr[] = {0, 1, 2, 3, 7, 8, 9, 10, 14, 16};
-//printIntArray(arr, 10);
-//buildHeap(arr, 9);
-//printIntArray(arr, 10);
-  QueueEle *arr = malloc(20 * sizeof(QueueEle));
+  QueueEle *arr = malloc(21 * sizeof(QueueEle));
   int i;
   for (i=0;i<20;i++) {
     arr[i].key = (27 - i) % 7;
     arr[i].pos = i;
     arr[i].data = &(arr[i]);
   }
-  printHeap(arr, 20);
+  printHeap(arr, 21);
   buildHeap(arr, 19);
-  printHeap(arr, 20);
+  printHeap(arr, 21);
+  QueueEle new = { NULL, -1, 4 };
+  insert(arr, new);
+  printHeap(arr, 21);
   return 0;
 }
 #endif
