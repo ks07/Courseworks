@@ -12,24 +12,20 @@ typedef struct QueueEle {
   int key; // The key, aka the priority.
 } QueueEle;
 
-inline int parent_i(int i) {
-  return i >> 1;
-}
-
-int parent(QueueEle *node) {
+inline int parent(int pos) {
   // Right shift will truncate any bits lost off the end, performing the floor op.
-  return (node->pos) >> 1;
+  return pos >> 1;
 }
 
-int left(QueueEle *node) {
-  return (node->pos) << 1;
+inline int left(int pos) {
+  return pos << 1;
 }
 
-int right(QueueEle *node) {
-  return ((node->pos) << 1) + 1;
+inline int right(int pos) {
+  return (pos << 1) + 1;
 }
 
-int heapSize(QueueEle heap[]) {
+inline int heapSize(QueueEle heap[]) {
   return heap[0].pos;
 }
 
@@ -44,16 +40,14 @@ void swapEle(QueueEle heap[], int a, int b) {
 
 void heapify(QueueEle heap[], int i) {
   int smallest;
-  //  QueueEle tmp;
-  QueueEle *parent = &(heap[i]);
 
-  if (left(parent) <= heapSize(heap) && heap[left(parent)].key < heap[i].key) {
-    smallest = left(parent);
+  if (left(i) <= heapSize(heap) && heap[left(i)].key < heap[i].key) {
+    smallest = left(i);
   } else {
     smallest = i;
   }
-  if (right(parent) <= heapSize(heap) && heap[right(parent)].key < heap[i].key) {
-    smallest = right(parent);
+  if (right(i) <= heapSize(heap) && heap[right(i)].key < heap[i].key) {
+    smallest = right(i);
   }
   if (smallest != i) {
     // A child is smaller, swap the elements.
@@ -75,6 +69,7 @@ void buildHeap(QueueEle arr[], int len) {
   }
 }
 
+// Debugging print of heap keys
 void printHeap(QueueEle arr[], int lim) {
   int i;
   printf("| ");
@@ -89,9 +84,9 @@ void decreaseKey(QueueEle heap[], int node, int k) {
     printf("ERROR: decreaseKey called with larger key value!");
   } else {
     heap[node].key = k;
-    while (node > 1 && heap[parent_i(node)].key > heap[node].key) {
-      swapEle(heap, node, parent_i(node));
-      node = parent_i(node);
+    while (node > 1 && heap[parent(node)].key > heap[node].key) {
+      swapEle(heap, node, parent(node));
+      node = parent(node);
     }
   }
 }
@@ -104,7 +99,7 @@ void insert(QueueEle heap[], QueueEle new) {
   decreaseKey(heap, heapSize(heap), new.key);
 }
 
-// Test main
+// Test main, #define NO_MAIN in other files to avoid conflict!
 #ifndef NO_MAIN
 int main() {
   QueueEle *arr = malloc(21 * sizeof(QueueEle));
