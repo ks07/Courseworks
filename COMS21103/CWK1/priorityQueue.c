@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 // A binary min-heap implementation of a priority queue, backed by an array.
 // We will treat the heap as starting from index 1, to simplify the maths!
@@ -27,6 +28,14 @@ inline int right(int pos) {
 
 inline int heapSize(QueueEle heap[]) {
   return heap[0].pos;
+}
+
+inline void heapSizeSet(QueueEle heap[], int size) {
+  heap[0].pos = size;
+}
+
+inline bool notEmpty(QueueEle heap[]) {
+  return heapSize(heap) > 0;
 }
 
 void swapEle(QueueEle heap[], int a, int b) {
@@ -97,6 +106,21 @@ void insert(QueueEle heap[], QueueEle new) {
   new.pos = heapSize(heap);
   heap[heapSize(heap)] = new;
   decreaseKey(heap, heapSize(heap), new.key);
+}
+
+QueueEle extractMin(QueueEle heap[]) {
+  QueueEle min;
+
+  if (heapSize(heap) < 1) {
+    printf("ERROR: We outta elements, foo!");
+    return min;
+  } else {
+    min = heap[1];
+    heap[1] = heap[heapSize(heap)];
+    heapSizeSet(heap, heapSize(heap) - 1);
+    heapify(heap, 1);
+    return min;
+  }
 }
 
 // Test main, #define NO_MAIN in other files to avoid conflict!

@@ -1,19 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <limits.h>
+
+#define NO_MAIN
+#include "priorityQueue.c"
 
 #define MAX_LINE_LEN 100
 #define MAX_GRAPH_DIM 20
 
-#define N 0
-#define S 1
-#define E 2
-#define W 3
+//TODO: Rename to Edge?
+typedef struct Teleport {
+  int dX;
+  int dY;
+  int weight; // If weight < 0, no teleport here.
+} Teleport;
 
 typedef struct Vertex {
   bool open;
-  struct Vertex *edge[5];
+  Teleport t;
   int dist;
+  int x;
+  int y;
+  int pX;
+  int pY;
 } Vertex;
 
 typedef struct Graph {
@@ -21,13 +31,13 @@ typedef struct Graph {
   int maxDim;
 } Graph;
 
-Vertex **callocSquare(int size) {
+Vertex **allocSquare(int size) {
   // Allocate the rows (y)
-  Vertex **square = calloc(size, sizeof(Vertex *));
+  Vertex **square = malloc(size * sizeof(Vertex *));
   int i;
   for (i = 0; i < size; i++) {
     // Add an array for each row, creating the columns (x).
-    square[i] = calloc(size, sizeof(Vertex));
+    square[i] = malloc(size * sizeof(Vertex));
   }
 
   return square;
@@ -55,6 +65,58 @@ void printMap(int maxDim, bool map[maxDim][maxDim]) {
       printf(map[y][x] ? "." : "#");
     }
     printf("|\n");
+  }
+}
+
+inline int calculateMaxEdges(int n) {
+  // All edges are bi-rectional, no diagonals.
+  // 2* 2n(n-1) + teleports
+  // Max teleports = floor(n^2 / 2)
+  // TODO: Count teleports
+  //return 4 * n * (n-1) + ((n*n) / 2)
+  return (4.5 * n * n) - (4 * n);
+}
+
+void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w, int vPos) {
+  if (nodes[vY][vX].dist > nodes[uY][uX].dist + w) {
+    decreaseKey(queue, vPos, nodes[uY][uX].dist + w);
+  }
+}
+
+void djikstra(Graph *g, int sX, int sY) {
+  Vertex **nodes = g->nodes;
+  nodes[sY][sX].dist = 0;
+
+  // Create a queue for all vertices.
+  // TODO: Better size creation, count unblocked.
+  QueueEle *queue = malloc(g->maxDim * g->maxDim * sizeof(QueueEle));
+  //  int count = 1;
+  int y, x;
+  for (y = 0; y < g->maxDim; y++) {
+    for (x = 0; x < g->maxDim; x++) {
+      // Only count node if open.
+      if (nodes[y][x].open) {
+	//TODO: Stop duplicating info, merge structs?
+	//queue[count].pos = count;
+	//queue[count].key = nodes[y][x].dist;
+	//queue[count].data = &(nodes[y][x]);
+	insert(queue, (QueueEle){&(nodes[y][x]), -1, INT_MAX});
+      }
+    }
+  }
+  QueueEle curr;
+  // Iterate through vertices updating the distances.
+  while (notEmpty(queue)) {
+    curr = (Vertex *)extractMin(queue);
+    y = curr->y;
+    x = curr->x;
+    // for each vertex v such that u -> v
+    //TODO: Bitmask cache of open directions?
+    // Check N
+    if (y > 0 && nodes[y-1][x].open) {
+      // relax(u,v)
+      relax(queue, nodes, x, y, x, y-1, 1, curr->pos); 
+    }
   }
 }
 
@@ -122,28 +184,29 @@ int main(int argc, char *argv[]) {
   // Build a graph/vertex representation of the map.
   Graph *graph = malloc(sizeof(Graph));
   graph -> maxDim = graphLim;
-  graph -> nodes = callocSquare(graphLim);
+  graph -> nodes = allocSquare(graphLim);
   for (y = 0; y < graphLim; y++) {
     for (x = 0; x < graphLim; x++) {
+      // TODO: This is fucking stupid. Why am I doing this?
+      graph -> nodes[y][x].open = map[y][x];
       if (map[y][x]) {
-	if (y < graphLim - 1 && map[y+1][x]) {
-	  // The node below us is not out of bounds and is free. Add it to our edges.
-	  graph -> nodes[y][x].edge[S] = &(graph -> nodes[y+1][x]);
-	  // We should also update the node below with a link back to us.
-	  graph -> nodes[y+1][x].edge[N] = &(graph -> nodes[y][x]);
-	}
-	if (x < graphLim - 1 && map[y][x+1]) {
-	  // The node east of us is not out of bounds and is free. Add it to our edges.
-	  graph -> nodes[y][x].edge[E] = &(graph -> nodes[y][x+1]);
-	  // We should also update the connected node with a link back to us.
-	  graph -> nodes[y][x+1].edge[W] = &(graph -> nodes[y][x]);
-	}
+	graph -> nodes[y][x].dist = INT_MAX;
+	graph -> nodes[y][x].t.weight = -1;
+	graph -> nodes[y][x].pX = -1;
+	graph -> nodes[y][x].pY = -1;
+	graph -> nodes[y][x].x = x;
+	graph -> nodes[y][x].y = y;
       }
     }
   }
 
   printMap(graphLim, map);
-  printf("Okay!");
+  printf("Feeding into djikstra's!\n");
+
+  djikstra(graph, 0, 0);
+
+  printf("I did it mom!");
+  // freeStructs();
   return 0;
 }
 
