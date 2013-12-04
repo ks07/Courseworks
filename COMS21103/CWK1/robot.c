@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <string.h>
+//TODO: Remove reliance on strlen
 
 #define NO_MAIN
 
@@ -59,7 +61,7 @@ void printMap(Graph *g) {
   int x, y;
   for (y = 0; y < g->maxDim; y++) {
     for (x = 0; x < g->maxDim; x++) {
-      printf(g->nodes[y][x].open ? "." : "#");
+      printf(g->nodes[y][x].open ? (g->nodes[y][x].t.w >= 0 ? "?" : ".") : "#");
     }
     printf("|\n");
   }
@@ -76,16 +78,41 @@ inline int calculateMaxEdges(int n) {
 
 void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
   if (nodes[vY][vX].dist > nodes[uY][uX].dist + w) {
-    printf("Decreasing (%d,%d) from %d/%d to %d. Pred = (%d,%d)\n", vX, vY, nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key, nodes[uY][uX].dist + w, uX, uY);
+    //    printf("Decreasing (%d,%d) from %d/%d to %d. Pred = (%d,%d)\n", vX, vY, nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key, nodes[uY][uX].dist + w, uX, uY);
     decreaseKey(queue, nodes[vY][vX].qPos, nodes[uY][uX].dist + w);
     nodes[vY][vX].pX = uX;
     nodes[vY][vX].pY = uY;
     nodes[vY][vX].dist = nodes[uY][uX].dist + w;
-    printf("  Now vY,vX key = %d/%d\n", nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key);
+    //printf("  Now vY,vX key = %d/%d\n", nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key);
   }
 }
 
-void djikstra(Graph *g, int sX, int sY) {
+char getDirection(int x, int y, int pX, int pY) {
+  if (y == pY) {
+    if (x > pX) {
+      return 'E';
+    } else if (x < pX) {
+      return 'W';
+    } else {
+      // No move?
+      printf("ERROR: No movement recorded for predecessor.");
+      return 'T';
+    }
+  } else if (x == pX) {
+    if (y > pY) {
+      return 'S';
+    } else if (y < pY) {
+      return 'N';
+    } else {
+      printf ("ERROR: No movement recorded for predecessor.");
+      return 'T';
+    }
+  } else {
+    return 'T';
+  }
+}
+
+char *djikstra(Graph *g, int sX, int sY) {
   Vertex **nodes = g->nodes;
   nodes[sY][sX].pX = START_VERT;
   nodes[sY][sX].pX = START_VERT;
@@ -93,6 +120,7 @@ void djikstra(Graph *g, int sX, int sY) {
   // Create a queue for all vertices.
   // TODO: Better size creation, count unblocked.
   QueueEle *queue = malloc(g->maxDim * g->maxDim * sizeof(QueueEle));
+  heapSizeSet(queue, 0);
   int y, x, tmp;
   for (y = 0; y < g->maxDim; y++) {
     for (x = 0; x < g->maxDim; x++) {
@@ -100,7 +128,7 @@ void djikstra(Graph *g, int sX, int sY) {
       if (nodes[y][x].open) {
 	//TODO: Stop duplicating info, merge structs?
 	//TODO: Change dis.
-	printf("Inserting %d,%d\n", x, y);
+	//	printf("Inserting %d,%d\n", x, y);
 	nodes[y][x].dist = INT_MAX;
 	insert(queue, &(nodes[y][x]), (x == sX && y == sY) ? 0 : INT_MAX);
       }
@@ -109,7 +137,8 @@ void djikstra(Graph *g, int sX, int sY) {
 
   // Set start node dist to 0.
   nodes[sY][sX].dist = 0;
-
+  char *ret;
+  int i;
   QueueEle curr;
   // Iterate through vertices updating the distances.
   while (notEmpty(queue)) {
@@ -117,20 +146,26 @@ void djikstra(Graph *g, int sX, int sY) {
     curr = extractMin(queue);
     y = curr.data->y;
     x = curr.data->x;
-    printf("Point %d,%d - Distance: %d %d\n", x, y, curr.data->dist, curr.pos);
+    // printf("Point %d,%d - Distance: %d %d\n", x, y, curr.data->dist, curr.pos);
+    // TODO: Variable end point
     if (x == y && y == g->maxDim-1) {
-      printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.data->dist);
-      
+      //printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.data->dist);
+      i = 0;
       // Trace path backwards.
-      while (x != START_VERT && y != START_VERT) {
-	printf("     (%d,%d)\n", x, y);
+      ret = malloc(sizeof(char) * (nodes[y][x].dist + 1));
+      while (x != sX || y != sY) {
+	//printf("     (%d,%d)\n", x, y);
+	ret[i] = getDirection(x, y, nodes[y][x].pX, nodes[y][x].pY);
+
 	tmp = nodes[y][x].pX;
 	y = nodes[y][x].pY;
 	x = tmp;
+	i++;
       }
-	
 
-      return;
+      ret[i] = '\0';
+
+      return ret;
     }
 
     // for each vertex v such that u -> v
@@ -157,6 +192,16 @@ void djikstra(Graph *g, int sX, int sY) {
       relax(queue, nodes, x, y, nodes[y][x].t.dX, nodes[y][x].t.dY, nodes[y][x].t.w);
     }
   }
+
+  return "";
+}
+
+void printStringR(char *str) {
+  int i = strlen(str) - 1;
+  for (; i >= 0; i--) {
+    printf("%c", str[i]);
+  }
+  printf("\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -179,7 +224,7 @@ int main(int argc, char *argv[]) {
     sscanf(line, "%5d ", &graphLim);
   }
 
-  printf("Making array of size %d squared\n", graphLim);
+  //printf("Making array of size %d squared\n", graphLim);
   
   // Build a graph/vertex representation of the map.
   Graph *graph = malloc(sizeof(Graph));
@@ -204,7 +249,7 @@ int main(int argc, char *argv[]) {
       // This line defines a blocked rectangle.
       // Format: 'b x1 y1 x2 y2' 1 <= 2
       sscanf(line, "b %5d %5d %5d %5d ", &x1, &y1, &x2, &y2);
-      printf("Blocking %d,%d to %d,%d\n", x1, y1, x2, y2);
+      //printf("Blocking %d,%d to %d,%d\n", x1, y1, x2, y2);
 
       for (y = y1 - 1; y < y2; y++) {
 	for (x = x1 - 1; x < x2; x++) {
@@ -213,7 +258,11 @@ int main(int argc, char *argv[]) {
       }
     } else if (line[0] == 't') {
       sscanf(line, "t %5d %5d %5d %5d %5d ", &x1, &y1, &x2, &y2, &tw);
-      printf("Teleporting %d,%d to %d,%d - cost %d\n", x1, y1, x2, y2, tw);
+      //printf("Teleporting %d,%d to %d,%d - cost %d\n", --x1, --y1, --x2, --y2, tw);
+      x1--;
+      x2--;
+      y1--;
+      y2--;
 
       graph -> nodes[y1][x1].t.dX = x2;
       graph -> nodes[y1][x1].t.dY = y2;
@@ -227,12 +276,12 @@ int main(int argc, char *argv[]) {
   // Close the file.
   fclose(mapFile);
 
-  printMap(graph);
-  printf("Feeding into djikstra's!\n");
+  //printMap(graph);
+  //printf("Feeding into djikstra's!\n");
 
-  djikstra(graph, 0, 0);
+  printStringR(djikstra(graph, 0, 0));
 
-  printf("I did it mom!");
+  //printf("I did it mom!");
   // freeStructs();
   return 0;
 }
