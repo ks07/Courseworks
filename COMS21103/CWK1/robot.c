@@ -4,7 +4,7 @@
 #include <limits.h>
 
 #define NO_MAIN
-#include "priorityQueue.c"
+//#include "structs.c"
 
 #define MAX_LINE_LEN 100
 #define MAX_GRAPH_DIM 20
@@ -24,12 +24,15 @@ typedef struct Vertex {
   int y;
   int pX;
   int pY;
+  int qPos;
 } Vertex;
 
 typedef struct Graph {
   Vertex **nodes;
   int maxDim;
 } Graph;
+
+#include "priorityQueue.c"
 
 Vertex **allocSquare(int size) {
   // Allocate the rows (y)
@@ -42,14 +45,6 @@ Vertex **allocSquare(int size) {
 
   return square;
 }
-
-typedef struct PointPairList {
-  struct PointPairList *next;
-  int x1;
-  int y1;
-  int x2;
-  int y2;
-} PointPairList;
 
 Vertex * newVertex(bool open) {
   Vertex *new = calloc(1, sizeof(Vertex));
@@ -90,16 +85,13 @@ void djikstra(Graph *g, int sX, int sY) {
   // Create a queue for all vertices.
   // TODO: Better size creation, count unblocked.
   QueueEle *queue = malloc(g->maxDim * g->maxDim * sizeof(QueueEle));
-  //  int count = 1;
   int y, x;
   for (y = 0; y < g->maxDim; y++) {
     for (x = 0; x < g->maxDim; x++) {
       // Only count node if open.
       if (nodes[y][x].open) {
 	//TODO: Stop duplicating info, merge structs?
-	//queue[count].pos = count;
-	//queue[count].key = nodes[y][x].dist;
-	//queue[count].data = &(nodes[y][x]);
+	//TODO: Change dis.
 	insert(queue, (QueueEle){&(nodes[y][x]), -1, INT_MAX});
       }
     }
@@ -107,15 +99,16 @@ void djikstra(Graph *g, int sX, int sY) {
   QueueEle curr;
   // Iterate through vertices updating the distances.
   while (notEmpty(queue)) {
-    curr = (Vertex *)extractMin(queue);
-    y = curr->y;
-    x = curr->x;
+    // TODO: Finish when extracting end point
+    curr = extractMin(queue);
+    y = curr.data->y;
+    x = curr.data->x;
     // for each vertex v such that u -> v
     //TODO: Bitmask cache of open directions?
     // Check N
     if (y > 0 && nodes[y-1][x].open) {
       // relax(u,v)
-      relax(queue, nodes, x, y, x, y-1, 1, curr->pos); 
+      relax(queue, nodes, x, y, x, y-1, 1, nodes[y-1][x].qPos); 
     }
   }
 }

@@ -8,9 +8,9 @@
 
 //TODO: Use a union for element 0
 typedef struct QueueEle {
-  void *data; // Pointer to 'user' data. Must be cast before use.
-  int pos; // Position in the heap (or size for element 0).
-  int key; // The key, aka the priority.
+  Vertex *data; // Pointer to vertex data.
+  int pos; // Position in the heap (or size for element 0). //TODO: Am I needed?
+  int key; // The key, aka the priority. //TODO: Is key === data->dist?
 } QueueEle;
 
 inline int parent(int pos) {
@@ -45,6 +45,9 @@ void swapEle(QueueEle heap[], int a, int b) {
   // Update the position in each element.
   heap[a].pos = a;
   heap[b].pos = b;
+  // Update pos in data part.
+  heap[a].data->qPos = a;
+  heap[b].data->qPos = b;
 }
 
 void heapify(QueueEle heap[], int i) {
@@ -105,6 +108,7 @@ void insert(QueueEle heap[], QueueEle new) {
   heap[0].pos++;
   new.pos = heapSize(heap);
   heap[heapSize(heap)] = new;
+  heap[heapSize(heap)].data->qPos = heapSize(heap);
   decreaseKey(heap, heapSize(heap), new.key);
 }
 
