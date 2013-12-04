@@ -72,9 +72,9 @@ inline int calculateMaxEdges(int n) {
   return (4.5 * n * n) - (4 * n);
 }
 
-void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w, int vPos) {
+void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
   if (nodes[vY][vX].dist > nodes[uY][uX].dist + w) {
-    decreaseKey(queue, vPos, nodes[uY][uX].dist + w);
+    decreaseKey(queue, nodes[vY][vX].qPos, nodes[uY][uX].dist + w);
   }
 }
 
@@ -103,12 +103,29 @@ void djikstra(Graph *g, int sX, int sY) {
     curr = extractMin(queue);
     y = curr.data->y;
     x = curr.data->x;
+    printf("Point %d,%d - Distance: %d %d\n", x, y, curr.data->dist, curr.pos);
+    if (x == y && y == g->maxDim-1) {
+      printf("WINNER WINNER Point %d,%d - Distance: %d\n", x, y, curr.data->dist);
+    }
+
     // for each vertex v such that u -> v
     //TODO: Bitmask cache of open directions?
     // Check N
     if (y > 0 && nodes[y-1][x].open) {
       // relax(u,v)
-      relax(queue, nodes, x, y, x, y-1, 1, nodes[y-1][x].qPos); 
+      relax(queue, nodes, x, y, x, y-1, 1); 
+    }
+    // Check E
+    if (x < g->maxDim-1 && nodes[y][x+1].open) {
+      relax(queue, nodes, x, y, x+1, y, 1);
+    }
+    // S
+    if (y < g->maxDim-1 && nodes[y+1][x].open) {
+      relax(queue, nodes, x, y, x, y+1, 1);
+    }
+    // W
+    if (x > 0 && nodes[y][x-1].open) {
+      relax(queue, nodes, x, y, x-1, y, 1);
     }
   }
 }
