@@ -4,10 +4,12 @@
 #include <limits.h>
 
 #define NO_MAIN
-//#include "structs.c"
 
 #define MAX_LINE_LEN 100
 #define MAX_GRAPH_DIM 20
+
+#define NO_PRED -1
+#define START_VERT -2
 
 //TODO: Rename to Edge?
 typedef struct Teleport {
@@ -74,28 +76,36 @@ inline int calculateMaxEdges(int n) {
 
 void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
   if (nodes[vY][vX].dist > nodes[uY][uX].dist + w) {
+    printf("Decreasing (%d,%d) from %d/%d to %d. Pred = (%d,%d)\n", vX, vY, nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key, nodes[uY][uX].dist + w, uX, uY);
     decreaseKey(queue, nodes[vY][vX].qPos, nodes[uY][uX].dist + w);
+    nodes[vY][vX].pX = uX;
+    nodes[vY][vX].pY = uY;
+    nodes[vY][vX].dist = nodes[uY][uX].dist + w;
+    printf("  Now vY,vX key = %d/%d\n", nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key);
   }
 }
 
 void djikstra(Graph *g, int sX, int sY) {
   Vertex **nodes = g->nodes;
   nodes[sY][sX].dist = 0;
+  nodes[sY][sX].pX = START_VERT;
+  nodes[sY][sX].pX = START_VERT;
 
   // Create a queue for all vertices.
   // TODO: Better size creation, count unblocked.
   QueueEle *queue = malloc(g->maxDim * g->maxDim * sizeof(QueueEle));
-  int y, x;
+  int y, x, tmp;
   for (y = 0; y < g->maxDim; y++) {
     for (x = 0; x < g->maxDim; x++) {
       // Only count node if open.
       if (nodes[y][x].open) {
 	//TODO: Stop duplicating info, merge structs?
 	//TODO: Change dis.
-	insert(queue, (QueueEle){&(nodes[y][x]), -1, INT_MAX});
+	insert(queue, &(nodes[y][x]), (x == sX && y == sY) ? 0 : INT_MAX);
       }
     }
   }
+
   QueueEle curr;
   // Iterate through vertices updating the distances.
   while (notEmpty(queue)) {
@@ -105,7 +115,18 @@ void djikstra(Graph *g, int sX, int sY) {
     x = curr.data->x;
     printf("Point %d,%d - Distance: %d %d\n", x, y, curr.data->dist, curr.pos);
     if (x == y && y == g->maxDim-1) {
-      printf("WINNER WINNER Point %d,%d - Distance: %d\n", x, y, curr.data->dist);
+      printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.data->dist);
+      
+      // Trace path backwards.
+      while (x != START_VERT && y != START_VERT) {
+	printf("     (%d,%d)\n", x, y);
+	tmp = nodes[y][x].pX;
+	y = nodes[y][x].pY;
+	x = tmp;
+      }
+	
+
+      return;
     }
 
     // for each vertex v such that u -> v

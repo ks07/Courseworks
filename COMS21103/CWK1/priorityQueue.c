@@ -103,13 +103,14 @@ void decreaseKey(QueueEle heap[], int node, int k) {
   }
 }
 
-void insert(QueueEle heap[], QueueEle new) {
+void insert(QueueEle heap[], Vertex *data, int key) {
   // TODO: RESIZE ARRAY
-  heap[0].pos++;
-  new.pos = heapSize(heap);
-  heap[heapSize(heap)] = new;
+  heapSizeSet(heap, heapSize(heap)+1);
+  heap[heapSize(heap)].data = data;
+  heap[heapSize(heap)].pos = heapSize(heap);
+  heap[heapSize(heap)].key = key;
   heap[heapSize(heap)].data->qPos = heapSize(heap);
-  decreaseKey(heap, heapSize(heap), new.key);
+  decreaseKey(heap, heapSize(heap), key);
 }
 
 QueueEle extractMin(QueueEle heap[]) {
