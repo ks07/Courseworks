@@ -15,7 +15,7 @@
 typedef struct Teleport {
   int dX;
   int dY;
-  int weight; // If weight < 0, no teleport here.
+  int w; // If weight < 0, no teleport here.
 } Teleport;
 
 typedef struct Vertex {
@@ -55,11 +55,11 @@ Vertex * newVertex(bool open) {
   return new;
 }
 
-void printMap(int maxDim, bool map[maxDim][maxDim]) {
+void printMap(Graph *g) {
   int x, y;
-  for (y = 0; y < maxDim; y++) {
-    for (x = 0; x < maxDim; x++) {
-      printf(map[y][x] ? "." : "#");
+  for (y = 0; y < g->maxDim; y++) {
+    for (x = 0; x < g->maxDim; x++) {
+      printf(g->nodes[y][x].open ? "." : "#");
     }
     printf("|\n");
   }
@@ -87,7 +87,6 @@ void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int
 
 void djikstra(Graph *g, int sX, int sY) {
   Vertex **nodes = g->nodes;
-  nodes[sY][sX].dist = 0;
   nodes[sY][sX].pX = START_VERT;
   nodes[sY][sX].pX = START_VERT;
 
@@ -101,10 +100,15 @@ void djikstra(Graph *g, int sX, int sY) {
       if (nodes[y][x].open) {
 	//TODO: Stop duplicating info, merge structs?
 	//TODO: Change dis.
+	printf("Inserting %d,%d\n", x, y);
+	nodes[y][x].dist = INT_MAX;
 	insert(queue, &(nodes[y][x]), (x == sX && y == sY) ? 0 : INT_MAX);
       }
     }
   }
+
+  // Set start node dist to 0.
+  nodes[sY][sX].dist = 0;
 
   QueueEle curr;
   // Iterate through vertices updating the distances.
@@ -148,6 +152,10 @@ void djikstra(Graph *g, int sX, int sY) {
     if (x > 0 && nodes[y][x-1].open) {
       relax(queue, nodes, x, y, x-1, y, 1);
     }
+    // Teleport
+    if (nodes[y][x].t.w >= 0) {
+      relax(queue, nodes, x, y, nodes[y][x].t.dX, nodes[y][x].t.dY, nodes[y][x].t.w);
+    }
   }
 }
 
@@ -157,7 +165,6 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  //bool point[MAX_GRAPH_DIM][MAX_GRAPH_DIM];
   int graphLim;
   char line[MAX_LINE_LEN];
   char *temp;
@@ -174,19 +181,25 @@ int main(int argc, char *argv[]) {
 
   printf("Making array of size %d squared\n", graphLim);
   
-  bool map[graphLim][graphLim];
-  
+  // Build a graph/vertex representation of the map.
+  Graph *graph = malloc(sizeof(Graph));
+  graph -> maxDim = graphLim;
+  graph -> nodes = allocSquare(graphLim);
   int x, y;
   for (y = 0; y < graphLim; y++) {
     for (x = 0; x < graphLim; x++) {
-      map[y][x] = true;
+      graph -> nodes[y][x].open = true;
+      graph -> nodes[y][x].t.w = -1;
+      graph -> nodes[y][x].pX = NO_PRED;
+      graph -> nodes[y][x].pY = NO_PRED;
+      graph -> nodes[y][x].x = x;
+      graph -> nodes[y][x].y = y;
     }
   }
 
   // Read map definitions into a temporary matrix of blocked locations.
   while (fgets(line, MAX_LINE_LEN, mapFile) != NULL) {
-    printf("%s\n", line);
-    int x1, y1, x2, y2;
+    int x1, y1, x2, y2, tw;
     if (line[0] == 'b') {
       // This line defines a blocked rectangle.
       // Format: 'b x1 y1 x2 y2' 1 <= 2
@@ -195,14 +208,16 @@ int main(int argc, char *argv[]) {
 
       for (y = y1 - 1; y < y2; y++) {
 	for (x = x1 - 1; x < x2; x++) {
-	  map[y][x] = false;
+	  graph -> nodes[y][x].open = false;
 	}
       }
     } else if (line[0] == 't') {
-      sscanf(line, "t %5d %5d %5d %5d ", &x1, &y1, &x2, &y2);
-      printf("Teleporting %d,%d to %d,%d\n", x1, y1, x2, y2);
+      sscanf(line, "t %5d %5d %5d %5d %5d ", &x1, &y1, &x2, &y2, &tw);
+      printf("Teleporting %d,%d to %d,%d - cost %d\n", x1, y1, x2, y2, tw);
 
-      // TODO: Support teleports
+      graph -> nodes[y1][x1].t.dX = x2;
+      graph -> nodes[y1][x1].t.dY = y2;
+      graph -> nodes[y1][x1].t.w = tw;
     } else {
       // Unknown line!
       printf("Warning: ignored line %s\n", line);
@@ -212,26 +227,7 @@ int main(int argc, char *argv[]) {
   // Close the file.
   fclose(mapFile);
 
-  // Build a graph/vertex representation of the map.
-  Graph *graph = malloc(sizeof(Graph));
-  graph -> maxDim = graphLim;
-  graph -> nodes = allocSquare(graphLim);
-  for (y = 0; y < graphLim; y++) {
-    for (x = 0; x < graphLim; x++) {
-      // TODO: This is fucking stupid. Why am I doing this?
-      graph -> nodes[y][x].open = map[y][x];
-      if (map[y][x]) {
-	graph -> nodes[y][x].dist = INT_MAX;
-	graph -> nodes[y][x].t.weight = -1;
-	graph -> nodes[y][x].pX = -1;
-	graph -> nodes[y][x].pY = -1;
-	graph -> nodes[y][x].x = x;
-	graph -> nodes[y][x].y = y;
-      }
-    }
-  }
-
-  printMap(graphLim, map);
+  printMap(graph);
   printf("Feeding into djikstra's!\n");
 
   djikstra(graph, 0, 0);
