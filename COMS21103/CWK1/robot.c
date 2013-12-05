@@ -192,6 +192,7 @@ void printStringR(char *str) {
   printf("\n");
 }
 
+#ifndef DBGQ
 int main(int argc, char *argv[]) {
   if (argc != 2) {
     printf("USAGE: robot <filename>\n");
@@ -271,4 +272,4 @@ int main(int argc, char *argv[]) {
   // freeStructs();
   return 0;
 }
-
+#endif

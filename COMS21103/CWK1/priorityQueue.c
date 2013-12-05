@@ -38,6 +38,16 @@ inline bool notEmpty(Vertex *heap[]) {
   return heapSize(heap) > 0;
 }
 
+// Debugging print of heap keys
+void printHeap(Vertex *arr[], int lim) {
+  int i;
+  printf("| ");
+  for (i=0; i<lim; i++) {
+    printf("%d | ", arr[i]->key);
+  }
+  printf("\n");
+}
+
 void swapEle(Vertex *heap[], int a, int b) {
   Vertex *tmp = heap[a];
   heap[a] = heap[b];
@@ -55,7 +65,7 @@ void heapify(Vertex *heap[], int i) {
   } else {
     smallest = i;
   }
-  if (right(i) <= heapSize(heap) && heap[right(i)]->key < heap[i]->key) {
+  if (right(i) <= heapSize(heap) && heap[right(i)]->key < heap[smallest]->key) {
     smallest = right(i);
   }
   if (smallest != i) {
@@ -69,22 +79,15 @@ void heapify(Vertex *heap[], int i) {
 void buildHeap(Vertex *arr[], int len) {
   int i = len >> 1;
   // Put the heapsize into the first element.
-  arr[0]->key = -1;
-  arr[0]->qPos = len;
+  arr[0]->key = len;
+  arr[0]->qPos = 0;
 
   for (; i >= 1; i--) {
     heapify(arr, i);
+#ifdef DBGQ
+    printHeap(arr, len + 1);
+#endif
   }
-}
-
-// Debugging print of heap keys
-void printHeap(Vertex *arr[], int lim) {
-  int i;
-  printf("| ");
-  for (i=0; i<lim; i++) {
-    printf("%d | ", arr[i]->key);
-  }
-  printf("\n");
 }
 
 void decreaseKey(Vertex *heap[], int node, int k) {
@@ -125,24 +128,22 @@ Vertex *extractMin(Vertex *heap[]) {
   }
 }
 
-// Test main, #define NO_MAIN in other files to avoid conflict!
-/*
-#ifndef NO_MAIN
+// Test main
+#ifdef DBGQ
 int main() {
-  Vertex *arr = malloc(21 * sizeof(Vertex));
+  int len = 5;
+  Vertex **arr = malloc(len * sizeof(Vertex *));
+
+  Vertex *nodes = malloc(len * sizeof(Vertex));
   int i;
-  for (i=0;i<20;i++) {
-    arr[i].key = (27 - i) % 7;
-    arr[i].pos = i;
-    arr[i].data = &(arr[i]);
+  for (i=0;i<len;i++) {
+    arr[i] = &(nodes[i]);
+    arr[i]->key = (27 - i) % 7;
+    arr[i]->qPos = i;
   }
-  printHeap(arr, 21);
-  buildHeap(arr, 19);
-  printHeap(arr, 21);
-  Vertex *new = { NULL, -1, 4 };
-  insert(arr, new);
-  printHeap(arr, 21);
+  printHeap(arr, len);
+  buildHeap(arr, len - 1);
+  printHeap(arr, len);
   return 0;
 }
 #endif
-*/
