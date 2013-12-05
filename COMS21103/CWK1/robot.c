@@ -126,7 +126,11 @@ char *djikstra(Graph *g, int sX, int sY) {
     x = curr.data->x;
     printf("Point %d,%d - Distance: %d\n", x, y, curr.key);
     // TODO: Variable end point
-    if (x == y && y == g->maxDim-1) {
+    if (curr.key == INT_MAX) {
+      // The key of the minimum element is the initial non-relaxed value. This means we have
+      // explored all possibilities, remaining nodes are isolated from start.
+      return "";
+    } else if (x == y && y == g->maxDim-1) {
       printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.key);
       /*i = 0;
       // Trace path backwards.

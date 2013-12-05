@@ -10,7 +10,7 @@
 typedef struct QueueEle {
   Vertex *data; // Pointer to vertex data.
   int pos; // Position in the heap (or size for element 0). //TODO: Am I needed?
-  int key; // The key, aka the priority. //TODO: Is key === data->dist?
+  int key; // The key, aka the priority.
 } QueueEle;
 
 inline int parent(int pos) {
@@ -106,11 +106,13 @@ void decreaseKey(QueueEle heap[], int node, int k) {
 void insert(QueueEle heap[], Vertex *data, int key) {
   // TODO: RESIZE ARRAY
   heapSizeSet(heap, heapSize(heap)+1);
-  heap[heapSize(heap)].data = data;
-  heap[heapSize(heap)].pos = heapSize(heap);
-  heap[heapSize(heap)].key = key;
-  heap[heapSize(heap)].data->qPos = heapSize(heap);
-  decreaseKey(heap, heapSize(heap), key);
+  int heapsize = heapSize(heap);
+  heap[heapsize].data = data;
+  heap[heapsize].pos = heapsize;
+  heap[heapsize].key = key;
+  heap[heapsize].data->qPos = heapsize;
+  decreaseKey(heap, heapsize, key);
+  printHeap(heap, heapsize);
 }
 
 QueueEle extractMin(QueueEle heap[]) {
