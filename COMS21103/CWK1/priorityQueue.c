@@ -93,7 +93,7 @@ void printHeap(QueueEle arr[], int lim) {
 
 void decreaseKey(QueueEle heap[], int node, int k) {
   if (k > heap[node].key) {
-    printf("ERROR: decreaseKey called with larger key value!");
+    printf("ERROR: decreaseKey called with larger key value!\n");
   } else {
     heap[node].key = k;
     while (node > 1 && heap[parent(node)].key > heap[node].key) {
@@ -112,14 +112,13 @@ void insert(QueueEle heap[], Vertex *data, int key) {
   heap[heapsize].key = key;
   heap[heapsize].data->qPos = heapsize;
   decreaseKey(heap, heapsize, key);
-  printHeap(heap, heapsize);
 }
 
 QueueEle extractMin(QueueEle heap[]) {
   QueueEle min;
 
   if (heapSize(heap) < 1) {
-    printf("ERROR: We outta elements, foo!");
+    printf("ERROR: Heap underflow.\n");
     return min;
   } else {
     min = heap[1];

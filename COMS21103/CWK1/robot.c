@@ -61,11 +61,12 @@ void printMap(Graph *g) {
 
 void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
   if (queue[nodes[vY][vX].qPos].key > w) {
+#ifdef DBGP
     printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, queue[nodes[vY][vX].qPos].key, w, uX, uY);
+#endif
     decreaseKey(queue, nodes[vY][vX].qPos, w);
     nodes[vY][vX].pX = uX;
     nodes[vY][vX].pY = uY;
-    //    printf("  Now %d,%d key = %d\n", vX, vY, queue[nodes[vY][vX].qPos].key);
   }
 }
 
@@ -108,8 +109,6 @@ char *djikstra(Graph *g, int sX, int sY) {
     for (x = 0; x < g->maxDim; x++) {
       // Only count node if open.
       if (nodes[y][x].open) {
-	//TODO: Change dis.
-	//	printf("Inserting %d,%d\n", x, y);
 	insert(queue, &(nodes[y][x]), (y == sY && x == sX) ? 0 : INT_MAX);
       }
     }
@@ -120,23 +119,28 @@ char *djikstra(Graph *g, int sX, int sY) {
   QueueEle curr;
   // Iterate through vertices updating the distances.
   while (notEmpty(queue)) {
-    // TODO: Finish when extracting end point
     curr = extractMin(queue);
     y = curr.data->y;
     x = curr.data->x;
+#ifdef DBGP
     printf("Point %d,%d - Distance: %d\n", x, y, curr.key);
+#endif
     // TODO: Variable end point
     if (curr.key == INT_MAX) {
       // The key of the minimum element is the initial non-relaxed value. This means we have
       // explored all possibilities, remaining nodes are isolated from start.
       return "";
     } else if (x == y && y == g->maxDim-1) {
+#ifdef DBGP
       printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.key);
-      /*i = 0;
+#endif
+      i = 0;
       // Trace path backwards.
       ret = malloc(sizeof(char) * (curr.key + 1));
       while ((x != sX || y != sY) && x >= 0 && y >= 0) {
-	//printf("     (%d,%d)\n", x, y);
+#ifdef DBGP
+	printf("     (%d,%d)\n", x, y);
+#endif
 	ret[i] = getDirection(x, y, nodes[y][x].pX, nodes[y][x].pY);
 
 	tmp = nodes[y][x].pX;
@@ -147,8 +151,7 @@ char *djikstra(Graph *g, int sX, int sY) {
 
       ret[i] = '\0';
 
-      return ret;*/
-      return "";
+      return ret;
     }
 
     // for each vertex v such that u -> v
@@ -206,8 +209,6 @@ int main(int argc, char *argv[]) {
   } else {
     sscanf(line, "%5d ", &graphLim);
   }
-
-  //printf("Making array of size %d squared\n", graphLim);
   
   // Build a graph/vertex representation of the map.
   Graph *graph = malloc(sizeof(Graph));
@@ -232,7 +233,6 @@ int main(int argc, char *argv[]) {
       // This line defines a blocked rectangle.
       // Format: 'b x1 y1 x2 y2' 1 <= 2
       sscanf(line, "b %5d %5d %5d %5d ", &x1, &y1, &x2, &y2);
-      //printf("Blocking %d,%d to %d,%d\n", x1, y1, x2, y2);
 
       for (y = y1 - 1; y < y2; y++) {
 	for (x = x1 - 1; x < x2; x++) {
@@ -240,6 +240,7 @@ int main(int argc, char *argv[]) {
 	}
       }
     } else if (line[0] == 't') {
+      // A teleport, 't x1 y1 x2 y2 w' 1 != 2, w >= 0
       sscanf(line, "t %5d %5d %5d %5d %5d ", &x1, &y1, &x2, &y2, &tw);
       x1--;
       x2--;
@@ -258,12 +259,12 @@ int main(int argc, char *argv[]) {
   // Close the file.
   fclose(mapFile);
 
-//  printMap(graph);
-  //printf("Feeding into djikstra's!\n");
+#ifdef DBGP
+  printMap(graph);
+#endif
 
   printStringR(djikstra(graph, 0, 0));
 
-  //printf("I did it mom!");
   // freeStructs();
   return 0;
 }
