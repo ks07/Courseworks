@@ -60,9 +60,9 @@ void printMap(Graph *g) {
 }
 
 void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
-  if (queue[nodes[vY][vX].qPos].key > queue[nodes[uY][uX].qPos].key + w) {
-    //    printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, queue[nodes[vY][vX].qPos].key, queue[nodes[vY][vX].qPos].key + w, uX, uY);
-    decreaseKey(queue, nodes[vY][vX].qPos, queue[nodes[uY][uX].qPos].key + w);
+  if (queue[nodes[vY][vX].qPos].key > w) {
+    printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, queue[nodes[vY][vX].qPos].key, w, uX, uY);
+    decreaseKey(queue, nodes[vY][vX].qPos, w);
     nodes[vY][vX].pX = uX;
     nodes[vY][vX].pY = uY;
     //    printf("  Now %d,%d key = %d\n", vX, vY, queue[nodes[vY][vX].qPos].key);
@@ -124,14 +124,14 @@ char *djikstra(Graph *g, int sX, int sY) {
     curr = extractMin(queue);
     y = curr.data->y;
     x = curr.data->x;
-    //    printf("Point %d,%d - Distance: %d\n", x, y, curr.key);
+    printf("Point %d,%d - Distance: %d\n", x, y, curr.key);
     // TODO: Variable end point
     if (x == y && y == g->maxDim-1) {
-      //printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.data->dist);
-      i = 0;
+      printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.key);
+      /*i = 0;
       // Trace path backwards.
       ret = malloc(sizeof(char) * (curr.key + 1));
-      while (x != sX || y != sY) {
+      while ((x != sX || y != sY) && x >= 0 && y >= 0) {
 	//printf("     (%d,%d)\n", x, y);
 	ret[i] = getDirection(x, y, nodes[y][x].pX, nodes[y][x].pY);
 
@@ -143,7 +143,8 @@ char *djikstra(Graph *g, int sX, int sY) {
 
       ret[i] = '\0';
 
-      return ret;
+      return ret;*/
+      return "";
     }
 
     // for each vertex v such that u -> v
@@ -151,23 +152,23 @@ char *djikstra(Graph *g, int sX, int sY) {
     // Check N
     if (y > 0 && nodes[y-1][x].open) {
       // relax(u,v)
-      relax(queue, nodes, x, y, x, y-1, 1); 
+      relax(queue, nodes, x, y, x, y-1, curr.key + 1); 
     }
     // Check E
     if (x < g->maxDim-1 && nodes[y][x+1].open) {
-      relax(queue, nodes, x, y, x+1, y, 1);
+      relax(queue, nodes, x, y, x+1, y, curr.key + 1);
     }
     // S
     if (y < g->maxDim-1 && nodes[y+1][x].open) {
-      relax(queue, nodes, x, y, x, y+1, 1);
+      relax(queue, nodes, x, y, x, y+1, curr.key + 1);
     }
     // W
     if (x > 0 && nodes[y][x-1].open) {
-      relax(queue, nodes, x, y, x-1, y, 1);
+      relax(queue, nodes, x, y, x-1, y, curr.key + 1);
     }
     // Teleport
     if (nodes[y][x].t.w >= 0) {
-      relax(queue, nodes, x, y, nodes[y][x].t.dX, nodes[y][x].t.dY, nodes[y][x].t.w);
+      relax(queue, nodes, x, y, nodes[y][x].t.dX, nodes[y][x].t.dY, curr.key + nodes[y][x].t.w);
     }
   }
 
