@@ -156,20 +156,20 @@ char *djikstra(Graph *g, int sX, int sY) {
 
     // for each vertex v such that u -> v
     //TODO: Bitmask cache of open directions?
-    // Check N
-    if (y > 0 && nodes[y-1][x].open) {
-      // relax(u,v)
-      relax(queue, nodes, x, y, x, y-1, curr.key + 1); 
+    // Check S
+    if (y < g->maxDim-1 && nodes[y+1][x].open) {
+      relax(queue, nodes, x, y, x, y+1, curr.key + 1);
     }
     // Check E
     if (x < g->maxDim-1 && nodes[y][x+1].open) {
       relax(queue, nodes, x, y, x+1, y, curr.key + 1);
     }
-    // S
-    if (y < g->maxDim-1 && nodes[y+1][x].open) {
-      relax(queue, nodes, x, y, x, y+1, curr.key + 1);
+    // Check N
+    if (y > 0 && nodes[y-1][x].open) {
+      // relax(u,v)
+      relax(queue, nodes, x, y, x, y-1, curr.key + 1); 
     }
-    // W
+    // Check W
     if (x > 0 && nodes[y][x-1].open) {
       relax(queue, nodes, x, y, x-1, y, curr.key + 1);
     }
