@@ -259,11 +259,13 @@ int main(int argc, char *argv[]) {
   // Close the file.
   fclose(mapFile);
 
-#ifdef DBGP
+#ifdef DBGP_MAP
   printMap(graph);
 #endif
 
   printStringR(djikstra(graph, 0, 0));
+
+  
 
   // freeStructs();
   return 0;
