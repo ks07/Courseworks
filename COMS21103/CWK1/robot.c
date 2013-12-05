@@ -13,7 +13,6 @@
 #define NO_PRED -1
 #define START_VERT -2
 
-//TODO: Rename to Edge?
 typedef struct Teleport {
   int dX;
   int dY;
@@ -28,6 +27,7 @@ typedef struct Vertex {
   int pX;
   int pY;
   int qPos;
+  int key;
 } Vertex;
 
 typedef struct Graph {
@@ -59,10 +59,10 @@ void printMap(Graph *g) {
   }
 }
 
-void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
-  if (queue[nodes[vY][vX].qPos].key > w) {
+void relax(Vertex *queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
+  if (nodes[vY][vX].key > w) {
 #ifdef DBGP
-    printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, queue[nodes[vY][vX].qPos].key, w, uX, uY);
+    printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, nodes[vY][vX].key, w, uX, uY);
 #endif
     decreaseKey(queue, nodes[vY][vX].qPos, w);
     nodes[vY][vX].pX = uX;
@@ -102,7 +102,9 @@ char *djikstra(Graph *g, int sX, int sY) {
 
   // Create a queue for all vertices.
   // TODO: Better size creation, count unblocked.
-  QueueEle *queue = malloc(g->maxDim * g->maxDim * sizeof(QueueEle));
+  Vertex **queue = malloc(g->maxDim * g->maxDim * sizeof(Vertex *));
+  queue[0] = calloc(1, sizeof(Vertex)); // Add size vertex.
+
   heapSizeSet(queue, 0);
   int y, x, tmp;
   for (y = 0; y < g->maxDim; y++) {
@@ -116,27 +118,27 @@ char *djikstra(Graph *g, int sX, int sY) {
 
   char *ret;
   int i;
-  QueueEle curr;
+  Vertex *curr;
   // Iterate through vertices updating the distances.
   while (notEmpty(queue)) {
     curr = extractMin(queue);
-    y = curr.data->y;
-    x = curr.data->x;
+    y = curr->y;
+    x = curr->x;
 #ifdef DBGP
-    printf("Point %d,%d - Distance: %d\n", x, y, curr.key);
+    printf("Point %d,%d - Distance: %d\n", x, y, curr->key);
 #endif
     // TODO: Variable end point
-    if (curr.key == INT_MAX) {
+    if (curr->key == INT_MAX) {
       // The key of the minimum element is the initial non-relaxed value. This means we have
       // explored all possibilities, remaining nodes are isolated from start.
       return "";
     } else if (x == y && y == g->maxDim-1) {
 #ifdef DBGP
-      printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.key);
+      printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr->key);
 #endif
       i = 0;
       // Trace path backwards.
-      ret = malloc(sizeof(char) * (curr.key + 1));
+      ret = malloc(sizeof(char) * (curr->key + 1));
       while ((x != sX || y != sY) && x >= 0 && y >= 0) {
 #ifdef DBGP
 	printf("     (%d,%d)\n", x, y);
@@ -158,24 +160,24 @@ char *djikstra(Graph *g, int sX, int sY) {
     //TODO: Bitmask cache of open directions?
     // Check S
     if (y < g->maxDim-1 && nodes[y+1][x].open) {
-      relax(queue, nodes, x, y, x, y+1, curr.key + 1);
+      relax(queue, nodes, x, y, x, y+1, curr->key + 1);
     }
     // Check E
     if (x < g->maxDim-1 && nodes[y][x+1].open) {
-      relax(queue, nodes, x, y, x+1, y, curr.key + 1);
+      relax(queue, nodes, x, y, x+1, y, curr->key + 1);
     }
     // Check N
     if (y > 0 && nodes[y-1][x].open) {
       // relax(u,v)
-      relax(queue, nodes, x, y, x, y-1, curr.key + 1); 
+      relax(queue, nodes, x, y, x, y-1, curr->key + 1); 
     }
     // Check W
     if (x > 0 && nodes[y][x-1].open) {
-      relax(queue, nodes, x, y, x-1, y, curr.key + 1);
+      relax(queue, nodes, x, y, x-1, y, curr->key + 1);
     }
     // Teleport
     if (nodes[y][x].t.w >= 0) {
-      relax(queue, nodes, x, y, nodes[y][x].t.dX, nodes[y][x].t.dY, curr.key + nodes[y][x].t.w);
+      relax(queue, nodes, x, y, nodes[y][x].t.dX, nodes[y][x].t.dY, curr->key + nodes[y][x].t.w);
     }
   }
 
@@ -226,7 +228,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Read map definitions into a temporary matrix of blocked locations.
   while (fgets(line, MAX_LINE_LEN, mapFile) != NULL) {
     int x1, y1, x2, y2, tw;
     if (line[0] == 'b') {

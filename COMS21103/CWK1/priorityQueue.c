@@ -5,13 +5,13 @@
 // A binary min-heap implementation of a priority queue, backed by an array.
 // We will treat the heap as starting from index 1, to simplify the maths!
 // heap[0] will thus be spare, we can use it's 'pos' to store heapSize.
-
-//TODO: Use a union for element 0
+/*
 typedef struct QueueEle {
   Vertex *data; // Pointer to vertex data.
   int pos; // Position in the heap (or size for element 0). //TODO: Am I needed?
   int key; // The key, aka the priority.
 } QueueEle;
+*/
 
 inline int parent(int pos) {
   // Right shift will truncate any bits lost off the end, performing the floor op.
@@ -26,39 +26,36 @@ inline int right(int pos) {
   return (pos << 1) + 1;
 }
 
-inline int heapSize(QueueEle heap[]) {
-  return heap[0].pos;
+inline int heapSize(Vertex *heap[]) {
+  return heap[0]->key;
 }
 
-inline void heapSizeSet(QueueEle heap[], int size) {
-  heap[0].pos = size;
+inline void heapSizeSet(Vertex *heap[], int size) {
+  heap[0]->key = size;
 }
 
-inline bool notEmpty(QueueEle heap[]) {
+inline bool notEmpty(Vertex *heap[]) {
   return heapSize(heap) > 0;
 }
 
-void swapEle(QueueEle heap[], int a, int b) {
-  QueueEle tmp = heap[a];
+void swapEle(Vertex *heap[], int a, int b) {
+  Vertex *tmp = heap[a];
   heap[a] = heap[b];
   heap[b] = tmp;
   // Update the position in each element.
-  heap[a].pos = a;
-  heap[b].pos = b;
-  // Update pos in data part.
-  heap[a].data->qPos = a;
-  heap[b].data->qPos = b;
+  heap[a]->qPos = a;
+  heap[b]->qPos = b;
 }
 
-void heapify(QueueEle heap[], int i) {
+void heapify(Vertex *heap[], int i) {
   int smallest;
 
-  if (left(i) <= heapSize(heap) && heap[left(i)].key < heap[i].key) {
+  if (left(i) <= heapSize(heap) && heap[left(i)]->key < heap[i]->key) {
     smallest = left(i);
   } else {
     smallest = i;
   }
-  if (right(i) <= heapSize(heap) && heap[right(i)].key < heap[i].key) {
+  if (right(i) <= heapSize(heap) && heap[right(i)]->key < heap[i]->key) {
     smallest = right(i);
   }
   if (smallest != i) {
@@ -69,12 +66,11 @@ void heapify(QueueEle heap[], int i) {
 }
 
 // Changes elements in arr to make it a binary min-heap. Elements should start at index 1.
-void buildHeap(QueueEle arr[], int len) {
+void buildHeap(Vertex *arr[], int len) {
   int i = len >> 1;
   // Put the heapsize into the first element.
-  arr[0].key = -1;
-  arr[0].pos = len;
-  arr[0].data = NULL;
+  arr[0]->key = -1;
+  arr[0]->qPos = len;
 
   for (; i >= 1; i--) {
     heapify(arr, i);
@@ -82,47 +78,46 @@ void buildHeap(QueueEle arr[], int len) {
 }
 
 // Debugging print of heap keys
-void printHeap(QueueEle arr[], int lim) {
+void printHeap(Vertex *arr[], int lim) {
   int i;
   printf("| ");
   for (i=0; i<lim; i++) {
-    printf("%d | ", arr[i].key);
+    printf("%d | ", arr[i]->key);
   }
   printf("\n");
 }
 
-void decreaseKey(QueueEle heap[], int node, int k) {
-  if (k > heap[node].key) {
+void decreaseKey(Vertex *heap[], int node, int k) {
+  if (k > heap[node]->key) {
     printf("ERROR: decreaseKey called with larger key value!\n");
   } else {
-    heap[node].key = k;
-    while (node > 1 && heap[parent(node)].key > heap[node].key) {
+    heap[node]->key = k;
+    while (node > 1 && heap[parent(node)]->key > heap[node]->key) {
       swapEle(heap, node, parent(node));
       node = parent(node);
     }
   }
 }
 
-void insert(QueueEle heap[], Vertex *data, int key) {
+void insert(Vertex *heap[], Vertex *data, int key) {
   // TODO: RESIZE ARRAY
   heapSizeSet(heap, heapSize(heap)+1);
   int heapsize = heapSize(heap);
-  heap[heapsize].data = data;
-  heap[heapsize].pos = heapsize;
-  heap[heapsize].key = key;
-  heap[heapsize].data->qPos = heapsize;
+  heap[heapsize] = data;
+  heap[heapsize]->qPos = heapsize;
+  heap[heapsize]->key = key;
   decreaseKey(heap, heapsize, key);
 }
 
-QueueEle extractMin(QueueEle heap[]) {
-  QueueEle min;
+Vertex *extractMin(Vertex *heap[]) {
+  Vertex *min;
 
   if (heapSize(heap) < 1) {
     printf("ERROR: Heap underflow.\n");
-    return min;
+    return NULL;
   } else {
     min = heap[1];
-    min.data->qPos = -1; //Removing from queue, invalidate this value.
+    min->qPos = -1; //Removing from queue, invalidate this value.
     heap[1] = heap[heapSize(heap)];
     heapSizeSet(heap, heapSize(heap) - 1);
     heapify(heap, 1);
@@ -131,9 +126,10 @@ QueueEle extractMin(QueueEle heap[]) {
 }
 
 // Test main, #define NO_MAIN in other files to avoid conflict!
+/*
 #ifndef NO_MAIN
 int main() {
-  QueueEle *arr = malloc(21 * sizeof(QueueEle));
+  Vertex *arr = malloc(21 * sizeof(Vertex));
   int i;
   for (i=0;i<20;i++) {
     arr[i].key = (27 - i) % 7;
@@ -143,9 +139,10 @@ int main() {
   printHeap(arr, 21);
   buildHeap(arr, 19);
   printHeap(arr, 21);
-  QueueEle new = { NULL, -1, 4 };
+  Vertex *new = { NULL, -1, 4 };
   insert(arr, new);
   printHeap(arr, 21);
   return 0;
 }
 #endif
+*/
