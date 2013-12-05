@@ -121,6 +121,7 @@ QueueEle extractMin(QueueEle heap[]) {
     return min;
   } else {
     min = heap[1];
+    min.data->qPos = -1; //Removing from queue, invalidate this value.
     heap[1] = heap[heapSize(heap)];
     heapSizeSet(heap, heapSize(heap) - 1);
     heapify(heap, 1);

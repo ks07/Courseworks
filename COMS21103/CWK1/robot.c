@@ -23,7 +23,6 @@ typedef struct Teleport {
 typedef struct Vertex {
   bool open;
   Teleport t;
-  int dist;
   int x;
   int y;
   int pX;
@@ -50,13 +49,6 @@ Vertex **allocSquare(int size) {
   return square;
 }
 
-Vertex * newVertex(bool open) {
-  Vertex *new = calloc(1, sizeof(Vertex));
-  new -> dist = -1;
-  new -> open = open;
-  return new;
-}
-
 void printMap(Graph *g) {
   int x, y;
   for (y = 0; y < g->maxDim; y++) {
@@ -67,23 +59,13 @@ void printMap(Graph *g) {
   }
 }
 
-inline int calculateMaxEdges(int n) {
-  // All edges are bi-rectional, no diagonals.
-  // 2* 2n(n-1) + teleports
-  // Max teleports = floor(n^2 / 2)
-  // TODO: Count teleports
-  //return 4 * n * (n-1) + ((n*n) / 2)
-  return (4.5 * n * n) - (4 * n);
-}
-
 void relax(QueueEle queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
-  if (nodes[vY][vX].dist > nodes[uY][uX].dist + w) {
-    //    printf("Decreasing (%d,%d) from %d/%d to %d. Pred = (%d,%d)\n", vX, vY, nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key, nodes[uY][uX].dist + w, uX, uY);
-    decreaseKey(queue, nodes[vY][vX].qPos, nodes[uY][uX].dist + w);
+  if (queue[nodes[vY][vX].qPos].key > queue[nodes[uY][uX].qPos].key + w) {
+    //    printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, queue[nodes[vY][vX].qPos].key, queue[nodes[vY][vX].qPos].key + w, uX, uY);
+    decreaseKey(queue, nodes[vY][vX].qPos, queue[nodes[uY][uX].qPos].key + w);
     nodes[vY][vX].pX = uX;
     nodes[vY][vX].pY = uY;
-    nodes[vY][vX].dist = nodes[uY][uX].dist + w;
-    //printf("  Now vY,vX key = %d/%d\n", nodes[vY][vX].dist, queue[nodes[vY][vX].qPos].key);
+    //    printf("  Now %d,%d key = %d\n", vX, vY, queue[nodes[vY][vX].qPos].key);
   }
 }
 
@@ -126,17 +108,13 @@ char *djikstra(Graph *g, int sX, int sY) {
     for (x = 0; x < g->maxDim; x++) {
       // Only count node if open.
       if (nodes[y][x].open) {
-	//TODO: Stop duplicating info, merge structs?
 	//TODO: Change dis.
 	//	printf("Inserting %d,%d\n", x, y);
-	nodes[y][x].dist = INT_MAX;
-	insert(queue, &(nodes[y][x]), (x == sX && y == sY) ? 0 : INT_MAX);
+	insert(queue, &(nodes[y][x]), (y == sY && x == sX) ? 0 : INT_MAX);
       }
     }
   }
 
-  // Set start node dist to 0.
-  nodes[sY][sX].dist = 0;
   char *ret;
   int i;
   QueueEle curr;
@@ -146,13 +124,13 @@ char *djikstra(Graph *g, int sX, int sY) {
     curr = extractMin(queue);
     y = curr.data->y;
     x = curr.data->x;
-    // printf("Point %d,%d - Distance: %d %d\n", x, y, curr.data->dist, curr.pos);
+    //    printf("Point %d,%d - Distance: %d\n", x, y, curr.key);
     // TODO: Variable end point
     if (x == y && y == g->maxDim-1) {
       //printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr.data->dist);
       i = 0;
       // Trace path backwards.
-      ret = malloc(sizeof(char) * (nodes[y][x].dist + 1));
+      ret = malloc(sizeof(char) * (curr.key + 1));
       while (x != sX || y != sY) {
 	//printf("     (%d,%d)\n", x, y);
 	ret[i] = getDirection(x, y, nodes[y][x].pX, nodes[y][x].pY);
@@ -258,7 +236,6 @@ int main(int argc, char *argv[]) {
       }
     } else if (line[0] == 't') {
       sscanf(line, "t %5d %5d %5d %5d %5d ", &x1, &y1, &x2, &y2, &tw);
-      //printf("Teleporting %d,%d to %d,%d - cost %d\n", --x1, --y1, --x2, --y2, tw);
       x1--;
       x2--;
       y1--;
@@ -276,7 +253,7 @@ int main(int argc, char *argv[]) {
   // Close the file.
   fclose(mapFile);
 
-  //printMap(graph);
+//  printMap(graph);
   //printf("Feeding into djikstra's!\n");
 
   printStringR(djikstra(graph, 0, 0));
