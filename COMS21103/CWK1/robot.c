@@ -2,10 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <limits.h>
-#include <string.h>
-//TODO: Remove reliance on strlen
-
-#define NO_MAIN
 
 #define MAX_LINE_LEN 50
 #define MAX_GRAPH_DIM 20
@@ -95,7 +91,13 @@ char getDirection(int x, int y, int pX, int pY) {
   }
 }
 
-char *djikstra(Graph *g, int sX, int sY) {
+typedef struct DjikstraResult {
+  char *rPath;
+  int len;
+} DjikstraResult;
+
+DjikstraResult djikstra(Graph *g, int sX, int sY) {
+  DjikstraResult res = {"", 0};
   Vertex **nodes = g->nodes;
   nodes[sY][sX].pX = START_VERT;
   nodes[sY][sX].pX = START_VERT;
@@ -116,7 +118,6 @@ char *djikstra(Graph *g, int sX, int sY) {
     }
   }
 
-  char *ret;
   int i;
   Vertex *curr;
   // Iterate through vertices updating the distances.
@@ -131,19 +132,20 @@ char *djikstra(Graph *g, int sX, int sY) {
     if (curr->key == INT_MAX) {
       // The key of the minimum element is the initial non-relaxed value. This means we have
       // explored all possibilities, remaining nodes are isolated from start.
-      return "";
+      return res;
     } else if (x == y && y == g->maxDim-1) {
 #ifdef DBGP
-      printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr->key);
+      printf("Route Found:\n   Point %d,%d - Distance: %d\n", x, y, curr->key);
 #endif
       i = 0;
       // Trace path backwards.
-      ret = malloc(sizeof(char) * (curr->key + 1));
+      res.rPath = malloc(sizeof(char) * (curr->key + 1));
+      res.len = curr->key;
       while ((x != sX || y != sY) && x >= 0 && y >= 0) {
 #ifdef DBGP
 	printf("     (%d,%d)\n", x, y);
 #endif
-	ret[i] = getDirection(x, y, nodes[y][x].pX, nodes[y][x].pY);
+	res.rPath[i] = getDirection(x, y, nodes[y][x].pX, nodes[y][x].pY);
 
 	tmp = nodes[y][x].pX;
 	y = nodes[y][x].pY;
@@ -151,9 +153,9 @@ char *djikstra(Graph *g, int sX, int sY) {
 	i++;
       }
 
-      ret[i] = '\0';
+      res.rPath[i] = '\0';
 
-      return ret;
+      return res;
     }
 
     // for each vertex v such that u -> v
@@ -181,13 +183,12 @@ char *djikstra(Graph *g, int sX, int sY) {
     }
   }
 
-  return "";
+  return res;
 }
 
-void printStringR(char *str) {
-  int i = strlen(str) - 1;
-  for (; i >= 0; i--) {
-    printf("%c", str[i]);
+void printStringR(char *str, int len) {
+  for (; len >= 0; len--) {
+    printf("%c", str[len]);
   }
   printf("\n");
 }
@@ -265,7 +266,8 @@ int main(int argc, char *argv[]) {
   printMap(graph);
 #endif
 
-  printStringR(djikstra(graph, 0, 0));
+  DjikstraResult dr = djikstra(graph, 0, 0);
+  printStringR(dr.rPath, dr.len);
 
   
 
