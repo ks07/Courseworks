@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // A binary min-heap implementation of a priority queue, backed by an array.
 // We will treat the heap as starting from index 1, to simplify the maths!
 // heap[0] will thus be spare, we can use it's 'pos' to store heapSize.
 
-
+// Replace small functions with preprocessor macros. If compiler optimisations were turned on,
+// these functions would be inlined - this forces that to happen, saves a few hundred ms.
 /*
 inline int parent(int pos) {
   // Right shift will truncate any bits lost off the end, performing the floor op.
@@ -61,9 +63,12 @@ void printHeap(Vertex *arr[], int lim) {
 }
 
 void swapEle(Vertex *heap[], int a, int b) {
-  Vertex *tmp = heap[a];
-  heap[a] = heap[b];
-  heap[b] = tmp;
+  //  Vertex *tmp = heap[a];
+  //  heap[a] = heap[b];
+  //  heap[b] = tmp;
+  heap[a] = (Vertex *)((intptr_t)heap[a] ^ (intptr_t)heap[b]);
+  heap[b] = (Vertex *)((intptr_t)heap[a] ^ (intptr_t)heap[b]);
+  heap[a] = (Vertex *)((intptr_t)heap[a] ^ (intptr_t)heap[b]);
   // Update the position in each element.
   heap[a]->qPos = a;
   heap[b]->qPos = b;
@@ -140,7 +145,7 @@ Vertex *extractMin(Vertex *heap[]) {
   }
 }
 
-// Test main
+// Test main. Compile with '-D DBGQ' in order to enable this main.
 #ifdef DBGQ
 int main() {
   int len = 5;
