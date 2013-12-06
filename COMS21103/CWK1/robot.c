@@ -187,7 +187,7 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
 }
 
 void printStringR(char *str, int len) {
-  for (; len >= 0; len--) {
+  for (len--; len >= 0; len--) {
     printf("%c", str[len]);
   }
   printf("\n");
