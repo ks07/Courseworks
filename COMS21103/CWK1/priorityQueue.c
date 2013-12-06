@@ -18,9 +18,12 @@ inline int parent(int pos) {
   return pos >> 1;
 }
 
+/*
 inline int left(int pos) {
   return pos << 1;
 }
+*/
+#define left(pos) (pos << 1)
 
 inline int right(int pos) {
   return (pos << 1) + 1;
