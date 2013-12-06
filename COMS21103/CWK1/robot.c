@@ -45,6 +45,14 @@ Vertex **allocSquare(int size) {
   return square;
 }
 
+void freeSquare(Vertex **square, int size) {
+  int i;
+  for (i = 0; i < size; i++) {
+    free(square[i]);
+  }
+  free(square);
+}
+
 void printMap(Graph *g) {
   int x, y;
   for (y = 0; y < g->maxDim; y++) {
@@ -132,6 +140,7 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
     if (curr->key == INT_MAX) {
       // The key of the minimum element is the initial non-relaxed value. This means we have
       // explored all possibilities, remaining nodes are isolated from start.
+      free(queue);
       return res;
     } else if (x == y && y == g->maxDim-1) {
 #ifdef DBGP
@@ -155,6 +164,7 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
 
       res.rPath[i] = '\0';
       res.len = i;
+      free(queue);
       return res;
     }
 
@@ -183,6 +193,7 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
     }
   }
 
+  free(queue);
   return res;
 }
 
@@ -269,9 +280,9 @@ int main(int argc, char *argv[]) {
   DjikstraResult dr = djikstra(graph, 0, 0);
   printStringR(dr.rPath, dr.len);
 
-  
-
-  // freeStructs();
+  freeSquare(graph->nodes, graph->maxDim);
+  free(graph);
+  free(dr.rPath);
   return 0;
 }
 #endif
