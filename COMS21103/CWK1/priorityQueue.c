@@ -5,18 +5,15 @@
 // A binary min-heap implementation of a priority queue, backed by an array.
 // We will treat the heap as starting from index 1, to simplify the maths!
 // heap[0] will thus be spare, we can use it's 'pos' to store heapSize.
-/*
-typedef struct QueueEle {
-  Vertex *data; // Pointer to vertex data.
-  int pos; // Position in the heap (or size for element 0). //TODO: Am I needed?
-  int key; // The key, aka the priority.
-} QueueEle;
-*/
 
+
+/*
 inline int parent(int pos) {
   // Right shift will truncate any bits lost off the end, performing the floor op.
   return pos >> 1;
 }
+*/
+#define parent(pos) (pos >> 1)
 
 /*
 inline int left(int pos) {
@@ -25,21 +22,33 @@ inline int left(int pos) {
 */
 #define left(pos) (pos << 1)
 
+/*
 inline int right(int pos) {
   return (pos << 1) + 1;
 }
+*/
+#define right(pos) ((pos << 1) + 1)
 
+/*
 inline int heapSize(Vertex *heap[]) {
   return heap[0]->key;
 }
+*/
+#define heapSize(heap) (heap[0]->key)
 
+/*
 inline void heapSizeSet(Vertex *heap[], int size) {
   heap[0]->key = size;
 }
+*/
+#define heapSizeSet(heap, size) (heap[0]->key = size)
 
+/*
 inline bool notEmpty(Vertex *heap[]) {
   return heapSize(heap) > 0;
 }
+*/
+#define notEmpty(heap) (heapSize(heap) > 0)
 
 // Debugging print of heap keys
 void printHeap(Vertex *arr[], int lim) {
