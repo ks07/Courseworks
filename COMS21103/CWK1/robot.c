@@ -282,7 +282,9 @@ int main(int argc, char *argv[]) {
 
   freeSquare(graph->nodes, graph->maxDim);
   free(graph);
-  free(dr.rPath);
+  if (dr.len > 0) {
+    free(dr.rPath);
+  }
   return 0;
 }
 #endif
