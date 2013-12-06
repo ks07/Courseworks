@@ -212,9 +212,9 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
 // Prints a string character by character in reverse.
 void printStringR(char *str, int len) {
   for (len--; len >= 0; len--) {
-    putchar(str[len]);
+    printf("%c", str[len]);
   }
-  putchar('\n');
+  printf("\n");
 }
 
 // Main function. Use preprocessor to remove this definition if we want to test the PriorityQueue
