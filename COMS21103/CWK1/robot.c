@@ -140,7 +140,7 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
       i = 0;
       // Trace path backwards.
       res.rPath = malloc(sizeof(char) * (curr->key + 1));
-      res.len = curr->key;
+      res.len = 0;
       while ((x != sX || y != sY) && x >= 0 && y >= 0) {
 #ifdef DBGP
 	printf("     (%d,%d)\n", x, y);
@@ -154,7 +154,7 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
       }
 
       res.rPath[i] = '\0';
-
+      res.len = i;
       return res;
     }
 
