@@ -7,7 +7,7 @@
 
 #define NO_MAIN
 
-#define MAX_LINE_LEN 100
+#define MAX_LINE_LEN 50
 #define MAX_GRAPH_DIM 20
 
 #define NO_PRED -1
