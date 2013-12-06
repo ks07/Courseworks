@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <stdint.h>
 
 // A binary min-heap implementation of a priority queue, backed by an array.
 // We will treat the heap as starting from index 1, to simplify the maths!
@@ -63,12 +62,9 @@ void printHeap(Vertex *arr[], int lim) {
 }
 
 void swapEle(Vertex *heap[], int a, int b) {
-  //  Vertex *tmp = heap[a];
-  //  heap[a] = heap[b];
-  //  heap[b] = tmp;
-  heap[a] = (Vertex *)((intptr_t)heap[a] ^ (intptr_t)heap[b]);
-  heap[b] = (Vertex *)((intptr_t)heap[a] ^ (intptr_t)heap[b]);
-  heap[a] = (Vertex *)((intptr_t)heap[a] ^ (intptr_t)heap[b]);
+  Vertex *tmp = heap[a];
+  heap[a] = heap[b];
+  heap[b] = tmp;
   // Update the position in each element.
   heap[a]->qPos = a;
   heap[b]->qPos = b;
