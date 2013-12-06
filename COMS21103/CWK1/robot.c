@@ -9,12 +9,14 @@
 #define NO_PRED -1
 #define START_VERT -2
 
+// Struct to group information about a teleport.
 typedef struct Teleport {
   int dX;
   int dY;
   int w; // If weight < 0, no teleport here.
 } Teleport;
 
+// Struct to hold information about a vertex.
 typedef struct Vertex {
   bool open;
   Teleport t;
@@ -26,13 +28,17 @@ typedef struct Vertex {
   int key;
 } Vertex;
 
+// Struct to hold graph global information.
 typedef struct Graph {
   Vertex **nodes;
   int maxDim;
 } Graph;
 
+// Include the priorityQueue code. This must be here, as it relies on the Vertex type.
 #include "priorityQueue.c"
 
+// Allocates a square matrix to hold the graph. Need to allocate rows/cols separately,
+// as an array of arrays does not degrade into a pointer to a pointer! (How would it know indexes?)
 Vertex **allocSquare(int size) {
   // Allocate the rows (y)
   Vertex **square = malloc(size * sizeof(Vertex *));
@@ -45,6 +51,7 @@ Vertex **allocSquare(int size) {
   return square;
 }
 
+// Frees rows/cols of the matrix.
 void freeSquare(Vertex **square, int size) {
   int i;
   for (i = 0; i < size; i++) {
@@ -53,6 +60,7 @@ void freeSquare(Vertex **square, int size) {
   free(square);
 }
 
+// Basic printing of graph, for debugging IO. Not suitable for large inputs.
 void printMap(Graph *g) {
   int x, y;
   for (y = 0; y < g->maxDim; y++) {
@@ -63,6 +71,7 @@ void printMap(Graph *g) {
   }
 }
 
+// Used in djikstra's algorithm to update node distances if necessary.
 void relax(Vertex *queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
   if (nodes[vY][vX].key > w) {
 #ifdef DBGP
@@ -74,6 +83,7 @@ void relax(Vertex *queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int 
   }
 }
 
+// Converts a point and predecessor point pair into a direction.
 char getDirection(int x, int y, int pX, int pY) {
   if (y == pY) {
     if (x > pX) {
@@ -99,11 +109,13 @@ char getDirection(int x, int y, int pX, int pY) {
   }
 }
 
+// Simple struct to allow djikstra to return both the string and it's length.
 typedef struct DjikstraResult {
   char *rPath;
   int len;
 } DjikstraResult;
 
+// Performs djikstra's algorithm on the graph from sX,sY. The returned path is reversed.
 DjikstraResult djikstra(Graph *g, int sX, int sY) {
   DjikstraResult res = {"", 0};
   Vertex **nodes = g->nodes;
@@ -134,7 +146,7 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
     y = curr->y;
     x = curr->x;
 #ifdef DBGP
-    printf("Point %d,%d - Distance: %d\n", x, y, curr->key);
+    printf("Point %d,%d - Distance: %d\n", x, y, curr->key); // Use preprocessor to remove debug prints.
 #endif
     // TODO: Variable end point
     if (curr->key == INT_MAX) {
@@ -197,13 +209,15 @@ DjikstraResult djikstra(Graph *g, int sX, int sY) {
   return res;
 }
 
+// Prints a string character by character in reverse.
 void printStringR(char *str, int len) {
   for (len--; len >= 0; len--) {
-    printf("%c", str[len]);
+    putchar(str[len]);
   }
-  printf("\n");
+  putchar('\n');
 }
 
+// Main function. Use preprocessor to remove this definition if we want to test the PriorityQueue
 #ifndef DBGQ
 int main(int argc, char *argv[]) {
   if (argc != 2) {
@@ -241,6 +255,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Start reading bulk of file
   while (fgets(line, MAX_LINE_LEN, mapFile) != NULL) {
     int x1, y1, x2, y2, tw;
     if (line[0] == 'b') {
@@ -280,6 +295,7 @@ int main(int argc, char *argv[]) {
   DjikstraResult dr = djikstra(graph, 0, 0);
   printStringR(dr.rPath, dr.len);
 
+  // Free resources before we quit.
   freeSquare(graph->nodes, graph->maxDim);
   free(graph);
   if (dr.len > 0) {
