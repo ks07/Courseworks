@@ -5,6 +5,8 @@
 #include <string.h>
 //TODO: Remove reliance on strlen
 
+#define NO_MAIN
+
 #define MAX_LINE_LEN 50
 #define MAX_GRAPH_DIM 20
 
@@ -29,39 +31,42 @@ typedef struct Vertex {
 } Vertex;
 
 typedef struct Graph {
-  Vertex *nodes;
+  Vertex **nodes;
   int maxDim;
 } Graph;
 
 #include "priorityQueue.c"
 
-#define flat(y, x, size) (size * y + x)
+Vertex **allocSquare(int size) {
+  // Allocate the rows (y)
+  Vertex **square = malloc(size * sizeof(Vertex *));
+  int i;
+  for (i = 0; i < size; i++) {
+    // Add an array for each row, creating the columns (x).
+    square[i] = malloc(size * sizeof(Vertex));
+  }
 
-#define gget(g, y, x) g->nodes[flat(y, x, g->maxDim)]
-
-Vertex *allocSquare(int size) {
-  // Store matrix flattened into a 1d array, less memory operations.
-  return (Vertex *)malloc(size * size * sizeof(Vertex));
+  return square;
 }
 
 void printMap(Graph *g) {
   int x, y;
   for (y = 0; y < g->maxDim; y++) {
     for (x = 0; x < g->maxDim; x++) {
-      printf(gget(g, y, x).open ? (gget(g, y, x).t.w >= 0 ? "?" : ".") : "#");
+      printf(g->nodes[y][x].open ? (g->nodes[y][x].t.w >= 0 ? "?" : ".") : "#");
     }
     printf("|\n");
   }
 }
 
-void relax(Vertex *queue[], Graph *g, int uX, int uY, int vX, int vY, int w) {
-  if (gget(g, vY, vX).key > w) {
+void relax(Vertex *queue[], Vertex **nodes, int uX, int uY, int vX, int vY, int w) {
+  if (nodes[vY][vX].key > w) {
 #ifdef DBGP
-    printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, gget(g, vY, vX).key, w, uX, uY);
+    printf("Decreasing (%d,%d) from %d to %d. Pred = (%d,%d)\n", vX, vY, nodes[vY][vX].key, w, uX, uY);
 #endif
-    decreaseKey(queue, gget(g, vY, vX).qPos, w);
-    gget(g, vY, vX).pX = uX;
-    gget(g, vY, vX).pY = uY;
+    decreaseKey(queue, nodes[vY][vX].qPos, w);
+    nodes[vY][vX].pX = uX;
+    nodes[vY][vX].pY = uY;
   }
 }
 
@@ -91,8 +96,9 @@ char getDirection(int x, int y, int pX, int pY) {
 }
 
 char *djikstra(Graph *g, int sX, int sY) {
-  gget(g, sY, sX).pX = START_VERT;
-  gget(g, sY, sX).pX = START_VERT;
+  Vertex **nodes = g->nodes;
+  nodes[sY][sX].pX = START_VERT;
+  nodes[sY][sX].pX = START_VERT;
 
   // Create a queue for all vertices.
   // TODO: Better size creation, count unblocked.
@@ -104,8 +110,8 @@ char *djikstra(Graph *g, int sX, int sY) {
   for (y = 0; y < g->maxDim; y++) {
     for (x = 0; x < g->maxDim; x++) {
       // Only count node if open.
-      if (gget(g, y, x).open) {
-	insert(queue, &(gget(g, y, x)), (y == sY && x == sX) ? 0 : INT_MAX);
+      if (nodes[y][x].open) {
+	insert(queue, &(nodes[y][x]), (y == sY && x == sX) ? 0 : INT_MAX);
       }
     }
   }
@@ -121,13 +127,14 @@ char *djikstra(Graph *g, int sX, int sY) {
 #ifdef DBGP
     printf("Point %d,%d - Distance: %d\n", x, y, curr->key);
 #endif
+    // TODO: Variable end point
     if (curr->key == INT_MAX) {
       // The key of the minimum element is the initial non-relaxed value. This means we have
       // explored all possibilities, remaining nodes are isolated from start.
       return "";
     } else if (x == y && y == g->maxDim-1) {
 #ifdef DBGP
-      printf("Route Found:\n   Point %d,%d - Distance: %d\n", x, y, curr->key);
+      printf("WINNER WINNER CHICKEN DINNER\n   Point %d,%d - Distance: %d\n", x, y, curr->key);
 #endif
       i = 0;
       // Trace path backwards.
@@ -136,40 +143,41 @@ char *djikstra(Graph *g, int sX, int sY) {
 #ifdef DBGP
 	printf("     (%d,%d)\n", x, y);
 #endif
-	ret[i] = getDirection(x, y, gget(g, y, x).pX, gget(g, y, x).pY);
+	ret[i] = getDirection(x, y, nodes[y][x].pX, nodes[y][x].pY);
 
-	tmp = gget(g, y, x).pX;
-	y = gget(g, y, x).pY;
+	tmp = nodes[y][x].pX;
+	y = nodes[y][x].pY;
 	x = tmp;
 	i++;
       }
 
       ret[i] = '\0';
+
       return ret;
     }
 
     // for each vertex v such that u -> v
     //TODO: Bitmask cache of open directions?
     // Check S
-    if (y < g->maxDim-1 && gget(g, y+1, x).open) {
-      relax(queue, g, x, y, x, y+1, curr->key + 1);
+    if (y < g->maxDim-1 && nodes[y+1][x].open) {
+      relax(queue, nodes, x, y, x, y+1, curr->key + 1);
     }
     // Check E
-    if (x < g->maxDim-1 && gget(g, y, x+1).open) {
-      relax(queue, g, x, y, x+1, y, curr->key + 1);
+    if (x < g->maxDim-1 && nodes[y][x+1].open) {
+      relax(queue, nodes, x, y, x+1, y, curr->key + 1);
     }
     // Check N
-    if (y > 0 && gget(g, y-1, x).open) {
+    if (y > 0 && nodes[y-1][x].open) {
       // relax(u,v)
-      relax(queue, g, x, y, x, y-1, curr->key + 1); 
+      relax(queue, nodes, x, y, x, y-1, curr->key + 1); 
     }
     // Check W
-    if (x > 0 && gget(g, y, x-1).open) {
-      relax(queue, g, x, y, x-1, y, curr->key + 1);
+    if (x > 0 && nodes[y][x-1].open) {
+      relax(queue, nodes, x, y, x-1, y, curr->key + 1);
     }
     // Teleport
-    if (gget(g, y, x).t.w >= 0) {
-      relax(queue, g, x, y, gget(g, y, x).t.dX, gget(g, y, x).t.dY, curr->key + gget(g, y, x).t.w);
+    if (nodes[y][x].t.w >= 0) {
+      relax(queue, nodes, x, y, nodes[y][x].t.dX, nodes[y][x].t.dY, curr->key + nodes[y][x].t.w);
     }
   }
 
@@ -206,18 +214,18 @@ int main(int argc, char *argv[]) {
   }
   
   // Build a graph/vertex representation of the map.
-  Graph *g = malloc(sizeof(Graph));
-  g -> maxDim = graphLim;
-  g -> nodes = allocSquare(graphLim);
+  Graph *graph = malloc(sizeof(Graph));
+  graph -> maxDim = graphLim;
+  graph -> nodes = allocSquare(graphLim);
   int x, y;
   for (y = 0; y < graphLim; y++) {
     for (x = 0; x < graphLim; x++) {
-      gget(g, y, x).open = true;
-      gget(g, y, x).t.w = -1;
-      gget(g, y, x).pX = NO_PRED;
-      gget(g, y, x).pY = NO_PRED;
-      gget(g, y, x).x = x;
-      gget(g, y, x).y = y;
+      graph -> nodes[y][x].open = true;
+      graph -> nodes[y][x].t.w = -1;
+      graph -> nodes[y][x].pX = NO_PRED;
+      graph -> nodes[y][x].pY = NO_PRED;
+      graph -> nodes[y][x].x = x;
+      graph -> nodes[y][x].y = y;
     }
   }
 
@@ -230,7 +238,7 @@ int main(int argc, char *argv[]) {
 
       for (y = y1 - 1; y < y2; y++) {
 	for (x = x1 - 1; x < x2; x++) {
-	  gget(g, y, x).open = false;
+	  graph -> nodes[y][x].open = false;
 	}
       }
     } else if (line[0] == 't') {
@@ -241,9 +249,9 @@ int main(int argc, char *argv[]) {
       y1--;
       y2--;
 
-      gget(g, y1, x1).t.dX = x2;
-      gget(g, y1, x1).t.dY = y2;
-      gget(g, y1, x1).t.w = tw;
+      graph -> nodes[y1][x1].t.dX = x2;
+      graph -> nodes[y1][x1].t.dY = y2;
+      graph -> nodes[y1][x1].t.w = tw;
     } else {
       // Unknown line!
       printf("Warning: ignored line %s\n", line);
@@ -254,10 +262,12 @@ int main(int argc, char *argv[]) {
   fclose(mapFile);
 
 #ifdef DBGP_MAP
-  printMap(g);
+  printMap(graph);
 #endif
 
-  printStringR(djikstra(g, 0, 0));
+  printStringR(djikstra(graph, 0, 0));
+
+  
 
   // freeStructs();
   return 0;
