@@ -1,5 +1,4 @@
-antlr3=/usr/local/antlr3
-export CLASSPATH=.:$antlr3/antlr-3.2.jar
+export CLASSPATH=.:/usr/share/java/stringtemplate.jar:/usr/share/java/antlr3.jar:/usr/share/java/antlr3-runtime.jar
 if test -z "$1"
 then
   echo CS USAGE: antlr3 t.g, then antlr3 *.java, then antlr3 Main
