@@ -27,20 +27,39 @@ public class Irt
 //
 // CAMLE TOKENS BEGIN
   public static final String[] tokenNames = new String[] {
-"NONE", "NONE", "NONE", "NONE", "BEGIN", "END", "WRITE", "WRITELN", "SEMICOLON", "OPENPAREN", "CLOSEPAREN", "INT", "EXPONENT", "REALNUM", "STRING", "COMMENT", "WS"};
-  public static final int CLOSEPAREN=10;
-  public static final int EXPONENT=12;
-  public static final int WS=16;
-  public static final int WRITELN=7;
-  public static final int BEGIN=4;
-  public static final int REALNUM=13;
-  public static final int SEMICOLON=8;
-  public static final int INT=11;
-  public static final int OPENPAREN=9;
-  public static final int END=5;
-  public static final int COMMENT=15;
+"NONE", "NONE", "NONE", "NONE", "BEGIN", "END", "WRITE", "WRITELN", "ARRAY", "ELSE", "IF", "READ", "REPEAT", "UNTIL", "SEMICOLON", "OPENPAREN", "CLOSEPAREN", "ASSIGN", "AOP", "FOP", "OPENSQ", "CLOSESQ", "COMMA", "INT", "EXPONENT", "REALNUM", "STRING", "COMMENT", "WS", "LT", "LTE", "GT", "GTE", "EQ", "NEQ", "IDENTIFIER"};
+  public static final int CLOSEPAREN=16;
+  public static final int EXPONENT=24;
+  public static final int LT=29;
+  public static final int AOP=18;
+  public static final int GTE=32;
+  public static final int OPENSQ=20;
+  public static final int ELSE=9;
+  public static final int INT=23;
+  public static final int SEMICOLON=14;
+  public static final int LTE=30;
   public static final int WRITE=6;
-  public static final int STRING=14;
+  public static final int FOP=19;
+  public static final int IF=10;
+  public static final int NEQ=34;
+  public static final int WS=28;
+  public static final int WRITELN=7;
+  public static final int READ=11;
+  public static final int COMMA=22;
+  public static final int UNTIL=13;
+  public static final int IDENTIFIER=35;
+  public static final int BEGIN=4;
+  public static final int REALNUM=25;
+  public static final int ASSIGN=17;
+  public static final int CLOSESQ=21;
+  public static final int GT=31;
+  public static final int REPEAT=12;
+  public static final int OPENPAREN=15;
+  public static final int EQ=33;
+  public static final int END=5;
+  public static final int COMMENT=27;
+  public static final int ARRAY=8;
+  public static final int STRING=26;
 // CAMLE TOKENS END
 
   public static IRTree convert(CommonTree ast)
