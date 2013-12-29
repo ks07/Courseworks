@@ -163,14 +163,32 @@ public class Irt
   // Convert an expression AST to IR tree
   public static void expression(CommonTree ast, IRTree irt)
   {
-    CommonTree ast1;
+      CommonTree ast1, ast2;
     IRTree irt1 = new IRTree();
+    IRTree irt2 = new IRTree();
     Token t = ast.getToken();
     int tt = t.getType();
     if (tt == REALNUM) {
       constant(ast, irt1);
       irt.setOp("CONST");
       irt.addSub(irt1);
+    } else if (tt == AOP) {
+	irt.setOp("ADDR");
+	// Unary operator, i.e. sign, so only 1 child
+	if (ast.getChild(1) == null) {
+	    ast1 = (CommonTree)ast.getChild(0);
+	    expression(ast1, irt1); // Recurse
+	    irt.addSub(irt1);
+	} else {
+	    // Left sub-tree
+	    ast1 = (CommonTree)ast.getChild(0);
+	    expression(ast1, irt1);
+	    irt.addSub(irt1);
+	    // Right sub-tree
+	    ast2 = (CommonTree)ast.getChild(1);
+	    expression(ast2, irt2);
+	    irt.addSub(irt2);
+	}
     }
   }
 
