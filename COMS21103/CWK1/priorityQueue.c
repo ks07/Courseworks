@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 // A binary min-heap implementation of a priority queue, backed by an array.
-// We will treat the heap as starting from index 1, to simplify the maths!
+// We will treat the heap as starting from index 1, to simplify the maths when moving around.
 // heap[0] will thus be spare, we can use it's 'pos' to store heapSize.
 
 // Replace small functions with preprocessor macros. If compiler optimisations were turned on,
@@ -61,6 +61,7 @@ void printHeap(Vertex *arr[], int lim) {
   printf("\n");
 }
 
+// Swaps two elements in the queue.
 void swapEle(Vertex *heap[], int a, int b) {
   Vertex *tmp = heap[a];
   heap[a] = heap[b];
@@ -70,6 +71,7 @@ void swapEle(Vertex *heap[], int a, int b) {
   heap[b]->qPos = b;
 }
 
+// Performs the heapify operation, 'fixes' the heap.
 void heapify(Vertex *heap[], int i) {
   int smallest;
 
@@ -103,6 +105,7 @@ void buildHeap(Vertex *arr[], int len) {
   }
 }
 
+// Updates the key of the given node to a lower value, calling heapify to fix resultant heap.
 void decreaseKey(Vertex *heap[], int node, int k) {
   if (k > heap[node]->key) {
     printf("ERROR: decreaseKey called with larger key value!\n");
@@ -115,8 +118,8 @@ void decreaseKey(Vertex *heap[], int node, int k) {
   }
 }
 
+// Inserts new node into the heap.
 void insert(Vertex *heap[], Vertex *data, int key) {
-  // TODO: RESIZE ARRAY
   heapSizeSet(heap, heapSize(heap)+1);
   int heapsize = heapSize(heap);
   heap[heapsize] = data;
@@ -125,6 +128,7 @@ void insert(Vertex *heap[], Vertex *data, int key) {
   decreaseKey(heap, heapsize, key);
 }
 
+// Extracts the highest priority element.
 Vertex *extractMin(Vertex *heap[]) {
   Vertex *min;
 
