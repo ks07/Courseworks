@@ -1,0 +1,17 @@
+antlr3=/usr/local/antlr3
+export CLASSPATH=.:$antlr3/antlr-3.2.jar
+if test -z "$1"
+then
+  echo CS USAGE: antlr3 t.g, then antlr3 *.java, then antlr3 Main
+  java org.antlr.Tool "$@"
+else case "$1" in
+  *.java)
+    javac "$@"
+    ;;
+  *.g)
+    java org.antlr.Tool "$@"
+    ;;
+  *)
+    java "$@"
+    ;;
+esac fi
