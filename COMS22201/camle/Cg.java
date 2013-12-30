@@ -47,8 +47,18 @@ public class Cg
       String t = irt.getSub(0).getOp();
       result = Reg.newReg();
       emit(o, "MOVIR "+result+","+t);
-    }
-    else {
+    } else if (irt.getOp().equals("ADDR")) {
+	if (irt.getSub(1).getOp() == null) {
+	    String reg = expression(irt.getSub(0), o);
+	    result = Reg.newReg();
+	    emit(o, "ADDR " + result + ",R0," + reg);
+	} else {
+	    String reg1 = expression(irt.getSub(0), o);
+	    String reg2 = expression(irt.getSub(1), o);
+	    result = Reg.newReg();
+	    emit(o, "ADDR " + result + "," + reg1 + "," + reg2);
+	}
+    } else {
       error(irt.getOp());
     }
     return result;  // Return name of the register holding expression's value
