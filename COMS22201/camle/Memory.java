@@ -1,22 +1,60 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.io.*;
 
 public class Memory {
 
-    static int stringID = 0;
+    private static int stringID = 0;
+    // We could use a LinkedHashMap here to combine id and address based access.
+    // Problem is, being based on a LinkedList means index based access is inefficient.
+    // Let's just do it ourselves.
+    static HashMap<String, Integer> memoryLookup = new HashMap<String, Integer>();
     static ArrayList<Byte> memory = new ArrayList<Byte>();
 
     static public int allocateString(String text)
     {
 	int id = stringID++; // Store a string with a unique identifier, per string and per byte.
-	int subId = 0;
 	int addr = memory.size();
 	int size = text.length();
-	for (int i=0; i<size; i++) {
-	    memory.add(new Byte(id, subId++, text.charAt(i)));
+
+	// Only store the address of the first char of the string in lookup. Pointless?
+	Byte nextC = new Byte(id, text.charAt(0));
+	memoryLookup.put(nextC.getName(), addr);
+	memory.add(nextC);
+	
+	for (int i=1; i<size; i++) {
+	    nextC = new Byte(id, text.charAt(i));
+	    memory.add(nextC);
 	}
-	memory.add(new Byte(id, subId++, 0));
+	nextC = new Byte(id, 0);
+	memory.add(nextC);
+	// Make sure we end on 4 byte boundaries, as MEM loads from these points only.
+	for (int i = (size + 1) % 4; i > 0; i--) {
+	    System.out.println("Padding string " + id +  " at " + memory.size());
+	    memory.add(new Byte(id, 0));
+	}
 	return addr;
+    }
+
+    // Allocate the next 4 byte chunk for a variable. Zero contents.
+    static public int alloc(String id) {
+	// Check if this named value exists already.
+	Integer addr = memoryLookup.get(id);
+	if (addr == null) {
+	    // New value.
+	    addr = memory.size();
+	    int size = 4; // Reals are 4 bytes.
+	    memoryLookup.put(id, addr);
+	    for (int i = 0; i < size; i++) {
+		memory.add(new Byte(id, 0));
+	    }
+	}
+
+	return addr.intValue();
+    }
+
+    public static int lookup(String id) {
+	return memoryLookup.get(id); //TODO: Error messages if not present?
     }
 
     static public void dumpData(PrintStream o)
@@ -44,8 +82,8 @@ class Byte {
     int contents;
 
     // Construct a Byte that forms a string.
-    Byte(int sId, int bId, int c) {
-	varname = sId+"-"+bId; // Use a special name for strings, based on IDs.
+    Byte(int sId, int c) {
+	varname = sId+"_STRING"; // Use a special name for strings, based on IDs.
 	contents = c;
     }
 
@@ -66,5 +104,5 @@ class Byte {
     int getContents()
     {
 	return contents;
-    }
+    }    
 }
