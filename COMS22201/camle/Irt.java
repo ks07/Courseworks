@@ -22,46 +22,47 @@ import org.antlr.runtime.tree.*;
 
 public class Irt
 {
-    // The code below is generated automatically from the ".tokens" file of the 
-    // ANTLR syntax analysis, using the TokenConv program.
-    //
-    // CAMLE TOKENS BEGIN
-    public static final String[] tokenNames = new String[] {
-	"NONE", "NONE", "NONE", "NONE", "BEGIN", "END", "WRITE", "WRITELN", "ARRAY", "ELSE", "IF", "READ", "REPEAT", "UNTIL", "SEMICOLON", "OPENPAREN", "CLOSEPAREN", "ASSIGN", "ADD", "SUB", "FOP", "OPENSQ", "CLOSESQ", "COMMA", "INT", "EXPONENT", "REALNUM", "STRING", "COMMENT", "WS", "LT", "LTE", "GT", "GTE", "EQ", "NEQ", "IDENTIFIER"};
-    public static final int CLOSEPAREN=16;
-    public static final int EXPONENT=25;
-    public static final int LT=30;
-    public static final int GTE=33;
-    public static final int OPENSQ=21;
-    public static final int ELSE=9;
-    public static final int SUB=19;
-    public static final int INT=24;
-    public static final int SEMICOLON=14;
-    public static final int LTE=31;
-    public static final int WRITE=6;
-    public static final int FOP=20;
-    public static final int IF=10;
-    public static final int NEQ=35;
-    public static final int WS=29;
-    public static final int WRITELN=7;
-    public static final int READ=11;
-    public static final int COMMA=23;
-    public static final int UNTIL=13;
-    public static final int IDENTIFIER=36;
-    public static final int BEGIN=4;
-    public static final int REALNUM=26;
-    public static final int ASSIGN=17;
-    public static final int CLOSESQ=22;
-    public static final int GT=32;
-    public static final int REPEAT=12;
-    public static final int OPENPAREN=15;
-    public static final int EQ=34;
-    public static final int END=5;
-    public static final int COMMENT=28;
-    public static final int ARRAY=8;
-    public static final int STRING=27;
-    public static final int ADD=18;
-    // CAMLE TOKENS END
+// The code below is generated automatically from the ".tokens" file of the 
+// ANTLR syntax analysis, using the TokenConv program.
+//
+// CAMLE TOKENS BEGIN
+  public static final String[] tokenNames = new String[] {
+"NONE", "NONE", "NONE", "NONE", "BEGIN", "END", "WRITE", "WRITELN", "ARRAY", "ELSE", "IF", "READ", "REPEAT", "UNTIL", "SEMICOLON", "OPENPAREN", "CLOSEPAREN", "ASSIGN", "ADD", "SUB", "MUL", "DIV", "OPENSQ", "CLOSESQ", "COMMA", "INT", "EXPONENT", "REALNUM", "STRING", "COMMENT", "WS", "LT", "LTE", "GT", "GTE", "EQ", "NEQ", "IDENTIFIER"};
+  public static final int CLOSEPAREN=16;
+  public static final int EXPONENT=26;
+  public static final int LT=31;
+  public static final int GTE=34;
+  public static final int OPENSQ=22;
+  public static final int ELSE=9;
+  public static final int SUB=19;
+  public static final int INT=25;
+  public static final int SEMICOLON=14;
+  public static final int LTE=32;
+  public static final int MUL=20;
+  public static final int WRITE=6;
+  public static final int IF=10;
+  public static final int NEQ=36;
+  public static final int WS=30;
+  public static final int WRITELN=7;
+  public static final int READ=11;
+  public static final int COMMA=24;
+  public static final int UNTIL=13;
+  public static final int IDENTIFIER=37;
+  public static final int BEGIN=4;
+  public static final int REALNUM=27;
+  public static final int ASSIGN=17;
+  public static final int CLOSESQ=23;
+  public static final int GT=33;
+  public static final int REPEAT=12;
+  public static final int OPENPAREN=15;
+  public static final int DIV=21;
+  public static final int EQ=35;
+  public static final int END=5;
+  public static final int COMMENT=29;
+  public static final int ARRAY=8;
+  public static final int STRING=28;
+  public static final int ADD=18;
+// CAMLE TOKENS END
 
     public static IRTree convert(CommonTree ast)
     {
