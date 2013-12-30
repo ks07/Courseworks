@@ -23,7 +23,7 @@ program :
   ;
 
 declaration :
-    IDENTIFIER OPENSQ! constant CLOSESQ!
+    IDENTIFIER^ OPENSQ! constant CLOSESQ!
     ;
 
 compoundstatement :
@@ -36,22 +36,25 @@ statement :
     WRITE^ OPENPAREN! ( expression | string ) CLOSEPAREN!
   | WRITELN
   | READ^ OPENPAREN! variable CLOSEPAREN!
-  | IF^ boolcmp compoundstatement ( ELSE compoundstatement )?
-  | REPEAT^ compoundstatement UNTIL boolcmp
+  | IF^ boolcmp compoundstatement ( ELSE! compoundstatement )?
+  | REPEAT^ compoundstatement UNTIL! boolcmp
   | variable ASSIGN^ expression
   ;
 
-relation :
-        ( GT | LT | GTE | LTE | EQ | NEQ )^
+aop :
+        ( ADD | SUB )
     ;
 
+relation :
+        ( GT | LT | GTE | LTE | EQ | NEQ )
+    ;
 
 expression:
-    unaryop term ( AOP^ term )*
+        ((( ADD | SUB )^ )? term ) (( ADD | SUB )^ term )*
   ;
 
 unaryop :
-        ( AOP^ )?
+        ( aop^ )?
     ;
 
 term: 
@@ -79,5 +82,5 @@ string
   ;
 
 boolcmp :
-    expression relation expression;
+    expression relation^ expression;
 
