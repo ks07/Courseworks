@@ -50,7 +50,7 @@ public class Cg
 	    emit(o, "MOVIR "+result+","+t);
 	    break;
 	case "ADDR":
-	    if (irt.getSub(1).getOp() == null) {
+	    if (irt.subCount() < 2) {
 		String reg = expression(irt.getSub(0), o);
 		result = Reg.newReg();
 		emit(o, "ADDR " + result + ",R0," + reg);
@@ -62,7 +62,8 @@ public class Cg
 	    }
 	    break;
 	case "SUBR":
-	    if (irt.getSub(1).getOp() == null) {
+	    System.out.println(irt);
+	    if (irt.subCount() < 2) {
 		String reg = expression(irt.getSub(0), o);
 		result = Reg.newReg();
 		emit(o, "SUBR " + result + ",R0," + reg);

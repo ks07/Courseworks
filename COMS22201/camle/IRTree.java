@@ -83,6 +83,10 @@ class IRTree
     return sub.get(i);
   }
 
+    public int subCount() {
+	return sub.size();
+    }
+
 // toString
 
   public String toString()

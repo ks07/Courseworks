@@ -178,6 +178,7 @@ public class Irt
 	case ADD:
 	    irt.setOp("ADDR");
 	    // Unary operator, i.e. sign, so only 1 child
+	    System.out.println("children: " + ast.getChild(0) + " : " + ast.getChild(1));
 	    if (ast.getChild(1) == null) {
 		ast1 = (CommonTree)ast.getChild(0);
 		expression(ast1, irt1); // Recurse
