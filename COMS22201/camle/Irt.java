@@ -117,8 +117,9 @@ public class Irt
     // Convert a statement AST to IR tree
     public static void statement(CommonTree ast, IRTree irt)
     {
-	CommonTree ast1;
+	CommonTree ast1, ast2;
 	IRTree irt1 = new IRTree();
+	IRTree irt2;
 	Token t = ast.getToken();
 	int tt = t.getType();
 	if (tt == WRITELN) {
@@ -137,8 +138,36 @@ public class Irt
 		irt.setOp("WRS");
 		irt.addSub(irt1);
 	    }
+	} else if (tt == ASSIGN) {
+	    // Child 0 should be an identifier, 1 should be expression.
+	    // <variable> ':=' <expression>
+	    ast1 = (CommonTree)ast.getChild(0);
+	    ast2 = (CommonTree)ast.getChild(1);
+	    irt.setOp("STORE");
+	    irt2 = new IRTree();
+	    
+	    // Prepare irt1.
+	    variable(ast1, irt1);
+	    expression(ast2, irt2);
+
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
+	} else {
+	    error(tt);
 	}
-	else {
+    }
+
+    // Convert a constant AST to IR tree
+    public static void variable(CommonTree ast, IRTree irt)
+    {
+	Token t = ast.getToken();
+	int tt = t.getType();
+	if (tt == IDENTIFIER) {
+	    String varname = t.getText();
+	    int addr = Memory.alloc(varname);
+	    irt.setOp("MEM");
+	    irt.addSub(new IRTree("CONST", new IRTree(String.valueOf(addr))));
+	} else {
 	    error(tt);
 	}
     }
