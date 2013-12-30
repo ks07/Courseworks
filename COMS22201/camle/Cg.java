@@ -33,10 +33,31 @@ public class Cg
 	else if (irt.getOp().equals("WRR")) {
 	    String e = expression(irt.getSub(0), o);
 	    emit(o, "WRR "+e);
-	}
-	else {
+	} else if (irt.getOp().equals("STORE")) {
+	    String e = expression(irt.getSub(1), o);
+	    String v = variable(irt.getSub(0), o);
+	    emit(o, "STORE " + e + "," + v);
+	} else {
 	    error(irt.getOp());
 	}
+    }
+
+    // Generate code from a variable identifier (in IRTree form)
+    private static String variable(IRTree irt, PrintStream o) {
+	String result = "";
+	switch (irt.getOp()) {
+	case "CONST":
+	    // TODO: Array support
+	    String addr = irt.getSub(0).getOp();
+	    result = Reg.newReg();
+	    emit(o, "MOVIR " + result + "," + addr);
+	    result = result + ",0"; // Variable only, no array index.
+	    break;
+	default:
+	    error(irt.getOp());
+	    break;
+	}
+	return result; // Return register contaning base addr and offset if applicable.
     }
 
     // Generate code from an expression (in IRTree form)
