@@ -62,7 +62,7 @@ public class Cg
 	    }
 	    break;
 	case "SUBR":
-	    System.out.println(irt);
+	    //System.out.println(irt);
 	    if (irt.subCount() < 2) {
 		String reg = expression(irt.getSub(0), o);
 		result = Reg.newReg();
@@ -72,6 +72,22 @@ public class Cg
 		String reg2 = expression(irt.getSub(1), o);
 		result = Reg.newReg();
 		emit(o, "SUBR " + result + "," + reg1 + "," + reg2);
+	    }
+	    break;
+	case "MULR":
+	    {
+	    String reg1 = expression(irt.getSub(0), o);
+	    String reg2 = expression(irt.getSub(1), o);
+	    result = Reg.newReg();
+	    emit(o, "MULR " + result + "," + reg1 + "," + reg2);
+	    }
+	    break;
+	case "DIVR":
+	    {
+	    String reg1 = expression(irt.getSub(0), o);
+	    String reg2 = expression(irt.getSub(1), o);
+	    result = Reg.newReg();
+	    emit(o, "DIVR " + result + "," + reg1 + "," + reg2);
 	    }
 	    break;
 	default:

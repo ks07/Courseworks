@@ -213,6 +213,26 @@ public class Irt
 		irt.addSub(irt2);
 	    }
 	    break;
+	case MUL:
+	    irt.setOp("MULR");
+	    // No unary operations here.
+	    ast1 = (CommonTree)ast.getChild(0);
+	    expression(ast1, irt1);
+	    irt.addSub(irt1);
+	    ast2 = (CommonTree)ast.getChild(1);
+	    expression(ast2, irt2);
+	    irt.addSub(irt2);
+	    break;
+	case DIV:
+	    irt.setOp("DIVR");
+	    // No unary operations here.
+	    ast1 = (CommonTree)ast.getChild(0);
+	    expression(ast1, irt1);
+	    irt.addSub(irt1);
+	    ast2 = (CommonTree)ast.getChild(1);
+	    expression(ast2, irt2);
+	    irt.addSub(irt2);
+	    break;
 	default:
 	    System.out.println("NOT IMPLEMENTED EXPRESSION"); // TODO: Delete me
 	    error(tt);
