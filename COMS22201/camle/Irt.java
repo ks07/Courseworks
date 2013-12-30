@@ -166,7 +166,7 @@ public class Irt
 	    String varname = t.getText();
 	    int addr = Memory.alloc(varname);
 	    irt.setOp("MEM");
-	    irt.addSub(new IRTree("CONST", new IRTree(String.valueOf(addr))));
+	    irt.addSub(new IRTree(String.valueOf(addr))); // TODO: names here, addr in Cg?
 	} else {
 	    error(tt);
 	}

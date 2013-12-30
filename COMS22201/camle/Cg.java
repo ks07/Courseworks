@@ -46,7 +46,7 @@ public class Cg
     private static String variable(IRTree irt, PrintStream o) {
 	String result = "";
 	switch (irt.getOp()) {
-	case "CONST":
+	case "MEM":
 	    // TODO: Array support
 	    String addr = irt.getSub(0).getOp();
 	    result = Reg.newReg();
