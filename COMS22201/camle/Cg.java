@@ -70,6 +70,13 @@ public class Cg
 	    result = Reg.newReg();
 	    emit(o, "MOVIR "+result+","+t);
 	    break;
+	case "MEM":
+	    // TODO: Array support
+	    String addr = irt.getSub(0).getOp() + ".0"; // Need to make float from addr
+	    result = Reg.newReg();
+	    emit(o, "MOVIR " + result + "," + addr);
+	    result = result + ",0"; // Variable only, no array index.
+	    break;
 	case "ADDR":
 	    if (irt.subCount() < 2) {
 		String reg = expression(irt.getSub(0), o);

@@ -145,8 +145,8 @@ public class Irt
 	    ast2 = (CommonTree)ast.getChild(1);
 	    irt.setOp("STORE");
 	    irt2 = new IRTree();
-	    
-	    // Prepare irt1.
+
+	    // Prepare irt1/2.
 	    variable(ast1, irt1);
 	    expression(ast2, irt2);
 
@@ -204,6 +204,10 @@ public class Irt
 	    constant(ast, irt1);
 	    irt.setOp("CONST");
 	    irt.addSub(irt1);
+	    break;
+	case IDENTIFIER:
+	    // Variable
+	    variable(ast, irt); // TODO: We should really change this so we use another level, like WRS
 	    break;
 	case ADD:
 	    irt.setOp("ADDR");
