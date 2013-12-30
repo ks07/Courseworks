@@ -169,11 +169,13 @@ public class Irt
 	IRTree irt2 = new IRTree();
 	Token t = ast.getToken();
 	int tt = t.getType();
-	if (tt == REALNUM) {
+	switch (tt) {
+	case REALNUM:
 	    constant(ast, irt1);
 	    irt.setOp("CONST");
 	    irt.addSub(irt1);
-	} else if (tt == ADD) {
+	    break;
+	case ADD:
 	    irt.setOp("ADDR");
 	    // Unary operator, i.e. sign, so only 1 child
 	    if (ast.getChild(1) == null) {
@@ -190,6 +192,29 @@ public class Irt
 		expression(ast2, irt2);
 		irt.addSub(irt2);
 	    }
+	    break;
+	case SUB:
+	    irt.setOp("SUBR");
+	    // Unary operator, i.e. sign, so only 1 child
+	    if (ast.getChild(1) == null) {
+		ast1 = (CommonTree)ast.getChild(0);
+		expression(ast1, irt1); // Recurse
+		irt.addSub(irt1);
+	    } else {
+		// Left sub-tree
+		ast1 = (CommonTree)ast.getChild(0);
+		expression(ast1, irt1);
+		irt.addSub(irt1);
+		// Right sub-tree
+		ast2 = (CommonTree)ast.getChild(1);
+		expression(ast2, irt2);
+		irt.addSub(irt2);
+	    }
+	    break;
+	default:
+	    System.out.println("NOT IMPLEMENTED EXPRESSION"); // TODO: Delete me
+	    error(tt);
+	    break;
 	}
     }
 

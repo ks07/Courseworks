@@ -43,11 +43,13 @@ public class Cg
     private static String expression(IRTree irt, PrintStream o)
     {
 	String result = "";
-	if (irt.getOp().equals("CONST")) {
+	switch (irt.getOp()) {
+	case "CONST":
 	    String t = irt.getSub(0).getOp();
 	    result = Reg.newReg();
 	    emit(o, "MOVIR "+result+","+t);
-	} else if (irt.getOp().equals("ADDR")) {
+	    break;
+	case "ADDR":
 	    if (irt.getSub(1).getOp() == null) {
 		String reg = expression(irt.getSub(0), o);
 		result = Reg.newReg();
@@ -58,8 +60,22 @@ public class Cg
 		result = Reg.newReg();
 		emit(o, "ADDR " + result + "," + reg1 + "," + reg2);
 	    }
-	} else {
+	    break;
+	case "SUBR":
+	    if (irt.getSub(1).getOp() == null) {
+		String reg = expression(irt.getSub(0), o);
+		result = Reg.newReg();
+		emit(o, "SUBR " + result + ",R0," + reg);
+	    } else {
+		String reg1 = expression(irt.getSub(0), o);
+		String reg2 = expression(irt.getSub(1), o);
+		result = Reg.newReg();
+		emit(o, "SUBR " + result + "," + reg1 + "," + reg2);
+	    }
+	    break;
+	default:
 	    error(irt.getOp());
+	    break;
 	}
 	return result;  // Return name of the register holding expression's value
     }
