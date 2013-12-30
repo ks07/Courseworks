@@ -41,9 +41,9 @@ statement :
   | variable ASSIGN^ expression
   ;
 
-aop :
-        ( ADD | SUB )
-    ;
+//aop :
+//        ( ADD | SUB )
+//    ;
 
 relation :
         ( GT | LT | GTE | LTE | EQ | NEQ )
@@ -53,12 +53,12 @@ expression:
         ((( ADD | SUB )^ )? term ) (( ADD | SUB )^ term )*
   ;
 
-unaryop :
-        ( aop^ )?
-    ;
+//unaryop :
+//        ( aop^ )?
+//    ;
 
 term: 
-    factor ( FOP^ factor )*
+    factor ( ( MUL | DIV )^ factor )*
     ;
 
 factor :
