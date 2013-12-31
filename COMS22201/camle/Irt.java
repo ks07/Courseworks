@@ -154,6 +154,12 @@ public class Irt
 	    irt.addSub(irt1);
 	    irt.addSub(irt2);
 	    break;
+	case READ:
+	    ast1 = (CommonTree)ast.getChild(0);
+	    irt.setOp("READ");
+	    variable(ast1, irt1);
+	    irt.addSub(irt1);
+	    break;
 	default:
 	    error(tt);
 	    break;
