@@ -160,13 +160,35 @@ public class Irt
 	    variable(ast1, irt1);
 	    irt.addSub(irt1);
 	    break;
+	case IF:
+	    ast1 = (CommonTree)ast.getChild(0);
+	    ast2 = (CommonTree)ast.getChild(1);
+	    irt.setOp("CJUMP");
+	    condition(ast1, irt1);
+	    System.out.println(ast2);
+	    break;
 	default:
 	    error(tt);
 	    break;
 	}
     }
 
-    // Convert a constant AST to IR tree
+    // Convert a condition AST to IR tree
+    public static void condition(CommonTree ast, IRTree irt) {
+	Token t = ast.getToken();
+	error(t.getType());
+	switch (t.getType()) {
+	case LT:
+	    break;
+	case LTE:
+	    break;
+	default:
+	    error(t.getType());
+	    break;
+	}
+    }
+
+    // Convert an identifier AST to IR tree
     public static void variable(CommonTree ast, IRTree irt)
     {
 	Token t = ast.getToken();
