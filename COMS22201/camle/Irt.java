@@ -163,9 +163,12 @@ public class Irt
 	case IF:
 	    ast1 = (CommonTree)ast.getChild(0);
 	    ast2 = (CommonTree)ast.getChild(1);
+	    irt2 = new IRTree();
 	    irt.setOp("CJUMP");
 	    condition(ast1, irt1);
-	    System.out.println(ast2);
+	    statements(ast2, irt2); // Recurse right back to compoundstatement handler
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
 	    break;
 	default:
 	    error(tt);
@@ -176,16 +179,37 @@ public class Irt
     // Convert a condition AST to IR tree
     public static void condition(CommonTree ast, IRTree irt) {
 	Token t = ast.getToken();
-	error(t.getType());
+	CommonTree ast1 = (CommonTree)ast.getChild(0);
+	CommonTree ast2 = (CommonTree)ast.getChild(1);
+	IRTree irt1 = new IRTree();
+	IRTree irt2 = new IRTree();
+        expression(ast1, irt1);
+	expression(ast2, irt2);
 	switch (t.getType()) {
 	case LT:
+	    irt.setOp("LT");
 	    break;
 	case LTE:
+	    irt.setOp("LE");
+	    break;
+	case GT:
+	    irt.setOp("GT");
+	    break;
+	case GTE:
+	    irt.setOp("GE");
+	    break;
+	case EQ:
+	    irt.setOp("EQ");
+	    break;
+	case NEQ:
+	    irt.setOp("NE");
 	    break;
 	default:
 	    error(t.getType());
 	    break;
 	}
+	irt.addSub(irt1);
+	irt.addSub(irt2);
     }
 
     // Convert an identifier AST to IR tree
