@@ -53,8 +53,9 @@ public class Memory {
 	return addr.intValue();
     }
 
-    public static int lookup(String id) {
-	return memoryLookup.get(id); //TODO: Error messages if not present?
+    public static String lookup(String id) {
+	// Operand must be formatted as a double.
+	return memoryLookup.get(id) + ".0"; //TODO: Error messages if not present?
     }
 
     static public void dumpData(PrintStream o)

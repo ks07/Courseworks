@@ -91,8 +91,7 @@ public class Irt
 		CommonTree ast1 = (CommonTree)ast.getChild(0);
 		statements1(ast, 0, n-1, irt);
 	    }
-	}
-	else {
+	} else {
 	    error(tt);
 	}
     }
@@ -166,7 +165,7 @@ public class Irt
 	    String varname = t.getText();
 	    int addr = Memory.alloc(varname);
 	    irt.setOp("MEM");
-	    irt.addSub(new IRTree(String.valueOf(addr))); // TODO: names here, addr in Cg?
+	    irt.addSub(new IRTree(varname)); // Don't store addr here, instead use name
 	} else {
 	    error(tt);
 	}
@@ -207,7 +206,12 @@ public class Irt
 	    break;
 	case IDENTIFIER:
 	    // Variable
-	    variable(ast, irt); // TODO: We should really change this so we use another level, like WRS
+	    System.out.println(ast);
+	    ast1 = (CommonTree)ast.getChild(0);
+	    System.out.println(ast1);
+	    //variable(ast1, irt1);
+	    irt.setOp("MEM");
+	    irt.addSub(new IRTree(t.getText()));
 	    break;
 	case ADD:
 	    irt.setOp("ADDR");

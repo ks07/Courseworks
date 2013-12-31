@@ -48,7 +48,7 @@ public class Cg
 	switch (irt.getOp()) {
 	case "MEM":
 	    // TODO: Array support
-	    String addr = irt.getSub(0).getOp() + ".0"; // Need to make float from addr
+	    String addr = Memory.lookup(irt.getSub(0).getOp());
 	    result = Reg.newReg();
 	    emit(o, "MOVIR " + result + "," + addr);
 	    result = result + ",0"; // Variable only, no array index.
@@ -72,10 +72,11 @@ public class Cg
 	    break;
 	case "MEM":
 	    // TODO: Array support
-	    String addr = irt.getSub(0).getOp() + ".0"; // Need to make float from addr
+	    String addr = Memory.lookup(irt.getSub(0).getOp()); // Need to make float from addr
 	    result = Reg.newReg();
 	    emit(o, "MOVIR " + result + "," + addr);
-	    result = result + ",0"; // Variable only, no array index.
+	    // Re-use the address register for the value. Gets in the way of better optimisation?
+	    emit(o, "LOAD " + result + "," + result + ",0");
 	    break;
 	case "ADDR":
 	    if (irt.subCount() < 2) {
