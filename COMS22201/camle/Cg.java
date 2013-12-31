@@ -36,10 +36,12 @@ public class Cg
 	} else if (irt.getOp().equals("STORE")) {
 	    String e = expression(irt.getSub(1), o);
 	    String v = variable(irt.getSub(0), o);
-	    emit(o, "STORE " + e + "," + v);
+	    emit(o, "STORE " + e + "," + v + ",0");
 	} else if (irt.getOp().equals("READ")) {
 	    String v = variable(irt.getSub(0), o);
-	    emit(o, "RDR " + v);
+	    String r = Reg.newReg(); // Reg to read into.
+	    emit(o, "RDR " + r); // Read into r.
+	    emit(o, "STORE " + r + "," + v + ",0");
 	} else {
 	    error(irt.getOp());
 	}
@@ -54,7 +56,7 @@ public class Cg
 	    String addr = Memory.lookup(irt.getSub(0).getOp());
 	    result = Reg.newReg();
 	    emit(o, "MOVIR " + result + "," + addr);
-	    result = result + ",0"; // Variable only, no array index.
+	    result = result;
 	    break;
 	default:
 	    error(irt.getOp());
