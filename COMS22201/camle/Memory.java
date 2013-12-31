@@ -28,10 +28,14 @@ public class Memory {
 	}
 	nextC = new Byte(id, 0);
 	memory.add(nextC);
-	// Make sure we end on 4 byte boundaries, as MEM loads from these points only.
-	for (int i = (size + 1) % 4; i > 0; i--) {
-	    System.out.println("Padding string " + id +  " at " + memory.size());
-	    memory.add(new Byte(id, 0));
+	// Make sure we end on 4 byte boundaries, as the machine can only access from these points.
+	int padding = 4 - (memory.size() % 4);
+	if (padding != 4) {
+	    // When padding == 4, none is required.
+	    for (; padding > 0; padding--) {
+		System.out.println("Padding string " + id +  " at " + memory.size());
+		memory.add(new Byte(id, 0));
+	    }
 	}
 	return addr;
     }
