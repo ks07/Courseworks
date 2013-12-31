@@ -121,12 +121,13 @@ public class Irt
 	IRTree irt2;
 	Token t = ast.getToken();
 	int tt = t.getType();
-	if (tt == WRITELN) {
+	switch (tt) {
+	case WRITELN:
 	    String a = String.valueOf(Memory.allocateString("\n"));
 	    irt.setOp("WRS");
 	    irt.addSub(new IRTree("MEM", new IRTree("CONST", new IRTree(a))));
-	}
-	else if (tt == WRITE) {
+	    break;
+	case WRITE:
 	    ast1 = (CommonTree)ast.getChild(0);
 	    String type = arg(ast1, irt1);
 	    if (type.equals("real")) {
@@ -137,7 +138,8 @@ public class Irt
 		irt.setOp("WRS");
 		irt.addSub(irt1);
 	    }
-	} else if (tt == ASSIGN) {
+	    break;
+	case ASSIGN:
 	    // Child 0 should be an identifier, 1 should be expression.
 	    // <variable> ':=' <expression>
 	    ast1 = (CommonTree)ast.getChild(0);
@@ -151,8 +153,10 @@ public class Irt
 
 	    irt.addSub(irt1);
 	    irt.addSub(irt2);
-	} else {
+	    break;
+	default:
 	    error(tt);
+	    break;
 	}
     }
 
