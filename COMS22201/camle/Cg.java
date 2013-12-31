@@ -37,6 +37,9 @@ public class Cg
 	    String e = expression(irt.getSub(1), o);
 	    String v = variable(irt.getSub(0), o);
 	    emit(o, "STORE " + e + "," + v);
+	} else if (irt.getOp().equals("READ")) {
+	    String v = variable(irt.getSub(0), o);
+	    emit(o, "RDR " + v);
 	} else {
 	    error(irt.getOp());
 	}
