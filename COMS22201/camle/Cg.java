@@ -9,6 +9,8 @@ import org.antlr.runtime.tree.*;
 
 public class Cg
 {
+    private static int label = 0;
+
     // Generate code from a program (in IRTree form)
     public static void program(IRTree irt, PrintStream o)
     {
@@ -42,9 +44,40 @@ public class Cg
 	    String r = Reg.newReg(); // Reg to read into.
 	    emit(o, "RDR " + r); // Read into r.
 	    emit(o, "STORE " + r + "," + v + ",0");
+	} else if (irt.getOp().equals("CJUMP")) {
+	    String trueLbl = cond(irt.getSub(0), o);
+	    // Create the jump if false.
+	    String falseLbl = "f" + label;
+	    emit(o, "JMP " + falseLbl);
+	    emit(o, trueLbl + ":"); // Mark this as the start of the true branch.
+	    statement(irt.getSub(1), o); // Work down the true branch.
+	    String endLbl = "e" + label++;
+	    emit(o, "JMP " + endLbl); // Jump at the end of the true block to the end of the if.
+	    emit(o, falseLbl + ":"); // Mark this as the start of the false branch.
+	    statement(irt.getSub(1), o); // False branch.
+	    emit(o, endLbl + ":"); // Mark the end of the if.
 	} else {
 	    error(irt.getOp());
 	}
+    }
+
+    // Generate code from a condition. Returns the label targeted if the condition is true.
+    private static String cond(IRTree irt, PrintStream o) {
+	String trueLbl = "t" + label;
+	String x = expression(irt.getSub(0), o);
+	String y = expression(irt.getSub(1), o);
+	switch(irt.getOp()) {
+	case "GE":
+	    // if x >= Y then  t = x - y; t >= 0
+	    String resReg = Reg.newReg();
+	    emit(o, "SUBR " + resReg + "," + x + "," + y);
+	    emit(o, "BGEZR " + resReg + "," + trueLbl);
+	    break;
+	default:
+	    error(irt.getOp());
+	    break;
+	}
+	return trueLbl;
     }
 
     // Generate code from a variable identifier (in IRTree form)
