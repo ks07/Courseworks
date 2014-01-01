@@ -11,6 +11,6 @@ else case "$1" in
     java org.antlr.Tool "$@"
     ;;
   *)
-    java "$@"
+    java -ea "$@"
     ;;
 esac fi

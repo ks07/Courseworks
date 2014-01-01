@@ -17,6 +17,8 @@ public class Memory {
 	int addr = memory.size();
 	int size = text.length();
 
+	assert (addr % 4) == 0;
+
 	// Only store the address of the first char of the string in lookup. Pointless?
 	Byte nextC = new Byte(id, text.charAt(0));
 	memoryLookup.put(nextC.getName(), addr);
@@ -33,7 +35,6 @@ public class Memory {
 	if (padding != 4) {
 	    // When padding == 4, none is required.
 	    for (; padding > 0; padding--) {
-		System.out.println("Padding string " + id +  " at " + memory.size());
 		memory.add(new Byte(id, 0));
 	    }
 	}
@@ -47,6 +48,7 @@ public class Memory {
 	if (addr == null) {
 	    // New value.
 	    addr = memory.size();
+	    assert (addr % 4) == 0;
 	    int size = 4; // Reals are 4 bytes.
 	    memoryLookup.put(id, addr);
 	    for (int i = 0; i < size; i++) {
