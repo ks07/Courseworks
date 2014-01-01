@@ -1,0 +1,5 @@
+{test7: program to test conditionals.}
+{Already tested: write statements and constants.}
+begin
+  if 1.0 < 2.0 begin write(1.0); end else begin write(2.0); end
+end
