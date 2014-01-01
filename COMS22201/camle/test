@@ -1,0 +1,11 @@
+#!/bin/bash
+FILE="test"$1
+
+if [ -f "${FILE}.le" ]
+then
+    echo "Running ${FILE}.le"
+    if antlr3 camle "${FILE}.le"
+	then
+	./assmule "${FILE}.ass"
+    fi 
+fi
