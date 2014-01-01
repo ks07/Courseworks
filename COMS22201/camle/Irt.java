@@ -116,9 +116,9 @@ public class Irt
     // Convert a statement AST to IR tree
     public static void statement(CommonTree ast, IRTree irt)
     {
-	CommonTree ast1, ast2;
+	CommonTree ast1, ast2, ast3;
 	IRTree irt1 = new IRTree();
-	IRTree irt2;
+	IRTree irt2, irt3;
 	Token t = ast.getToken();
 	int tt = t.getType();
 	switch (tt) {
@@ -162,13 +162,22 @@ public class Irt
 	    break;
 	case IF:
 	    ast1 = (CommonTree)ast.getChild(0);
-	    ast2 = (CommonTree)ast.getChild(1);
+	    ast2 = (CommonTree)ast.getChild(1); // TRUE AST
 	    irt2 = new IRTree();
 	    irt.setOp("CJUMP");
 	    condition(ast1, irt1);
-	    statements(ast2, irt2); // Recurse right back to compoundstatement handler
+	    statements(ast2, irt2); // Use compoundstatement on TRUE branch
+
 	    irt.addSub(irt1);
 	    irt.addSub(irt2);
+
+	    // Determine if this is an if...else statement
+	    ast3 = (CommonTree)ast.getChild(2);
+	    if (ast3 != null) {
+		irt3 = new IRTree();
+		statements(ast3, irt3); // ELSE branch
+		irt.addSub(irt3);
+	    }
 	    break;
 	default:
 	    error(tt);
