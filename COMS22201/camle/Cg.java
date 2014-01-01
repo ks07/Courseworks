@@ -54,7 +54,7 @@ public class Cg
 	    String endLbl = "e" + label++;
 	    emit(o, "JMP " + endLbl); // Jump at the end of the true block to the end of the if.
 	    emit(o, falseLbl + ":"); // Mark this as the start of the false branch.
-	    statement(irt.getSub(1), o); // False branch.
+	    statement(irt.getSub(2), o); // False branch.
 	    emit(o, endLbl + ":"); // Mark the end of the if.
 	} else {
 	    error(irt.getOp());
