@@ -271,17 +271,13 @@ public class Irt
 	    break;
 	case IDENTIFIER:
 	    // Variable
-	    System.out.println(ast);
 	    ast1 = (CommonTree)ast.getChild(0);
-	    System.out.println(ast1);
-	    //variable(ast1, irt1);
 	    irt.setOp("MEM");
 	    irt.addSub(new IRTree(t.getText()));
 	    break;
 	case ADD:
 	    irt.setOp("ADDR");
 	    // Unary operator, i.e. sign, so only 1 child
-	    System.out.println("children: " + ast.getChild(0) + " : " + ast.getChild(1));
 	    if (ast.getChild(1) == null) {
 		ast1 = (CommonTree)ast.getChild(0);
 		expression(ast1, irt1); // Recurse
@@ -336,7 +332,6 @@ public class Irt
 	    irt.addSub(irt2);
 	    break;
 	default:
-	    System.out.println("NOT IMPLEMENTED EXPRESSION"); // TODO: Delete me
 	    error(tt);
 	    break;
 	}
