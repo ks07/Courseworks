@@ -66,11 +66,36 @@ public class Cg
 	String trueLbl = "t" + label;
 	String x = expression(irt.getSub(0), o);
 	String y = expression(irt.getSub(1), o);
+	String resReg = Reg.newReg();
 	switch(irt.getOp()) {
 	case "GE":
-	    // if x >= Y then  t = x - y; t >= 0
-	    String resReg = Reg.newReg();
+	    // if x >= y then t = x - y; t >= 0
 	    emit(o, "SUBR " + resReg + "," + x + "," + y);
+	    emit(o, "BGEZR " + resReg + "," + trueLbl);
+	    break;
+	case "LT":
+	    // if x < y then t = x - y; t < 0
+	    emit(o, "SUBR " + resReg + "," + x + "," + y);
+	    emit(o, "BLTZR " + resReg + "," + trueLbl);
+	    break;
+	case "EQ":
+	    // if x == y then t = x - y; t == 0
+	    emit(o, "SUBR " + resReg + "," + x + "," + y);
+	    emit(o, "BEQZR " + resReg + "," + trueLbl);
+	    break;
+	case "NE":
+	    // x-y != 0
+	    emit(o, "SUBR " + resReg + "," + x + "," + y);
+	    emit(o, "BNEZR " + resReg + "," + trueLbl);
+	    break;
+	case "GT":
+	    // if x > y then t = y - x; t < 0
+	    emit(o, "SUBR " + resReg + "," + y + "," + x);
+	    emit(o, "BLTZR " + resReg + "," + trueLbl);
+	    break;
+	case "LE":
+	    // if x <= y then t = y - x; t >= 0
+	    emit(o, "SUBR " + resReg + "," + y + "," + x);
 	    emit(o, "BGEZR " + resReg + "," + trueLbl);
 	    break;
 	default:
