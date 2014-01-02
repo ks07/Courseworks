@@ -46,6 +46,7 @@ public class Cg
 	    emit(o, "STORE " + r + "," + v + ",0");
 	} else if (irt.getOp().equals("CJUMP")) {
 	    String lbl = String.valueOf(label);
+	    label++;
 	    String trueLbl = "t" + lbl;
 	    cond(trueLbl, irt.getSub(0), o); // Generate condition code that jumps to trueLbl if true.
 	    // Create the jump if false.
