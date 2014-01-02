@@ -18,8 +18,13 @@ options {
 	}
 }
 
+// Want to be able to parse array declarations recursively.
 program :
-        ( ARRAY! declaration^ ( COMMA! declaration^ )* SEMICOLON! )? compoundstatement
+	( ARRAY^ arrays )? compoundstatement
+  ;
+
+arrays :
+	declaration ( COMMA! declaration )* SEMICOLON!
   ;
 
 declaration :
