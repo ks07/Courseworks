@@ -1,0 +1,7 @@
+{test8: program to test loops.}
+{Already tested: write statements and constants.}
+{Note: need to use the "-j" option of assmule to prevent infinite loops.}
+begin
+  i := 1.0;
+  repeat begin write(i); writeln; i := i + 1.0; end until i > 10.0;
+end
