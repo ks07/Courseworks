@@ -327,9 +327,7 @@ public class Irt
 	    break;
 	case IDENTIFIER:
 	    // Variable
-	    ast1 = (CommonTree)ast.getChild(0);
-	    irt.setOp("MEM");
-	    irt.addSub(new IRTree(t.getText()));
+	    variable(ast, irt);
 	    break;
 	case ADD:
 	    irt.setOp("ADDR");
