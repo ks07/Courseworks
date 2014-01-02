@@ -179,6 +179,17 @@ public class Irt
 		irt.addSub(irt3);
 	    }
 	    break;
+	case REPEAT:
+	    ast1 = (CommonTree)ast.getChild(0); // compoundstatement
+	    ast2 = (CommonTree)ast.getChild(1); // until condition
+	    irt2 = new IRTree();
+	    irt.setOp("LOOP");
+	    statements(ast1, irt1);
+	    condition(ast2, irt2);
+
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
+	    break;
 	default:
 	    error(tt);
 	    break;
