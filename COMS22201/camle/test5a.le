@@ -1,0 +1,6 @@
+{test8: program to test loops.}
+{Already tested: write statements and constants.}
+{Note: need to use the "-j" option of assmule to prevent infinite loops.}
+begin
+  repeat begin write('ONCE'); end until 1.0 <= 2.0;
+end
