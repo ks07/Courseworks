@@ -74,6 +74,21 @@ public class Irt
     // Convert a program AST to IR tree
     public static void program(CommonTree ast, IRTree irt)
     {
+	if (ast.getToken().getType() == ARRAY) {
+	    // Program starts with some array declarations.
+	    //	    declarations(
+	}
+	statements(ast, irt);
+    }
+
+    // Converts a program AST, starting with array declarations, to IR tree
+    public static void declarations(CommonTree ast, IRTree irt) {
+	CommonTree ast1 = (CommonTree)ast.getChild(0);
+	//	int tt = t.getType();
+	//	while (tt != BEGIN) {
+
+
+	//}
 	statements(ast, irt);
     }
 

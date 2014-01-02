@@ -19,7 +19,7 @@ options {
 }
 
 program :
-        ( ARRAY declaration ( COMMA declaration )* SEMICOLON! )? compoundstatement
+        ( ARRAY! declaration^ ( COMMA! declaration^ )* SEMICOLON! )? compoundstatement
   ;
 
 declaration :
