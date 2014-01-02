@@ -11,6 +11,24 @@ public class Memory {
     static HashMap<String, Integer> memoryLookup = new HashMap<String, Integer>();
     static ArrayList<Byte> memory = new ArrayList<Byte>();
 
+    static public int allocateArray(String id, int size) {
+	int addr = memory.size();
+	assert (addr % 4) == 0;
+
+	if (size > 0) {
+	    memoryLookup.put(id, addr);
+	    for (size = size * 4; size > 0; size--) {
+		memory.add(new Byte(id));
+	    }
+	} else {
+	    System.err.println("Warning: 0 length array declared!");
+	    memoryLookup.put(id, -1);
+	}
+
+	assert (memory.size() % 4) == 0;
+	return addr;
+    }
+
     static public int allocateString(String text)
     {
 	int id = stringID++; // Store a string with a unique identifier, per string and per byte.
@@ -61,7 +79,7 @@ public class Memory {
 
     public static String lookup(String id) {
 	// Operand must be formatted as a double.
-	return memoryLookup.get(id) + ".0"; //TODO: Error messages if not present?
+	return memoryLookup.get(id) + ".0"; //TODO: Error messages if not present/invalid?
     }
 
     static public void dumpData(PrintStream o)
@@ -87,6 +105,12 @@ public class Memory {
 class Byte {
     String varname;
     int contents;
+
+    // Constructor for 0 value.
+    Byte(String n) {
+	varname = n;
+	contents = 0;
+    }
 
     // Construct a Byte that forms a string.
     Byte(int sId, int c) {
