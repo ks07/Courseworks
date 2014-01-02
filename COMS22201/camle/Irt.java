@@ -272,10 +272,21 @@ public class Irt
 	Token t = ast.getToken();
 	int tt = t.getType();
 	if (tt == IDENTIFIER) {
-	    String varname = t.getText();
-	    int addr = Memory.alloc(varname);
 	    irt.setOp("MEM");
-	    irt.addSub(new IRTree(varname)); // Don't store addr here, instead use name
+	    String varname = t.getText();
+	    CommonTree ast1 = (CommonTree) ast.getChild(0);
+	    IRTree irt1 = new IRTree(varname);
+
+	    if (ast1 != null) {
+		// This variable is an array with index.
+		IRTree irt2 = new IRTree();
+		expression(ast1, irt2);
+		irt1.addSub(irt2);
+	    } else {
+		Memory.alloc(varname); // Allocate var if not already present.
+	    }
+
+	    irt.addSub(irt1); // Don't store addr here, instead use name
 	} else {
 	    error(tt);
 	}
