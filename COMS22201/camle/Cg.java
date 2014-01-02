@@ -160,10 +160,7 @@ public class Cg
 	    emit(o, "MOVIR "+result+","+t);
 	    break;
 	case "MEM":
-	    // TODO: Array support
-	    String addr = Memory.lookup(irt.getSub(0).getOp()); // Need to make float from addr
-	    result = Reg.newReg();
-	    emit(o, "MOVIR " + result + "," + addr);
+	    result = variable(irt, o);
 	    // Re-use the address register for the value. Gets in the way of better optimisation?
 	    emit(o, "LOAD " + result + "," + result + ",0");
 	    break;
