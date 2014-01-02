@@ -76,20 +76,39 @@ public class Irt
     {
 	if (ast.getToken().getType() == ARRAY) {
 	    // Program starts with some array declarations.
-	    //	    declarations(
+	    ast = declarations(ast, irt);
 	}
 	statements(ast, irt);
     }
 
     // Converts a program AST, starting with array declarations, to IR tree
-    public static void declarations(CommonTree ast, IRTree irt) {
-	CommonTree ast1 = (CommonTree)ast.getChild(0);
-	//	int tt = t.getType();
-	//	while (tt != BEGIN) {
+    public static CommonTree declarations(CommonTree ast, IRTree irt) {
+	int child = 0;
+	CommonTree decl = (CommonTree)ast.getChild(child);
+	CommonTree param;
+	int tt = decl.getToken().getType();
+	while (tt != BEGIN) {
+	    param = (CommonTree)decl.getChild(0);
+	    
+	    if (param.getToken().getType() == REALNUM) {
+		// Parse the size into an int
+		try {
+		    int size = (int) Double.parseDouble(param.getToken().getText());
+		    Memory.allocateArray(decl.getToken().getText(), size);
+		} catch (NumberFormatException nfe) {
+		    error(param.getToken().getType());
+		}
+	    } else {
+		error(tt);
+	    }
 
+	    child++;
+	    decl = (CommonTree)ast.getChild(child);
+	    tt = decl.getToken().getType();
+	}
 
-	//}
-	statements(ast, irt);
+	assert decl.getToken().getType() == BEGIN;
+	return decl;
     }
 
     // Convert a compoundstatement AST to IR tree
