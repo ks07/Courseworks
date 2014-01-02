@@ -1,11 +1,25 @@
-#!/bin/bash
-FILE="test"$1
+#!/bin/sh
+LEF="test${1}.le"
+ASSF="test${1}.ass"
 
-if [ -f "${FILE}.le" ]
+if [ -f "$LEF" ]
 then
-    echo "Running ${FILE}.le"
-    if antlr3 camle "${FILE}.le"
+    if [ "$(hostname)" = "snowy.cs.bris.ac.uk" ]
+    then
+	if antlr3 camle "$LEF"
 	then
-	./assmule "${FILE}.ass"
-    fi 
+	    ./assmule "$ASSF"
+	else
+	    antlr3 camle -irt "$LEF" | ./disptree | less
+	fi
+    else
+	if ./antLEr3 camle "$LEF"
+	then
+	    less "$ASSF"
+	else
+	    ./antLEr3 camle -irt "$LEF" | less
+	fi
+    fi
+else
+    echo "Test $LEF does not exist!"
 fi
