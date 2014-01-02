@@ -122,16 +122,25 @@ public class Cg
 	}
     }
 
-    // Generate code from a variable identifier (in IRTree form)
+    // Generate code from a variable identifier (in IRTree form) TODO: Use I param where possible.
     private static String variable(IRTree irt, PrintStream o) {
 	String result = "";
+	IRTree sub;
 	switch (irt.getOp()) {
 	case "MEM":
-	    // TODO: Array support
 	    String addr = Memory.lookup(irt.getSub(0).getOp());
 	    result = Reg.newReg();
 	    emit(o, "MOVIR " + result + "," + addr);
-	    result = result;
+	    sub = irt.getSub(0).tryGetSub(0);
+	    if (sub != null) {
+		// This is an array.
+		String index = expression(sub, o);
+		// Need to get index into an address by * 4 + addr
+		String four = Reg.newReg(); // TODO: If arrays declared, set aside a "four" reg.
+		emit(o, "MOVIR " + four + ",4.0"); // Put 4.0 into Rfour
+		emit(o, "MULR " + index + "," + four + "," + index); // Multiply index by 4
+		emit(o, "ADDR " + result + "," + index + "," + result); // Add index to addr
+	    }
 	    break;
 	default:
 	    error(irt.getOp());

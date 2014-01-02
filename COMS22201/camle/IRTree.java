@@ -83,6 +83,14 @@ class IRTree
     return sub.get(i);
   }
 
+    public IRTree tryGetSub(int i) {
+	if (i >= sub.size()) {
+	    return null;
+	} else {
+	    return sub.get(i);
+	}
+    }
+
     public int subCount() {
 	return sub.size();
     }
