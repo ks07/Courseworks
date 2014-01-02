@@ -45,8 +45,9 @@ public class Cg
 	    emit(o, "RDR " + r); // Read into r.
 	    emit(o, "STORE " + r + "," + v + ",0");
 	} else if (irt.getOp().equals("CJUMP")) {
-	    String lbl = cond(irt.getSub(0), o);
+	    String lbl = String.valueOf(label);
 	    String trueLbl = "t" + lbl;
+	    cond(trueLbl, irt.getSub(0), o); // Generate condition code that jumps to trueLbl if true.
 	    // Create the jump if false.
 	    String falseLbl = "f" + lbl;
 	    emit(o, "JMP " + falseLbl);
@@ -64,16 +65,23 @@ public class Cg
 	} else if (irt.getOp().equals("NOOP")) {
 	    // Do we need to output anything here?
 	    emit(o, "NOP");
+	} else if (irt.getOp().equals("LOOP")) {
+	    String lbl = String.valueOf(label);
+	    label++;
+	    String startLbl = "b" + lbl;
+	    String exitLbl = "e" + lbl;
+	    emit(o, startLbl + ":"); // Mark the entry of the loop.
+	    statement(irt.getSub(0), o); // Loop body. Should run at least once.
+	    cond(exitLbl, irt.getSub(1), o); // Until condition. Jumps out if true.
+	    emit(o, "JMP " + startLbl); // Jump back if until didn't jump us.
+	    emit(o, exitLbl + ":"); // Mark the exit of the loop.
 	} else {
 	    error(irt.getOp());
 	}
     }
 
     // Generate code from a condition. Returns the label targeted if the condition is true.
-    private static String cond(IRTree irt, PrintStream o) {
-	String lbl = String.valueOf(label);
-	label++;
-	String trueLbl = "t" + lbl;
+    private static void cond(String trueLbl, IRTree irt, PrintStream o) {
 	String x = expression(irt.getSub(0), o);
 	String y = expression(irt.getSub(1), o);
 	String resReg = Reg.newReg();
@@ -112,7 +120,6 @@ public class Cg
 	    error(irt.getOp());
 	    break;
 	}
-	return lbl;
     }
 
     // Generate code from a variable identifier (in IRTree form)
