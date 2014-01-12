@@ -1,0 +1,503 @@
+// COMS22303: IR tree construction
+//
+// This program converts an Abstract Syntax Tree produced by ANTLR to an IR tree.
+// The Abstract Syntax Tree has type CommonTree and can be walked using 5 simple
+// methods.  If ast is a CommonTree and t is a Token:
+//   
+//   int        ast.getChildCount();                       // Get # of subtrees
+//   CommonTree (CommonTree)ast.getChild(int childNumber); // Get a subtree
+//   Token      ast.getToken();                            // Get a node's token
+//   int        t.getType();                               // Get token type
+//   String     t.getText();                               // Get token text
+//
+// Every method below has two parameters: the AST (input) and IR tree (output).
+// Some methods (arg()) return the type of the item processed.
+
+import java.util.*;
+import java.io.*;
+import java.lang.reflect.Array;
+import antlr.collections.AST;
+import org.antlr.runtime.*;
+import org.antlr.runtime.tree.*;
+
+public class Irt
+{
+// The code below is generated automatically from the ".tokens" file of the 
+// ANTLR syntax analysis, using the TokenConv program.
+//
+// CAMLE TOKENS BEGIN
+  public static final String[] tokenNames = new String[] {
+"NONE", "NONE", "NONE", "NONE", "BEGIN", "END", "WRITE", "WRITELN", "ARRAY", "ELSE", "IF", "READ", "REPEAT", "UNTIL", "SEMICOLON", "OPENPAREN", "CLOSEPAREN", "ASSIGN", "ADD", "SUB", "MUL", "DIV", "OPENSQ", "CLOSESQ", "COMMA", "INT", "EXPONENT", "REALNUM", "STRING", "COMMENT", "WS", "LT", "LTE", "GT", "GTE", "EQ", "NEQ", "IDENTIFIER"};
+  public static final int CLOSEPAREN=16;
+  public static final int EXPONENT=26;
+  public static final int LT=31;
+  public static final int GTE=34;
+  public static final int OPENSQ=22;
+  public static final int ELSE=9;
+  public static final int SUB=19;
+  public static final int INT=25;
+  public static final int SEMICOLON=14;
+  public static final int LTE=32;
+  public static final int MUL=20;
+  public static final int WRITE=6;
+  public static final int IF=10;
+  public static final int NEQ=36;
+  public static final int WS=30;
+  public static final int WRITELN=7;
+  public static final int READ=11;
+  public static final int COMMA=24;
+  public static final int UNTIL=13;
+  public static final int IDENTIFIER=37;
+  public static final int BEGIN=4;
+  public static final int REALNUM=27;
+  public static final int ASSIGN=17;
+  public static final int CLOSESQ=23;
+  public static final int GT=33;
+  public static final int REPEAT=12;
+  public static final int OPENPAREN=15;
+  public static final int DIV=21;
+  public static final int EQ=35;
+  public static final int END=5;
+  public static final int COMMENT=29;
+  public static final int ARRAY=8;
+  public static final int STRING=28;
+  public static final int ADD=18;
+// CAMLE TOKENS END
+
+    public static IRTree convert(CommonTree ast)
+    {
+	IRTree irt = new IRTree();
+	program(ast, irt);
+	return irt;
+    }
+
+    // Convert a program AST to IR tree
+    public static void program(CommonTree ast, IRTree irt)
+    {
+	if (ast.getToken().getType() == ARRAY) {
+	    // Program starts with some array declarations.
+	    ast = declarations(ast, irt);
+	}
+	statements(ast, irt);
+    }
+
+    // Converts a program AST, starting with array declarations, to IR tree
+    public static CommonTree declarations(CommonTree ast, IRTree irt) {
+	int child = 0;
+	CommonTree decl = (CommonTree)ast.getChild(child);
+	CommonTree param;
+	int tt = decl.getToken().getType();
+	while (tt != BEGIN) {
+	    param = (CommonTree)decl.getChild(0);
+	    
+	    if (param.getToken().getType() == REALNUM) {
+		// Parse the size into an int
+		try {
+		    int size = (int) Double.parseDouble(param.getToken().getText());
+		    Memory.allocateArray(decl.getToken().getText(), size);
+		} catch (NumberFormatException nfe) {
+		    error(param.getToken().getType());
+		}
+	    } else {
+		error(tt);
+	    }
+
+	    child++;
+	    decl = (CommonTree)ast.getChild(child);
+	    tt = decl.getToken().getType();
+	}
+
+	assert decl.getToken().getType() == BEGIN;
+	return decl;
+    }
+
+    // Convert a compoundstatement AST to IR tree
+    public static void statements(CommonTree ast, IRTree irt)
+    {
+	Token t = ast.getToken();
+	int tt = t.getType();
+	if (tt == BEGIN) {
+	    int n = ast.getChildCount();
+	    if (n == 0) {
+		irt.setOp("NOOP");
+	    }
+	    else {
+		CommonTree ast1 = (CommonTree)ast.getChild(0);
+		statements1(ast, 0, n-1, irt);
+	    }
+	} else {
+	    error(tt);
+	}
+    }
+
+    public static void statements1(CommonTree ast, int first, int last, IRTree irt)
+    {
+	CommonTree ast1 = (CommonTree)ast.getChild(first);
+	if (first == last) {
+	    statement(ast1, irt);
+	}
+	else {
+	    IRTree irt1 = new IRTree();
+	    IRTree irt2 = new IRTree();
+	    statement(ast1, irt1);
+	    statements1(ast, first+1, last, irt2);
+	    irt.setOp("SEQ");
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
+	}
+    }
+
+    // Convert a statement AST to IR tree
+    public static void statement(CommonTree ast, IRTree irt)
+    {
+	CommonTree ast1, ast2, ast3;
+	IRTree irt1 = new IRTree();
+	IRTree irt2, irt3;
+	Token t = ast.getToken();
+	int tt = t.getType();
+	switch (tt) {
+	case WRITELN:
+	    String a = String.valueOf(Memory.allocateString("\n"));
+	    irt.setOp("WRS");
+	    irt.addSub(new IRTree("MEM", new IRTree("CONST", new IRTree(a))));
+	    break;
+	case WRITE:
+	    ast1 = (CommonTree)ast.getChild(0);
+	    String type = arg(ast1, irt1);
+	    if (type.equals("real")) {
+		irt.setOp("WRR");
+		irt.addSub(irt1);
+	    }
+	    else {
+		irt.setOp("WRS");
+		irt.addSub(irt1);
+	    }
+	    break;
+	case ASSIGN:
+	    // Child 0 should be an identifier, 1 should be expression.
+	    // <variable> ':=' <expression>
+	    ast1 = (CommonTree)ast.getChild(0);
+	    ast2 = (CommonTree)ast.getChild(1);
+	    irt.setOp("STORE");
+	    irt2 = new IRTree();
+
+	    // Prepare irt1/2.
+	    variable(ast1, irt1);
+	    expression(ast2, irt2);
+
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
+	    break;
+	case READ:
+	    ast1 = (CommonTree)ast.getChild(0);
+	    irt.setOp("READ");
+	    variable(ast1, irt1);
+	    irt.addSub(irt1);
+	    break;
+	case IF:
+	    ast1 = (CommonTree)ast.getChild(0);
+	    ast2 = (CommonTree)ast.getChild(1); // TRUE AST
+	    irt2 = new IRTree();
+	    irt.setOp("CJUMP");
+	    Boolean cRes = condition(ast1, irt1);
+	    if (cRes == null) {
+		// Not a constant expression.
+		statements(ast2, irt2); // Use compoundstatement on TRUE branch
+
+		irt.addSub(irt1);
+		irt.addSub(irt2);
+
+		// Determine if this is an if...else statement
+		ast3 = (CommonTree)ast.getChild(2);
+		if (ast3 != null) {
+		    irt3 = new IRTree();
+		    statements(ast3, irt3); // ELSE branch
+		    irt.addSub(irt3);
+		}
+	    } else if (cRes) {
+		// Always true.
+		statements(ast2, irt); // Set the current irt to be the target.
+	    } else if (ast.getChild(2) != null) {
+		// Always false, and else clause present.
+		ast3 = (CommonTree)ast.getChild(2);
+		statements(ast3, irt);
+	    } else {
+		// Always false, but no else clause.
+		irt.setOp("NOOP");
+	    }
+	    break;
+	case REPEAT:
+	    ast1 = (CommonTree)ast.getChild(0); // compoundstatement
+	    ast2 = (CommonTree)ast.getChild(1); // until condition
+	    irt2 = new IRTree();
+	    irt.setOp("LOOP");
+	    statements(ast1, irt1);
+	    condition(ast2, irt2);
+
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
+	    break;
+	default:
+	    error(tt);
+	    break;
+	}
+    }
+
+    // Convert a condition AST to IR tree. Returns True/False if constant, else null.
+    public static Boolean condition(CommonTree ast, IRTree irt) {
+	Token t = ast.getToken();
+	CommonTree ast1 = (CommonTree)ast.getChild(0);
+	CommonTree ast2 = (CommonTree)ast.getChild(1);
+	IRTree irt1 = new IRTree();
+	IRTree irt2 = new IRTree();
+        Float val1 = expression(ast1, irt1);
+	Float val2 = expression(ast2, irt2);
+	if (val1.isNaN() || val2.isNaN()) {
+	    switch (t.getType()) {
+	    case LT:
+		irt.setOp("LT");
+		break;
+	    case LTE:
+		irt.setOp("LE");
+		break;
+	    case GT:
+		irt.setOp("GT");
+		break;
+	    case GTE:
+		irt.setOp("GE");
+		break;
+	    case EQ:
+		irt.setOp("EQ");
+		break;
+	    case NEQ:
+		irt.setOp("NE");
+		break;
+	    default:
+		error(t.getType());
+		break;
+	    }
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
+	    return null;
+	} else {
+	    switch (t.getType()) {
+	    case LT:
+		return val1 < val2;
+	    case LTE:
+		return val1 <= val2;
+	    case GT:
+		return val1 > val2;
+	    case GTE:
+		return val1 >= val2;
+	    case EQ:
+		return val1.equals(val2);
+	    case NEQ:
+		return !val1.equals(val2);
+	    default:
+		error(t.getType());
+		return null;
+	    }
+	}
+    }
+
+    // Convert an identifier AST to IR tree
+    public static void variable(CommonTree ast, IRTree irt)
+    {
+	Token t = ast.getToken();
+	int tt = t.getType();
+	if (tt == IDENTIFIER) {
+	    irt.setOp("MEM");
+	    String varname = t.getText();
+	    CommonTree ast1 = (CommonTree) ast.getChild(0);
+	    IRTree irt1 = new IRTree(varname);
+
+	    if (ast1 != null) {
+		// This variable is an array with index.
+		IRTree irt2 = new IRTree();
+		expression(ast1, irt2);
+		irt1.addSub(irt2);
+	    } else {
+		Memory.alloc(varname); // Allocate var if not already present.
+	    }
+
+	    irt.addSub(irt1); // Don't store addr here, instead use name
+	} else {
+	    error(tt);
+	}
+    }
+
+    // Convert an arg AST to IR tree
+    public static String arg(CommonTree ast, IRTree irt)
+    {
+	Token t = ast.getToken();
+	int tt = t.getType();
+	if (tt == STRING) {
+	    String tx = t.getText();
+	    int a = Memory.allocateString(tx); 
+	    String st = String.valueOf(a);
+	    irt.setOp("MEM");
+	    irt.addSub(new IRTree("CONST", new IRTree(st)));
+	    return "string";
+	}
+	else {
+	    expression(ast, irt);
+	    return "real";
+	}
+    }
+
+    // Convert an expression AST to IR tree. Returns a float if the expression is constant, else NaN.
+    public static Float expression(CommonTree ast, IRTree irt)
+    {
+	CommonTree ast1, ast2;
+	IRTree irt1 = new IRTree();
+	IRTree irt2 = new IRTree();
+	Token t = ast.getToken();
+	int tt = t.getType();
+	Float val = Float.NaN;
+	Float val2 = Float.NaN;
+	switch (tt) {
+	case REALNUM:
+	    val = constant(ast, irt1);
+	    irt.setOp("CONST");
+	    irt.addSub(irt1);
+	    break;
+	case IDENTIFIER:
+	    // Variable
+	    variable(ast, irt);
+	    break;
+	case ADD:
+	    irt.setOp("ADDR");
+	    // Unary operator, i.e. sign, so only 1 child
+	    if (ast.getChild(1) == null) {
+		ast1 = (CommonTree)ast.getChild(0);
+		val = expression(ast1, irt1); // Recurse
+		if (val.isNaN()) {
+		    irt.addSub(irt1);
+		} else {
+		    // No change of sign, just add the constant.
+		    constant(val, irt);
+		}
+	    } else {
+		// Left sub-tree
+		ast1 = (CommonTree)ast.getChild(0);
+		val = expression(ast1, irt1);
+		// Right sub-tree
+		ast2 = (CommonTree)ast.getChild(1);
+		val2 = expression(ast2, irt2);
+
+		// If both sub-trees were constant expressions, evaluate and replace with const.
+		if (val.isNaN() || val2.isNaN()) {
+		    val = Float.NaN;
+		    irt.addSub(irt1);
+		    irt.addSub(irt2);
+		} else {
+		    val = val + val2;
+		    constant(val, irt); // Make this constant.
+		}
+	    }
+	    break;
+	case SUB:
+	    irt.setOp("SUBR");
+	    // Unary operator, i.e. sign, so only 1 child
+	    if (ast.getChild(1) == null) {
+		ast1 = (CommonTree)ast.getChild(0);
+		val = expression(ast1, irt1); // Recurse
+		if (val.isNaN()) {
+		    irt.addSub(irt1);
+		} else {
+		    // Change of sign.
+		    val = -1 * val;
+		    constant(val, irt);
+		}
+	    } else {
+		// Left sub-tree
+		ast1 = (CommonTree)ast.getChild(0);
+		val = expression(ast1, irt1);
+		// Right sub-tree
+		ast2 = (CommonTree)ast.getChild(1);
+		val2 = expression(ast2, irt2);
+
+		// If both sub-trees were constant expressions, evaluate and replace with const.
+		if (val.isNaN() || val2.isNaN()) {
+		    val = Float.NaN;
+		    irt.addSub(irt1);
+		    irt.addSub(irt2);
+		} else {
+		    val = val - val2;
+		    constant(val, irt); // Make this constant.
+		}
+	    }
+	    break;
+	case MUL:
+	    irt.setOp("MULR");
+	    // No unary operations here.
+	    ast1 = (CommonTree)ast.getChild(0);
+	    val = expression(ast1, irt1);
+	    ast2 = (CommonTree)ast.getChild(1);
+	    val2 = expression(ast2, irt2);
+
+	    // If both sub-trees were constant expressions, evaluate and replace with const.
+	    if (val.isNaN() || val2.isNaN()) {
+		val = Float.NaN;
+		irt.addSub(irt1);
+		irt.addSub(irt2);
+	    } else {
+		val = val * val2;
+		constant(val, irt); // Make this constant.
+	    }
+	    break;
+	case DIV:
+	    irt.setOp("DIVR");
+	    // No unary operations here.
+	    ast1 = (CommonTree)ast.getChild(0);
+	    val = expression(ast1, irt1);
+	    ast2 = (CommonTree)ast.getChild(1);
+	    val2 = expression(ast2, irt2);
+
+	    // If both sub-trees were constant expressions, evaluate and replace with const.
+	    if (val.isNaN() || val2.isNaN()) {
+		val = Float.NaN;
+		irt.addSub(irt1);
+		irt.addSub(irt2);
+	    } else {
+		val = val / val2;
+		constant(val, irt); // Make this constant.
+	    }
+	    break;
+	default:
+	    error(tt);
+	    val = Float.NaN;
+	    break;
+	}
+	return val;
+    }
+
+    // Convert a constant AST to IR tree. Returns the float value of the const.
+    public static float constant(CommonTree ast, IRTree irt)
+    {
+	Token t = ast.getToken();
+	int tt = t.getType();
+	float ret = Float.NaN;
+	if (tt == REALNUM) {
+	    String tx = t.getText();
+	    irt.setOp(tx);
+	    ret = Float.parseFloat(tx);
+	} else {
+	    error(tt);
+	}
+	return ret;
+    }
+
+    // For internal use by expression. Creates a const IR tree without an AST.
+    private static void constant(float val, IRTree irt) {
+	irt.setOp("CONST");
+	IRTree sub = new IRTree(Float.toString(val));
+	irt.addSub(sub);
+    }
+
+    private static void error(int tt)
+    {
+	System.out.println("IRT error: "+tokenNames[tt]);
+	System.exit(1);
+    }
+}
