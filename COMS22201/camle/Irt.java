@@ -199,18 +199,31 @@ public class Irt
 	    ast2 = (CommonTree)ast.getChild(1); // TRUE AST
 	    irt2 = new IRTree();
 	    irt.setOp("CJUMP");
-	    condition(ast1, irt1);
-	    statements(ast2, irt2); // Use compoundstatement on TRUE branch
+	    Boolean cRes = condition(ast1, irt1);
+	    if (cRes == null) {
+		// Not a constant expression.
+		statements(ast2, irt2); // Use compoundstatement on TRUE branch
 
-	    irt.addSub(irt1);
-	    irt.addSub(irt2);
+		irt.addSub(irt1);
+		irt.addSub(irt2);
 
-	    // Determine if this is an if...else statement
-	    ast3 = (CommonTree)ast.getChild(2);
-	    if (ast3 != null) {
-		irt3 = new IRTree();
-		statements(ast3, irt3); // ELSE branch
-		irt.addSub(irt3);
+		// Determine if this is an if...else statement
+		ast3 = (CommonTree)ast.getChild(2);
+		if (ast3 != null) {
+		    irt3 = new IRTree();
+		    statements(ast3, irt3); // ELSE branch
+		    irt.addSub(irt3);
+		}
+	    } else if (cRes) {
+		// Always true.
+		statements(ast2, irt); // Set the current irt to be the target.
+	    } else if (ast.getChild(2) != null) {
+		// Always false, and else clause present.
+		ast3 = (CommonTree)ast.getChild(2);
+		statements(ast3, irt);
+	    } else {
+		// Always false, but no else clause.
+		irt.setOp("NOOP");
 	    }
 	    break;
 	case REPEAT:
@@ -230,40 +243,61 @@ public class Irt
 	}
     }
 
-    // Convert a condition AST to IR tree
-    public static void condition(CommonTree ast, IRTree irt) {
+    // Convert a condition AST to IR tree. Returns True/False if constant, else null.
+    public static Boolean condition(CommonTree ast, IRTree irt) {
 	Token t = ast.getToken();
 	CommonTree ast1 = (CommonTree)ast.getChild(0);
 	CommonTree ast2 = (CommonTree)ast.getChild(1);
 	IRTree irt1 = new IRTree();
 	IRTree irt2 = new IRTree();
-        expression(ast1, irt1);
-	expression(ast2, irt2);
-	switch (t.getType()) {
-	case LT:
-	    irt.setOp("LT");
-	    break;
-	case LTE:
-	    irt.setOp("LE");
-	    break;
-	case GT:
-	    irt.setOp("GT");
-	    break;
-	case GTE:
-	    irt.setOp("GE");
-	    break;
-	case EQ:
-	    irt.setOp("EQ");
-	    break;
-	case NEQ:
-	    irt.setOp("NE");
-	    break;
-	default:
-	    error(t.getType());
-	    break;
+        Float val1 = expression(ast1, irt1);
+	Float val2 = expression(ast2, irt2);
+	if (val1.isNaN() || val2.isNaN()) {
+	    switch (t.getType()) {
+	    case LT:
+		irt.setOp("LT");
+		break;
+	    case LTE:
+		irt.setOp("LE");
+		break;
+	    case GT:
+		irt.setOp("GT");
+		break;
+	    case GTE:
+		irt.setOp("GE");
+		break;
+	    case EQ:
+		irt.setOp("EQ");
+		break;
+	    case NEQ:
+		irt.setOp("NE");
+		break;
+	    default:
+		error(t.getType());
+		break;
+	    }
+	    irt.addSub(irt1);
+	    irt.addSub(irt2);
+	    return null;
+	} else {
+	    switch (t.getType()) {
+	    case LT:
+		return val1 < val2;
+	    case LTE:
+		return val1 <= val2;
+	    case GT:
+		return val1 > val2;
+	    case GTE:
+		return val1 >= val2;
+	    case EQ:
+		return val1.equals(val2);
+	    case NEQ:
+		return !val1.equals(val2);
+	    default:
+		error(t.getType());
+		return null;
+	    }
 	}
-	irt.addSub(irt1);
-	irt.addSub(irt2);
     }
 
     // Convert an identifier AST to IR tree
