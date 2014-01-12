@@ -1,0 +1,195 @@
+I have implemented all language features, in order to succesfully compile all provided test programs.
+
+My compiler can be compiled using the Makefile, as with the skeleton compiler.
+To run the compiler, simply run `antlr3 camle sourcefile.le` in the compiler directory.
+Alternatively, the provided `test` shell script can be used to compile and run any of the tests by
+simply running `test id`, where id should be replaced by the letter/number of the test file.
+
+Test Output:
+============
+test1.le:
+ASS/MULE - ASSembler/eMUlator for Language Engineering - v2.4 - Steve Gregory
+---test1.ass ASSEMBLY BEGINS
+---test1.ass ASSEMBLY ENDS
+---test1.ass EXECUTION BEGINS
+-5.000000
+7.000000
+-16.000000
+-0.500000
+-0.700000
+-1.366667
+---test1.ass EXECUTION ENDS
+STATISTICS:
+  50 instructions generated
+  37 registers used
+  50 instructions executed
+
+test2.le:
+ASS/MULE - ASSembler/eMUlator for Language Engineering - v2.4 - Steve Gregory
+---test2.ass ASSEMBLY BEGINS
+---test2.ass ASSEMBLY ENDS
+---test2.ass EXECUTION BEGINS
+10023.000000
+10023.000000
+76.500000
+76.500000
+---test2.ass EXECUTION ENDS
+STATISTICS:
+  32 instructions generated
+  13 registers used
+  32 instructions executed
+
+test3.le:
+ASS/MULE - ASSembler/eMUlator for Language Engineering - v2.4 - Steve Gregory
+---test3.ass ASSEMBLY BEGINS
+---test3.ass ASSEMBLY ENDS
+---test3.ass EXECUTION BEGINS
+Enter a number: 7.89
+Enter a number: 10.11
+First is 7.890000; second is 10.110000
+---test3.ass EXECUTION ENDS
+STATISTICS:
+  19 instructions generated
+  7 registers used
+  19 instructions executed
+
+test4.le:
+ASS/MULE - ASSembler/eMUlator for Language Engineering - v2.4 - Steve Gregory
+---test4.ass ASSEMBLY BEGINS
+---test4.ass ASSEMBLY ENDS
+---test4.ass EXECUTION BEGINS
+1.0000003.000000
+6.000000
+
+7.0000008.000000bcd
+---test4.ass EXECUTION ENDS
+STATISTICS:
+  94 instructions generated
+  46 registers used
+  71 instructions executed
+
+test5.le (with -j):
+ASS/MULE - ASSembler/eMUlator for Language Engineering - v2.4 - Steve Gregory
+---test5.ass ASSEMBLY BEGINS
+---test5.ass ASSEMBLY ENDS
+---test5.ass EXECUTION BEGINS
+1.000000
+WARNING: Disabled backward jump in    7: JMP 1
+2.0000003.000000
+WARNING: Disabled backward jump in   22: JMP 15
+5.000000
+
+7.000000
+WARNING: Disabled backward jump in   38: JMP 32
+WARNING: Disabled backward jump in   50: JMP 45
+ab
+WARNING: Disabled backward jump in   62: JMP 57
+c
+WARNING: Disabled backward jump in   68: JMP 63
+d
+WARNING: Disabled backward jump in   74: JMP 69
+WARNING: Disabled backward jump in   79: JMP 63
+---test5.ass EXECUTION ENDS
+STATISTICS:
+  81 instructions generated
+  42 registers used
+  77 instructions executed
+
+test6.le:
+ASS/MULE - ASSembler/eMUlator for Language Engineering - v2.4 - Steve Gregory
+---test6.ass ASSEMBLY BEGINS
+---test6.ass ASSEMBLY ENDS
+---test6.ass EXECUTION BEGINS
+0.000000 1.000000
+1.000000 1.000000
+4.000000 2.000000
+9.000000 3.000000
+16.000000 5.000000
+25.000000 8.000000
+36.000000 13.000000
+49.000000 21.000000
+64.000000 34.000000
+81.000000 55.000000
+285.000000
+---test6.ass EXECUTION ENDS
+STATISTICS:
+  130 instructions generated
+  67 registers used
+  987 instructions executed
+
+testa.le:
+ASS/MULE - ASSembler/eMUlator for Language Engineering - v2.4 - Steve Gregory
+---testa.ass ASSEMBLY BEGINS
+---testa.ass ASSEMBLY ENDS
+---testa.ass EXECUTION BEGINS
+Recommended input:
+-2 -1.25 0.5 1.25
+40
+
+Please enter (left,top),(right,bottom)
+-2
+-1.25
+0.5
+1.25
+Please enter maximum iterations
+40
+...............:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+.............:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+............::::::::::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%:::::::::::::
+..........::::::::::::::::::::::::::::::::::::%%%%%%%%%%%%&&%%%%%%%%%%%:::::::::
+.........::::::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%&&&*& %%%%%%%%:::::::
+........::::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%&&&&%%%%%%%%%%%%:::::
+.......::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%&&&*  &&&%%%%%%%%%%%%:::
+......:::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%%&*      * *%%%%%%%%%%%%::
+.....::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%%%%&*        &%%%%%%%%%%%%%%
+....::::::::::::::::::::::::::%%%%%%%%%%%%%%&&&*&%%&&&&&&*     *&&&&&%%%%%%&&%%%
+....::::::::::::::::::::::::%%%%%%%%%%%%%%%%&*****&&               * *&&*&&&&&%%
+...::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%&&*                       *&   *&&%%
+...:::::::::::::::::::%%%%%%%%%%%%%%%%%%%%& &&*                            *&%%%
+..:::::::::::::::%%%%%%&%%%%%%%%%%%%%%%%%&&                                *&%%%
+..:::::::::%%%%%%%%%%%%%&%%%%%%&%%%%%%%%%&*                                 *& %
+.::::::%%%%%%%%%%%%%%%%%&&**&&&&*&&&&&&&&&                                    &%
+.:::%%%%%%%%%%%%%%%%%%%%&&*  *      *&&&&                                    &&%
+.:%%%%%%%%%%%%%%%%%%%%%&&*             &*                                    &%%
+.%%%%%%%%%%%%%%%%%%*&&&&*               *                                   *&%%
+.%%%%%%%%%%%%%%%%&&&*                                                      *%%%%
+                                                                         &&&%%%%
+.%%%%%%%%%%%%%%%%&&&*                                                      *%%%%
+.%%%%%%%%%%%%%%%%%%*&&&&*               *                                   *&%%
+.:%%%%%%%%%%%%%%%%%%%%%&&*             &*                                    &%%
+.:::%%%%%%%%%%%%%%%%%%%%&&*  *      *&&&&                                    &&%
+.::::::%%%%%%%%%%%%%%%%%&&**&&&&*&&&&&&&&&                                    &%
+..:::::::::%%%%%%%%%%%%%&%%%%%%&%%%%%%%%%&*                                 *& %
+..:::::::::::::::%%%%%%&%%%%%%%%%%%%%%%%%&&                                *&%%%
+...:::::::::::::::::::%%%%%%%%%%%%%%%%%%%%& &&*                            *&%%%
+...::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%&&*                       *&   *&&%%
+....::::::::::::::::::::::::%%%%%%%%%%%%%%%%&*****&&               * *&&*&&&&&%%
+....::::::::::::::::::::::::::%%%%%%%%%%%%%%&&&*&%%&&&&&&*     *&&&&&%%%%%%&&%%%
+.....::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%%%%&*        &%%%%%%%%%%%%%%
+......:::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%%&*      * *%%%%%%%%%%%%::
+.......::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%&&&*  &&&%%%%%%%%%%%%:::
+........::::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%%%&&&&%%%%%%%%%%%%:::::
+.........::::::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%&&&*& %%%%%%%%:::::::
+..........::::::::::::::::::::::::::::::::::::%%%%%%%%%%%%&&%%%%%%%%%%%:::::::::
+............::::::::::::::::::::::::::::::::::::::%%%%%%%%%%%%%%%%%:::::::::::::
+.............:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+---testa.ass EXECUTION ENDS
+STATISTICS:
+  203 instructions generated
+  107 registers used
+  3217328 instructions executed
+
+Extras:
+=========
+I have implemented some error checking in Syn.g. I have left some default error messages
+in place, but have replaced these with more helpful messages in some situations. Specifically,
+I have added extra messages for missing begin and end tokens, mismatched parentheses, and 
+missing assignments/misspelt keywords.
+
+I have implemented some minor optimisations. Namely, duplicate strings are re-used in memory, and
+some jumps were removed from conditionals. I began implementing some optimisations where constant
+expressions are evaluated at compile time, and subsequently constant conditionals are also
+optimised out. These improvements don't actually improve any of the tests a through g, and may cause
+issues with sig fig when used with the assmule program, so I have reverted these changes to the source.
+You can find the modified Irt.java in the source folder named 'Irt_constants.java', if you're
+interested.
