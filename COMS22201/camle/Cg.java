@@ -49,19 +49,17 @@ public class Cg
 	    label++;
 	    String trueLbl = "t" + lbl;
 	    cond(trueLbl, irt.getSub(0), o); // Generate condition code that jumps to trueLbl if true.
-	    // Create the jump if false.
+	    // Emit the false body if present
 	    String falseLbl = "f" + lbl;
-	    emit(o, "JMP " + falseLbl);
-	    emit(o, trueLbl + ":"); // Mark this as the start of the true branch.
-	    statement(irt.getSub(1), o); // Work down the true branch.
-	    String endLbl = "e" + lbl;
-	    emit(o, "JMP " + endLbl); // Jump at the end of the true block to the end of the if.
-	    emit(o, falseLbl + ":"); // Mark this as the start of the false branch.
-	    // Don't emit any false body if no else is present!
-	    // TODO: Make this more elegant
+	    emit(o, falseLbl + ":"); // Mark this as the start of the false branch. Mainly for reference.
 	    if (irt.subCount() == 3) {
 		statement(irt.getSub(2), o); // False branch.
 	    }
+	    // Skip true body.
+	    String endLbl = "e" + lbl;
+	    emit(o, "JMP " + endLbl);
+	    emit(o, trueLbl + ":"); // Mark this as the start of the true branch.
+	    statement(irt.getSub(1), o); // Work down the true branch. No need to jump at end.
 	    emit(o, endLbl + ":"); // Mark the end of the if.
 	} else if (irt.getOp().equals("NOOP")) {
 	    // Do we need to output anything here?
