@@ -11,6 +11,8 @@ public class Memory {
     static HashMap<String, Integer> memoryLookup = new HashMap<String, Integer>();
     static ArrayList<Byte> memory = new ArrayList<Byte>();
 
+    static HashMap<String, Integer> stringLookup = new HashMap<String, Integer>();
+
     static public int allocateArray(String id, int size) {
 	int addr = memory.size();
 	assert (addr % 4) == 0;
@@ -31,32 +33,39 @@ public class Memory {
 
     static public int allocateString(String text)
     {
-	int id = stringID++; // Store a string with a unique identifier, per string and per byte.
-	int addr = memory.size();
-	int size = text.length();
+	Integer a = stringLookup.get(text);
 
-	assert (addr % 4) == 0;
+	if (a == null) {
+	    int id = stringID++;
+	    int addr = memory.size();
+	    int size = text.length();
 
-	// Only store the address of the first char of the string in lookup. Pointless?
-	Byte nextC = new Byte(id, text.charAt(0));
-	memoryLookup.put(nextC.getName(), addr);
-	memory.add(nextC);
-	
-	for (int i=1; i<size; i++) {
-	    nextC = new Byte(id, text.charAt(i));
+	    assert (addr % 4) == 0;
+
+	    // Only store the address of the first char of the string in lookup.
+	    stringLookup.put(text, addr);
+	    Byte nextC = new Byte(id, text.charAt(0));
 	    memory.add(nextC);
-	}
-	nextC = new Byte(id, 0);
-	memory.add(nextC);
-	// Make sure we end on 4 byte boundaries, as the machine can only access from these points.
-	int padding = 4 - (memory.size() % 4);
-	if (padding != 4) {
-	    // When padding == 4, none is required.
-	    for (; padding > 0; padding--) {
-		memory.add(new Byte(id, 0));
+	
+	    for (int i=1; i<size; i++) {
+		nextC = new Byte(id, text.charAt(i));
+		memory.add(nextC);
 	    }
+	    nextC = new Byte(id, 0);
+	    memory.add(nextC);
+	    // Make sure we end on 4 byte boundaries, as the machine can only access from these points.
+	    int padding = 4 - (memory.size() % 4);
+	    if (padding != 4) {
+		// When padding == 4, none is required.
+		for (; padding > 0; padding--) {
+		    memory.add(new Byte(id, 0));
+		}
+	    }
+	    return addr;
+	} else {
+	    // Strings are immutable in the language, so we can reuse old allocations.
+	    return a.intValue();
 	}
-	return addr;
     }
 
     // Allocate the next 4 byte chunk for a variable. Zero contents.
