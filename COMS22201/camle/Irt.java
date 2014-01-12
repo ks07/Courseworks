@@ -311,17 +311,19 @@ public class Irt
 	}
     }
 
-    // Convert an expression AST to IR tree
-    public static void expression(CommonTree ast, IRTree irt)
+    // Convert an expression AST to IR tree. Returns a float if the expression is constant, else NaN.
+    public static Float expression(CommonTree ast, IRTree irt)
     {
 	CommonTree ast1, ast2;
 	IRTree irt1 = new IRTree();
 	IRTree irt2 = new IRTree();
 	Token t = ast.getToken();
 	int tt = t.getType();
+	Float val = Float.NaN;
+	Float val2 = Float.NaN;
 	switch (tt) {
 	case REALNUM:
-	    constant(ast, irt1);
+	    val = constant(ast, irt1);
 	    irt.setOp("CONST");
 	    irt.addSub(irt1);
 	    break;
@@ -334,17 +336,30 @@ public class Irt
 	    // Unary operator, i.e. sign, so only 1 child
 	    if (ast.getChild(1) == null) {
 		ast1 = (CommonTree)ast.getChild(0);
-		expression(ast1, irt1); // Recurse
-		irt.addSub(irt1);
+		val = expression(ast1, irt1); // Recurse
+		if (val.isNaN()) {
+		    irt.addSub(irt1);
+		} else {
+		    // No change of sign, just add the constant.
+		    constant(val, irt);
+		}
 	    } else {
 		// Left sub-tree
 		ast1 = (CommonTree)ast.getChild(0);
-		expression(ast1, irt1);
-		irt.addSub(irt1);
+		val = expression(ast1, irt1);
 		// Right sub-tree
 		ast2 = (CommonTree)ast.getChild(1);
-		expression(ast2, irt2);
-		irt.addSub(irt2);
+		val2 = expression(ast2, irt2);
+
+		// If both sub-trees were constant expressions, evaluate and replace with const.
+		if (val.isNaN() || val2.isNaN()) {
+		    val = Float.NaN;
+		    irt.addSub(irt1);
+		    irt.addSub(irt2);
+		} else {
+		    val = val + val2;
+		    constant(val, irt); // Make this constant.
+		}
 	    }
 	    break;
 	case SUB:
@@ -352,57 +367,98 @@ public class Irt
 	    // Unary operator, i.e. sign, so only 1 child
 	    if (ast.getChild(1) == null) {
 		ast1 = (CommonTree)ast.getChild(0);
-		expression(ast1, irt1); // Recurse
-		irt.addSub(irt1);
+		val = expression(ast1, irt1); // Recurse
+		if (val.isNaN()) {
+		    irt.addSub(irt1);
+		} else {
+		    // Change of sign.
+		    val = -1 * val;
+		    constant(val, irt);
+		}
 	    } else {
 		// Left sub-tree
 		ast1 = (CommonTree)ast.getChild(0);
-		expression(ast1, irt1);
-		irt.addSub(irt1);
+		val = expression(ast1, irt1);
 		// Right sub-tree
 		ast2 = (CommonTree)ast.getChild(1);
-		expression(ast2, irt2);
-		irt.addSub(irt2);
+		val2 = expression(ast2, irt2);
+
+		// If both sub-trees were constant expressions, evaluate and replace with const.
+		if (val.isNaN() || val2.isNaN()) {
+		    val = Float.NaN;
+		    irt.addSub(irt1);
+		    irt.addSub(irt2);
+		} else {
+		    val = val - val2;
+		    constant(val, irt); // Make this constant.
+		}
 	    }
 	    break;
 	case MUL:
 	    irt.setOp("MULR");
 	    // No unary operations here.
 	    ast1 = (CommonTree)ast.getChild(0);
-	    expression(ast1, irt1);
-	    irt.addSub(irt1);
+	    val = expression(ast1, irt1);
 	    ast2 = (CommonTree)ast.getChild(1);
-	    expression(ast2, irt2);
-	    irt.addSub(irt2);
+	    val2 = expression(ast2, irt2);
+
+	    // If both sub-trees were constant expressions, evaluate and replace with const.
+	    if (val.isNaN() || val2.isNaN()) {
+		val = Float.NaN;
+		irt.addSub(irt1);
+		irt.addSub(irt2);
+	    } else {
+		val = val * val2;
+		constant(val, irt); // Make this constant.
+	    }
 	    break;
 	case DIV:
 	    irt.setOp("DIVR");
 	    // No unary operations here.
 	    ast1 = (CommonTree)ast.getChild(0);
-	    expression(ast1, irt1);
-	    irt.addSub(irt1);
+	    val = expression(ast1, irt1);
 	    ast2 = (CommonTree)ast.getChild(1);
-	    expression(ast2, irt2);
-	    irt.addSub(irt2);
+	    val2 = expression(ast2, irt2);
+
+	    // If both sub-trees were constant expressions, evaluate and replace with const.
+	    if (val.isNaN() || val2.isNaN()) {
+		val = Float.NaN;
+		irt.addSub(irt1);
+		irt.addSub(irt2);
+	    } else {
+		val = val / val2;
+		constant(val, irt); // Make this constant.
+	    }
 	    break;
 	default:
 	    error(tt);
+	    val = Float.NaN;
 	    break;
 	}
+	return val;
     }
 
-    // Convert a constant AST to IR tree
-    public static void constant(CommonTree ast, IRTree irt)
+    // Convert a constant AST to IR tree. Returns the float value of the const.
+    public static float constant(CommonTree ast, IRTree irt)
     {
 	Token t = ast.getToken();
 	int tt = t.getType();
+	float ret = Float.NaN;
 	if (tt == REALNUM) {
 	    String tx = t.getText();
 	    irt.setOp(tx);
-	}
-	else {
+	    ret = Float.parseFloat(tx);
+	} else {
 	    error(tt);
 	}
+	return ret;
+    }
+
+    // For internal use by expression. Creates a const IR tree without an AST.
+    private static void constant(float val, IRTree irt) {
+	irt.setOp("CONST");
+	IRTree sub = new IRTree(Float.toString(val));
+	irt.addSub(sub);
     }
 
     private static void error(int tt)
