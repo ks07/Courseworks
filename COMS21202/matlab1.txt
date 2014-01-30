@@ -1,0 +1,38 @@
+1) Open matlab
+   Cry
+   ???
+   Cry
+2) C = 3 * A
+   C = A + B
+   C = A * transpose(B)
+   C = [A B]
+   C = [A; B]
+3) Less typing.
+   Matrices, I suppose.
+4) mean/sum/var give vectors, do it twice.
+5) csvread
+   dir
+   somefile.bytes
+6)
+>> plot(D)
+>> plot(D(:,1))
+>> plot(D(:,1),D(:,3))
+>> plot(D(:,1),D(:,3),'x')
+>> plot(D(:,1),D(:,3),'o')
+>> plot(D(,1:))
+
+>> plot(D(:,1),D(:,2),'G-o')
+
+>> scatter3(D(:,1),D(:,2),D(:,3))
+>> grid on
+>> xlabel('welcome to hell')
+>> ylabel('there is no escape')
+>> zlabel('do I exist')
+
+7) hist(D(:,1))
+8) randn(1000,1)
+   you want a range? do you? f you.
+>> hist(randn(10000000,1),[-5:0.1:5])
+9) csvwrite('dout.dat',randn(1000,1))
+10)mean(mean(rand(20).*100))
+   It's uniform - meaning it might be useful.
