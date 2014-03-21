@@ -223,7 +223,7 @@ FROM
       INNER JOIN movie m1 ON m1.id = c1.movieid
       GROUP BY a1.name HAVING MIN(c1.ord) <> 1
       ORDER BY appearances DESC) t) t2
-WHERE appearances = highest
+WHERE appearances = highest;
 
 -- q18 List the five actors with the longest careers (the time between their first and last film). For each one give their name, and the length of their career (in descending order of career length)
 SELECT name, diff AS careerLength FROM (SELECT a1.name, MAX(m1.yr) - MIN(m1.yr) AS diff
@@ -246,6 +246,7 @@ FROM
    INNER JOIN movie m1 ON m1.director = director.id
    GROUP BY director.name HAVING COUNT(*) >= 5
    ORDER BY averageScore DESC) t
-WHERE ROWNUM <= 10
+WHERE ROWNUM <= 10;
 
 -- q20 List the decades from the 30s (1930-39) to the 90s (1990-99) and for each of those decades show the average film score, the best film and the actor who starred in most films
+SELECT FLOOR(yr/10) * 10 AS decade, AVG(score) As average, MAX(score) FROM movie WHERE yr BETWEEN 1930 AND 1999 GROUP BY FLOOR(yr/10) * 10;
