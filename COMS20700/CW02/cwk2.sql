@@ -210,12 +210,23 @@ WHERE a1.name = 'Robert De Niro'
   AND c2.ord = 2;
 
 -- q17 Find the actor(s) who has appeared in most films, but has never starred in one
-SELECT a1.name, COUNT(*)
+SELECT a1.name, COUNT(*), MIN(c1.ord)
 FROM actor a1
 INNER JOIN casting c1 ON a1.id = c1.actorid
 INNER JOIN movie m1 ON m1.id = c1.movieid
 GROUP BY a1.name
+HAVING MIN(c1.ord) <> 1 AND COUNT(*)
 ORDER BY COUNT(*) DESC;
+
+SELECT name, MAX(appearances) FROM 
+(SELECT a1.name, COUNT(*) AS appearances
+FROM actor a1
+INNER JOIN casting c1 ON a1.id = c1.actorid
+INNER JOIN movie m1 ON m1.id = c1.movieid
+GROUP BY a1.name
+HAVING MIN(c1.ord) <> 1
+ORDER BY appearances DESC) t
+GROUP by name;
 
 -- q18 List the five actors with the longest careers (the time between their first and last film). For each one give their name, and the length of their career (in descending order of career length)
 -- q19 List the 10 best directors (use the average score of their films to determine who is best) in descending order along with the number of films they’ve made and the average score for their films. Only consider directors who have made at least five films
