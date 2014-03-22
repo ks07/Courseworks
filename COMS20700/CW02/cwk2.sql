@@ -289,6 +289,7 @@ INNER JOIN
 FROM movie m1
 INNER JOIN casting c1 ON c1.movieid = m1.id
 INNER JOIN actor a1 ON a1.id = c1.actorid
+WHERE c1.ord = 1
 GROUP BY a1.name,
          FLOOR(yr/10) * 10
 ORDER BY actedIn DESC) t2 ON t2.decade = t.decade
@@ -301,6 +302,7 @@ SELECT decade, MAX(actedIn) AS topActed FROM
 FROM movie m1
 INNER JOIN casting c1 ON c1.movieid = m1.id
 INNER JOIN actor a1 ON a1.id = c1.actorid
+WHERE c1.ord = 1
 GROUP BY a1.name,
          FLOOR(yr/10) * 10) t
 GROUP BY decade;
@@ -312,6 +314,33 @@ SELECT name, decade, actedIn FROM (SELECT name, decade, actedIn, MAX(actedIn) OV
 FROM movie m1
 INNER JOIN casting c1 ON c1.movieid = m1.id
 INNER JOIN actor a1 ON a1.id = c1.actorid
+WHERE c1.ord = 1
 GROUP BY a1.name,
          FLOOR(yr/10) * 10) t) t2
 WHERE actedIn = t2.topActed;
+
+-- Close-ish
+SELECT m1.title As bestFilm, t.average, t.decade, t2.name
+FROM movie m1
+INNER JOIN
+  (SELECT FLOOR(yr/10) * 10 AS decade,
+          AVG(score) AS average,
+          MAX(score) AS highest
+   FROM movie
+   WHERE yr BETWEEN 1930 AND 1999
+   GROUP BY FLOOR(yr/10) * 10) t ON t.highest = m1.score
+AND t.decade = FLOOR(yr/10) * 10
+INNER JOIN
+   (SELECT name, decade, actedIn FROM (SELECT name, decade, actedIn, MAX(actedIn) OVER (PARTITION BY decade) AS topActed FROM
+(SELECT a1.name,
+       FLOOR(yr/10) * 10 AS decade,
+       COUNT(*) AS actedIn
+FROM movie m1
+INNER JOIN casting c1 ON c1.movieid = m1.id
+INNER JOIN actor a1 ON a1.id = c1.actorid
+WHERE c1.ord = 1
+GROUP BY a1.name,
+         FLOOR(yr/10) * 10) t) t2
+WHERE actedIn = t2.topActed) t2
+ON t2.decade = t.decade
+ORDER BY t.decade DESC;
