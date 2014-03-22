@@ -138,15 +138,14 @@ SELECT a2.name,
 FROM actor a2
 INNER JOIN casting c2 ON a2.id = c2.actorid
 INNER JOIN movie m2 ON m2.id = c2.movieid
-WHERE c2.actorid IN
-    (SELECT director.id
-     FROM actor director
-     INNER JOIN movie m1 ON m1.director = director.id
-     INNER JOIN casting c1 ON m1.id = c1.movieid
-     INNER JOIN actor a1 ON c1.actorid = a1.id
-     WHERE a1.id = director.id
-       AND c1.ord = 1)
-GROUP BY a2.name;
+INNER JOIN actor director ON director.id = c2.actorid
+INNER JOIN movie m1 ON m1.director = director.id
+INNER JOIN casting c1 ON m1.id = c1.movieid
+INNER JOIN actor a1 ON c1.actorid = a1.id
+WHERE a1.id = director.id
+  AND c1.ord = 1
+GROUP BY a2.name
+ORDER BY firstFilm DESC;
 
 -- q15 List the names of actors who have appeared in at least three films directed by Alfred Hitchcock along with the number of those films each has starred in (in descending order of number of films)
 SELECT a1.name,
