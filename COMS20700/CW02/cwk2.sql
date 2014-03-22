@@ -132,21 +132,27 @@ WHERE ROWNUM = 1;
 -- q14 List the directors, who have starred in films they directed along with the number of those films each has starred in and the year the earliest was made (in descending order of year)
 
 -- INTERPRETED AS: List all directors who have starred in films that they directed, along with the total number of films they have starred in (whether they directed it or not), along with the year of the earliest film they starred in or directed
-SELECT a2.name,
-       MIN(m2.yr) AS firstFilm,
-       COUNT(*) AS starredIN
-FROM actor a2
-INNER JOIN casting c2 ON a2.id = c2.actorid
-INNER JOIN movie m2 ON m2.id = c2.movieid
-WHERE c2.actorid IN
-    (SELECT director.id
-     FROM actor director
-     INNER JOIN movie m1 ON m1.director = director.id
-     INNER JOIN casting c1 ON m1.id = c1.movieid
-     INNER JOIN actor a1 ON c1.actorid = a1.id
-     WHERE a1.id = director.id
-       AND c1.ord = 1)
-GROUP BY a2.name
+SELECT DISTINCT name,
+                firstFilm,
+                starredIn
+FROM
+  (SELECT a2.name,
+          c2.actorid,
+          MIN(m2.yr) AS firstFilm,
+          COUNT(*) AS starredIN
+   FROM actor a2
+   INNER JOIN casting c2 ON a2.id = c2.actorid
+   INNER JOIN movie m2 ON m2.id = c2.movieid
+   GROUP BY a2.name,
+            c2.actorid) t
+INNER JOIN
+  (SELECT director.id
+   FROM actor director
+   INNER JOIN movie m1 ON m1.director = director.id
+   INNER JOIN casting c1 ON m1.id = c1.movieid
+   INNER JOIN actor a1 ON c1.actorid = a1.id
+   WHERE a1.id = director.id
+     AND c1.ord = 1) t2 ON t2.id = t.actorid
 ORDER BY firstFilm DESC;
 
 -- q15 List the names of actors who have appeared in at least three films directed by Alfred Hitchcock along with the number of those films each has starred in (in descending order of number of films)
