@@ -277,4 +277,4 @@ INNER JOIN
          GROUP BY a1.name,
                   FLOOR(yr/10) * 10) t) t2
    WHERE actedIn = t2.topActed) t2 ON t2.decade = t.decade
-ORDER BY t.decade DESC;
+ORDER BY t.decade ASC;

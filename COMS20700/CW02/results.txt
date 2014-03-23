@@ -153,13 +153,13 @@ James Cameron,7.56667,6
 
 q20
 BESTFILM,AVERAGE,DECADE,MOSTSTARREDACTOR
-"Shawshank Redemption, The",6.37622,"1,990",Johnny Depp
-Star Wars: Episode V - The Empire Strikes Back,6.4393,"1,980",Arnold Schwarzenegger
-Raiders of the Lost Ark,6.4393,"1,980",Arnold Schwarzenegger
-"Godfather, The",7.05782,"1,970",Woody Allen
-Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb,7.5012,"1,960",Sean Connery
-Shichinin no samurai,7.89848,"1,950",James Stewart
-Casablanca,8.11724,"1,940",Cary Grant
-Citizen Kane,8.11724,"1,940",Cary Grant
 City Lights,8.19444,"1,930",Groucho Marx
 "Grande illusion, La",8.19444,"1,930",Groucho Marx
+Casablanca,8.11724,"1,940",Cary Grant
+Citizen Kane,8.11724,"1,940",Cary Grant
+Shichinin no samurai,7.89848,"1,950",James Stewart
+Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb,7.5012,"1,960",Sean Connery
+"Godfather, The",7.05782,"1,970",Woody Allen
+Star Wars: Episode V - The Empire Strikes Back,6.4393,"1,980",Arnold Schwarzenegger
+Raiders of the Lost Ark,6.4393,"1,980",Arnold Schwarzenegger
+"Shawshank Redemption, The",6.37622,"1,990",Johnny Depp
