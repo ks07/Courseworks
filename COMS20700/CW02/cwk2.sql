@@ -144,6 +144,7 @@ FROM
    FROM actor a2
    INNER JOIN casting c2 ON a2.id = c2.actorid
    INNER JOIN movie m2 ON m2.id = c2.movieid
+   WHERE c2.ord = 1
    GROUP BY a2.name,
             c2.actorid) t
 INNER JOIN

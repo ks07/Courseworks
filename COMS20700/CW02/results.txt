@@ -83,32 +83,32 @@ YR,CNT
 
 q14
 NAME,FIRSTFILM,STARREDIN
+Christopher Guest,"2,000",1
+Vincent Gallo,"1,998",1
+Roberto Benigni,"1,997",1
 Trey Parker,"1,997",3
+Billy Bob Thornton,"1,996",1
 Mike Judge,"1,996",1
-Billy Bob Thornton,"1,993",9
-Vincent Gallo,"1,993",2
+Albert Brooks,"1,991",1
+Kenneth Branagh,"1,991",2
 Richard Linklater,"1,991",1
-Kenneth Branagh,"1,989",8
-Steven Seagal,"1,988",6
+Billy Crystal,"1,989",4
+Tim Robbins,"1,989",6
+Steven Seagal,"1,988",5
 Yahoo Serious,"1,988",1
-Billy Crystal,"1,987",10
-Roberto Benigni,"1,986",2
-Kevin Costner,"1,985",15
-Tim Robbins,"1,985",15
-Christopher Guest,"1,984",5
-Rob Reiner,"1,984",6
-William Shatner,"1,979",8
-Albert Brooks,"1,976",6
-Danny DeVito,"1,975",17
-Sylvester Stallone,"1,975",21
-Mel Brooks,"1,974",8
-Robert De Niro,"1,974",29
+Danny DeVito,"1,986",4
+Kevin Costner,"1,985",14
+Rob Reiner,"1,984",1
+William Shatner,"1,979",6
+Mel Brooks,"1,976",3
+Robert De Niro,"1,976",18
+Sylvester Stallone,"1,976",18
+Robert Redford,"1,975",5
 Barbra Streisand,"1,972",3
-Robert Redford,"1,969",10
-Warren Beatty,"1,967",6
-Woody Allen,"1,967",19
-Clint Eastwood,"1,964",20
-Orson Welles,"1,941",7
+Woody Allen,"1,969",14
+Warren Beatty,"1,967",5
+Clint Eastwood,"1,964",18
+Orson Welles,"1,941",2
 Charles Chaplin,"1,925",3
 
 q15
