@@ -25,69 +25,16 @@ Barton Fink,7.2
 
 q5
 TITLE
-Chariots of Fire
-"Right Stuff, The"
-Ghostbusters II
-"Elephant Man, The"
-"Ice Storm, The"
 Death and the Maiden
-Nineteen Eighty-Four
-Aliens
-"Fifth Element, The"
-Repo Man
-Midnight Express
-Pretty in Pink
-"Mighty, The"
-1492: Conquest of Paradise
-Spaceballs
-Copycat
-"River Runs Through It, A"
 Gorillas in the Mist
-"Dead Zone, The"
-Naked Lunch
-Down Periscope
-Ghostbusters
-eXistenZ
-"Sweet Hereafter, The"
-Henry V
-"Birds, The"
-Dave
-Contact
-"Green Mile, The"
-Top Gun
-Brazil
-"Running Man, The"
-Working Girl
-Harold and Maude
-"Witches of Eastwick, The"
-Midnight Run
-Time Bandits
-She's So Lovely
-SpaceCamp
-Rob Roy
-Singles
-Private Benjamin
-Frankenstein
-Steel Magnolias
-Red Dawn
-Poison Ivy
-"Thomas Crown Affair, The"
-Galaxy Quest
+Aliens
 Alien&#179;
-Wild at Heart
-Dead Man
-Escape from New York
 Alien: Resurrection
-"Other Sister, The"
-Flight of the Navigator
+Copycat
+"Sweet Hereafter, The"
+Repo Man
+Nineteen Eighty-Four
 Watership Down
-Freddy's Dead: The Final Nightmare
-Money Talks
-Christine
-Hamlet
-Big Night
-"Greystoke: The Legend of Tarzan, Lord of the Apes"
-"Year of Living Dangerously, The"
 
 q6
 TITLE,SCORE
@@ -166,10 +113,10 @@ Charles Chaplin,"1,925",3
 
 q15
 NAME,STARREDIN
-Leo G. Carroll,5
 Cary Grant,4
-Grace Kelly,3
 James Stewart,3
+Grace Kelly,0
+Leo G. Carroll,0
 
 q16
 TITLE,DIRECTOR,COSTAR,YR,SCORE

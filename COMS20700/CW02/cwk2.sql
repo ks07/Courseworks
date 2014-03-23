@@ -30,7 +30,8 @@ INNER JOIN casting c1 ON m1.id = c1.movieid
 INNER JOIN casting c2 ON c1.actorid = c2.actorid
 INNER JOIN movie m2 ON c2.movieid = m2.id
 WHERE m1.title <> 'Alien'
-  AND m2.title = 'Alien';
+  AND m2.title = 'Alien'
+  AND c1.ord = 1;
 
 -- q6 Give the title and score of the best film of the final year of the database
 SELECT *
@@ -156,15 +157,27 @@ INNER JOIN
 ORDER BY firstFilm DESC;
 
 -- q15 List the names of actors who have appeared in at least three films directed by Alfred Hitchcock along with the number of those films each has starred in (in descending order of number of films)
-SELECT a1.name,
-       COUNT(*) AS starredIn
-FROM actor a1
-INNER JOIN casting c1 ON a1.id = c1.actorid
-INNER JOIN movie m1 ON m1.id = c1.movieid
-INNER JOIN actor director ON m1.director = director.id
-WHERE director.name = 'Alfred Hitchcock'
-GROUP BY a1.name HAVING COUNT(*) >= 3
-ORDER BY starredIn DESC;
+SELECT t.name,
+       NVL(t2.starredIn, '0') AS starredIn
+FROM
+  (SELECT a1.name
+   FROM actor a1
+   INNER JOIN casting c1 ON a1.id = c1.actorid
+   INNER JOIN movie m1 ON m1.id = c1.movieid
+   INNER JOIN actor director ON m1.director = director.id
+   WHERE director.name = 'Alfred Hitchcock'
+   GROUP BY a1.name HAVING COUNT(*) >= 3) t
+LEFT OUTER JOIN
+  (SELECT actor.name,
+          COUNT(*) AS starredIn
+   FROM actor
+   INNER JOIN casting ON actor.id = casting.actorid
+   INNER JOIN movie ON movie.id = casting.movieid
+   INNER JOIN actor d ON movie.director = d.id
+   WHERE casting.ord = 1
+     AND d.name = 'Alfred Hitchcock'
+   GROUP BY actor.name) t2 ON t.name = t2.name
+ORDER BY starredIn DESC
 
 -- q16 List the title, director’s name, co-star (ord = 2), year and score (in descending order of score) for the five best films starring Robert De Niro
 SELECT *
