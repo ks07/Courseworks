@@ -35,8 +35,8 @@ subst_aexp (Add one two) sub with = (Add (subst_aexp one sub with) (subst_aexp t
 subst_aexp (Mult one two) sub with = (Mult (subst_aexp one sub with) (subst_aexp two sub with))
 subst_aexp (Sub one two) sub with = (Sub (subst_aexp one sub with) (subst_aexp two sub with)) 
 subst_aexp (V v) sub with
-    | v == sub = with
-    | otherwise = (V v)
+  | v == sub = with
+  | otherwise = (V v)
 
 -- Evaluates a given arithmetic expression in a given state
 a_val :: Aexp -> State -> Z
@@ -77,11 +77,11 @@ b_val (Le a b) sigma = (a_val a sigma) <= (a_val b sigma)
 -- Conditional function that returns a function from a choice of two, using a
 -- function that returns a truth value given a parameter
 cond :: (a->T, a->a, a->a) -> (a->a)
-cond (a, b, c) = \xs a' -> case (a a') of True -> b
-                                          False -> c 
+cond (boolFunc, trueBody, falseBody) sigma
+  | (boolFunc sigma) = trueBody sigma
+  | otherwise        = falseBody sigma
 
--- With thanks to Sahaj (give him 20 marks plz)
--- An example state for testing
+-- An example state 
 sigma_t :: State
 sigma_t "x" = 12
 sigma_t "y" = 999
