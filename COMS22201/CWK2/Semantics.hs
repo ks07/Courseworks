@@ -81,6 +81,12 @@ cond (boolFunc, trueBody, falseBody) sigma
   | (boolFunc sigma) = trueBody sigma
   | otherwise        = falseBody sigma
 
+-- 'Functional Update', takes a function (e.g. state), value, and key and returns a new function
+update :: Eq a => (a->b) -> b -> a -> (a->b)
+update s v y x
+  | y == x    = v
+  | otherwise = (s x)
+
 -- An example state 
 sigma_t :: State
 sigma_t "x" = 12
