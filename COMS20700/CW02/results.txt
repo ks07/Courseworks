@@ -1,0 +1,165 @@
+Query Results:
+
+q1
+YR
+"1,999"
+
+q2
+SCORE
+8.5
+
+q3
+NAME
+Henry Fonda
+
+q4
+TITLE,SCORE
+Fargo,8.2
+"O Brother, Where Art Thou?",8
+Miller's Crossing,7.9
+Blood Simple,7.7
+"Big Lebowski, The",7.6
+Raising Arizona,7.6
+"Hudsucker Proxy, The",7.3
+Barton Fink,7.2
+
+q5
+TITLE
+Death and the Maiden
+Gorillas in the Mist
+Aliens
+Alien&#179;
+Alien: Resurrection
+Copycat
+"Sweet Hereafter, The"
+Repo Man
+Nineteen Eighty-Four
+Watership Down
+
+q6
+TITLE,SCORE
+Wo hu zang long,9
+
+q7
+TITLE
+Being John Malkovich
+
+q8
+TITLE,YR,SCORE
+"Thing, The","1,982",7.5
+Big Trouble in Little China,"1,986",6.4
+Escape from L.A.,"1,996",4.7
+Escape from New York,"1,981",6.7
+
+q9
+TITLE,YR,SCORE
+Casablanca,"1,942",8.8
+"Treasure of the Sierra Madre, The","1,948",8.5
+"Big Sleep, The","1,946",8.2
+"African Queen, The","1,951",8.2
+"Caine Mutiny, The","1,954",8
+
+q10
+TITLE
+Chinatown
+
+q11
+NAME
+Abe Vigoda
+James Caan
+Marlon Brando
+Richard S. Castellano
+Rudy Bond
+Sterling Hayden
+
+q12
+TITLE
+Apocalypse Now
+Super Mario Bros.
+
+q13
+YR,CNT
+"1,994",3
+
+q14
+NAME,FIRSTFILM,STARREDIN
+Christopher Guest,"2,000",1
+Vincent Gallo,"1,998",1
+Roberto Benigni,"1,997",1
+Trey Parker,"1,997",3
+Billy Bob Thornton,"1,996",1
+Mike Judge,"1,996",1
+Albert Brooks,"1,991",1
+Kenneth Branagh,"1,991",2
+Richard Linklater,"1,991",1
+Billy Crystal,"1,989",4
+Tim Robbins,"1,989",6
+Steven Seagal,"1,988",5
+Yahoo Serious,"1,988",1
+Danny DeVito,"1,986",4
+Kevin Costner,"1,985",14
+Rob Reiner,"1,984",1
+William Shatner,"1,979",6
+Mel Brooks,"1,976",3
+Robert De Niro,"1,976",18
+Sylvester Stallone,"1,976",18
+Robert Redford,"1,975",5
+Barbra Streisand,"1,972",3
+Woody Allen,"1,969",14
+Warren Beatty,"1,967",5
+Clint Eastwood,"1,964",18
+Orson Welles,"1,941",2
+Charles Chaplin,"1,925",3
+
+q15
+NAME,STARREDIN
+Cary Grant,4
+James Stewart,3
+Grace Kelly,0
+Leo G. Carroll,0
+
+q16
+TITLE,DIRECTOR,COSTAR,YR,SCORE
+Goodfellas,Martin Scorsese,Ray Liotta,"1,990",8.5
+Taxi Driver,Martin Scorsese,Jodie Foster,"1,976",8.4
+Raging Bull,Martin Scorsese,Cathy Moriarty,"1,980",8.4
+"Deer Hunter, The",Michael Cimino,John Cazale,"1,978",8.1
+Once Upon a Time in America,Sergio Leone,James Woods,"1,984",8
+
+q17
+NAME
+Dan Hedaya
+
+q18
+NAME,CAREERLENGTH
+Deems Taylor,59
+Leopold Stokowski,59
+Robert Stack,56
+Norman Lloyd,55
+Teresa Wright,54
+
+q19
+NAME,AVERAGESCORE,FILMSMADE
+Akira Kurosawa,8.48333,6
+Howard Hawks,8.18333,6
+John Ford,8.14,5
+Stanley Kubrick,8.13333,9
+Billy Wilder,8.08889,9
+Sergio Leone,8.04,5
+Alfred Hitchcock,7.97647,17
+Ang Lee,7.94,5
+Joel Coen,7.6875,8
+James Cameron,7.56667,6
+
+q20
+BESTFILM,AVERAGE,DECADE,MOSTSTARREDACTOR
+City Lights,8.19444,"1,930",Groucho Marx
+"Grande illusion, La",8.19444,"1,930",Groucho Marx
+Casablanca,8.11724,"1,940",Cary Grant
+Citizen Kane,8.11724,"1,940",Cary Grant
+Shichinin no samurai,7.89848,"1,950",James Stewart
+Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb,7.5012,"1,960",Sean Connery
+"Godfather, The",7.05782,"1,970",Woody Allen
+Star Wars: Episode V - The Empire Strikes Back,6.4393,"1,980",Arnold Schwarzenegger
+Raiders of the Lost Ark,6.4393,"1,980",Arnold Schwarzenegger
+"Shawshank Redemption, The",6.37622,"1,990",Johnny Depp

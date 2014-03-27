@@ -8,40 +8,32 @@ SELECT yr FROM movie WHERE title = 'Fight Club';
 SELECT score FROM movie WHERE title = 'Vertigo';
 
 -- q3  Who starred in the film “12 Angry Men”? 
-SELECT name FROM actor 
-INNER JOIN casting 
-ON actor.id = casting.actorid 
-INNER JOIN movie 
-ON casting.movieid = movie.id 
-WHERE title = '12 Angry Men' AND ord = 1;
+SELECT name
+FROM actor
+INNER JOIN casting ON actor.id = casting.actorid
+INNER JOIN movie ON casting.movieid = movie.id
+WHERE title = '12 Angry Men'
+  AND ord = 1;
 
 -- q4 List the title and scores (in descending order) for the films directed by Joel Coen
-SELECT title, score FROM movie 
-INNER JOIN actor
-ON movie.director = actor.id
+SELECT title,
+       score
+FROM movie
+INNER JOIN actor ON movie.director = actor.id
 WHERE name = 'Joel Coen'
 ORDER BY score DESC;
 
 -- q5  List the titles of other films starring actors who appeared in the film “Alien”
-SELECT DISTINCT title
-FROM movie
-INNER JOIN casting ON movie.id = casting.movieid
-WHERE title <> 'Alien' AND casting.actorid IN
-    (SELECT actorid
-     FROM casting
-     INNER JOIN movie ON movie.id = casting.movieid
-     WHERE title = 'Alien');
-     
--- Much faster!
 SELECT m1.title
 FROM movie m1
 INNER JOIN casting c1 ON m1.id = c1.movieid
 INNER JOIN casting c2 ON c1.actorid = c2.actorid
 INNER JOIN movie m2 ON c2.movieid = m2.id
-WHERE m1.title <> 'Alien' AND m2.title = 'Alien';
+WHERE m1.title <> 'Alien'
+  AND m2.title = 'Alien'
+  AND c1.ord = 1;
 
 -- q6 Give the title and score of the best film of the final year of the database
--- Praise the lord for awful oracle sql
 SELECT *
 FROM
   (SELECT title,
@@ -111,24 +103,6 @@ INNER JOIN casting ON actor.id = casting.actorid
 INNER JOIN movie ON casting.movieid = movie.id 
 WHERE title = 'Godfather: Part II, The';
 
--- Eek, slower!
-SELECT * FROM (
-SELECT name, actorid
-FROM actor
-INNER JOIN casting ON actor.id = casting.actorid
-INNER JOIN movie ON casting.movieid = movie.id
-WHERE title = 'Godfather, The' ) t1
-  LEFT OUTER JOIN (
-SELECT name, actorid
-FROM actor
-INNER JOIN casting ON actor.id = casting.actorid
-INNER JOIN movie ON casting.movieid = movie.id 
-WHERE title = 'Godfather: Part II, The' ) t2
-ON t1.actorid = t2.actorid
-WHERE t2.actorid IS NULL;
-
--- G1 = 12, G2 = 61
-
 -- q12 List the title and score of the best and worst films in which Dennis Hopper appeared
 -- We can't reference the renamed columns in the inner where clause, so we have to do an outer select
 SELECT title
@@ -158,56 +132,73 @@ WHERE ROWNUM = 1;
 
 -- q14 List the directors, who have starred in films they directed along with the number of those films each has starred in and the year the earliest was made (in descending order of year)
 
--- THIS IS WRONG INTERPRETATION, SIRRY
-SELECT director.name, COUNT(*)
-FROM actor director
-INNER JOIN movie m1 ON m1.director = director.id
-INNER JOIN casting c1 ON m1.id = c1.movieid
-INNER JOIN actor a1 ON c1.actorid = a1.id
-WHERE a1.id = director.id AND c1.ord = 1
-GROUP BY director.name;
-
 -- INTERPRETED AS: List all directors who have starred in films that they directed, along with the total number of films they have starred in (whether they directed it or not), along with the year of the earliest film they starred in or directed
--- 27 who have both directed and starred
-SELECT a2.name, MIN(m2.yr) AS firstFilm, COUNT(*) AS starredIN
-FROM actor a2
-INNER JOIN casting c2 ON a2.id = c2.actorid
-INNER JOIN movie m2 ON m2.id = c2.movieid
-WHERE c2.actorid IN 
-(SELECT director.id
-FROM actor director
-INNER JOIN movie m1 ON m1.director = director.id
-INNER JOIN casting c1 ON m1.id = c1.movieid
-INNER JOIN actor a1 ON c1.actorid = a1.id
-WHERE a1.id = director.id AND c1.ord = 1)
-GROUP BY a2.name;
+SELECT DISTINCT name,
+                firstFilm,
+                starredIn
+FROM
+  (SELECT a2.name,
+          c2.actorid,
+          MIN(m2.yr) AS firstFilm,
+          COUNT(*) AS starredIN
+   FROM actor a2
+   INNER JOIN casting c2 ON a2.id = c2.actorid
+   INNER JOIN movie m2 ON m2.id = c2.movieid
+   WHERE c2.ord = 1
+   GROUP BY a2.name,
+            c2.actorid) t
+INNER JOIN
+  (SELECT director.id
+   FROM actor director
+   INNER JOIN movie m1 ON m1.director = director.id
+   INNER JOIN casting c1 ON m1.id = c1.movieid
+   INNER JOIN actor a1 ON c1.actorid = a1.id
+   WHERE a1.id = director.id
+     AND c1.ord = 1) t2 ON t2.id = t.actorid
+ORDER BY firstFilm DESC;
 
 -- q15 List the names of actors who have appeared in at least three films directed by Alfred Hitchcock along with the number of those films each has starred in (in descending order of number of films)
-SELECT a1.name
-FROM actor a1
-INNER JOIN casting c1 ON a1.id = c1.actorid
-INNER JOIN movie m1 ON m1.id = c1.movieid
-INNER JOIN actor director ON m1.director = director.id
-WHERE director.name = 'Alfred Hitchcock'
-GROUP BY a1.name
-HAVING COUNT(*) >= 3
-ORDER BY COUNT(*);
+SELECT t.name,
+       NVL(t2.starredIn, '0') AS starredIn
+FROM
+  (SELECT a1.name
+   FROM actor a1
+   INNER JOIN casting c1 ON a1.id = c1.actorid
+   INNER JOIN movie m1 ON m1.id = c1.movieid
+   INNER JOIN actor director ON m1.director = director.id
+   WHERE director.name = 'Alfred Hitchcock'
+   GROUP BY a1.name HAVING COUNT(*) >= 3) t
+LEFT OUTER JOIN
+  (SELECT actor.name,
+          COUNT(*) AS starredIn
+   FROM actor
+   INNER JOIN casting ON actor.id = casting.actorid
+   INNER JOIN movie ON movie.id = casting.movieid
+   INNER JOIN actor d ON movie.director = d.id
+   WHERE casting.ord = 1
+     AND d.name = 'Alfred Hitchcock'
+   GROUP BY actor.name) t2 ON t.name = t2.name
+ORDER BY starredIn DESC
 
 -- q16 List the title, director’s name, co-star (ord = 2), year and score (in descending order of score) for the five best films starring Robert De Niro
-SELECT m1.title,
-       d.name AS director,
-       a2.name AS coStar,
-       m1.yr,
-       m1.score
-FROM movie m1
-INNER JOIN actor d ON d.id = m1.director
-INNER JOIN casting c1 ON c1.movieid = m1.id
-INNER JOIN actor a1 ON c1.actorid = a1.id
-INNER JOIN casting c2 ON c2.movieid = m1.id
-INNER JOIN actor a2 ON c2.actorid = a2.id
-WHERE a1.name = 'Robert De Niro'
-  AND c1.ord = 1
-  AND c2.ord = 2;
+SELECT *
+FROM
+  (SELECT m1.title,
+          d.name AS director,
+          a2.name AS coStar,
+          m1.yr,
+          m1.score
+   FROM movie m1
+   INNER JOIN actor d ON d.id = m1.director
+   INNER JOIN casting c1 ON c1.movieid = m1.id
+   INNER JOIN actor a1 ON c1.actorid = a1.id
+   INNER JOIN casting c2 ON c2.movieid = m1.id
+   INNER JOIN actor a2 ON c2.actorid = a2.id
+   WHERE a1.name = 'Robert De Niro'
+     AND c1.ord = 1
+     AND c2.ord = 2
+   ORDER BY m1.score DESC) t
+WHERE ROWNUM <= 5;
 
 -- q17 Find the actor(s) who has appeared in most films, but has never starred in one
 SELECT name
@@ -223,15 +214,19 @@ FROM
       INNER JOIN movie m1 ON m1.id = c1.movieid
       GROUP BY a1.name HAVING MIN(c1.ord) <> 1
       ORDER BY appearances DESC) t) t2
-WHERE appearances = highest
+WHERE appearances = highest;
 
 -- q18 List the five actors with the longest careers (the time between their first and last film). For each one give their name, and the length of their career (in descending order of career length)
-SELECT name, diff AS careerLength FROM (SELECT a1.name, MAX(m1.yr) - MIN(m1.yr) AS diff
-FROM movie m1 
-INNER JOIN casting c1 ON c1.movieid = m1.id
-INNER JOIN actor a1 ON a1.id = c1.actorid
-GROUP BY a1.name
-ORDER BY diff DESC)
+SELECT name,
+       diff AS careerLength
+FROM
+  (SELECT a1.name,
+          MAX(m1.yr) - MIN(m1.yr) AS diff
+   FROM movie m1
+   INNER JOIN casting c1 ON c1.movieid = m1.id
+   INNER JOIN actor a1 ON a1.id = c1.actorid
+   GROUP BY a1.name
+   ORDER BY diff DESC)
 WHERE ROWNUM <= 5;
 
 -- q19 List the 10 best directors (use the average score of their films to determine who is best) in descending order along with the number of films they’ve made and the average score for their films. Only consider directors who have made at least five films
@@ -246,6 +241,40 @@ FROM
    INNER JOIN movie m1 ON m1.director = director.id
    GROUP BY director.name HAVING COUNT(*) >= 5
    ORDER BY averageScore DESC) t
-WHERE ROWNUM <= 10
+WHERE ROWNUM <= 10;
 
 -- q20 List the decades from the 30s (1930-39) to the 90s (1990-99) and for each of those decades show the average film score, the best film and the actor who starred in most films
+SELECT m1.title AS bestFilm,
+       t.average,
+       t.decade,
+       t2.name AS mostStarredActor
+FROM movie m1
+INNER JOIN
+  (SELECT FLOOR(yr/10) * 10 AS decade,
+          AVG(score) AS average,
+          MAX(score) AS highest
+   FROM movie
+   WHERE yr BETWEEN 1930 AND 1999
+   GROUP BY FLOOR(yr/10) * 10) t ON t.highest = m1.score
+AND t.decade = FLOOR(yr/10) * 10
+INNER JOIN
+  (SELECT name,
+          decade,
+          actedIn
+   FROM
+     (SELECT name,
+             decade,
+             actedIn,
+             MAX(actedIn) OVER (PARTITION BY decade) AS topActed
+      FROM
+        (SELECT a1.name,
+                FLOOR(yr/10) * 10 AS decade,
+                COUNT(*) AS actedIn
+         FROM movie m1
+         INNER JOIN casting c1 ON c1.movieid = m1.id
+         INNER JOIN actor a1 ON a1.id = c1.actorid
+         WHERE c1.ord = 1
+         GROUP BY a1.name,
+                  FLOOR(yr/10) * 10) t) t2
+   WHERE actedIn = t2.topActed) t2 ON t2.decade = t.decade
+ORDER BY t.decade ASC;
