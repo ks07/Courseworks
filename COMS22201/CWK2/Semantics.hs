@@ -121,9 +121,17 @@ p' = (sigma_final "x", sigma_final "y")
 test_p' :: Bool
 test_p' = p' == (1,120)
 
+--------------------------------------------------------------
+--------------------------- Part 2 ---------------------------
+--------------------------------------------------------------
+
 -- Returns the successor of a location
 new :: Loc -> Loc
 new = succ
+
+-- Constant next location of 0
+next :: Loc
+next = 0
 
 -- An example state 
 sigma_t :: State
