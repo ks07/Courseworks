@@ -83,9 +83,9 @@ cond (boolFunc, trueBody, falseBody) sigma
 
 -- 'Functional Update', takes a function (e.g. state), value, and key and returns a new function
 update :: Eq a => (a->b) -> b -> a -> (a->b)
-update f y x z
-  | x == z    = y
-  | otherwise = (f x)
+update s v x y
+  | x == y    = v
+  | otherwise = (s y)
 
 -- Least fixpoint operator
 fix :: ((a->a) -> (a->a)) -> (a->a)
@@ -99,6 +99,27 @@ s_ds (Comp s1 s2) sigma = ((s_ds s2) . (s_ds s1)) sigma
 s_ds (If b s1 s2) sigma = cond ((b_val b), (s_ds s1), (s_ds s2)) sigma
 s_ds (While b s1) sigma = fix ff sigma
   where ff g = cond ((b_val b), g.(s_ds s1), id)
+
+-- AST for factorial program in While
+p :: Stm
+p = (While (Neg (Eq (V "x") (N 1))) (Comp (Ass "y" (Mult (V "y") (V "x"))) (Ass "x" (Sub (V "x") (N 1)))) ) 
+
+-- State for p function from Part 1
+sigma_p :: State
+sigma_p "x" = 5
+sigma_p "y" = 1
+sigma_p v = undefined
+
+-- Final values of x and y after evaluating p in state sigma_p
+p' :: (Z,Z)
+p' = (sigma_final "x", sigma_final "y")
+  where sigma_final = s_ds p sigma_p
+-- This should be equivalent to:
+-- p' = (1,120)
+
+-- Test function to make sure p' hasn't broken and is still giving the expected results
+test_p' :: Bool
+test_p' = p' == (1,120)
 
 -- An example state 
 sigma_t :: State
