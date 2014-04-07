@@ -133,6 +133,11 @@ new = succ
 next :: Loc
 next = 0
 
+-- Lookup function. We now have variable environments, 'EnvV's that map variables to locations,
+-- and Stores that map locations to values. This function combines the two to make a state.
+lookup :: EnvV -> Store -> State
+lookup ve st = st . ve
+
 -- An example state 
 sigma_t :: State
 sigma_t "x" = 12
