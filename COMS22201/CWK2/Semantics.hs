@@ -141,9 +141,15 @@ lookup ve st = st . ve
 -- Variable environment update. Takes some changes to make to the state and the current state (env/loc).
 d_v_ds :: DecV -> (EnvV, Store) -> (EnvV, Store)
 d_v_ds [] (ve, st) = (ve, st)
-d_v_ds ((x, a) : remaining) (ve, st) = (( update ve l x ), ( update st v l ) . ( update st (new l) next ))
+d_v_ds ((x, a) : remaining) (ve, st) = d_v_ds remaining (( update ve l x ), ( update st v l ) . ( update st (new l) next ))
   where l = st next
         v = a_val a (lookup ve st)
+
+-- Procedure environment update.
+d_p_ds :: DecP -> EnvV -> EnvP -> EnvP
+d_p_ds [] ve pe = pe
+d_p_ds ((p, body) : remaining) ve pe = pe
+-- type DecP = [(Pname,Stm)]
 
 -- An example state 
 sigma_t :: State
