@@ -138,6 +138,13 @@ next = 0
 lookup :: EnvV -> Store -> State
 lookup ve st = st . ve
 
+-- Variable environment update. Takes some changes to make to the state and the current state (env/loc).
+d_v_ds :: DecV -> (EnvV, Store) -> (EnvV, Store)
+d_v_ds [] (ve, st) = (ve, st)
+d_v_ds ((x, a) : remaining) (ve, st) = (( update ve l x ), ( update st v l ) . ( update st (new l) next ))
+  where l = st next
+        v = a_val a (lookup ve st)
+
 -- An example state 
 sigma_t :: State
 sigma_t "x" = 12
