@@ -121,6 +121,10 @@ p' = (sigma_final "x", sigma_final "y")
 test_p' :: Bool
 test_p' = p' == (1,120)
 
+-- Returns the successor of a location
+new :: Loc -> Loc
+new = succ
+
 -- An example state 
 sigma_t :: State
 sigma_t "x" = 12
