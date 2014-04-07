@@ -93,11 +93,12 @@ fix ff = ff (fix ff)
 
 -- While language semantic function
 s_ds :: Stm -> State -> State
-s_ds Skip sigma = sigma
+s_ds Skip sigma = id sigma
 s_ds (Ass v a) sigma = (update sigma (a_val a sigma) v)
 s_ds (Comp s1 s2) sigma = ((s_ds s2) . (s_ds s1)) sigma
 s_ds (If b s1 s2) sigma = cond ((b_val b), (s_ds s1), (s_ds s2)) sigma
-s_ds (While b s1) sigma = fix (cond ((b_val b), (s_ds s1), (s_ds Skip))) sigma
+s_ds (While b s1) sigma = fix ff sigma
+  where ff g = cond ((b_val b), g.(s_ds s1), id)
 
 -- An example state 
 sigma_t :: State
