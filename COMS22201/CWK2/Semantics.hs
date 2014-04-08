@@ -148,10 +148,25 @@ d_v_ds ((x, a) : remaining) (ve, st) = d_v_ds remaining (( update ve l x ), ( up
 -- Procedure environment update.
 d_p_ds :: DecP -> EnvV -> EnvP -> EnvP
 d_p_ds [] ve pe = pe
-d_p_ds ((p, body) : remaining) ve pe = pe
+d_p_ds ((p, body) : remaining) ve pe = d_p_ds remaining ve (update pe (fix ff) p)
+  where ff g = s_static body ve (update pe g p)
 -- type DecP = [(Pname,Stm)]
+-- type EnvP = Pname -> Store -> Store
 
--- An example state 
+-- A new semantic function for Proc with static scoping
+s_static :: Stm -> EnvV -> EnvP -> Store -> Store
+s_static Skip         ve pe st = st
+s_static (Ass v a)    ve pe st = update st ( a_val a (lookup ve st) ) ( ve v)
+s_static (Comp s1 s2) ve pe st = ((s_static s2 ve pe) . (s_static s1 ve pe)) st
+s_static (If b s1 s2) ve pe st = cond ( (b_val b) . (lookup ve), (s_static s1 ve pe), (s_static s2 ve pe) ) st
+s_static (While b s1) ve pe st = fix ff st
+  where ff g = cond ( (b_val b) . (lookup ve), g . (s_static s1 ve pe), id )
+s_static (Call p)     ve pe st = pe p st
+s_static (Block d_v d_p s1) ve pe st = s_static s1 ve' pe' st'
+  where (ve', st') = d_v_ds d_v (ve, st)
+        pe' = d_p_ds d_p ve' pe
+
+-- An example state
 sigma_t :: State
 sigma_t "x" = 12
 sigma_t "y" = 999
