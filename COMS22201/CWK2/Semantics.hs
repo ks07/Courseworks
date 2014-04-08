@@ -1,10 +1,13 @@
 module Semantics where
 import Prelude hiding (lookup)
 import Data.List hiding (lookup)
+-- TODO: Remove me!
+import Debug.Trace
 
 data Aexp = N Integer | V Var | Add Aexp Aexp | Mult Aexp Aexp | Sub Aexp Aexp deriving (Show, Eq)
 data Bexp = TRUE | FALSE | Eq Aexp Aexp | Le Aexp Aexp | Neg Bexp | And Bexp Bexp deriving (Show, Eq)
-data Stm  = Ass Var Aexp | Skip | Comp Stm Stm | If Bexp Stm Stm | While Bexp Stm | Block DecV DecP Stm | Call Pname deriving (Show, Eq)
+--data Stm  = Ass Var Aexp | Skip | Comp Stm Stm | If Bexp Stm Stm | While Bexp Stm | Block DecV DecP Stm | Call Pname deriving (Show, Eq)
+data Stm  = Ass Var Aexp | Skip | Comp Stm Stm | If Bexp Stm Stm | While Bexp Stm | Block DecV DecP Stm | Call Pname | Dbg Var Stm deriving (Show, Eq)
 
 type Var = String
 type Pname = String
@@ -163,6 +166,7 @@ s_static (Call p)     ve pe st = pe p st
 s_static (Block d_v d_p s1) ve pe st = s_static s1 ve' pe' st'
   where (ve', st') = d_v_ds d_v (ve, st)
         pe' = d_p_ds d_p ve' pe
+s_static (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_static s1 ve pe st)
 
 -- Minimal store mapping only next
 t :: Store
@@ -171,9 +175,37 @@ t l = undefined
 
 -- AST for factorial program in Proc
 q :: Stm
-q = (Block [("x", (N 7))] [] (Ass "x" (N 5)))
--- q = (Comp (Ass "x" (N 5)) (Ass "y" (N 1)))
--- q = (Block [] [] (Comp (Comp (Ass "x" (N 5)) (Ass "y" (N 1))) (Block [] [] (Ass "y" (N 3)))
+-- begin
+q = (Block 
+--   var x:=5;
+        [("x", (N 5)),
+--   var y:=1;
+        ("y", (N 1))] 
+--   proc fac is
+        [("fac", 
+--     begin
+          (Block 
+--       var z:=x;
+           [("x", (V "x"))] []
+--       if x=1 then
+           (Dbg "x" (If (Eq (V "x") (N 1)) 
+--         skip
+            Skip
+--       else
+            (Comp 
+--         x:=x-1;
+             ((Ass "x") (Sub (V "x") (N 1))) 
+--         call fac;
+             (Comp (Dbg "x" (Call "fac"))
+            --(Comp Skip 
+--         y:=z*y
+             (Ass "y" (Mult (V "z") (V "y"))))) )
+--     end
+         )))] 
+--   call fac
+        (Call "fac")
+-- end
+    )
      -- TODO: Add assigns to p
 -- p = (While (Neg (Eq (V "x") (N 1))) (Comp (Ass "y" (Mult (V "y") (V "x"))) (Ass "x" (Sub (V "x") (N 1)))) )
 
