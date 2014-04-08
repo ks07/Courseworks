@@ -141,7 +141,7 @@ lookup ve st = st . ve
 -- Variable environment update. Takes some changes to make to the state and the current state (env/loc).
 d_v_ds :: DecV -> (EnvV, Store) -> (EnvV, Store)
 d_v_ds [] (ve, st) = (ve, st)
-d_v_ds ((x, a) : remaining) (ve, st) = d_v_ds remaining (( update ve l x ), ( update st v l ) . ( update st (new l) next ))
+d_v_ds ((x, a) : remaining) (ve, st) = d_v_ds remaining (( update ve l x ), ( update ( update st v l ) (new l) next )) -- TODO: Can we do this with composition?
   where l = st next
         v = a_val a (lookup ve st)
 
