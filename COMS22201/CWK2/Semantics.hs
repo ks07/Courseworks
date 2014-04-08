@@ -150,8 +150,6 @@ d_p_ds :: DecP -> EnvV -> EnvP -> EnvP
 d_p_ds [] ve pe = pe
 d_p_ds ((p, body) : remaining) ve pe = d_p_ds remaining ve (update pe (fix ff) p)
   where ff g = s_static body ve (update pe g p)
--- type DecP = [(Pname,Stm)]
--- type EnvP = Pname -> Store -> Store
 
 -- A new semantic function for Proc with static scoping
 s_static :: Stm -> EnvV -> EnvP -> Store -> Store
@@ -165,6 +163,12 @@ s_static (Call p)     ve pe st = pe p st
 s_static (Block d_v d_p s1) ve pe st = s_static s1 ve' pe' st'
   where (ve', st') = d_v_ds d_v (ve, st)
         pe' = d_p_ds d_p ve' pe
+
+-- AST for factorial program in Proc
+q :: Stm
+q = (Block [] [] (Comp (Comp (Ass "x" (N 5)) (Ass "y" (N 1))) (Block [] [] (Ass "y" (N 3)))
+     -- TODO: Add assigns to p
+-- p = (While (Neg (Eq (V "x") (N 1))) (Comp (Ass "y" (Mult (V "y") (V "x"))) (Ass "x" (Sub (V "x") (N 1)))) )
 
 -- An example state
 sigma_t :: State
