@@ -164,11 +164,26 @@ s_static (Block d_v d_p s1) ve pe st = s_static s1 ve' pe' st'
   where (ve', st') = d_v_ds d_v (ve, st)
         pe' = d_p_ds d_p ve' pe
 
+-- Minimal store mapping only next
+t :: Store
+t 0 = 1
+t l = undefined
+
 -- AST for factorial program in Proc
 q :: Stm
-q = (Block [] [] (Comp (Comp (Ass "x" (N 5)) (Ass "y" (N 1))) (Block [] [] (Ass "y" (N 3)))
+q = Ass "x" (N 5)
+-- q = (Comp (Ass "x" (N 5)) (Ass "y" (N 1)))
+-- q = (Block [] [] (Comp (Comp (Ass "x" (N 5)) (Ass "y" (N 1))) (Block [] [] (Ass "y" (N 3)))
      -- TODO: Add assigns to p
 -- p = (While (Neg (Eq (V "x") (N 1))) (Comp (Ass "y" (Mult (V "y") (V "x"))) (Ass "x" (Sub (V "x") (N 1)))) )
+
+-- Empty EnvV for q
+env_v_q :: EnvV
+env_v_q = undefined
+
+-- Empty EnvP for q
+env_p_q :: EnvP
+env_p_q = undefined
 
 -- An example state
 sigma_t :: State
