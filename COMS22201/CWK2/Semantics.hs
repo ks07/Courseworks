@@ -154,7 +154,7 @@ d_p_ds ((p, body) : remaining) ve pe = d_p_ds remaining ve (update pe (fix ff) p
 -- A new semantic function for Proc with static scoping
 s_static :: Stm -> EnvV -> EnvP -> Store -> Store
 s_static Skip         ve pe st = st
-s_static (Ass v a)    ve pe st = update st ( a_val a (lookup ve st) ) ( ve v)
+s_static (Ass v a)    ve pe st = update st ( a_val a (lookup ve st) ) ( ve v )
 s_static (Comp s1 s2) ve pe st = ((s_static s2 ve pe) . (s_static s1 ve pe)) st
 s_static (If b s1 s2) ve pe st = cond ( (b_val b) . (lookup ve), (s_static s1 ve pe), (s_static s2 ve pe) ) st
 s_static (While b s1) ve pe st = fix ff st
@@ -171,7 +171,7 @@ t l = undefined
 
 -- AST for factorial program in Proc
 q :: Stm
-q = Ass "x" (N 5)
+q = (Block [("x", (N 7))] [] (Ass "x" (N 5)))
 -- q = (Comp (Ass "x" (N 5)) (Ass "y" (N 1)))
 -- q = (Block [] [] (Comp (Comp (Ass "x" (N 5)) (Ass "y" (N 1))) (Block [] [] (Ass "y" (N 3)))
      -- TODO: Add assigns to p
