@@ -188,7 +188,7 @@ q = (Block
 --       var z:=x;
            [("z", (V "x"))] []
 --       if x=1 then
-           (Dbg "x" (If (Eq (V "x") (N 1)) 
+           (If (Eq (V "x") (N 1)) 
 --         skip
             Skip
 --       else
@@ -196,12 +196,11 @@ q = (Block
 --         x:=x-1;
              ((Ass "x") (Sub (V "x") (N 1))) 
 --         call fac;
-             (Comp (Dbg "x" (Call "fac"))
-            --(Comp Skip 
+             (Comp (Call "fac")
 --         y:=z*y
              (Ass "y" (Mult (V "z") (V "y"))))) )
 --     end
-         )))] 
+         ))] 
 --   call fac
         (Call "fac")
 -- end
@@ -217,9 +216,12 @@ env_v_q = undefined
 env_p_q :: EnvP
 env_p_q = undefined
 
--- An example state
-sigma_t :: State
-sigma_t "x" = 12
-sigma_t "y" = 999
-sigma_t "z" = -1
-sigma_t v = undefined
+-- Final store values after evaluating q on t using s_static (from location 0 to n)
+q' :: [Z]
+q' = [ st_q loc | loc <- [0..end_loc] ]
+  where end_loc = (st_q 0) - 1
+        st_q = s_static q env_v_q env_p_q t
+
+-- Test function to make sure q' hasn't broken and is still giving the expected results
+test_q' :: Bool
+test_q' = q' == [8,1,120,5,4,3,2,1]
