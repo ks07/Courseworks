@@ -233,15 +233,15 @@ r = (Block
 --   var x:=0;
      [("x", (N 0))] 
 --   proc p is x:=x*2;
-     [("p", (Block [] [] (Ass "x" (Mult (V "x") (N 2))))), 
+     [("p", (Ass "x" (Mult (V "x") (N 2)))), 
 --   proc q is call p;
-      ("q", (Block [] [] (Call "p")))] 
+      ("q", (Call "p"))] 
 --   begin
      (Block 
 --     var x:=5;
       [("x", (N 5))] 
 --     proc p is x:=x+1;
-      [("p", (Block [] [] (Ass "x" (Add (V "x") (N 1)))))]
+      [("p", (Ass "x" (Add (V "x") (N 1))))]
 --     call q
       (Call "q")
 --   end
