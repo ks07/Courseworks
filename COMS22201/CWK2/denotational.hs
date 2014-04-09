@@ -1,13 +1,16 @@
 module Semantics where
 import Prelude hiding (lookup)
 import Data.List hiding (lookup)
--- TODO: Remove me!
-import Debug.Trace
+
+-- TO ENABLE DEBUGGING IN STATEMENTS: Uncomment the following import, the alternative Stm, and the relevant lines in s_*.
+-- Use the debugging by wrapping any statement, s, in your AST in (Dbg "some_var" s).
+-- import Debug.Trace
 
 data Aexp = N Integer | V Var | Add Aexp Aexp | Mult Aexp Aexp | Sub Aexp Aexp deriving (Show, Eq)
 data Bexp = TRUE | FALSE | Eq Aexp Aexp | Le Aexp Aexp | Neg Bexp | And Bexp Bexp deriving (Show, Eq)
---data Stm  = Ass Var Aexp | Skip | Comp Stm Stm | If Bexp Stm Stm | While Bexp Stm | Block DecV DecP Stm | Call Pname deriving (Show, Eq)
-data Stm  = Ass Var Aexp | Skip | Comp Stm Stm | If Bexp Stm Stm | While Bexp Stm | Block DecV DecP Stm | Call Pname | Dbg Var Stm deriving (Show, Eq)
+data Stm  = Ass Var Aexp | Skip | Comp Stm Stm | If Bexp Stm Stm | While Bexp Stm | Block DecV DecP Stm | Call Pname deriving (Show, Eq)
+-- Alternative Stm to add debugging support.
+-- data Stm  = Ass Var Aexp | Skip | Comp Stm Stm | If Bexp Stm Stm | While Bexp Stm | Block DecV DecP Stm | Call Pname | Dbg Var Stm deriving (Show, Eq)
 
 type Var = String
 type Pname = String
@@ -96,29 +99,27 @@ fix ff = ff (fix ff)
 
 -- While language semantic function
 s_ds :: Stm -> State -> State
-s_ds Skip sigma = id sigma
-s_ds (Ass v a) sigma = (update sigma (a_val a sigma) v)
+s_ds Skip         sigma = sigma
+s_ds (Ass v a)    sigma = (update sigma (a_val a sigma) v)
 s_ds (Comp s1 s2) sigma = ((s_ds s2) . (s_ds s1)) sigma
 s_ds (If b s1 s2) sigma = cond ((b_val b), (s_ds s1), (s_ds s2)) sigma
 s_ds (While b s1) sigma = fix ff sigma
   where ff g = cond ((b_val b), g.(s_ds s1), id)
+-- Uncomment to enable debugging for s_static (see above)
+-- s_ds (Dbg v s1)   sigma = trace (v ++ " = " ++ show (sigma v)) (s_ds s1 sigma)
 
 -- AST for factorial program in While
 p :: Stm
-p = (While (Neg (Eq (V "x") (N 1))) (Comp (Ass "y" (Mult (V "y") (V "x"))) (Ass "x" (Sub (V "x") (N 1)))) ) 
+p = (Comp (Ass "x" (N 5)) (Comp (Ass "y" (N 1)) (While (Neg (Eq (V "x") (N 1))) (Comp (Ass "y" (Mult (V "y") (V "x"))) (Ass "x" (Sub (V "x") (N 1)))) ) ))
 
--- State for p function from Part 1
+-- Initial state for p
 sigma_p :: State
-sigma_p "x" = 5
-sigma_p "y" = 1
 sigma_p v = undefined
 
 -- Final values of x and y after evaluating p in state sigma_p
 p' :: (Z,Z)
 p' = (sigma_final "x", sigma_final "y")
   where sigma_final = s_ds p sigma_p
--- This should be equivalent to:
--- p' = (1,120)
 
 -- Test function to make sure p' hasn't broken and is still giving the expected results
 test_p' :: Bool
@@ -166,7 +167,8 @@ s_static (Call p)     ve pe st = pe p st
 s_static (Block d_v d_p s1) ve pe st = s_static s1 ve' pe' st'
   where (ve', st') = d_v_ds d_v (ve, st)
         pe' = d_p_ds d_p ve' pe
-s_static (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_static s1 ve pe st)
+-- Uncomment to enable debugging for s_static (see above)
+-- s_static (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_static s1 ve pe st)
 
 -- Minimal store mapping only next
 t :: Store
@@ -205,8 +207,6 @@ q = (Block
         (Call "fac")
 -- end
     )
-     -- TODO: Add assigns to p
--- p = (While (Neg (Eq (V "x") (N 1))) (Comp (Ass "y" (Mult (V "y") (V "x"))) (Ass "x" (Sub (V "x") (N 1)))) )
 
 -- Empty EnvV for q
 env_v_q :: EnvV
