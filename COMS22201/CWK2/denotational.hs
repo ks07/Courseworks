@@ -226,6 +226,36 @@ q' = [ st_q loc | loc <- [0..end_loc] ]
 test_q' :: Bool
 test_q' = q' == [8,1,120,5,4,3,2,1]
 
+-- AST for part 3 program
+r :: Stm
+-- begin
+r = (Block 
+--   var x:=0;
+     [("x", (N 0))] 
+--   proc p is x:=x*2;
+     [("p", (Block [] [] (Ass "x" (Mult (V "x") (N 2))))), 
+--   proc q is call p;
+      ("q", (Block [] [] (Call "p")))] 
+--   begin
+     (Block 
+--     var x:=5;
+      [("x", (N 5))] 
+--     proc p is x:=x+1;
+      [("p", (Block [] [] (Ass "x" (Add (V "x") (N 1)))))]
+--     call q
+      (Call "q")
+--   end
+     )
+-- end
+    )
+
+-- Final values of outer and inner x values after evaluating r using static scoping
+r1 :: (Z,Z)
+r1 = (ox, ix)
+  where ox = st_r 1
+        ix = st_r 2
+        st_r = s_static r env_v_q env_p_q t
+
 -- Run all tests
 run_tests :: Bool
 run_tests = test_p' && test_q'
