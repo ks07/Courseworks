@@ -186,7 +186,7 @@ q = (Block
 --     begin
           (Block 
 --       var z:=x;
-           [("x", (V "x"))] []
+           [("z", (V "x"))] []
 --       if x=1 then
            (Dbg "x" (If (Eq (V "x") (N 1)) 
 --         skip
