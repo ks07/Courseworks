@@ -256,6 +256,10 @@ r1 = (ox, ix)
         ix = st_r 2
         st_r = s_static r env_v_q env_p_q t
 
+-- Test function for r1
+test_r1 :: Bool
+test_r1 = r1 == (0,5)
+
 -- Run all tests
 run_tests :: Bool
-run_tests = test_p' && test_q'
+run_tests = test_p' && test_q' && test_r1
