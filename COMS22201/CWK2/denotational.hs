@@ -226,6 +226,10 @@ q' = [ st_q loc | loc <- [0..end_loc] ]
 test_q' :: Bool
 test_q' = q' == [8,1,120,5,4,3,2,1]
 
+--------------------------------------------------------------
+--------------------------- Part 3 ---------------------------
+--------------------------------------------------------------
+
 -- AST for part 3 program
 r :: Stm
 -- begin
@@ -249,7 +253,7 @@ r = (Block
 -- end
     )
 
--- Final values of outer and inner x values after evaluating r using static scoping
+-- Final values of outer and inner x variables after evaluating r using static scoping
 r1 :: (Z,Z)
 r1 = (ox, ix)
   where ox = st_r 1
@@ -259,6 +263,14 @@ r1 = (ox, ix)
 -- Test function for r1
 test_r1 :: Bool
 test_r1 = r1 == (0,5)
+
+-- Final values of outer and inner x variables after evaluating r using mixed scoping
+r2 :: (Z,Z)
+r2 = (0,10)
+
+-- Final values of outer and inner x variables after evaluating r using dynamic scoping
+r3 :: (Z,Z)
+r3 = (0,6)
 
 -- Run all tests
 run_tests :: Bool
