@@ -225,3 +225,7 @@ q' = [ st_q loc | loc <- [0..end_loc] ]
 -- Test function to make sure q' hasn't broken and is still giving the expected results
 test_q' :: Bool
 test_q' = q' == [8,1,120,5,4,3,2,1]
+
+-- Run all tests
+run_tests :: Bool
+run_tests = test_p' && test_q'
