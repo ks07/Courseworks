@@ -272,14 +272,14 @@ r2 = (0,10)
 r3 :: (Z,Z)
 r3 = (0,6)
 
--- Alternative EnvP type for mixed scoping
-type EnvP' = Pname -> EnvV -> Store -> EnvV -> Store
+-- Alternative EnvP type for mixed scoping. See Semantics with Applications by Nielson p60
+type EnvP' = Pname -> Stm
 
--- Alternative d_p_ds for mixed scoping
-d_p_ds_m :: DecP -> EnvV -> EnvP' -> EnvP'
-d_p_ds_m [] ve pe = pe
-d_p_ds_m ((p, body) : remaining) ve pe = d_p_ds_m remaining ve (update pe (fix ff) p)
-  where ff g = s_mixed body ve (update pe g p)
+-- Alternative d_p_ds for mixed scoping ==> upd_p!
+d_p_ds_m :: DecP -> EnvP' -> EnvP'
+d_p_ds_m [] pe = pe
+d_p_ds_m ((p, body) : remaining) pe = d_p_ds_m remaining (update pe body p)
+--  where ff g = s_mixed body ve (update pe g p)
 
 -- Semantic function for Proc with dynamic scoping for variables
 s_mixed :: Stm -> EnvV -> EnvP' -> Store -> Store
@@ -289,10 +289,10 @@ s_mixed (Comp s1 s2) ve pe st = ((s_mixed s2 ve pe) . (s_mixed s1 ve pe)) st
 s_mixed (If b s1 s2) ve pe st = cond ( (b_val b) . (lookup ve), (s_mixed s1 ve pe), (s_mixed s2 ve pe) ) st
 s_mixed (While b s1) ve pe st = fix ff st
   where ff g = cond ( (b_val b) . (lookup ve), g . (s_mixed s1 ve pe), id )
-s_mixed (Call p)     ve pe st = pe p st
+s_mixed (Call p)     ve pe st = s_mixed (pe p) ve pe st
 s_mixed (Block d_v d_p s1) ve pe st = s_mixed s1 ve' pe' st'
   where (ve', st') = d_v_ds d_v (ve, st)
-        pe' = d_p_ds_m d_p ve' pe
+        pe' = d_p_ds_m d_p pe
 -- Uncomment to enable debugging for s_mixed (see above)
 -- s_mixed (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_static s1 ve pe st)
 
