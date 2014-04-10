@@ -105,7 +105,7 @@ s_ds (Comp s1 s2) sigma = ((s_ds s2) . (s_ds s1)) sigma
 s_ds (If b s1 s2) sigma = cond ((b_val b), (s_ds s1), (s_ds s2)) sigma
 s_ds (While b s1) sigma = fix ff sigma
   where ff g = cond ((b_val b), g.(s_ds s1), id)
--- Uncomment to enable debugging for s_static (see above)
+-- Uncomment to enable debugging for s_ds (see above)
 -- s_ds (Dbg v s1)   sigma = trace (v ++ " = " ++ show (sigma v)) (s_ds s1 sigma)
 
 -- AST for factorial program in While
@@ -271,6 +271,30 @@ r2 = (0,10)
 -- Final values of outer and inner x variables after evaluating r using dynamic scoping
 r3 :: (Z,Z)
 r3 = (0,6)
+
+-- Alternative EnvP type for mixed scoping
+type EnvP' = Pname -> EnvV -> Store -> EnvV -> Store
+
+-- Alternative d_p_ds for mixed scoping
+d_p_ds_m :: DecP -> EnvV -> EnvP' -> EnvP'
+d_p_ds_m [] ve pe = pe
+d_p_ds_m ((p, body) : remaining) ve pe = d_p_ds_m remaining ve (update pe (fix ff) p)
+  where ff g = s_mixed body ve (update pe g p)
+
+-- Semantic function for Proc with dynamic scoping for variables
+s_mixed :: Stm -> EnvV -> EnvP' -> Store -> Store
+s_mixed Skip         ve pe st = st
+s_mixed (Ass v a)    ve pe st = update st ( a_val a (lookup ve st) ) ( ve v )
+s_mixed (Comp s1 s2) ve pe st = ((s_mixed s2 ve pe) . (s_mixed s1 ve pe)) st
+s_mixed (If b s1 s2) ve pe st = cond ( (b_val b) . (lookup ve), (s_mixed s1 ve pe), (s_mixed s2 ve pe) ) st
+s_mixed (While b s1) ve pe st = fix ff st
+  where ff g = cond ( (b_val b) . (lookup ve), g . (s_mixed s1 ve pe), id )
+s_mixed (Call p)     ve pe st = pe p st
+s_mixed (Block d_v d_p s1) ve pe st = s_mixed s1 ve' pe' st'
+  where (ve', st') = d_v_ds d_v (ve, st)
+        pe' = d_p_ds_m d_p ve' pe
+-- Uncomment to enable debugging for s_mixed (see above)
+-- s_mixed (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_static s1 ve pe st)
 
 -- Run all tests
 run_tests :: Bool
