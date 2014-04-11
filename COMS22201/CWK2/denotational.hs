@@ -264,14 +264,6 @@ r1 = (ox, ix)
 test_r1 :: Bool
 test_r1 = r1 == (0,5)
 
--- Final values of outer and inner x variables after evaluating r using mixed scoping
-r2 :: (Z,Z)
-r2 = (0,10)
-
--- Final values of outer and inner x variables after evaluating r using dynamic scoping
-r3 :: (Z,Z)
-r3 = (0,6)
-
 -- Alternative EnvP type for mixed scoping. See Semantics with Applications by Nielson p60
 type EnvP' = Pname -> (Stm, EnvP'_r)
 newtype EnvP'_r = EnvP'_r (EnvP')
@@ -302,6 +294,17 @@ s_mixed (Block d_v d_p s1) ve pe st = s_mixed s1 ve' pe' st'
 -- Uncomment to enable debugging for s_mixed (see above)
 -- s_mixed (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_mixed s1 ve pe st)
 
+-- Final values of outer and inner x variables after evaluating r using mixed scoping
+r2 :: (Z,Z)
+r2 = (ox, ix)
+  where ox = st_r 1
+        ix = st_r 2
+        st_r = s_mixed r undefined undefined t
+
+-- Test function for r2
+test_r2 :: Bool
+test_r2 = r2 == (0,10)
+
 -- Alternative EnvP type for dynamic scoping.
 type EnvP'' = Pname -> Stm
 
@@ -325,6 +328,17 @@ s_dynamic (Block d_v d_p s1) ve pe st = s_dynamic s1 ve' pe' st'
 -- Uncomment to enable debugging for s_dynamic (see above)
 -- s_dynamic (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_dynamic s1 ve pe st)
 
+-- Final values of outer and inner x variables after evaluating r using dynamic scoping
+r3 :: (Z,Z)
+r3 =  (ox, ix)
+  where ox = st_r 1
+        ix = st_r 2
+        st_r = s_dynamic r undefined undefined t
+
+-- Test function for r3
+test_r3 :: Bool
+test_r3 = r3 == (0,6)
+
 -- Run all tests
 run_tests :: Bool
-run_tests = test_p' && test_q' && test_r1
+run_tests = test_p' && test_q' && test_r1 && test_r2 && test_r3
