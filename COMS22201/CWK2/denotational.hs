@@ -273,12 +273,17 @@ r3 :: (Z,Z)
 r3 = (0,6)
 
 -- Alternative EnvP type for mixed scoping. See Semantics with Applications by Nielson p60
-type EnvP' = Pname -> Stm
+type EnvP' = Pname -> (Stm, EnvP'_r)
+newtype EnvP'_r = EnvP'_r (EnvP')
+
+-- Get the EnvP' from an EnvP'_r
+unboxEnvP'_r :: EnvP'_r -> EnvP'
+unboxEnvP'_r (EnvP'_r pe) = pe
 
 -- Alternative d_p_ds for mixed scoping ==> upd_p!
 d_p_ds_m :: DecP -> EnvP' -> EnvP'
 d_p_ds_m [] pe = pe
-d_p_ds_m ((p, body) : remaining) pe = d_p_ds_m remaining (update pe body p)
+d_p_ds_m ((p, body) : remaining) pe = d_p_ds_m remaining (update pe (body, (EnvP'_r pe)) p)
 --  where ff g = s_mixed body ve (update pe g p)
 
 -- Semantic function for Proc with dynamic scoping for variables
@@ -289,22 +294,23 @@ s_mixed (Comp s1 s2) ve pe st = ((s_mixed s2 ve pe) . (s_mixed s1 ve pe)) st
 s_mixed (If b s1 s2) ve pe st = cond ( (b_val b) . (lookup ve), (s_mixed s1 ve pe), (s_mixed s2 ve pe) ) st
 s_mixed (While b s1) ve pe st = fix ff st
   where ff g = cond ( (b_val b) . (lookup ve), g . (s_mixed s1 ve pe), id )
-s_mixed (Call p)     ve pe st = s_mixed (pe p) ve pe st
+s_mixed (Call p)     ve pe st = s_mixed p_stm ve (unboxEnvP'_r p_pe) st
+ where (p_stm, p_pe) = pe p
 s_mixed (Block d_v d_p s1) ve pe st = s_mixed s1 ve' pe' st'
   where (ve', st') = d_v_ds d_v (ve, st)
         pe' = d_p_ds_m d_p pe
 -- Uncomment to enable debugging for s_mixed (see above)
 -- s_mixed (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_mixed s1 ve pe st)
 
--- Alternative EnvP type for dynamic scoping. See Semantics with Applications by Nielson p60
+-- Alternative EnvP type for dynamic scoping.
 type EnvP'' = Pname -> Stm
 
 -- Alternative d_p_ds for dynamic scoping ==> upd_p!
-d_p_ds_m :: DecP -> EnvP'' -> EnvP''
-d_p_ds_m [] pe = pe
-d_p_ds_m ((p, body) : remaining) pe = d_p_ds_m remaining (update pe body p)
+d_p_ds_d :: DecP -> EnvP'' -> EnvP''
+d_p_ds_d [] pe = pe
+d_p_ds_d ((p, body) : remaining) pe = d_p_ds_d remaining (update pe body p)
 
--- Semantic function for Proc with dynamic scoping for variables
+-- Semantic function for Proc with dynamic scoping
 s_dynamic :: Stm -> EnvV -> EnvP'' -> Store -> Store
 s_dynamic Skip         ve pe st = st
 s_dynamic (Ass v a)    ve pe st = update st ( a_val a (lookup ve st) ) ( ve v )
@@ -315,7 +321,7 @@ s_dynamic (While b s1) ve pe st = fix ff st
 s_dynamic (Call p)     ve pe st = s_dynamic (pe p) ve pe st
 s_dynamic (Block d_v d_p s1) ve pe st = s_dynamic s1 ve' pe' st'
   where (ve', st') = d_v_ds d_v (ve, st)
-        pe' = d_p_ds_m d_p pe
+        pe' = d_p_ds_d d_p pe
 -- Uncomment to enable debugging for s_dynamic (see above)
 -- s_dynamic (Dbg v s1)      ve pe st = trace (v ++ " = " ++ show ((lookup ve st) v)) (s_dynamic s1 ve pe st)
 
