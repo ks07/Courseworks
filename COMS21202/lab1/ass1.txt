@@ -1,0 +1,32 @@
+1)x = rand(10,1)
+>> y = 0.2 * ones(10,1) + 0.5 * x + normrnd(0,sqrt(0.1),10,1)
+scatter(x,y)
+
+2) function [x,y] = questTwo(m, c, n)
+    x = rand(n,1);
+    e = normrnd(0,0.1,n,1);
+    y = c + m * x + e;
+
+    
+3) [x,y] = questTwo(0.5,0.2,100)
+X = [ones(100,1) x]
+>> a=inv((transpose(X) * X)) * transpose(X) * y
+
+4) scatter(x,y)
+hold on
+xPoints = 0:0.1:1
+yPoints = (a(1) + a(end) * xPoints)
+plot(xPoints, yPoints)
+grid on
+hold off
+
+5) xO = [ x ; 0.5 ; 0.6 ; 0.7]
+yO = [ y ; 5 ; 5 ; 5 ]
+XO = [ones(103,1) xO]
+aO=inv((transpose(XO) * XO)) * transpose(XO) * yO
+yOPoints = (aO(1) + aO(end) * xPoints)
+scatter(xO,yO,'x')
+grid on
+hold on
+plot(xPoints, yPoints)
+plot(xOPoints, yOPoints)
