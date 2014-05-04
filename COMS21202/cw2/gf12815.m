@@ -145,6 +145,25 @@ function gf12815()
     % Join the two box sums and classify.
     testPoints = [testsBox1Sum(:), testsBox2Sum(:)];
     testGroups = knnclassify(testPoints,training,group,k)
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%% A B CLASSIFICATION %%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % Load A and B
+    ab = double(imread('characters/A1.GIF'));
+    ab = cat(3,ab,double(imread('characters/B1.GIF')));
+    
+    % Perform fft on all test images.
+    abF = ftStack(ab);
+
+    % Get the values of each feature for each image.
+    abBox1Sum = sumBoxMag(boxes(1,:), abF);
+    abBox2Sum = sumBoxMag(boxes(2,:), abF);
+    
+    % Join the two box sums and classify.
+    abPoints = [abBox1Sum(:), abBox2Sum(:)];
+    abGroups = knnclassify(abPoints,training,group,k)
 end
 
 % Averages a 3D matrix and displays the fourier domain.
