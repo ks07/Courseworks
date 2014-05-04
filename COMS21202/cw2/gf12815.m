@@ -41,12 +41,13 @@ function training = gf12815()
     %Pick the box features (x y w h)
     boxes = [
     %    300, 1,   40,  180; % Top vert
-        300, 60,   20,  120; % Top vert
+        310, 40,   20,  120; % Top vert
     %    310, 100,   20,  30; % Top vert
     %    100, 100, 100, 60; % Diag
     %    230, 150, 60, 45; % Diag
     %    240, 160, 30, 25; % Diag
-        165, 10 , 90 , 40; % Top-left S
+    %    165, 10 , 90 , 40; % Top-left S
+        145, 120, 90, 50;
     ];
 
     %Draw the boxes on the last figure
@@ -63,12 +64,15 @@ function training = gf12815()
     %dispStack(log(vf + 1));
 
     % Get the values of each feature for each image.
-    sBox1Sum = sumBoxMag(boxes(1,:), sf);
-    tBox1Sum = sumBoxMag(boxes(1,:), tf);
-    vBox1Sum = sumBoxMag(boxes(1,:), vf);
-    sBox2Sum = sumBoxMag(boxes(2,:), sf);
-    tBox2Sum = sumBoxMag(boxes(2,:), tf);
-    vBox2Sum = sumBoxMag(boxes(2,:), vf);
+    box1 = boxes(1,:);
+    box2 = boxes(2,:);
+    
+    sBox1Sum = sumBoxMag(box1, sf);
+    tBox1Sum = sumBoxMag(box1, tf);
+    vBox1Sum = sumBoxMag(box1, vf);
+    sBox2Sum = sumBoxMag(box2, sf);
+    tBox2Sum = sumBoxMag(box2, tf);
+    vBox2Sum = sumBoxMag(box2, vf);
 
     % Concatenate the various box sums into a matrix
     training = [
@@ -194,6 +198,9 @@ function training = gf12815()
     % Display the classification of the A and B characters.
     disp('A & B:');
     disp(abGroups);
+    
+    % Display every FFT to visually inspect reasons for classification.
+    dispStack(log(abF + 1));
 end
 
 % Shows all images in a stack, in new figures. Remember to log magnitude
@@ -218,7 +225,7 @@ function Magq = displayMeanFD(imMat)
     %Phaseq = angle(q);
 
     % Display the log of the fourier space
-    figure; imagesc(log(Magq+1)); axis on; colorbar; colormap gray;
+    figure; imagesc(log(Magq+1)); axis off; colorbar; colormap gray;
 end
 
 % Averages a 3D matrix, performs Sobel edge detection, and displays both
@@ -283,7 +290,7 @@ function magSum = sumBoxMag(box, imMat)
     y2 = y1 + box(4);
     
     % Cut out the points of the box from all images
-    area = imMat(x1:x2,y1:y2,:);
+    area = imMat(y1:y2,x1:x2,:);
     % Sum in the first 2 dimensions.
     magSum = sum(sum(area,1),2);
 end
