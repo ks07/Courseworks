@@ -33,8 +33,6 @@ function gf12815()
     %displayMeanSobelFD(t);
     vfm = displayMeanFD(v);
     %displayMeanSobelFD(v);
-    
-    %dim = size(vfm)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%% FEATURE SELECTION %%%%%%%%%%%%%%%%%
@@ -82,11 +80,71 @@ function gf12815()
         repmat('v', vCount, 1);
     ];
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%% K - NEAREST NEIGHBOUR CLASSIFICATION %%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    % Define how many neighbours to use.
+    k = 2;
+    
     % Use k-nearest-neighbour classification to classify 
-    classified = knnclassify(training,training,group,2);
+    classified = knnclassify(training,training,group,k);
     
     % Print the total for each resultant class 
     displayClassCount(classified);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%% DECISION BOUNDARIES %%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %figure; scatter(training(:,1),training(:,2));
+    %training = log(training);
+    %max(training);
+    %figure; scatter(training(:,1),training(:,2));
+    
+    % Generate a list of regular points on 2D grid
+    axisPoints = 0:2.5e2:15e4;
+    [xMesh, yMesh] = meshgrid(axisPoints);
+    mesh = [xMesh(:), yMesh(:)];
+
+    % Classify every point in the mesg
+    meshGroups = knnclassify(mesh,training,group,k);
+    
+    % Display the decision boundaries via a scatter.
+    figure; gscatter(xMesh(:), yMesh(:), meshGroups);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%% NEW TEST DATA %%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % Load new test data files
+    sTestFiles = dir('test_chars/S*.GIF');
+    tTestFiles = dir('test_chars/T*.GIF');
+    vTestFiles = dir('test_chars/V*.GIF');
+
+    tests = [];
+
+    % Add each image contents as another 'layer'
+    for sFile = sTestFiles'
+        tests = cat(3,tests,double(imread(strcat('test_chars/', sFile.name))));
+    end
+    for tFile = tTestFiles'
+        tests = cat(3,tests,double(imread(strcat('test_chars/', tFile.name))));
+    end
+    for vFile = vTestFiles'
+        tests = cat(3,tests,double(imread(strcat('test_chars/', vFile.name))));
+    end
+    
+    % Perform fft on all test images.
+    testsF = ftStack(tests);
+
+    % Get the values of each feature for each image.
+    testsBox1Sum = sumBoxMag(boxes(1,:), testsF);
+    testsBox2Sum = sumBoxMag(boxes(2,:), testsF);
+    
+    % Join the two box sums and classify.
+    testPoints = [testsBox1Sum(:), testsBox2Sum(:)];
+    testGroups = knnclassify(testPoints,training,group,k)
 end
 
 % Averages a 3D matrix and displays the fourier domain.
