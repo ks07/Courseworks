@@ -1,4 +1,4 @@
-function gf12815()
+function training = gf12815()
     % Cleanup workspace
     clearvars; close all;
 
@@ -40,9 +40,13 @@ function gf12815()
     
     %Pick the box features (x y w h)
     boxes = [
-    %    1,   185, 250, 25; % Left hand horiz
-        300, 1,   40,  180; % Top vert
-        100, 100, 100, 60; % Horiz
+    %    300, 1,   40,  180; % Top vert
+        300, 60,   20,  120; % Top vert
+    %    310, 100,   20,  30; % Top vert
+    %    100, 100, 100, 60; % Diag
+    %    230, 150, 60, 45; % Diag
+    %    240, 160, 30, 25; % Diag
+        165, 10 , 90 , 40; % Top-left S
     ];
 
     %Draw the boxes on the last figure
@@ -52,6 +56,11 @@ function gf12815()
     sf = ftStack(s);
     tf = ftStack(t);
     vf = ftStack(v);
+    
+    % Display every FFT to visually inspect reasons for classification.
+    %dispStack(log(sf + 1));
+    %dispStack(log(tf + 1));
+    %dispStack(log(vf + 1));
 
     % Get the values of each feature for each image.
     sBox1Sum = sumBoxMag(boxes(1,:), sf);
@@ -85,12 +94,15 @@ function gf12815()
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Define how many neighbours to use.
-    k = 2;
+    k = 3;
     
     % Use k-nearest-neighbour classification to classify 
     classified = knnclassify(training,training,group,k);
     
-    % Print the total for each resultant class 
+    % Print the classification of points and the counts of each.
+    disp('Training:');
+    disp(classified);
+    disp('  per class total (s,t,v):');
     displayClassCount(classified);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,8 +114,12 @@ function gf12815()
     %max(training);
     %figure; scatter(training(:,1),training(:,2));
     
-    % Generate a list of regular points on 2D grid
-    axisPoints = 0:2.5e2:15e4;
+    % Generate a list of regular points on 2D grid. Determine limits from
+    % the training data.
+    axisLimit = 1.5 * max(training(:));
+    stepSize = axisLimit / 1000;
+    
+    axisPoints = 0:stepSize:axisLimit;
     [xMesh, yMesh] = meshgrid(axisPoints);
     mesh = [xMesh(:), yMesh(:)];
 
@@ -112,6 +128,9 @@ function gf12815()
     
     % Display the decision boundaries via a scatter.
     figure; gscatter(xMesh(:), yMesh(:), meshGroups);
+    
+    % Plot the training data over the decision boundaries.
+    hold on; gscatter(training(:,1), training(:,2), classified, 'kkk', 'x.o', 5, 'off', 'Box1', 'Box2');
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%% NEW TEST DATA %%%%%%%%%%%%%%%%%%%
@@ -137,14 +156,21 @@ function gf12815()
     
     % Perform fft on all test images.
     testsF = ftStack(tests);
-
+    
     % Get the values of each feature for each image.
     testsBox1Sum = sumBoxMag(boxes(1,:), testsF);
     testsBox2Sum = sumBoxMag(boxes(2,:), testsF);
     
     % Join the two box sums and classify.
     testPoints = [testsBox1Sum(:), testsBox2Sum(:)];
-    testGroups = knnclassify(testPoints,training,group,k)
+    testGroups = knnclassify(testPoints,training,group,k);
+    
+    % Display the classification of the test data.
+    disp('Tests:');
+    disp(testGroups);
+    
+    % Display every FFT to visually inspect reasons for classification.
+    %dispStack(log(testsF + 1));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%% A B CLASSIFICATION %%%%%%%%%%%%%%%%%
@@ -163,7 +189,21 @@ function gf12815()
     
     % Join the two box sums and classify.
     abPoints = [abBox1Sum(:), abBox2Sum(:)];
-    abGroups = knnclassify(abPoints,training,group,k)
+    abGroups = knnclassify(abPoints,training,group,k);
+    
+    % Display the classification of the A and B characters.
+    disp('A & B:');
+    disp(abGroups);
+end
+
+% Shows all images in a stack, in new figures. Remember to log magnitude
+% before passing in if showing FFT.
+function dispStack(imMat)
+    [~, ~, pages] = size(imMat);
+    
+    for i=1:pages,
+        figure; imagesc(imMat(:,:,i)); axis off; colorbar; colormap gray;
+    end
 end
 
 % Averages a 3D matrix and displays the fourier domain.
@@ -178,7 +218,7 @@ function Magq = displayMeanFD(imMat)
     %Phaseq = angle(q);
 
     % Display the log of the fourier space
-    figure; imagesc(log(Magq+1)); axis off; colorbar; colormap gray;
+    figure; imagesc(log(Magq+1)); axis on; colorbar; colormap gray;
 end
 
 % Averages a 3D matrix, performs Sobel edge detection, and displays both
