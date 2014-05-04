@@ -26,6 +26,7 @@ function gf12815()
         v = cat(3,v,double(imread(strcat('characters/', vFile.name))));
     end
 
+    % Display the mean Fourier Domain of each character type.
     sfm = displayMeanFD(s);
     %displayMeanSobelFD(s);
     tfm = displayMeanFD(t);
@@ -34,15 +35,58 @@ function gf12815()
     %displayMeanSobelFD(v);
     
     %dim = size(vfm)
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%% FEATURE SELECTION %%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    %Pick the box classifiers (x y w h)
+    %Pick the box features (x y w h)
     boxes = [
-        100 185 150 25; % Left hand horiz
-        250 0   50  200;
+    %    1,   185, 250, 25; % Left hand horiz
+        300, 1,   40,  180; % Top vert
+        100, 100, 100, 60; % Horiz
     ];
 
-    %Draw the boxes on the last diagram
+    %Draw the boxes on the last figure
     drawBoxes(boxes);
+
+    % Perform fft on all images of each type.
+    sf = ftStack(s);
+    tf = ftStack(t);
+    vf = ftStack(v);
+
+    % Get the values of each feature for each image.
+    sBox1Sum = sumBoxMag(boxes(1,:), sf);
+    tBox1Sum = sumBoxMag(boxes(1,:), tf);
+    vBox1Sum = sumBoxMag(boxes(1,:), vf);
+    sBox2Sum = sumBoxMag(boxes(2,:), sf);
+    tBox2Sum = sumBoxMag(boxes(2,:), tf);
+    vBox2Sum = sumBoxMag(boxes(2,:), vf);
+
+    % Concatenate the various box sums into a matrix
+    training = [
+        sBox1Sum(:), sBox2Sum(:);
+        tBox1Sum(:), tBox2Sum(:);
+        vBox1Sum(:), vBox2Sum(:);
+    ];
+
+    % Get the number of each character we have.
+    [~, ~, sCount] = size(s);
+    [~, ~, tCount] = size(t);
+    [~, ~, vCount] = size(v);
+
+    % Get the list of the corresponding classes.
+    group = [
+        repmat('s', sCount, 1); % Copies the character to match the values
+        repmat('t', tCount, 1);
+        repmat('v', vCount, 1);
+    ];
+
+    % Use k-nearest-neighbour classification to classify 
+    classified = knnclassify(training,training,group,2);
+    
+    % Print the total for each resultant class 
+    displayClassCount(classified);
 end
 
 % Averages a 3D matrix and displays the fourier domain.
@@ -96,4 +140,37 @@ function drawBoxes(posDims)
     for i=1:rows,
         rectangle('position', posDims(i,:), 'facecolor', 'r', 'edgecolor', 'r');
     end
+end
+
+% Performs the FFT on all the images in a 3D matrix, returning magnitude
+function fts = ftStack(imMat)
+    [~, ~, pages] = size(imMat);
+    fts = [];
+    
+    for i=1:pages,
+        % Calculate the fourier transforms of the raw image
+        z = fft2(imMat(:,:,i));
+        q = fftshift(z);
+        Magq = abs(q);
+        %Phaseq = angle(q);
+        fts = cat(3,fts,Magq);
+    end
+end
+
+% Sums the absolute magnitudes of each box.
+function magSum = sumBoxMag(box, imMat)
+    % Get the positions of the box boundaries
+    x1 = box(1);
+    y1 = box(2);
+    x2 = x1 + box(3);
+    y2 = y1 + box(4);
+    
+    % Cut out the points of the box from all images
+    area = imMat(x1:x2,y1:y2,:);
+    % Sum in the first 2 dimensions.
+    magSum = sum(sum(area,1),2);
+end
+
+function displayClassCount(classified)
+    disp(histc(classified,unique(classified)));
 end
