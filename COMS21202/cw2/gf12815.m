@@ -1,4 +1,4 @@
-function training = gf12815()
+function gf12815()
     % Cleanup workspace
     clearvars; close all;
 
@@ -47,7 +47,7 @@ function training = gf12815()
     %    230, 150, 60, 45; % Diag
     %    240, 160, 30, 25; % Diag
     %    165, 10 , 90 , 40; % Top-left S
-        145, 120, 90, 50;
+        145, 120, 90, 50; % V capture
     ];
 
     %Draw the boxes on the last figure
@@ -98,7 +98,7 @@ function training = gf12815()
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Define how many neighbours to use.
-    k = 3;
+    k = 5;
     
     % Use k-nearest-neighbour classification to classify 
     classified = knnclassify(training,training,group,k);
@@ -200,7 +200,38 @@ function training = gf12815()
     disp(abGroups);
     
     % Display every FFT to visually inspect reasons for classification.
-    dispStack(log(abF + 1));
+    %dispStack(log(abF + 1));
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%% ALTERNATIVE CLASSIFIER %%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % Create a decision tree using our training data.
+    tree = classregtree(training,group);
+    
+    % Classify the training points using the tree. (These should all be
+    % correct.)
+    treeClassified = eval(tree,training);
+    
+    % See how decision tree classifies the test data and A & B
+    treeTestC = eval(tree,testPoints);
+    treeABC = eval(tree,abPoints);
+    
+    % Display the classification of all data using the tree.
+    disp('Decision Tree Training:');
+    disp(treeClassified);
+    disp('Decision Tree Tests:');
+    disp(treeTestC);
+    disp('Decision Tree Tests:');
+    disp(treeABC);
+    
+    % Display the tree
+    view(tree);
+    
+    % Visualise the decision boundaries
+    treeMeshGroups = eval(tree,mesh);
+    figure; gscatter(xMesh(:), yMesh(:), treeMeshGroups);
+    hold on; gscatter(testsBox1Sum(:), testsBox2Sum(:), treeTestC, 'kkk', 'x.o', 5, 'off', 'Box1', 'Box2');
 end
 
 % Shows all images in a stack, in new figures. Remember to log magnitude
@@ -295,6 +326,8 @@ function magSum = sumBoxMag(box, imMat)
     magSum = sum(sum(area,1),2);
 end
 
+% Displays the occurrences of each element in the list. (Output in
+% alphabetical order)
 function displayClassCount(classified)
     disp(histc(classified,unique(classified)));
 end
