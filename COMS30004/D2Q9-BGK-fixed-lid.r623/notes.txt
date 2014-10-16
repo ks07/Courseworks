@@ -6,5 +6,5 @@ OPENMP Coursework Notes
 Total runtime unoptimised: 4:03.525
 Slowest function is collision()
 
-2) Modify collision()
+2) Modify collision() to stop recomputing curr_cell
 
