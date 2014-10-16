@@ -8,3 +8,10 @@ Slowest function is collision()
 
 2) Modify collision() to stop recomputing curr_cell
 
+New time is 3:53.237
+
+3) Collision again, directional velocity
+
+This was stupid, slower. 3:54.088
+
+
