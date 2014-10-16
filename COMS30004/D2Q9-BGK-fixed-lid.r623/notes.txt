@@ -1,0 +1,10 @@
+OPENMP Coursework Notes
+=======================
+
+1) Compile using tau and run to get profiler results.
+
+Total runtime unoptimised: 4:03.525
+Slowest function is collision()
+
+2) Modify collision()
+
