@@ -337,8 +337,8 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 	u[4] =       - u_y;  /* south */
 	u[5] =   u_x + u_y;  /* north-east */
 	u[6] = - u_x + u_y;  /* north-west */
-	u[7] = - u[5];  /* south-west */
-	u[8] = - u[6];  /* south-east */
+	u[7] = - u_x - u_y;  /* south-west */
+	u[8] =   u_x - u_y;  /* south-east */
 	/* equilibrium densities */
 	/* zero velocity density: weight w0 */
 	d_equ[0] = w0 * local_density * (1.0 - u_sq / (2.0 * c_sq));
