@@ -38,4 +38,10 @@ Down to 27.279!
 
 DOWN TO 9.756s MO-FOS.
 
-10) 
+10) Par reduction on total_density
+
+Negligible effect, now at 9.760s
+
+11) Try total_density with fewer threads.
+
+Same as above. 9.771s
