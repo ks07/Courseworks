@@ -1,0 +1,20 @@
+Reading Profile files in profile.*
+
+NODE 0;CONTEXT 0;THREAD 0:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        0.028     1:51.143           1           1  111143438 .TAU application
+100.0          125     1:51.143           1      120004  111143410 int main(int, char **) C 
+ 83.5           32     1:32.822       40000      160000       2321 int timestep(const t_param, t_speed *, t_speed *, int *) C 
+ 72.8     1:20.869     1:20.869       40000           0       2022 int collision(const t_param, t_speed *, t_speed *, int *) C 
+ 11.5       12,741       12,741       40001           0        319 double av_velocity(const t_param, t_speed *, int *) C 
+ 10.2       11,307       11,307       40000           0        283 int propagate(const t_param, t_speed *, t_speed *) C 
+  4.8        5,382        5,382       40000           0        135 double total_density(const t_param, t_speed *) C 
+  0.5          589          589       40000           0         15 int rebound(const t_param, t_speed *, t_speed *, int *) C 
+  0.1           67           67           1           0      67301 int write_values(const t_param, t_speed *, int *, double *) C 
+  0.0           22           22       40000           0          1 int accelerate_flow(const t_param, t_speed *, int *) C 
+  0.0            4            4           1           0       4669 int initialise(const char *, const char *, t_param *, t_speed **, t_speed **, int **, double **) C 
+  0.0        0.001        0.322           1           1        322 double calc_reynolds(const t_param, t_speed *, int *) C 
+  0.0        0.241        0.241           1           0        241 int finalise(const t_param *, t_speed **, t_speed **, int **, double **) C 

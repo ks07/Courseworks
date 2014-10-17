@@ -1,0 +1,11 @@
+Running on host node47-001
+Time is Fri Oct 17 22:58:41 BST 2014
+Directory is /panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623
+PBS job ID is 1651868.master.cm.cluster
+This jobs runs on the following machines:
+node47-001
+==done==
+Reynolds number:		9.763598020526E+00
+Elapsed time:			9.755822 (s)
+Elapsed user CPU time:		155.630340 (s)
+Elapsed system CPU time:	0.061990 (s)
