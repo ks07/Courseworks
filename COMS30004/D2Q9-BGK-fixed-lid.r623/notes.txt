@@ -26,4 +26,8 @@ Down to 38.661s
 
 At 38.586 - negligible
 
-7) 
+7) Attempt parallelisation of accelerate_flow
+
+Slower! 39.146
+
+
