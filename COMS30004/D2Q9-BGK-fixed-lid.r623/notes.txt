@@ -50,4 +50,6 @@ Same as above. 9.771s
 
 Back to 9.754s
 
-13)
+13) Parallel in rebound
+
+Slightly faster @ 8.952

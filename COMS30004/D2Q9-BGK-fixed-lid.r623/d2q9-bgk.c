@@ -263,6 +263,7 @@ int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obsta
   int ii,jj;  /* generic counters */
 
   /* loop over the cells in the grid */
+#pragma omp parallel for private(jj) shared(cells,tmp_cells,obstacles)
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
       /* if the cell contains an obstacle */
