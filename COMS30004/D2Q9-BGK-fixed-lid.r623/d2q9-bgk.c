@@ -55,6 +55,7 @@
 #include<time.h>
 #include<sys/time.h>
 #include<sys/resource.h>
+#include<omp.h>
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -301,6 +302,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
+#pragma omp parallel for private(curr_cell,local_density,jj,kk,u_x,u_y,u,d_equ,u_sq) shared(obstacles,tmp_cells,cells)
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
       // Compute array index.
@@ -312,6 +314,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 	for(kk=0;kk<NSPEEDS;kk++) {
 	  local_density += tmp_cells[curr_cell].speeds[kk];
 	}
+
 	/* compute x velocity component */
 	u_x = (tmp_cells[curr_cell].speeds[1] + 
 	       tmp_cells[curr_cell].speeds[5] + 
@@ -320,6 +323,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 		  tmp_cells[curr_cell].speeds[6] + 
 		  tmp_cells[curr_cell].speeds[7]))
 	  / local_density;
+
 	/* compute y velocity component */
 	u_y = (tmp_cells[curr_cell].speeds[2] + 
 	       tmp_cells[curr_cell].speeds[5] + 
@@ -328,6 +332,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 		  tmp_cells[curr_cell].speeds[7] + 
 		  tmp_cells[curr_cell].speeds[8]))
 	  / local_density;
+
 	/* velocity squared */ 
 	u_sq = u_x * u_x + u_y * u_y;
 	/* directional velocity components */

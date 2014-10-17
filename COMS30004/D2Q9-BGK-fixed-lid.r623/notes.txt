@@ -14,4 +14,10 @@ New time is 3:53.237
 
 This was stupid, slower. 3:54.088
 
+4) See the effect when switching to -O3
 
+Much much faster, 1:51.143
+
+5) Try naiive parallel for in collision
+
+Down to 38.661s
