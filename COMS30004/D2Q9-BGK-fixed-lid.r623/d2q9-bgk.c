@@ -302,6 +302,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
+  omp_set_nested(1);
 #pragma omp parallel for private(curr_cell,local_density,jj,kk,u_x,u_y,u,d_equ,u_sq) shared(obstacles,tmp_cells,cells)
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {

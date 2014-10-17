@@ -21,3 +21,9 @@ Much much faster, 1:51.143
 5) Try naiive parallel for in collision
 
 Down to 38.661s
+
+6) Try adding omp_set_nested(1)
+
+At 38.586 - negligible
+
+7) 
