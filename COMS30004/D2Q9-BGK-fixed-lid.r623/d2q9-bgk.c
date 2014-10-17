@@ -606,9 +606,6 @@ double total_density(const t_param params, t_speed* cells)
   int ii,jj,kk;        /* generic counters */
   double total = 0.0;  /* accumulator */
 
-  omp_set_num_threads(4);
-
-#pragma omp parallel for private(jj,kk) shared(cells) reduction(+:total)
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
       for(kk=0;kk<NSPEEDS;kk++) {
@@ -616,7 +613,7 @@ double total_density(const t_param params, t_speed* cells)
       }
     }
   }
-  omp_set_num_threads(16);
+
   return total;
 }
 

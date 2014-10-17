@@ -45,3 +45,9 @@ Negligible effect, now at 9.760s
 11) Try total_density with fewer threads.
 
 Same as above. 9.771s
+
+12) Revert to serial total_density
+
+Back to 9.754s
+
+13)
