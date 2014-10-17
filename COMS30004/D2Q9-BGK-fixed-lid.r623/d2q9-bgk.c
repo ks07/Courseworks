@@ -556,6 +556,7 @@ double av_velocity(const t_param params, t_speed* cells, int* obstacles)
   tot_u = 0.0;
 
   /* loop over all non-blocked cells */
+#pragma omp parallel for private(jj,kk,local_density,u_x,u_y) shared(cells,obstacles) reduction(+:tot_cells,tot_u)
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
       /* ignore occupied cells */

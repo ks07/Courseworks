@@ -30,4 +30,8 @@ At 38.586 - negligible
 
 Slower! 39.146
 
+8) That was silly, par av_velocity with a reduction after checking next in prof
 
+Down to 27.279!
+
+9) Next to par is propagate
