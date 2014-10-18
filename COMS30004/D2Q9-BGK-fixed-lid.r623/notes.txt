@@ -63,5 +63,11 @@ Followed by barrier entry/exit on <308,387> and <266,283> and others.
 
 Slower - 9.138s
 
-16) Revert 15. 
+16) Revert 15. Try collapsing nested collision loops manually.
+
+Slower - 9.912s
+
+17) Stop calculating rows/cols in collapsed loop.
+
+
 

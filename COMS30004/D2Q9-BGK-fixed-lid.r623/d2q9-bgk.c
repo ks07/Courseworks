@@ -287,7 +287,7 @@ int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obsta
 
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
-  int ii,jj,kk;                 /* generic counters */
+  int ii,jj,kk,zz;                 /* generic counters */
   const double c_sq = 1.0/3.0;  /* square of speed of sound */
   const double w0 = 4.0/9.0;    /* weighting factor */
   const double w1 = 1.0/9.0;    /* weighting factor */
@@ -304,10 +304,10 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
-  omp_set_nested(1);
-#pragma omp parallel for private(curr_cell,local_density,jj,kk,u_x,u_y,u,d_equ,u_sq) shared(obstacles,tmp_cells,cells)
-  for(ii=0;ii<params.ny;ii++) {
-    for(jj=0;jj<params.nx;jj++) {
+#pragma omp parallel for private(curr_cell,local_density,ii,jj,kk,u_x,u_y,u,d_equ,u_sq) shared(obstacles,tmp_cells,cells)
+  for(zz=0;zz<(params.ny*params.nx);++zz) {
+    ii = zz / params.ny;
+    jj = zz % params.ny;
       // Compute array index.
       curr_cell = ii*params.nx + jj;
       /* don't consider occupied cells */
@@ -382,7 +382,6 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 						 + params.omega * 
 						 (d_equ[kk] - tmp_cells[curr_cell].speeds[kk]));
 	}
-      }
     }
   }
 
