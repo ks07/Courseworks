@@ -287,7 +287,7 @@ int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obsta
 
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
-  int ii,jj,kk,zz;                 /* generic counters */
+  int kk;                 /* generic counters */
   const double c_sq = 1.0/3.0;  /* square of speed of sound */
   const double w0 = 4.0/9.0;    /* weighting factor */
   const double w1 = 1.0/9.0;    /* weighting factor */
@@ -299,17 +299,14 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   double local_density;         /* sum of densities in a particular cell */
 
   int curr_cell; // Stop re-calculating the array index repeatedly.
+  const int cell_lim = (params.ny * params.nx);
 
   /* loop over the cells in the grid
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
-#pragma omp parallel for private(curr_cell,local_density,ii,jj,kk,u_x,u_y,u,d_equ,u_sq) shared(obstacles,tmp_cells,cells)
-  for(zz=0;zz<(params.ny*params.nx);++zz) {
-    ii = zz / params.ny;
-    jj = zz % params.ny;
-      // Compute array index.
-      curr_cell = ii*params.nx + jj;
+#pragma omp parallel for private(local_density,kk,u_x,u_y,u,d_equ,u_sq) shared(obstacles,tmp_cells,cells)
+  for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
       /* don't consider occupied cells */
       if(!obstacles[curr_cell]) {
 	/* compute local density total */

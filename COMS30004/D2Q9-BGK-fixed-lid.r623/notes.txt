@@ -69,5 +69,6 @@ Slower - 9.912s
 
 17) Stop calculating rows/cols in collapsed loop.
 
+Now at 9.054s - assuming no change to original nested loops.
 
-
+18) 
