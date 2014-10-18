@@ -299,12 +299,12 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   double local_density;         /* sum of densities in a particular cell */
 
   int curr_cell; // Stop re-calculating the array index repeatedly.
-  double tmp;
 
   /* loop over the cells in the grid
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
+  omp_set_nested(1);
 #pragma omp parallel for private(curr_cell,local_density,jj,kk,u_x,u_y,u,d_equ,u_sq) shared(obstacles,tmp_cells,cells)
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
@@ -351,31 +351,29 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 	/* zero velocity density: weight w0 */
 	d_equ[0] = w0 * local_density * (1.0 - u_sq / (2.0 * c_sq));
 	/* axis speeds: weight w1 */
-	tmp = w1 * local_density;
-	d_equ[1] = tmp * (1.0 + u[1] / c_sq
+	d_equ[1] = w1 * local_density * (1.0 + u[1] / c_sq
 					 + (u[1] * u[1]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
-	d_equ[2] = tmp * (1.0 + u[2] / c_sq
+	d_equ[2] = w1 * local_density * (1.0 + u[2] / c_sq
 					 + (u[2] * u[2]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
-	d_equ[3] = tmp * (1.0 + u[3] / c_sq
+	d_equ[3] = w1 * local_density * (1.0 + u[3] / c_sq
 					 + (u[3] * u[3]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
-	d_equ[4] = tmp * (1.0 + u[4] / c_sq
+	d_equ[4] = w1 * local_density * (1.0 + u[4] / c_sq
 					 + (u[4] * u[4]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
 	/* diagonal speeds: weight w2 */
-	tmp = w2 * local_density;
-	d_equ[5] = tmp * (1.0 + u[5] / c_sq
+	d_equ[5] = w2 * local_density * (1.0 + u[5] / c_sq
 					 + (u[5] * u[5]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
-	d_equ[6] = tmp * (1.0 + u[6] / c_sq
+	d_equ[6] = w2 * local_density * (1.0 + u[6] / c_sq
 					 + (u[6] * u[6]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
-	d_equ[7] = tmp * (1.0 + u[7] / c_sq
+	d_equ[7] = w2 * local_density * (1.0 + u[7] / c_sq
 					 + (u[7] * u[7]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
-	d_equ[8] = tmp * (1.0 + u[8] / c_sq
+	d_equ[8] = w2 * local_density * (1.0 + u[8] / c_sq
 					 + (u[8] * u[8]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
 	/* relaxation step */
