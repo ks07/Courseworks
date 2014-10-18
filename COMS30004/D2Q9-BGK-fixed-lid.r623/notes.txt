@@ -53,3 +53,15 @@ Back to 9.754s
 13) Parallel in rebound
 
 Slightly faster @ 8.952
+
+14) Re-compile with tau and check new timings
+
+Highest times on parallelfor body <308,387> - collision().
+Followed by barrier entry/exit on <308,387> and <266,283> and others.
+
+15) Try manually storing w1|w2 * local_density
+
+Slower - 9.138s
+
+16) Revert 15. 
+
