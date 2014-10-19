@@ -85,4 +85,12 @@ Slower, 5.134s
 
 20.1) Try to figure out a better way to access adjacent cells. Fail.
 
-21) 
+21) Try switching propagate to guided scheduling.
+
+Much slower! 7.386s!
+
+22) Revert and try the same on collision.
+
+Faster than propagate but still worse. Longer function has more room for variation? 6.789s
+
+23)
