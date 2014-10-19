@@ -79,4 +79,10 @@ MAXIMUM SPEEEEED. 5.081s
 
 Otherwise: 1741 msec for collision body, 1140 msec for propagate
 
-20) 
+20) Try storing current cell in propagate.
+
+Slower, 5.134s
+
+20.1) Try to figure out a better way to access adjacent cells. Fail.
+
+21) 
