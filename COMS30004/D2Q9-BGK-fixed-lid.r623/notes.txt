@@ -71,4 +71,8 @@ Slower - 9.912s
 
 Now at 9.054s - assuming no change to original nested loops.
 
-18) 
+18) Turn on -ffast-math, #YOLO
+
+MAXIMUM SPEEEEED. 5.081s
+
+19) 
