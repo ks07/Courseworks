@@ -1,0 +1,445 @@
+Reading Profile files in profile.*
+
+NODE 0;CONTEXT 0;THREAD 0:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        0.033       19,010           1           1   19010857 .TAU application
+100.0           20       19,010           1       80004   19010824 int main(int, char **) C 
+ 98.2           54       18,661      160001      160001        117 parallel fork/join [OpenMP]
+ 88.4           77       16,812      160001      160001        105 parallel begin/end [OpenMP]
+ 84.5           81       16,071      160001      160001        100 for enter/exit [OpenMP]
+ 74.4           49       14,147       40000      160000        354 int timestep(const t_param, t_speed *, t_speed *, int *) C 
+ 62.5           87       11,875      160001      160001         74 barrier enter/exit [OpenMP]
+ 27.5           30        5,218       40000       40000        130 int collision(const t_param, t_speed *, t_speed *, int *) C 
+ 27.2          389        5,175       40000       40000        129 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 25.1          170        4,768       40000       40000        119 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 25.0           30        4,758       40001       40001        119 double av_velocity(const t_param, t_speed *, int *) C 
+ 25.0           32        4,747       40000       40000        119 int propagate(const t_param, t_speed *, t_speed *) C 
+ 24.8          592        4,711       40001       40001        118 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 24.7          403        4,702       40000       40000        118 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 24.1        1,741        4,578       40000       40000        114 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 22.5          158        4,278       40000       40000        107 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 21.6        1,140        4,100       40000       40000        103 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 21.6          191        4,098       40001       40001        102 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 21.4           29        4,058       40000       40000        101 int rebound(const t_param, t_speed *, t_speed *, int *) C 
+ 21.1          409        4,017       40000       40000        100 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 20.4          969        3,885       40001       40001         97 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 18.9          141        3,588       40000       40000         90 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 18.0          262        3,426       40000       40000         86 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 16.5        3,142        3,142       40000           0         79 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 15.4        2,935        2,935       40000           0         73 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.2        2,893        2,893       40001           0         72 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 14.8        2,815        2,815       40000           0         70 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  0.4           72           72           1           0      72765 int write_values(const t_param, t_speed *, int *, double *) C 
+  0.4           72           72       40000           0          2 int accelerate_flow(const t_param, t_speed *, int *) C 
+  0.1           11           11           1           0      11566 int initialise(const char *, const char *, t_param *, t_speed **, t_speed **, int **, double **) C 
+  0.0        0.216        0.216           1           0        216 int finalise(const t_param *, t_speed **, t_speed **, int **, double **) C 
+  0.0        0.001        0.123           1           1        123 double calc_reynolds(const t_param, t_speed *, int *) C 
+
+NODE 0;CONTEXT 0;THREAD 1:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,149       18,997           1      160001   18997574 .TAU application
+ 72.9        1,788       13,847      160001      160001         87 parallel begin/end [OpenMP]
+ 54.1        1,103       10,275      160001      160001         64 for enter/exit [OpenMP]
+ 22.0          413        4,174      160001      160001         26 barrier enter/exit [OpenMP]
+ 19.1          396        3,619       40000       40000         90 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.6          421        3,162       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.7        1,993        2,989       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.4          464        2,925       40001       40001         73 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.0        1,388        2,473       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.4          502        2,351       40000       40000         59 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.5        1,181        2,193       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.0          433        1,515       40000       40000         38 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.3        1,006        1,006       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  4.9          928          928       40001           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  4.9          925          925       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  4.7          901          901       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+
+NODE 0;CONTEXT 0;THREAD 2:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,160       19,003           1      160001   19003577 .TAU application
+ 72.8        1,745       13,843      160001      160001         87 parallel begin/end [OpenMP]
+ 54.3        1,098       10,324      160001      160001         65 for enter/exit [OpenMP]
+ 23.4          394        4,455      160001      160001         28 barrier enter/exit [OpenMP]
+ 19.1          392        3,621       40000       40000         91 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.7          422        3,164       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.8        1,783        2,996       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.5          458        2,937       40001       40001         73 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.1        1,435        2,484       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.5          499        2,373       40000       40000         59 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.6        1,077        2,209       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.1          473        1,534       40000       40000         38 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  6.1        1,153        1,153       40000           0         29 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  5.5        1,047        1,047       40001           0         26 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.1          977          977       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  4.6          882          882       40000           0         22 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+
+NODE 0;CONTEXT 0;THREAD 3:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,146       19,009           1      160001   19009661 .TAU application
+ 72.9        1,739       13,863      160001      160001         87 parallel begin/end [OpenMP]
+ 54.5        1,099       10,351      160001      160001         65 for enter/exit [OpenMP]
+ 22.5          398        4,269      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.1          394        3,631       40000       40000         91 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.7          417        3,165       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.8        2,019        3,003       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.5          465        2,946       40001       40001         74 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.1        1,340        2,490       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.5          495        2,381       40000       40000         60 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.6        1,183        2,213       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.1          439        1,544       40000       40000         39 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.7        1,074        1,074       40000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.0          951          951       40001           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  4.9          926          926       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  4.8          918          918       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 4:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,155       19,014           1      160001   19014893 .TAU application
+ 72.9        1,750       13,859      160001      160001         87 parallel begin/end [OpenMP]
+ 54.3        1,094       10,331      160001      160001         65 for enter/exit [OpenMP]
+ 22.4          397        4,256      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.1          392        3,629       40000       40000         91 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.7          421        3,167       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.8        2,020        3,001       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.5          464        2,940       40001       40001         74 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.1        1,339        2,489       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.5          498        2,370       40000       40000         59 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.6        1,180        2,211       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.1          439        1,534       40000       40000         38 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.7        1,075        1,075       40000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.0          951          951       40001           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  4.8          916          916       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  4.8          915          915       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+
+NODE 0;CONTEXT 0;THREAD 5:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,179       19,020           1      160001   19020887 .TAU application
+ 72.8        1,748       13,841      160001      160001         87 parallel begin/end [OpenMP]
+ 54.3        1,091       10,324      160001      160001         65 for enter/exit [OpenMP]
+ 22.3          400        4,240      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.1          396        3,629       40000       40000         91 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.6          414        3,160       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.8        2,018        3,001       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.4          461        2,933       40001       40001         73 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.1        1,352        2,492       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.5          495        2,369       40000       40000         59 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.6        1,183        2,208       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.0          438        1,531       40000       40000         38 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.6        1,063        1,063       40000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.0          944          944       40001           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  4.8          917          917       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  4.8          914          914       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+
+NODE 0;CONTEXT 0;THREAD 6:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,196       19,026           1      160001   19026278 .TAU application
+ 72.7        1,755       13,829      160001      160001         86 parallel begin/end [OpenMP]
+ 54.2        1,106       10,308      160001      160001         64 for enter/exit [OpenMP]
+ 22.2          394        4,224      160001      160001         26 barrier enter/exit [OpenMP]
+ 19.1          399        3,627       40000       40000         91 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.6          414        3,160       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.7        2,023        2,989       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.3          459        2,918       40001       40001         73 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.1        1,331        2,487       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.4          491        2,367       40000       40000         59 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.5        1,184        2,192       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.1          438        1,533       40000       40000         38 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.7        1,080        1,080       40000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  4.9          930          930       40001           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  4.8          916          916       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  4.7          902          902       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 7:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,187       19,031           1      160001   19031957 .TAU application
+ 72.7        1,775       13,844      160001      160001         87 parallel begin/end [OpenMP]
+ 54.2        1,109       10,307      160001      160001         64 for enter/exit [OpenMP]
+ 22.1          400        4,205      160001      160001         26 barrier enter/exit [OpenMP]
+ 19.1          397        3,629       40000       40000         91 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.6          406        3,152       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.7        2,025        2,992       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.4          461        2,926       40001       40001         73 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.1        1,346        2,487       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.4          495        2,360       40000       40000         59 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.5        1,183        2,194       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.0          437        1,522       40000       40000         38 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.6        1,063        1,063       40000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  4.9          932          932       40001           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  4.8          908          908       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  4.7          900          900       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 8:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,748       19,037           1      160001   19037373 .TAU application
+ 75.1        1,861       14,288      160001      160001         89 parallel begin/end [OpenMP]
+ 55.6        1,162       10,593      160001      160001         66 for enter/exit [OpenMP]
+ 22.9          439        4,364      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.5          421        3,718       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.9          433        3,224       40000       40000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 16.0        2,017        3,041       40000       40000         76 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.8          471        3,011       40001       40001         75 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.2        1,412        2,518       40000       40000         63 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.0          506        2,473       40000       40000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.9        1,188        2,258       40001       40001         56 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.5          447        1,612       40000       40000         40 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.4        1,025        1,025       40000           0         26 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.1          979          979       40001           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.1          964          964       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.0          955          955       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 9:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,816       19,041           1      160001   19041875 .TAU application
+ 74.7        1,867       14,225      160001      160001         89 parallel begin/end [OpenMP]
+ 55.3        1,140       10,526      160001      160001         66 for enter/exit [OpenMP]
+ 22.4          424        4,268      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.5          426        3,705       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.8          430        3,206       40000       40000         80 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.9        2,032        3,030       40000       40000         76 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.7          469        2,981       40001       40001         75 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.2        1,448        2,509       40000       40000         63 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.9          504        2,463       40000       40000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.8        1,186        2,238       40001       40001         56 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.4          449        1,608       40000       40000         40 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.2          986          986       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.1          963          963       40001           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.1          962          962       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  4.9          931          931       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 10:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,798       19,047           1      160001   19047118 .TAU application
+ 74.8        1,843       14,248      160001      160001         89 parallel begin/end [OpenMP]
+ 55.5        1,148       10,576      160001      160001         66 for enter/exit [OpenMP]
+ 22.5          421        4,286      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.5          423        3,707       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.9          425        3,223       40000       40000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.9        2,035        3,032       40000       40000         76 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.8          472        3,002       40001       40001         75 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.3        1,469        2,527       40000       40000         63 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.0          506        2,470       40000       40000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.8        1,186        2,252       40001       40001         56 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.5          450        1,615       40000       40000         40 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.2          983          983       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.1          980          980       40001           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.1          966          966       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  4.9          934          934       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 11:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,742       19,052           1      160001   19052466 .TAU application
+ 75.1        1,831       14,310      160001      160001         89 parallel begin/end [OpenMP]
+ 55.8        1,161       10,628      160001      160001         66 for enter/exit [OpenMP]
+ 22.7          422        4,319      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.5          423        3,715       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.9          437        3,226       40000       40000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 16.0        2,030        3,038       40000       40000         76 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.9          479        3,033       40001       40001         76 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.2        1,475        2,517       40000       40000         63 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.1          509        2,503       40000       40000         63 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.9        1,188        2,270       40001       40001         57 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.6          453        1,640       40000       40000         41 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.2          994          994       40001           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.2          988          988       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.1          968          968       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.0          945          945       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 12:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,780       19,058           1      160001   19058467 .TAU application
+ 74.9        1,833       14,277      160001      160001         89 parallel begin/end [OpenMP]
+ 55.7        1,153       10,609      160001      160001         66 for enter/exit [OpenMP]
+ 22.7          418        4,321      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.5          422        3,719       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 17.0          433        3,233       40000       40000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 16.0        2,035        3,045       40000       40000         76 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.8          477        3,014       40001       40001         75 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.3        1,458        2,529       40000       40000         63 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.0          501        2,476       40000       40000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.8        1,187        2,254       40001       40001         56 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.5          453        1,625       40000       40000         41 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.2          997          997       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.1          981          981       40001           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.1          976          976       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.0          948          948       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 13:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,775       19,064           1      160001   19064384 .TAU application
+ 74.9        1,829       14,288      160001      160001         89 parallel begin/end [OpenMP]
+ 55.7        1,156       10,620      160001      160001         66 for enter/exit [OpenMP]
+ 22.9          419        4,360      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.5          425        3,720       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.9          432        3,227       40000       40000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 16.0        2,031        3,044       40000       40000         76 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.8          474        3,019       40001       40001         75 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.2        1,435        2,522       40000       40000         63 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.1          506        2,491       40000       40000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.9        1,184        2,265       40001       40001         57 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.6          451        1,630       40000       40000         41 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.3        1,011        1,011       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.2          997          997       40001           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.2          982          982       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.0          949          949       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 14:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,796       19,069           1      160001   19069849 .TAU application
+ 74.8        1,843       14,273      160001      160001         89 parallel begin/end [OpenMP]
+ 55.6        1,160       10,606      160001      160001         66 for enter/exit [OpenMP]
+ 22.6          417        4,305      160001      160001         27 barrier enter/exit [OpenMP]
+ 19.5          425        3,720       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.9          428        3,227       40000       40000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.9        2,032        3,037       40000       40000         76 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.8          471        3,003       40001       40001         75 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.3        1,468        2,531       40000       40000         63 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.0          497        2,478       40000       40000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.8        1,187        2,253       40001       40001         56 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.5          451        1,624       40000       40000         41 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.2          987          987       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.1          981          981       40001           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.1          976          976       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  4.9          942          942       40000           0         24 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+NODE 0;CONTEXT 0;THREAD 15:
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        5,193       19,074           1      160001   19074969 .TAU application
+ 72.8        1,790       13,881      160001      160001         87 parallel begin/end [OpenMP]
+ 54.2        1,130       10,329      160001      160001         65 for enter/exit [OpenMP]
+ 21.9          420        4,183      160001      160001         26 barrier enter/exit [OpenMP]
+ 19.0          390        3,627       40000       40000         91 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.6          415        3,158       40000       40000         79 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 15.7        2,020        2,994       40000       40000         75 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 15.4          456        2,930       40001       40001         73 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.0        1,376        2,477       40000       40000         62 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 12.4          498        2,374       40000       40000         59 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 11.5        1,181        2,197       40001       40001         55 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.0          436        1,528       40000       40000         38 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.3        1,019        1,019       40000           0         25 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  4.9          932          932       40001           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  4.8          909          909       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  4.7          902          902       40000           0         23 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+
+FUNCTION SUMMARY (total):
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0     1:14.828     5:04.562          16 2.40002E+06   19035137 .TAU application
+ 74.7       27,083     3:47.535 2.56002E+06 2.56002E+06         89 parallel begin/end [OpenMP]
+ 56.7       16,999     2:52.787 2.56002E+06 2.56002E+06         67 for enter/exit [OpenMP]
+ 25.0        6,270     1:16.112 2.56002E+06 2.56002E+06         30 barrier enter/exit [OpenMP]
+ 19.6        6,299       59,790      640000      640000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 17.1        6,514       52,139      640000      640000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 16.4       31,862       49,817      640000      640000         78 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.0        7,199       48,626      640016      640016         76 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.7       22,219       41,640      640000      640000         65 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.1        7,651       39,894      640000      640000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 12.2       18,634       37,299      640016      640016         58 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.9        6,958       27,030      640000      640000         42 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  6.2           20       19,010           1       80004   19010824 int main(int, char **) C 
+  6.1           54       18,661      160001      160001        117 parallel fork/join [OpenMP]
+  6.0       18,256       18,256      640000           0         29 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.7       17,390       17,390      640016           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.7       17,233       17,233      640000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.6       16,960       16,960      640000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  4.6           49       14,147       40000      160000        354 int timestep(const t_param, t_speed *, t_speed *, int *) C 
+  1.7           30        5,218       40000       40000        130 int collision(const t_param, t_speed *, t_speed *, int *) C 
+  1.7          389        5,175       40000       40000        129 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  1.6           30        4,758       40001       40001        119 double av_velocity(const t_param, t_speed *, int *) C 
+  1.6           32        4,747       40000       40000        119 int propagate(const t_param, t_speed *, t_speed *) C 
+  1.5          592        4,711       40001       40001        118 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  1.5          403        4,702       40000       40000        118 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  1.3           29        4,058       40000       40000        101 int rebound(const t_param, t_speed *, t_speed *, int *) C 
+  1.3          409        4,017       40000       40000        100 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  0.0           72           72           1           0      72765 int write_values(const t_param, t_speed *, int *, double *) C 
+  0.0           72           72       40000           0          2 int accelerate_flow(const t_param, t_speed *, int *) C 
+  0.0           11           11           1           0      11566 int initialise(const char *, const char *, t_param *, t_speed **, t_speed **, int **, double **) C 
+  0.0        0.216        0.216           1           0        216 int finalise(const t_param *, t_speed **, t_speed **, int **, double **) C 
+  0.0        0.001        0.123           1           1        123 double calc_reynolds(const t_param, t_speed *, int *) C 
+
+FUNCTION SUMMARY (mean):
+---------------------------------------------------------------------------------------
+%Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
+              msec   total msec                          usec/call 
+---------------------------------------------------------------------------------------
+100.0        4,676       19,035           1      150001   19035137 .TAU application
+ 74.7        1,692       14,220      160001      160001         89 parallel begin/end [OpenMP]
+ 56.7        1,062       10,799      160001      160001         67 for enter/exit [OpenMP]
+ 25.0          391        4,757      160001      160001         30 barrier enter/exit [OpenMP]
+ 19.6          393        3,736       40000       40000         93 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 17.1          407        3,258       40000       40000         81 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 16.4        1,991        3,113       40000       40000         78 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+ 16.0          449        3,039       40001       40001         76 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+ 13.7        1,388        2,602       40000       40000         65 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+ 13.1          478        2,493       40000       40000         62 parallelfor (parallel begin/end) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+ 12.2        1,164        2,331       40001       40001         58 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  8.9          434        1,689       40000       40000         42 parallelfor (loop body) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  6.2            1        1,188      0.0625     5000.25   19010824 int main(int, char **) C 
+  6.1            3        1,166     10000.1     10000.1        117 parallel fork/join [OpenMP]
+  6.0        1,141        1,141       40000           0         29 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  5.7        1,086        1,086       40001           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  5.7        1,077        1,077       40000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  5.6        1,060        1,060       40000           0         27 parallelfor (barrier enter/exit) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  4.6            3          884        2500       10000        354 int timestep(const t_param, t_speed *, t_speed *, int *) C 
+  1.7            1          326        2500        2500        130 int collision(const t_param, t_speed *, t_speed *, int *) C 
+  1.7           24          323        2500        2500        129 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <308, 383>]
+  1.6            1          297     2500.06     2500.06        119 double av_velocity(const t_param, t_speed *, int *) C 
+  1.6            2          296        2500        2500        119 int propagate(const t_param, t_speed *, t_speed *) C 
+  1.5           37          294     2500.06     2500.06        118 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <557, 589>]
+  1.5           25          293        2500        2500        118 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <233, 256>]
+  1.3            1          253        2500        2500        101 int rebound(const t_param, t_speed *, t_speed *, int *) C 
+  1.3           25          251        2500        2500        100 parallelfor (parallel fork/join) [OpenMP location: file:/panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623/d2q9-bgk.c <266, 283>]
+  0.0            4            4      0.0625           0      72765 int write_values(const t_param, t_speed *, int *, double *) C 
+  0.0            4            4        2500           0          2 int accelerate_flow(const t_param, t_speed *, int *) C 
+  0.0        0.723        0.723      0.0625           0      11566 int initialise(const char *, const char *, t_param *, t_speed **, t_speed **, int **, double **) C 
+  0.0       0.0135       0.0135      0.0625           0        216 int finalise(const t_param *, t_speed **, t_speed **, int **, double **) C 
+  0.0     6.25E-05      0.00769      0.0625      0.0625        123 double calc_reynolds(const t_param, t_speed *, int *) C 
