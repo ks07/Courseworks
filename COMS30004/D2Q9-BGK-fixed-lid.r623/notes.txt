@@ -93,4 +93,13 @@ Much slower! 7.386s!
 
 Faster than propagate but still worse. Longer function has more room for variation? 6.789s
 
-23)
+22.1) Reverted back to 5.090s, checked verification.
+
+23) Checked 1024x1024 example.
+
+Runtime 125.2s. Verification passed.
+
+24) Try manually flattening nested loops in av_velocity.
+
+No change! 5.056s
+
