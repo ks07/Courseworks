@@ -103,3 +103,15 @@ Runtime 125.2s. Verification passed.
 
 No change! 5.056s
 
+25) Try adding march flag
+
+Perhaps a very small change? 5.045s
+
+26) Try flattening propagate?
+
+Need to know ii and jj in order to wrap around edges... Better way to calculate?
+
+27) Use curr_cell in rebound.
+
+Possible minimal speedup. Best is 5.026s
+

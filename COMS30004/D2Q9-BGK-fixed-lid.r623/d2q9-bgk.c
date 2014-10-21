@@ -260,27 +260,26 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
 
 int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
-  int ii,jj;  /* generic counters */
+  int curr_cell;  /* generic counters */
+  const int cell_lim = (params.ny * params.nx);
 
   /* loop over the cells in the grid */
-#pragma omp parallel for private(jj) shared(cells,tmp_cells,obstacles)
-  for(ii=0;ii<params.ny;ii++) {
-    for(jj=0;jj<params.nx;jj++) {
-      /* if the cell contains an obstacle */
-      if(obstacles[ii*params.nx + jj]) {
+#pragma omp parallel for shared(cells,tmp_cells,obstacles)
+  for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
+    /* if the cell contains an obstacle */
+    if(obstacles[curr_cell]) {
 	/* called after propagate, so taking values from scratch space
 	** mirroring, and writing into main grid */
-	cells[ii*params.nx + jj].speeds[1] = tmp_cells[ii*params.nx + jj].speeds[3];
-	cells[ii*params.nx + jj].speeds[2] = tmp_cells[ii*params.nx + jj].speeds[4];
-	cells[ii*params.nx + jj].speeds[3] = tmp_cells[ii*params.nx + jj].speeds[1];
-	cells[ii*params.nx + jj].speeds[4] = tmp_cells[ii*params.nx + jj].speeds[2];
-	cells[ii*params.nx + jj].speeds[5] = tmp_cells[ii*params.nx + jj].speeds[7];
-	cells[ii*params.nx + jj].speeds[6] = tmp_cells[ii*params.nx + jj].speeds[8];
-	cells[ii*params.nx + jj].speeds[7] = tmp_cells[ii*params.nx + jj].speeds[5];
-	cells[ii*params.nx + jj].speeds[8] = tmp_cells[ii*params.nx + jj].speeds[6];
+	cells[curr_cell].speeds[1] = tmp_cells[curr_cell].speeds[3];
+	cells[curr_cell].speeds[2] = tmp_cells[curr_cell].speeds[4];
+	cells[curr_cell].speeds[3] = tmp_cells[curr_cell].speeds[1];
+	cells[curr_cell].speeds[4] = tmp_cells[curr_cell].speeds[2];
+	cells[curr_cell].speeds[5] = tmp_cells[curr_cell].speeds[7];
+	cells[curr_cell].speeds[6] = tmp_cells[curr_cell].speeds[8];
+	cells[curr_cell].speeds[7] = tmp_cells[curr_cell].speeds[5];
+	cells[curr_cell].speeds[8] = tmp_cells[curr_cell].speeds[6];
       }
     }
-  }
 
   return EXIT_SUCCESS;
 }
