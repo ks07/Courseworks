@@ -49,6 +49,7 @@
 ** if you choose a different obstacle file.
 */
 
+#include<math.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<time.h>
@@ -62,12 +63,10 @@
 
 // Add an easy way to switch between single and double precision math.
 #ifdef SINGLE_PRECISION
-#include<tgmath.h>
 #define my_float float
-#define my_sqrt sqrt
+#define my_sqrt sqrtf
 #define MY_FLOAT_PATTERN "%f\n"
 #else
-#include<math.h>
 #define my_float double
 #define my_sqrt sqrt
 #define MY_FLOAT_PATTERN "%lf\n"
