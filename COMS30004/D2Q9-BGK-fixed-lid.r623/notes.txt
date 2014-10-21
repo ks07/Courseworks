@@ -115,3 +115,9 @@ Need to know ii and jj in order to wrap around edges... Better way to calculate?
 
 Possible minimal speedup. Best is 5.026s
 
+28) Add a compile time switch to use single precision floats.
+
+Compiles fine in normal mode, time still 5.033s.
+Compiles fine in single precision mode, time reduced to 4.469s. Verification passes!
+Large input in single mode = 72.648s! Passing!
+
