@@ -121,3 +121,28 @@ Compiles fine in normal mode, time still 5.033s.
 Compiles fine in single precision mode, time reduced to 4.469s. Verification passes!
 Large input in single mode = 72.648s! Passing!
 
+29) Try the intel compiler.
+
+Using single precision down to 3.538s!
+Using double precision down to 69.461s!
+
+30) Try LLVM
+
+Locally only, unfortunately. With 8 cores on my laptop, small problem:
+GCC 4.8.2: 7.999s
+CLANG ~3.5: 7.492s
+
+31) FINAL TIMES (ICC 13)
+128_bx 3.586s PASS
+128_sq 3.806s PASS
+256_sw 6.399s PASS
+1024  71.522s PASS
+
+(ICC 15)
+128_bx 3.450s PASS
+128_sq 3.654s PASS
+256_sw 5.855s PASS
+1024  69.140s PASS
+
+Sandwich Average:
+From 10 runs, 5.856s
