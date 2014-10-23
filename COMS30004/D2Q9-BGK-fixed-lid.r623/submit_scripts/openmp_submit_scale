@@ -1,0 +1,48 @@
+#!/bin/bash 
+#!
+#! Sample PBS file
+#!
+#! Name of job
+
+#PBS -N OPENMP
+#PBS -o OUT
+#PBS -q hpc-course
+#PBS -l nodes=1:ppn=16,walltime=00:10:00
+
+#! Mail to user if job aborts
+#PBS -m a
+
+#! application name
+application="./d2q9-bgk.exe"
+
+#! Run options for the application
+options="cfgs/input_128x128.params cfgs/obstacles_128x128_box.dat"
+
+###############################################################
+### You should not have to change anything below this line ####
+###############################################################
+
+#! change the working directory (default is home directory)
+
+cd $PBS_O_WORKDIR
+
+echo Running on host `hostname`
+echo Time is `date`
+echo Directory is `pwd`
+echo PBS job ID is $PBS_JOBID
+echo This jobs runs on the following machines:
+echo `cat $PBS_NODEFILE | uniq`
+
+#! numnodes=`wc $PBS_NODEFILE | awk '{ print $1 }'`
+
+for i in {1..16}; do
+    export OMP_NUM_THREADS=$i
+    echo "============================="
+    echo "Using $OMP_NUM_THREADS cores."
+    echo "============================="
+
+    #! Run the executable
+    $application $options
+done
+
+echo "Done!"

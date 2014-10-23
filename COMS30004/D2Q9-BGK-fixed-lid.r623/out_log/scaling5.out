@@ -1,0 +1,135 @@
+Running on host node47-001
+Time is Wed Oct 22 18:59:37 BST 2014
+Directory is /panfs/panasas01/cosc/gf12815/D2Q9-BGK-fixed-lid.r623
+PBS job ID is 1690154.master.cm.cluster
+This jobs runs on the following machines:
+node47-001
+=============================
+Using 1 cores.
+=============================
+==done==
+Reynolds number:		9.757627487183E+00
+Elapsed time:			34.957656 (s)
+Elapsed user CPU time:		34.873698 (s)
+Elapsed system CPU time:	0.001999 (s)
+=============================
+Using 2 cores.
+=============================
+==done==
+Reynolds number:		9.757624626160E+00
+Elapsed time:			17.748756 (s)
+Elapsed user CPU time:		35.400618 (s)
+Elapsed system CPU time:	0.007998 (s)
+=============================
+Using 3 cores.
+=============================
+==done==
+Reynolds number:		9.757621765137E+00
+Elapsed time:			12.458180 (s)
+Elapsed user CPU time:		37.272333 (s)
+Elapsed system CPU time:	0.008998 (s)
+=============================
+Using 4 cores.
+=============================
+==done==
+Reynolds number:		9.757631301880E+00
+Elapsed time:			9.374491 (s)
+Elapsed user CPU time:		37.384316 (s)
+Elapsed system CPU time:	0.015997 (s)
+=============================
+Using 5 cores.
+=============================
+==done==
+Reynolds number:		9.757623672485E+00
+Elapsed time:			7.895398 (s)
+Elapsed user CPU time:		39.354017 (s)
+Elapsed system CPU time:	0.016997 (s)
+=============================
+Using 6 cores.
+=============================
+==done==
+Reynolds number:		9.757621765137E+00
+Elapsed time:			6.596573 (s)
+Elapsed user CPU time:		39.467000 (s)
+Elapsed system CPU time:	0.006998 (s)
+=============================
+Using 7 cores.
+=============================
+==done==
+Reynolds number:		9.757618904114E+00
+Elapsed time:			5.899980 (s)
+Elapsed user CPU time:		41.185738 (s)
+Elapsed system CPU time:	0.004999 (s)
+=============================
+Using 8 cores.
+=============================
+==done==
+Reynolds number:		9.757624626160E+00
+Elapsed time:			5.156093 (s)
+Elapsed user CPU time:		41.129747 (s)
+Elapsed system CPU time:	0.002999 (s)
+=============================
+Using 9 cores.
+=============================
+==done==
+Reynolds number:		9.757619857788E+00
+Elapsed time:			4.890950 (s)
+Elapsed user CPU time:		43.876329 (s)
+Elapsed system CPU time:	0.014997 (s)
+=============================
+Using 10 cores.
+=============================
+==done==
+Reynolds number:		9.757626533508E+00
+Elapsed time:			4.737545 (s)
+Elapsed user CPU time:		47.206823 (s)
+Elapsed system CPU time:	0.028995 (s)
+=============================
+Using 11 cores.
+=============================
+==done==
+Reynolds number:		9.757623672485E+00
+Elapsed time:			4.559157 (s)
+Elapsed user CPU time:		49.975402 (s)
+Elapsed system CPU time:	0.018997 (s)
+=============================
+Using 12 cores.
+=============================
+==done==
+Reynolds number:		9.757623672485E+00
+Elapsed time:			4.124551 (s)
+Elapsed user CPU time:		49.309503 (s)
+Elapsed system CPU time:	0.034994 (s)
+=============================
+Using 13 cores.
+=============================
+==done==
+Reynolds number:		9.757626533508E+00
+Elapsed time:			3.986629 (s)
+Elapsed user CPU time:		51.661146 (s)
+Elapsed system CPU time:	0.010998 (s)
+=============================
+Using 14 cores.
+=============================
+==done==
+Reynolds number:		9.757624626160E+00
+Elapsed time:			3.837694 (s)
+Elapsed user CPU time:		53.541860 (s)
+Elapsed system CPU time:	0.015997 (s)
+=============================
+Using 15 cores.
+=============================
+==done==
+Reynolds number:		9.757624626160E+00
+Elapsed time:			3.777272 (s)
+Elapsed user CPU time:		56.431421 (s)
+Elapsed system CPU time:	0.018997 (s)
+=============================
+Using 16 cores.
+=============================
+==done==
+Reynolds number:		9.757623672485E+00
+Elapsed time:			3.474694 (s)
+Elapsed user CPU time:		55.351585 (s)
+Elapsed system CPU time:	0.009998 (s)
+Done!
