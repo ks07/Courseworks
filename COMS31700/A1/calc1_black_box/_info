@@ -1,0 +1,138 @@
+m255
+K3
+13
+cModel Technology
+Z0 d/usr/local/modelsim/modeltech
+valu_input_stage
+ITDW:D8QSk7kaE[228al;g1
+V6kO50JZYjU7llzW_OlR?63
+Z1 w1382393444
+Falu_input_stage.v
+Z2 8/usr/local/modelsim/modeltech/calc1.v
+Z3 F/usr/local/modelsim/modeltech/calc1.v
+L0 5
+Z4 OL;L;6.5c;42
+r1
+31
+Z5 o-work calc1_black_box -L mtiAvm -L mtiOvm -L mtiUPF
+Z6 tCoverFEC 0 CoverShortCircuit 0
+!s100 02nNVNP_6CRn7KO>n@ZG`1
+!s85 0
+valu_output_stage
+IJMOSCoSjj2>fJ3<m^jZAb3
+Vi`mPlJPedoA8j;EM61OD?3
+R1
+Falu_output_stage.v
+R2
+R3
+L0 5
+R4
+r1
+31
+R5
+R6
+!s100 B_Kgo2;a8cB>LIFKMO1:z3
+!s85 0
+vcalc1
+Ia0LmbFUdFaagYG7>9B?UM2
+VORH_:B2miP6HC5g74B]KA3
+R1
+R2
+R3
+L0 7
+R4
+r1
+31
+R5
+R6
+!s100 Z:4=eCYbn=Mb:15Ab53P:2
+!s85 0
+vcalc1_top
+I=I8G:P91JL5_RXhz[D^ha2
+V^;=R0:hM91Y<CGMV:OYCc0
+R1
+Fcalc1_top.v
+R2
+R3
+L0 13
+R4
+r1
+31
+R5
+R6
+!s100 i:lGI52Xnf^fB8HUoz2^i2
+!s85 0
+vexdbin_mac
+I933_g`NV?AkKd:HCO=;aA2
+V=Zl3R1B6M288^3a@;JD5?3
+R1
+Fexdbin_mac.v
+R2
+R3
+L0 5
+R4
+r1
+31
+R5
+R6
+!s100 `dMI:nCOLOd0;F[[iIi8b1
+!s85 0
+vholdreg
+I6_U74<l5K;gbLA0V^[nk;1
+VMZTNz=;`Yhdz9XVLn5j?X1
+R1
+Fholdreg.v
+R2
+R3
+L0 5
+R4
+r1
+31
+R5
+R6
+!s100 z`cSQSAWEzg1Kh0?VRKe=2
+!s85 0
+vmux_out
+I4;;F5J?^;gZlYSdAin^K01
+Vh0iCDlm>2AhWefgO>7TLe1
+R1
+Fmux_out.v
+R2
+R3
+L0 5
+R4
+r1
+31
+R5
+R6
+!s100 `A31bgL1<=Y07aH[h8TaX1
+!s85 0
+vpriority
+Ic`NoOiX7NAOKznb<6bE2<2
+Vog_2Xoa79jmj`5Xhg`2HB2
+R1
+Fpriority.v
+R2
+R3
+L0 5
+R4
+r1
+31
+R5
+R6
+!s100 UBTKD=m2??ohoS6KU_lO=2
+!s85 0
+vshifter
+!s100 Gidin>7Rc:<DNiGd=YVB`0
+I0NagKKbi_l3LZ8_hF[7233
+V;YacVe8Y_>Ie<POj1Pn;F1
+R1
+8/usr/local/modelsim/modeltech/shifter.v
+F/usr/local/modelsim/modeltech/shifter.v
+L0 5
+R4
+r1
+!s85 0
+31
+R5
+R6
