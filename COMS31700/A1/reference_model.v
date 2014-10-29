@@ -8,12 +8,28 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
    input [0:31]  req1_data_in, req2_data_in, req3_data_in, req4_data_in;
    input [1:7] 	 reset;
 
+   // Define some constants.
+   localparam CMD_NOP = 0;
+   localparam CMD_ADD = 1;
+   localparam CMD_SUB = 2;
+   localparam CMD_LSH = 5;
+   localparam CMD_RSH = 6;
+
+   localparam RSP_NONE = 0;
+   localparam RSP_SUCC = 1;
+   localparam RSP_INOF = 2; // Invalid command or overflow
+   localparam RSP_IERR = 3;
+
+   localparam DATA_MAX = (2 ** 32) - 1;
+   
    // Use packed/unpacked arrays to make an array of vectors.
    // http://electronics.stackexchange.com/questions/99507/
-   reg 		 req_busy     [1:4];
-   reg [0:31] 	 req_data_buf [1:4];
-   reg [0:3] 	 req_cmd_buf  [1:4];
+   reg 		 req_busy       [1:4];
+   reg [0:31] 	 req_data_buf_A [1:4];
+   reg [0:31] 	 req_data_buf_B [1:4];
+   reg [0:3] 	 req_cmd_buf    [1:4];
 
+   // Init code for reference model.
    initial
      begin
 	// Init all busy states to 0.
@@ -21,10 +37,25 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
 	req_busy[2] = 0;
 	req_busy[3] = 0;
 	req_busy[4] = 0;
-	out_data4 = 0;
-	
      end
-   
+
+   // Task definitions for calc functions
+   task OP_ADD;
+      input  [0:31] d1;
+      input  [0:31] d2;
+      output [0:31] r; // Result
+      output [0:1]  s; // Response
+      begin
+	 s = RSP_SUCC;
+	 r = d1 + d2;
+      end
+   endtask
+
+   // Temp Vars. Might need two later for simultaneous shift and arithmetic?
+   reg [0:31] tmp_data;
+   reg [0:1]  tmp_resp;
+
+   // Simulation and scheduling code.
    always
      @ (negedge c_clk) begin
 	//$display ("%t rb1: %d r1ci: %d\n\n", $time, req_busy[1], req1_cmd_in);
@@ -34,11 +65,15 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
 	  begin
 	     req_busy[1] = 1;
 	     req_cmd_buf[1] = req1_cmd_in;
-	     req_data_buf[1] = req1_data_in;
+	     req_data_buf_A[1] = req1_data_in;
 
+	     // Delay until the next negedge
+	     @(negedge c_clk) req_data_buf_B[1] = req1_data_in;
+	     
 	     // On the next clock edge, spit out the data in.
 	     // Use a non-blocking delayed assign.
-	     out_data1 <= #200 req_data_buf[1];
+	     OP_ADD(req_data_buf_A[1], req_data_buf_B[1], tmp_data, tmp_resp);
+	     out_data1 <= #100 tmp_data;
 	  end
      end
 
