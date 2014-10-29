@@ -21,6 +21,7 @@ module example_calc1_tb;
 	req2_data_in = 0;
 	req3_cmd_in = 0;
 	req3_data_in = 0;
+	req4_cmd_in = 0;
 	req4_data_in = 0;
      end   
 	

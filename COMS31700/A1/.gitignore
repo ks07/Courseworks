@@ -1,0 +1,7 @@
+@_opt*/
+*.asm64
+*.rw64
+_opt__lock
+transcript
+vsim.wlf
+

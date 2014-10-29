@@ -1,0 +1,25 @@
+m255
+K3
+13
+cModel Technology
+Z0 d/home/ugrads/coms2012/gf12815/linux/Dev/COMS31700/A1
+T_opt
+VK;bX:Bj;S=`;>HEGCfR:J1
+04 16 4 work example_calc1_tb fast 0
+=1-00224d86a187-5450cd57-a2511-58e3
+o-quiet -auto_acc_if_foreign -work my_calc1
+n@_opt
+OL;O;6.5c;42
+vexample_calc1_tb
+V0;Fk=HPj@XA3n]oNKWB9P1
+r1
+!s85 0
+31
+IeGSN<k2`jKH^7JE7HR`391
+w1414347828
+8/home/ugrads/coms2012/gf12815/linux/Dev/COMS31700/A1/example_calc1_tb.v
+F/home/ugrads/coms2012/gf12815/linux/Dev/COMS31700/A1/example_calc1_tb.v
+L0 3
+OL;L;6.5c;42
+o-work my_calc1 -L mtiAvm -L mtiOvm -L mtiUPF
+!s100 7R1JWC;Z53n<U4mT;8:^73
