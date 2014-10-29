@@ -52,8 +52,8 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
    endtask
 
    // Temp Vars. Might need two later for simultaneous shift and arithmetic?
-   reg [0:31] tmp_data;
-   reg [0:1]  tmp_resp;
+   reg [0:31] tmp_data [1:4];
+   reg [0:1]  tmp_resp [1:4];
 
    // Simulation and scheduling code.
    always
@@ -67,13 +67,29 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
 	     req_cmd_buf[1] = req1_cmd_in;
 	     req_data_buf_A[1] = req1_data_in;
 
-	     // Delay until the next negedge
+	     // Delay until the next negedge to read data 2.
 	     @(negedge c_clk) req_data_buf_B[1] = req1_data_in;
+	     $display("$t A\n", $time);
 	     
-	     // On the next clock edge, spit out the data in.
-	     // Use a non-blocking delayed assign.
-	     OP_ADD(req_data_buf_A[1], req_data_buf_B[1], tmp_data, tmp_resp);
-	     out_data1 <= #100 tmp_data;
+	     // Do calc.
+	     OP_ADD(req_data_buf_A[1], req_data_buf_B[1], tmp_data[1], tmp_resp[1]);
+	     
+	     // On the next clock edge (or longer when we add scheduling), spit out the data in.
+	     #200
+	       $display("$t B\n", $time);
+	     
+	     out_data1 = tmp_data[1];
+	     out_resp1 = tmp_resp[1];
+	     req_busy[1] = 0;
+
+	     // Add a delay so that if we stop on a negedge the output isn't immediately removed.
+	     #1 ;
+
+	     // Reset output on next clock edge.
+	     @(negedge c_clk) out_data1 = 0;
+	     $display("$t C\n", $time);
+	     
+	     out_resp1 = 0;
 	  end
      end
 

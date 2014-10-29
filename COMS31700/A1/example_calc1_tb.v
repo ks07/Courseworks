@@ -51,7 +51,7 @@ module example_calc1_tb;
 
 	#200
 	
-	req1_cmd_in = 0;
+	req1_cmd_in = 1;
 	req1_data_in = 32'b0001_1111_1111_1111_1111_1111_1111_1111;
 				
 	// TEST 2: 1FF_FFFFh + 1FF_FFFFh =  3FFF_FFFE ?
