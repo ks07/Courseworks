@@ -9,7 +9,7 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
    input [1:7] 	 reset;
 
    always
-     @ (posedge c_clk) begin
+     @ (negedge c_clk) begin
 	
 	   out_data1 = req1_data_in;
 	
