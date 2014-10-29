@@ -41,8 +41,12 @@ module calc1_driver;
      begin
 
 	# 200
-	  req1_cmd_in = CMD_ADD;	
-	  req1_data_in = 255;
+	  req1_cmd_in = CMD_ADD;
+	req1_data_in = 255;
+
+	# 100
+	  req1_cmd_in = CMD_NOP;
+	
      end
 
 endmodule // calc1_driver

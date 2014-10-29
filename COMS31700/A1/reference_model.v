@@ -15,10 +15,10 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
    localparam CMD_LSH = 5;
    localparam CMD_RSH = 6;
 
-   localparam RSP_NONE = 0;
-   localparam RSP_SUCC = 1;
-   localparam RSP_INOF = 2; // Invalid command or overflow
-   localparam RSP_IERR = 3;
+   localparam RESP_NONE = 0;
+   localparam RESP_SUCC = 1;
+   localparam RESP_INOF = 2; // Invalid command or overflow
+   localparam RESP_IERR = 3;
 
    localparam DATA_MAX = (2 ** 32) - 1;
    
@@ -28,6 +28,16 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
    reg [0:31] 	 req_data_buf_A [1:4];
    reg [0:31] 	 req_data_buf_B [1:4];
    reg [0:3] 	 req_cmd_buf    [1:4];
+   // Temp Vars. Might need two later for simultaneous shift and arithmetic?
+   reg [0:31] tmp_data [1:4];
+   reg [0:1]  tmp_resp [1:4];
+
+   // Represent each cmd pipeline as a state machine
+   localparam STATE_IDLE = 0; // Waiting for command.
+   localparam STATE_DATA = 1; // Waiting for arg 2.
+   localparam STATE_COMP = 2; // Ready to output result. Goto 0 or 3.
+   localparam STATE_ODAT = 3; // Clear result and wait for arg2.
+   integer    pipe_state [1:4]; // The current state of each pipe.
 
    // Init code for reference model.
    initial
@@ -37,6 +47,11 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
 	req_busy[2] = 0;
 	req_busy[3] = 0;
 	req_busy[4] = 0;
+	// Init all pipe states to 0.
+	pipe_state[1] = STATE_IDLE;
+	pipe_state[2] = STATE_IDLE;
+	pipe_state[3] = STATE_IDLE;
+	pipe_state[4] = STATE_IDLE;
      end
 
    // Task definitions for calc functions
@@ -46,50 +61,57 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
       output [0:31] r; // Result
       output [0:1]  s; // Response
       begin
-	 s = RSP_SUCC;
+	 s = RESP_SUCC;
 	 r = d1 + d2;
       end
    endtask
 
-   // Temp Vars. Might need two later for simultaneous shift and arithmetic?
-   reg [0:31] tmp_data [1:4];
-   reg [0:1]  tmp_resp [1:4];
-
    // Simulation and scheduling code.
    always
      @ (negedge c_clk) begin
-	//$display ("%t rb1: %d r1ci: %d\n\n", $time, req_busy[1], req1_cmd_in);
-		
-	// If port not busy and cmd coming in, start processing.
-	if (req_busy[1] == 0 && req1_cmd_in != 0)
+	$display ("%t Pipe State: %d %d %d %d\n\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
+
+	if (pipe_state[1] == STATE_IDLE)
 	  begin
-	     req_busy[1] = 1;
-	     req_cmd_buf[1] = req1_cmd_in;
-	     req_data_buf_A[1] = req1_data_in;
-
-	     // Delay until the next negedge to read data 2.
-	     @(negedge c_clk) req_data_buf_B[1] = req1_data_in;
-	     $display("$t A\n", $time);
+	     // Reset this stream's output.
+	     out_resp1 = RESP_NONE;
+	     out_data1 = 0;
 	     
-	     // Do calc.
-	     OP_ADD(req_data_buf_A[1], req_data_buf_B[1], tmp_data[1], tmp_resp[1]);
+	     if (req1_cmd_in != 0)
+	       begin
+		  req_data_buf_A[1] = req1_data_in;
+		  req_cmd_buf[1] = req1_cmd_in;
+		  pipe_state[1] = STATE_DATA;
+	       end
+	  end
+	else if (pipe_state[1] == STATE_DATA)
+	  begin
+	     req_data_buf_B[1] = req1_data_in;
+	     pipe_state[1] = STATE_COMP;
+	  end
+	else if (pipe_state[1] == STATE_COMP)
+	  begin
+	     out_resp1 = RESP_SUCC;
+	     out_data1 = DATA_MAX;
 	     
-	     // On the next clock edge (or longer when we add scheduling), spit out the data in.
-	     #200
-	       $display("$t B\n", $time);
-	     
-	     out_data1 = tmp_data[1];
-	     out_resp1 = tmp_resp[1];
-	     req_busy[1] = 0;
-
-	     // Add a delay so that if we stop on a negedge the output isn't immediately removed.
-	     #1 ;
-
-	     // Reset output on next clock edge.
-	     @(negedge c_clk) out_data1 = 0;
-	     $display("$t C\n", $time);
-	     
-	     out_resp1 = 0;
+	     // If new cmd in jump to ODAT.
+	     if (req1_cmd_in != 0)
+	       begin
+		  req_cmd_buf[1] = req1_cmd_in;
+		  req_data_buf_A[1] = req1_data_in;
+		  pipe_state[1] = STATE_ODAT;
+	       end
+	     else
+	       begin
+		  pipe_state[1] = STATE_IDLE;
+	       end
+	  end
+	else if (pipe_state[1] == STATE_ODAT)
+	  begin
+	     // We have just output a result and have part 1 of a command.
+	     out_resp1 = RESP_NONE;
+	     out_data1 = 0;
+	     pipe_state[1] = STATE_COMP;
 	  end
      end
 
