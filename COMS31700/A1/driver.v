@@ -1,6 +1,7 @@
 `include "reference_model.v"
+`uselib lib=calc1_black_box
 
-module calc1_reference_test;
+module calc1_driver;
 
    wire [0:31]   out_data1, out_data2, out_data3, out_data4;
    wire [0:1]    out_resp1, out_resp2, out_resp3, out_resp4;
@@ -24,6 +25,9 @@ module calc1_reference_test;
    
    // Instantiate a copy of the reference model named CREF
    calc1_reference CREF(out_data1, out_data2, out_data3, out_data4, out_resp1, out_resp2, out_resp3, out_resp4, c_clk, req1_cmd_in, req1_data_in, req2_cmd_in, req2_data_in, req3_cmd_in, req3_data_in, req4_cmd_in, req4_data_in, reset);
+
+   // Instantiate a copy of the DUV
+   //calc1 DUV(out_data1, out_data2, out_data3, out_data4, out_resp1, out_resp2, out_resp3, out_resp4, c_clk, req1_cmd_in, req1_data_in, req2_cmd_in, req2_data_in, req3_cmd_in, req3_data_in, req4_cmd_in, req4_data_in, reset);
    
    initial
      begin
@@ -36,11 +40,9 @@ module calc1_reference_test;
    initial
      begin
 
-	// Test the data copy. Should be 0 out after 100.
-
 	# 200
 	  req1_cmd_in = CMD_ADD;	
 	  req1_data_in = 255;
      end
 
-endmodule // calc1_reference_test
+endmodule // calc1_driver
