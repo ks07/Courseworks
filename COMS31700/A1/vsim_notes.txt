@@ -1,0 +1,9 @@
+Some PRO-TIPS:
+
+add wave *
+  Quickly adds all possible in/out to the waveform viewer
+
+radix uns/hex/bin
+  Switch the radix on all waveform values at once
+
+
