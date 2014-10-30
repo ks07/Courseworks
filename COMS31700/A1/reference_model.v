@@ -113,7 +113,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	      if (arith_queue[0] == port)
 		begin
 		   // We are at the front of the queue. Pop us off and return true.
-		   arith_queue.pop_front();
+		   void '(arith_queue.pop_front());
 		   arith_last_op = $time;
 		   return 1;
 		end
@@ -123,7 +123,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	      if (shift_queue[0] == port)
 		begin
 		   // Pop off and ret true.
-		   shift_queue.pop_front();
+		   void '(shift_queue.pop_front());
 		   shift_last_op = $time;
 		   return 1;
 		end
