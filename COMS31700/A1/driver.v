@@ -3,12 +3,12 @@
 
 module calc1_driver;
 
-   wire [0:31]   out_data1, out_data2, out_data3, out_data4;
-   wire [0:1]    out_resp1, out_resp2, out_resp3, out_resp4;
+   wire [0:31]   out_data [1:4];
+   wire [0:1] 	 out_resp [1:4];
    
    reg 	         c_clk;
-   reg [0:3] 	 req1_cmd_in, req2_cmd_in, req3_cmd_in, req4_cmd_in;
-   reg [0:31]    req1_data_in, req2_data_in, req3_data_in, req4_data_in;
+   reg [0:3] 	 req_cmd_in [1:4];
+   reg [0:31]    req_data_in [1:4];
    reg [1:7] 	 reset;
 
    // Define some constants.
@@ -24,15 +24,12 @@ module calc1_driver;
    localparam RSP_IERR = 3;
    
    // Instantiate a copy of the reference model named CREF
-   calc1_reference CREF(out_data1, out_data2, out_data3, out_data4, out_resp1, out_resp2, out_resp3, out_resp4, c_clk, req1_cmd_in, req1_data_in, req2_cmd_in, req2_data_in, req3_cmd_in, req3_data_in, req4_cmd_in, req4_data_in, reset);
-
-   // Instantiate a copy of the DUV
-   //calc1 DUV(out_data1, out_data2, out_data3, out_data4, out_resp1, out_resp2, out_resp3, out_resp4, c_clk, req1_cmd_in, req1_data_in, req2_cmd_in, req2_data_in, req3_cmd_in, req3_data_in, req4_cmd_in, req4_data_in, reset);
+   calc1_reference CREF(out_data[1], out_data[2], out_data[3], out_data[4], out_resp[1], out_resp[2], out_resp[3], out_resp[4], c_clk, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], reset);
    
    initial
      begin
 	c_clk = 0;
-	req1_data_in = 0;
+	req_data_in[1] = 0;
      end
 
    always #100 c_clk = ~c_clk;
@@ -41,32 +38,32 @@ module calc1_driver;
      begin
 
 	# 200
-	  req1_cmd_in = CMD_ADD;
-	req1_data_in = 255;
+	  req_cmd_in[1] = CMD_ADD;
+	req_data_in[1] = 255;
 
 	# 100
-	  req1_cmd_in = CMD_NOP;
+	  req_cmd_in[1] = CMD_NOP;
 
 	# 400
-	  req2_cmd_in = CMD_SUB;
-	req2_data_in = 1;
+	  req_cmd_in[2] = CMD_SUB;
+	req_data_in[2] = 1;
 	
 
 	# 200
-	  req2_cmd_in = CMD_NOP;
-	req2_data_in = 100;
+	  req_cmd_in[2] = CMD_NOP;
+	req_data_in[2] = 100;
 	
 	# 100
-	  req3_cmd_in = CMD_ADD;
-	req3_data_in = 1;
-	req4_cmd_in = CMD_ADD;
-	req4_data_in = 2;
+	  req_cmd_in[3] = CMD_ADD;
+	req_data_in[3] = 1;
+	req_cmd_in[4] = CMD_ADD;
+	req_data_in[4] = 2;
 
 	# 200
-	  req3_cmd_in = CMD_NOP;
-	req3_data_in = 4;
-	req4_cmd_in = CMD_NOP;
-	req4_data_in = 8;
+	  req_cmd_in[3] = CMD_NOP;
+	req_data_in[3] = 4;
+	req_cmd_in[4] = CMD_NOP;
+	req_data_in[4] = 8;
 		
 	#800 $stop;
 	
