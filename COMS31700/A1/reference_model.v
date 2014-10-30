@@ -113,7 +113,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    function integer QUEUE_GATE;
       input integer port; // TODO: Assert that we are only queue'd once
       begin
-	 $display("Checking %d\n", port);
+	 //$display("Checking %d\n", port);
 
 	 // Need to check that we are both at the front of the queue and
 	 // we haven't already done a computation this cycle.	 
@@ -157,9 +157,9 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    // Simulation and scheduling code.
    always
      @ (negedge c_clk) begin
-	$display ("%t Pipe State: %d %d %d %d\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
-	print_queue(arith_queue);
-	print_queue(shift_queue);
+	//$display ("%t Pipe State: %d %d %d %d\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
+	//print_queue(arith_queue);
+	//print_queue(shift_queue);
 	
 	for (i = 1; i < 5; i = i + 1)
 	  begin
@@ -226,7 +226,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		  else
 		    begin
 		       // Not yet scheduled to run, wait until next clock edge.
-		       $display("Delaying %d", i);
+		       //$display("Delaying %d", i);
 		       pipe_state[i] = STATE_COMP; // Let's be explicit.
 		    end // else: !if(QUEUE_GATE(i) == 1)
 	       end // if (pipe_state[i] == STATE_COMP)

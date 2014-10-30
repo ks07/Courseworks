@@ -13,13 +13,50 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
    localparam RSP_INOF = 2; // Invalid command or overflow
    localparam RSP_IERR = 3;
 
+   // Task definition to check for output discrepancies.
+   task CONSISTENCY_CHECK;
+      integer i; // Loop counter.
+      integer port_problem;
+      integer any_problem;
+      begin
+	 any_problem = 0;
+	 $display ("CONSISTENCY CHECK AT %t:", $time);
+	 for (i = 1; i < 5; i = i + 1)
+	     begin
+		port_problem = 0;
+		if (!(ref_out_data[i] === duv_out_data[i]))
+		  begin
+		     port_problem = 1;
+		     $write ("\tout_data port %d", i);
+		  end
+		if (!(ref_out_resp[i] === duv_out_resp[i]))
+		  begin
+		     port_problem = 1;
+		     $write ("\tout_resp port %d", i);
+		  end
+		if (port_problem != 0)
+		  begin
+		     any_problem = 1;
+		     $write ("\n");
+		  end
+	     end // for (i = 1; i < 5; i = i + 1)
+	 if (any_problem != 0)
+	   begin
+	      $display ("DISCREPANCIES DETECTED\n");
+	   end
+	 else
+	   begin
+	      $display ("OUTPUTS CONSISTENT\n");
+	   end
+      end
+   endtask // CONSISTENCY_CHECK
+   
    always @ (negedge c_clk)
      begin
 	// (Falsely) assume that outputs should always match.
-	if (ref_out_data != duv_out_data || ref_out_resp != duv_out_resp)
-	  begin
-	     $display ("%t INCONSISTENT OUTPUT DETECTED\n\n", $time);
-	  end
+	// Due to timing, this will actually flag up errors up to the instant of the clock pulse if we don't delay.
+	// A delay of 0 might be possible?
+	#1 CONSISTENCY_CHECK();
      end
    
 endmodule // calc1_checker
