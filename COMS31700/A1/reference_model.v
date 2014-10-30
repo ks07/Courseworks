@@ -24,13 +24,17 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    
    // Use packed/unpacked arrays to make an array of vectors.
    // http://electronics.stackexchange.com/questions/99507/
-   reg 		 req_busy       [1:4];
    reg [0:31] 	 req_data_buf_A [1:4];
    reg [0:31] 	 req_data_buf_B [1:4];
    reg [0:3] 	 req_cmd_buf    [1:4];
-   // Temp Vars. Might need two later for simultaneous shift and arithmetic?
-   reg [0:31] tmp_data [1:4];
-   reg [0:1]  tmp_resp [1:4];
+
+   // Use a queue to ensure fairness of channel responses. Need one queue per op type.
+   // Queue should hold the number of the channel that is waiting, in order of request time.
+   // TODO: Support for simultaneous request randomisation.
+   integer 	 arith_queue [$];
+   integer 	 shift_queue [$];
+   time 	 arith_last_op;
+   time 	 shift_last_op;
 
    // Represent each cmd pipeline as a state machine
    localparam STATE_IDLE = 0; // Waiting for command.
@@ -38,22 +42,20 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    localparam STATE_COMP = 2; // Ready to output result. Goto 0 or 3.
    localparam STATE_ODAT = 3; // Clear result and wait for arg2.
    integer    pipe_state [1:4]; // The current state of each pipe.
-   integer    i; // Temp counter
-   
+   integer    i; // Temp counter.
 
    // Init code for reference model.
    initial
      begin
-	// Init all busy states to 0.
-	req_busy[1] = 0;
-	req_busy[2] = 0;
-	req_busy[3] = 0;
-	req_busy[4] = 0;
 	// Init all pipe states to 0.
 	pipe_state[1] = STATE_IDLE;
 	pipe_state[2] = STATE_IDLE;
 	pipe_state[3] = STATE_IDLE;
 	pipe_state[4] = STATE_IDLE;
+
+	// Init last op to 0.
+	arith_last_op = 0;
+	shift_last_op = 0;
      end
 
    // Task definitions for calc functions
@@ -73,7 +75,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	   end
 	 else if (cmd == CMD_SUB)
 	   begin
-	      $display("Calculating %d - %d", d2, d1);
+	      //$display("Calculating %d - %d", d2, d1);
 	      r = d2 - d1;
 	   end
 	 else
@@ -82,12 +84,74 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	      $display("%t UNIMPLEMENTED COMMAND %d\n", $time, cmd);
 	   end
       end
-   endtask
+   endtask // OP
 
+   task QUEUE;
+      input [0:3] cmd;
+      input integer port;
+      begin
+	 if (cmd == CMD_ADD || cmd == CMD_SUB)
+	   begin
+	      arith_queue.push_back(port);
+	   end
+	 else if (cmd == CMD_LSH || cmd == CMD_RSH)
+	   begin
+	      shift_queue.push_back(port);
+	   end
+      end
+   endtask // QUEUE
+
+   function integer QUEUE_GATE;
+      input integer port; // TODO: Assert that we are only queue'd once
+      begin
+	 $display("Checking %d\n", port);
+
+	 // Need to check that we are both at the front of the queue and
+	 // we haven't already done a computation this cycle.	 
+	 if (arith_queue.size() > 0 && arith_last_op < $time)
+	   begin
+	      if (arith_queue[0] == port)
+		begin
+		   // We are at the front of the queue. Pop us off and return true.
+		   arith_queue.pop_front();
+		   arith_last_op = $time;
+		   return 1;
+		end
+	   end
+	 else if (shift_queue.size() > 0 && shift_last_op < $time)
+	   begin
+	      if (shift_queue[0] == port)
+		begin
+		   // Pop off and ret true.
+		   shift_queue.pop_front();
+		   shift_last_op = $time;
+		   return 1;
+		end
+	   end // if (shift_queue.size() > 0)
+	 return 0;
+      end
+   endfunction // QUEUE_GATE
+
+   // From http://www.asic-world.com/systemverilog/data_types14.html
+   task print_queue;
+      input integer queue [$];
+      integer 	    i;
+      begin
+	 $write("Queue contains: [");
+	 for (i = 0; i < queue.size(); i ++) begin
+	    $write (" %g", queue[i]);
+	 end
+	 $write(" ]\n");
+      end
+   endtask // print_queue
+   
    // Simulation and scheduling code.
    always
      @ (negedge c_clk) begin
-	$display ("%t Pipe State: %d %d %d %d\n\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
+	$display ("%t Pipe State: %d %d %d %d\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
+	print_queue(arith_queue);
+	print_queue(shift_queue);
+	
 	for (i = 1; i < 5; i = i + 1)
 	  begin
 	     if (pipe_state[i] == STATE_IDLE)
@@ -98,6 +162,10 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	     
 		  if (req_cmd_in[i] != 0)
 		    begin
+		       // We have a new request on this port, add this to the queue.
+		       QUEUE(req_cmd_in[i], i);
+		       
+		       // Store inputs.
 		       req_data_buf_A[i] = req_data_in[i];
 		       req_cmd_buf[i] = req_cmd_in[i];
 		       pipe_state[i] = STATE_DATA;
@@ -105,25 +173,37 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	       end
 	     else if (pipe_state[i] == STATE_DATA)
 	       begin
+		  // Store second operand.
 		  req_data_buf_B[i] = req_data_in[i];
 		  pipe_state[i] = STATE_COMP;
 	       end
 	     else if (pipe_state[i] == STATE_COMP)
 	       begin
-		  OP(req_cmd_buf[i], req_data_buf_A[i], req_data_buf_B[i], out_data[i], out_resp[i]);
-	     
-		  // If new cmd in jump to ODAT.
-		  if (req_cmd_in[i] != 0)
+		  // Only allow execution at this time if we are at the front of the queue.
+		  if (QUEUE_GATE(i) == 1)
 		    begin
-		       req_cmd_buf[i] = req_cmd_in[i];
-		       req_data_buf_A[i] = req_data_in[i];
-		       pipe_state[i] = STATE_ODAT;
-		    end
+		       // At front, GO GO GO!
+		       OP(req_cmd_buf[i], req_data_buf_A[i], req_data_buf_B[i], out_data[i], out_resp[i]);
+		       
+		       // If new cmd in jump to ODAT.
+		       if (req_cmd_in[i] != 0)
+			 begin
+			    req_cmd_buf[i] = req_cmd_in[i];
+			    req_data_buf_A[i] = req_data_in[i];
+			    pipe_state[i] = STATE_ODAT;
+			 end
+		       else
+			 begin
+			    pipe_state[i] = STATE_IDLE;
+			 end
+		    end // if (QUEUE_GATE(i) == 1)
 		  else
 		    begin
-		       pipe_state[i] = STATE_IDLE;
-		    end
-	       end
+		       // Not yet scheduled to run, wait until next clock edge.
+		       $display("Delaying %d", i);
+		       pipe_state[i] = STATE_COMP; // Let's be explicit.
+		    end // else: !if(QUEUE_GATE(i) == 1)
+	       end // if (pipe_state[i] == STATE_COMP)
 	     else if (pipe_state[i] == STATE_ODAT)
 	       begin
 		  // We have just output a result and have part 1 of a command.
