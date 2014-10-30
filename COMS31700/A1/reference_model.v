@@ -42,8 +42,12 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    localparam STATE_COMP = 2; // Ready to output result. Goto 0 or 3.
    localparam STATE_ODAT = 3; // Clear result and wait for arg2.
    integer    pipe_state [1:4]; // The current state of each pipe.
-   integer    i; // Temp counter.
+   integer    i, j; // Temp counters.
 
+   // The DUV only starts output after the first command is process, otherwise is floating.
+   // Assume this behaviour to be correct, and emulate here.
+   integer    output_active;
+   
    // Init code for reference model.
    initial
      begin
@@ -56,8 +60,11 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	// Init last op to 0.
 	arith_last_op = 0;
 	shift_last_op = 0;
-     end
 
+	// Init output state to floating until first comp done.
+	output_active = 0;
+     end // initial begin
+   
    // Task definitions for calc functions
    task OP;
       input  [0:3]  cmd;
@@ -156,9 +163,12 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	  begin
 	     if (pipe_state[i] == STATE_IDLE)
 	       begin
-		  // Reset this stream's output.
-		  out_resp[i] = RESP_NONE;
-		  out_data[i] = 0;
+		  // Reset this stream's output, only if the output is active.
+		  if (output_active != 0)
+		    begin
+		       out_resp[i] = RESP_NONE;
+		       out_data[i] = 0;
+		    end
 	     
 		  if (req_cmd_in[i] != 0)
 		    begin
@@ -183,6 +193,20 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		  if (QUEUE_GATE(i) == 1)
 		    begin
 		       // At front, GO GO GO!
+		       
+		       // Set the output active flag, and pull-down floating outputs on first comp.
+		       if (output_active == 0)
+			 begin
+			    output_active = 1;
+			    for (j = 1; j < 5; j = j + 1)
+			      begin
+				 // Pull down all outputs.
+				 out_data[j] = 0;
+				 out_resp[j] = 0;
+			      end
+			 end
+		       
+		       // Do the actual calculation.
 		       OP(req_cmd_buf[i], req_data_buf_A[i], req_data_buf_B[i], out_data[i], out_resp[i]);
 		       
 		       // If new cmd in jump to ODAT.
