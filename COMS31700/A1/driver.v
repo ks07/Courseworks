@@ -99,24 +99,28 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	// Run on all 4 ports.
 	for (i = 1; i < 5; i = i + 1)
 	  begin
+	     $display ("Driving Test 2.1.1.1");
 	     TEST_2_1_1_1(i);
 	  end
 	
 	// Run on all 4 ports.
 	for (i = 1; i < 5; i = i + 1)
 	  begin
+	     $display ("Driving Test 2.1.1.2");
 	     TEST_2_1_1_2(i);
 	  end
 	
 	// Run on all 4 ports.
 	for (i = 1; i < 5; i = i + 1)
 	  begin
+	     $display ("Driving Test 2.1.1.3");
 	     TEST_2_1_1_3(i);
 	  end
 	
 	// Run on all 4 ports.
 	for (i = 1; i < 5; i = i + 1)
 	  begin
+	     $display ("Driving Test 2.1.1.4");
 	     TEST_2_1_1_4(i);
 	  end
 		
