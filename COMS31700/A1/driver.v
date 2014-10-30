@@ -56,8 +56,19 @@ module calc1_driver;
 	  req2_cmd_in = CMD_NOP;
 	req2_data_in = 100;
 	
+	# 100
+	  req3_cmd_in = CMD_ADD;
+	req3_data_in = 1;
+	req4_cmd_in = CMD_ADD;
+	req4_data_in = 2;
 
-	#600 $stop;
+	# 200
+	  req3_cmd_in = CMD_NOP;
+	req3_data_in = 4;
+	req4_cmd_in = CMD_NOP;
+	req4_data_in = 8;
+		
+	#800 $stop;
 	
      end
 
