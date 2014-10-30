@@ -1,12 +1,12 @@
-module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, out_resp2, out_resp3, out_resp4, c_clk, req1_cmd_in, req1_data_in, req2_cmd_in, req2_data_in, req3_cmd_in, req3_data_in, req4_cmd_in, req4_data_in, reset);
+module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_resp[1], out_resp[2], out_resp[3], out_resp[4], c_clk, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], reset);
 
-   output reg [0:31] out_data1, out_data2, out_data3, out_data4;
-   output reg [0:1]  out_resp1, out_resp2, out_resp3, out_resp4;
+   output reg [0:31] out_data [1:4];
+   output reg [0:1]  out_resp [1:4];
 
-   input         c_clk;
-   input [0:3] 	 req1_cmd_in, req2_cmd_in, req3_cmd_in, req4_cmd_in;
-   input [0:31]  req1_data_in, req2_data_in, req3_data_in, req4_data_in;
-   input [1:7] 	 reset;
+   input 	     c_clk;
+   input [0:3] 	     req_cmd_in  [1:4];
+   input [0:31]      req_data_in [1:4];
+   input [1:7] 	     reset;
 
    // Define some constants.
    localparam CMD_NOP = 0;
@@ -38,6 +38,8 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
    localparam STATE_COMP = 2; // Ready to output result. Goto 0 or 3.
    localparam STATE_ODAT = 3; // Clear result and wait for arg2.
    integer    pipe_state [1:4]; // The current state of each pipe.
+   integer    i; // Temp counter
+   
 
    // Init code for reference model.
    initial
@@ -55,14 +57,30 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
      end
 
    // Task definitions for calc functions
-   task OP_ADD;
+   task OP;
+      input  [0:3]  cmd;
       input  [0:31] d1;
       input  [0:31] d2;
       output [0:31] r; // Result
       output [0:1]  s; // Response
       begin
+	 // TODO: Support shift and set overflow/error responses.
 	 s = RESP_SUCC;
-	 r = d1 + d2;
+	 
+	 if (cmd == CMD_ADD)
+	   begin
+	      r = d1 + d2;
+	   end
+	 else if (cmd == CMD_SUB)
+	   begin
+	      $display("Calculating %d - %d", d2, d1);
+	      r = d2 - d1;
+	   end
+	 else
+	   begin
+	      s = RESP_INOF;
+	      $display("%t UNIMPLEMENTED COMMAND %d\n", $time, cmd);
+	   end
       end
    endtask
 
@@ -70,49 +88,50 @@ module calc1_reference (out_data1, out_data2, out_data3, out_data4, out_resp1, o
    always
      @ (negedge c_clk) begin
 	$display ("%t Pipe State: %d %d %d %d\n\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
-
-	if (pipe_state[1] == STATE_IDLE)
+	for (i = 1; i < 5; i = i + 1)
 	  begin
-	     // Reset this stream's output.
-	     out_resp1 = RESP_NONE;
-	     out_data1 = 0;
+	     if (pipe_state[i] == STATE_IDLE)
+	       begin
+		  // Reset this stream's output.
+		  out_resp[i] = RESP_NONE;
+		  out_data[i] = 0;
 	     
-	     if (req1_cmd_in != 0)
-	       begin
-		  req_data_buf_A[1] = req1_data_in;
-		  req_cmd_buf[1] = req1_cmd_in;
-		  pipe_state[1] = STATE_DATA;
+		  if (req_cmd_in[i] != 0)
+		    begin
+		       req_data_buf_A[i] = req_data_in[i];
+		       req_cmd_buf[i] = req_cmd_in[i];
+		       pipe_state[i] = STATE_DATA;
+		    end
 	       end
-	  end
-	else if (pipe_state[1] == STATE_DATA)
-	  begin
-	     req_data_buf_B[1] = req1_data_in;
-	     pipe_state[1] = STATE_COMP;
-	  end
-	else if (pipe_state[1] == STATE_COMP)
-	  begin
-	     out_resp1 = RESP_SUCC;
-	     out_data1 = DATA_MAX;
+	     else if (pipe_state[i] == STATE_DATA)
+	       begin
+		  req_data_buf_B[i] = req_data_in[i];
+		  pipe_state[i] = STATE_COMP;
+	       end
+	     else if (pipe_state[i] == STATE_COMP)
+	       begin
+		  OP(req_cmd_buf[i], req_data_buf_A[i], req_data_buf_B[i], out_data[i], out_resp[i]);
 	     
-	     // If new cmd in jump to ODAT.
-	     if (req1_cmd_in != 0)
-	       begin
-		  req_cmd_buf[1] = req1_cmd_in;
-		  req_data_buf_A[1] = req1_data_in;
-		  pipe_state[1] = STATE_ODAT;
+		  // If new cmd in jump to ODAT.
+		  if (req_cmd_in[i] != 0)
+		    begin
+		       req_cmd_buf[i] = req_cmd_in[i];
+		       req_data_buf_A[i] = req_data_in[i];
+		       pipe_state[i] = STATE_ODAT;
+		    end
+		  else
+		    begin
+		       pipe_state[i] = STATE_IDLE;
+		    end
 	       end
-	     else
+	     else if (pipe_state[i] == STATE_ODAT)
 	       begin
-		  pipe_state[1] = STATE_IDLE;
+		  // We have just output a result and have part 1 of a command.
+		  out_resp[i] = RESP_NONE;
+		  out_data[i] = 0;
+		  pipe_state[i] = STATE_COMP;
 	       end
-	  end
-	else if (pipe_state[1] == STATE_ODAT)
-	  begin
-	     // We have just output a result and have part 1 of a command.
-	     out_resp1 = RESP_NONE;
-	     out_data1 = 0;
-	     pipe_state[1] = STATE_COMP;
-	  end
-     end
+	  end // for (i = 1; i < 5; i = i + 1)
+     end // always @ (negedge c_clk)
 
 endmodule // calc1_reference
