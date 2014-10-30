@@ -37,25 +37,27 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    time 	 shift_last_op;
 
    // Represent each cmd pipeline as a state machine
-   localparam STATE_IDLE = 0; // Waiting for command.
-   localparam STATE_DATA = 1; // Waiting for arg 2.
-   localparam STATE_COMP = 2; // Ready to output result. Goto 0 or 3.
-   localparam STATE_ODAT = 3; // Clear result and wait for arg2.
-   integer    pipe_state [1:4]; // The current state of each pipe.
-   integer    i, j; // Temp counters.
+   localparam    STATE_IDLE = 0; // Waiting for command.
+   localparam    STATE_DATA = 1; // Waiting for arg 2.
+   localparam    STATE_COMP = 2; // Ready to output result. Goto 0 or 3.
+   localparam    STATE_ODAT = 3; // Clear result and wait for arg2.
+   localparam    STATE_DEAD = 4; // Error state and initial state, cleared by a reset signal.
+   integer 	 pipe_state [1:4]; // The current state of each pipe.
+   integer 	 i, j; // Temp counters.
 
    // The DUV only starts output after the first command is process, otherwise is floating.
    // Assume this behaviour to be correct, and emulate here.
-   integer    output_active;
+   // TODO: Interaction with reset?
+   integer 	 output_active;
    
    // Init code for reference model.
    initial
      begin
 	// Init all pipe states to 0.
-	pipe_state[1] = STATE_IDLE;
-	pipe_state[2] = STATE_IDLE;
-	pipe_state[3] = STATE_IDLE;
-	pipe_state[4] = STATE_IDLE;
+	pipe_state[1] = STATE_DEAD;
+	pipe_state[2] = STATE_DEAD;
+	pipe_state[3] = STATE_DEAD;
+	pipe_state[4] = STATE_DEAD;
 
 	// Init last op to 0.
 	arith_last_op = 0;
@@ -234,6 +236,17 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		  out_resp[i] = RESP_NONE;
 		  out_data[i] = 0;
 		  pipe_state[i] = STATE_COMP;
+	       end
+	     else if (pipe_state[i] == STATE_DEAD)
+	       begin
+		  // This pipe is dead, either uninitialised or an internal error occurred.
+		  // We must wait for a reset signal to leave this state.
+		  // TODO: Check for more than just bit 1 of reset!
+		  // TODO: Reset should affect all pipes even if they aren't dead - need to compare with DUV/spec.
+		  if (reset[1])
+		    begin
+		       pipe_state[i] = STATE_IDLE;
+		    end
 	       end
 	  end // for (i = 1; i < 5; i = i + 1)
      end // always @ (negedge c_clk)

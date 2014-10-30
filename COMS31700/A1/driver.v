@@ -32,33 +32,42 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    initial
      begin
 
+	// TEST 1.1.1
+	// Drive reset bit 1 to init the design.
+	reset[1] = 1;
+	#200
+	  reset[1] = 0;
+
+	// TEST 2.1.1.1
+	// 0xFFFF0000 + 0x0000FFFF
 	# 200
 	  req_cmd_out[1] = CMD_ADD;
-	req_data_out[1] = 255;
+	req_data_out[1] = 32'hFFFF0000;
 
-	# 100
+	# 200
 	  req_cmd_out[1] = CMD_NOP;
-
-	# 400
-	  req_cmd_out[2] = CMD_SUB;
-	req_data_out[2] = 1;
+	req_data_out[1] = 32'h0000FFFF;
+	
+	// # 400
+	//   req_cmd_out[2] = CMD_SUB;
+	// req_data_out[2] = 1;
 	
 
-	# 200
-	  req_cmd_out[2] = CMD_NOP;
-	req_data_out[2] = 100;
+	// # 200
+	//   req_cmd_out[2] = CMD_NOP;
+	// req_data_out[2] = 100;
 	
-	# 100
-	  req_cmd_out[3] = CMD_ADD;
-	req_data_out[3] = 1;
-	req_cmd_out[4] = CMD_ADD;
-	req_data_out[4] = 2;
+	// # 100
+	//   req_cmd_out[3] = CMD_ADD;
+	// req_data_out[3] = 1;
+	// req_cmd_out[4] = CMD_ADD;
+	// req_data_out[4] = 2;
 
-	# 200
-	  req_cmd_out[3] = CMD_NOP;
-	req_data_out[3] = 4;
-	req_cmd_out[4] = CMD_NOP;
-	req_data_out[4] = 8;
+	// # 200
+	//   req_cmd_out[3] = CMD_NOP;
+	// req_data_out[3] = 4;
+	// req_cmd_out[4] = CMD_NOP;
+	// req_data_out[4] = 8;
 		
 	#800 $stop;
 	
