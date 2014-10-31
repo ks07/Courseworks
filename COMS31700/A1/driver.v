@@ -160,6 +160,44 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	   req_cmd_out[i] = CMD_NOP;
       end
    endtask // TEST_2_1_2_6
+
+   // 0x00000000 + 0x00000000
+   task TEST_2_2_1_1;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_ADD;
+	 req_data_out[i] = 32'h00000000;
+	 #200
+	   req_cmd_out[i] = CMD_NOP;
+      end
+   endtask // TEST_2_2_1_1
+
+   // 0xFFFFFFFF + 0x00000000
+   task TEST_2_2_1_2;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_ADD;
+	 req_data_out[i] = 32'hFFFFFFFF;
+	 #200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'h00000000;
+      end
+   endtask // TEST_2_2_1_2
+
+   // 0x00000000 + 0xFFFFFFFF
+   task TEST_2_2_1_3;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_ADD;
+	 req_data_out[i] = 32'h00000000;
+	 #200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'hFFFFFFFF;
+      end
+   endtask // TEST_2_2_1_3
    
    initial
      begin
@@ -234,7 +272,24 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	     $display ("Driving Test 2.1.2.6 [port=%0d]", i);
 	     TEST_2_1_2_6(i);
 	  end
-	
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.2.1.1 [port=%0d]", i);
+	     TEST_2_2_1_1(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.2.1.1 [port=%0d]", i);
+	     TEST_2_2_1_2(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.2.1.3 [port=%0d]", i);
+	     TEST_2_2_1_3(i);
+	  end
 	
 	#800 $stop;
 	
