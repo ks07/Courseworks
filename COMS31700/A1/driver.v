@@ -33,6 +33,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
    // Task-ified tests.
 
+   // TEST GROUP 2.1.1: Simple add no carry.
    // 0xFFFF0000 + 0x0000FFFF
    task TEST_2_1_1_1;
       input integer i;
@@ -85,34 +86,60 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_2_1_1_4
 
-   // 0x0000FFFF + 0x00000001
+   // TEST GROUP 2.1.2: Simple subtraction no carry.
+   // 0x0000FFFF - 0x0000FFFF
    task TEST_2_1_2_1;
       input integer i;
       begin
 	 #200
-	   req_cmd_out[i] = CMD_ADD;
+	   req_cmd_out[i] = CMD_SUB;
 	 req_data_out[i] = 32'h0000FFFF;
 	 # 200
 	   req_cmd_out[i] = CMD_NOP;
-	 req_data_out[i] = 32'h00000001;
       end
    endtask // TEST_2_1_2_1
-
-   // 0x00000001 + 0x0000FFFF
+   
+   // 0xFFFF0000 - 0xFFFF0000
    task TEST_2_1_2_2;
       input integer i;
       begin
 	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'hFFFF0000;
+	 # 200
+	   req_cmd_out[i] = CMD_NOP;
+      end
+   endtask // TEST_2_1_2_2
+
+   // TEST GROUP 2.1.3: Addition with carry.
+   // 0x0000FFFF + 0x00000001
+   task TEST_2_1_3_1;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_ADD;
+	 req_data_out[i] = 32'h0000FFFF;
+	 # 200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'h00000001;
+      end
+   endtask // TEST_2_1_3_1
+
+   // 0x00000001 + 0x0000FFFF
+   task TEST_2_1_3_2;
+      input integer i;
+      begin
+	 #200
 	   req_cmd_out[i] = CMD_ADD;
 	 req_data_out[i] = 32'h00000001;
 	 # 200
 	   req_cmd_out[i] = CMD_NOP;
 	 req_data_out[i] = 32'h0000FFFF;
       end
-   endtask // TEST_2_1_2_2
+   endtask // TEST_2_1_3_2
 
    // 0x7FFF8000 + 0x00008000
-   task TEST_2_1_2_3;
+   task TEST_2_1_3_3;
       input integer i;
       begin
 	 #200
@@ -122,10 +149,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	   req_cmd_out[i] = CMD_NOP;
 	 req_data_out[i] = 32'h00008000;
       end
-   endtask // TEST_2_1_2_3
+   endtask // TEST_2_1_3_3
 
    // 0x00008000 + 0x7FFF8000
-   task TEST_2_1_2_4;
+   task TEST_2_1_3_4;
       input integer i;
       begin
 	 #200
@@ -135,10 +162,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	   req_cmd_out[i] = CMD_NOP;
 	 req_data_out[i] = 32'h7FFF8000;
       end
-   endtask // TEST_2_1_2_4
+   endtask // TEST_2_1_3_4
 
    // 0x55555555 + 0x55555555
-   task TEST_2_1_2_5;
+   task TEST_2_1_3_5;
       input integer i;
       begin
 	 #200
@@ -147,10 +174,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	 #200
 	   req_cmd_out[i] = CMD_NOP;
       end
-   endtask // TEST_2_1_2_5
+   endtask // TEST_2_1_3_5
 
    // 0x2AAAAAAA + 0x2AAAAAAA
-   task TEST_2_1_2_6;
+   task TEST_2_1_3_6;
       input integer i;
       begin
 	 #200
@@ -159,8 +186,63 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	 #200
 	   req_cmd_out[i] = CMD_NOP;
       end
-   endtask // TEST_2_1_2_6
+   endtask // TEST_2_1_3_6
 
+   // TEST GROUP 2.1.4: Subtraction with carry.
+   // 0x80000000 - 0x00000001
+   task TEST_2_1_4_1;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'h00000001;
+	 # 200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'h80000000;
+      end
+   endtask // TEST_2_1_4_1
+   
+   // 0xFFFF0000 - 0x0000FFFF
+   task TEST_2_1_4_2;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'h0000FFFF;
+	 # 200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'hFFFF0000;
+      end
+   endtask // TEST_2_1_4_2
+   
+   // 0xAAAAAAAA - 0x55555555
+   task TEST_2_1_4_3;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'h55555555;
+	 # 200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'hAAAAAAAA;
+      end
+   endtask // TEST_2_1_4_3
+   
+   // 0x55555555 - 0x2AAAAAAA
+   task TEST_2_1_4_4;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'h2AAAAAAA;
+	 # 200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'h55555555;
+      end
+   endtask // TEST_2_1_4_1
+
+   // TEST GROUP 2.2.1: Boundary addition results.
+   
    // 0x00000000 + 0x00000000
    task TEST_2_2_1_1;
       input integer i;
@@ -199,6 +281,45 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_2_2_1_3
    
+   // TEST GROUP 2.2.2: Boundary subtraction results.
+   
+   // 0x00000000 - 0x00000000
+   task TEST_2_2_2_1;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'h00000000;
+	 #200
+	   req_cmd_out[i] = CMD_NOP;
+      end
+   endtask // TEST_2_2_2_1
+
+   // 0xFFFFFFFF - 0xFFFFFFFF
+   task TEST_2_2_2_2;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'hFFFFFFFF;
+	 #200
+	   req_cmd_out[i] = CMD_NOP;
+      end
+   endtask // TEST_2_2_2_2
+
+   // 0xFFFFFFFF - 0x00000000
+   task TEST_2_2_2_3;
+      input integer i;
+      begin
+	 #200
+	   req_cmd_out[i] = CMD_SUB;
+	 req_data_out[i] = 32'h00000000;
+	 #200
+	   req_cmd_out[i] = CMD_NOP;
+	 req_data_out[i] = 32'hFFFFFFFF;
+      end
+   endtask // TEST_2_2_2_3
+   
    initial
      begin
 
@@ -236,7 +357,6 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	     TEST_2_1_1_4(i);
 	  end
 
-	// TEST 2.1.2 - Carry chains
 	for (i = 1; i < 5; i = i + 1)
 	  begin
 	     $display ("Driving Test 2.1.2.1 [port=%0d]", i);
@@ -248,29 +368,65 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	     $display ("Driving Test 2.1.2.2 [port=%0d]", i);
 	     TEST_2_1_2_2(i);
 	  end
-
+	
 	for (i = 1; i < 5; i = i + 1)
 	  begin
-	     $display ("Driving Test 2.1.2.3 [port=%0d]", i);
-	     TEST_2_1_2_3(i);
+	     $display ("Driving Test 2.1.3.1 [port=%0d]", i);
+	     TEST_2_1_3_1(i);
 	  end
 
 	for (i = 1; i < 5; i = i + 1)
 	  begin
-	     $display ("Driving Test 2.1.2.4 [port=%0d]", i);
-	     TEST_2_1_2_4(i);
+	     $display ("Driving Test 2.1.3.2 [port=%0d]", i);
+	     TEST_2_1_3_2(i);
 	  end
 
 	for (i = 1; i < 5; i = i + 1)
 	  begin
-	     $display ("Driving Test 2.1.2.5 [port=%0d]", i);
-	     TEST_2_1_2_5(i);
+	     $display ("Driving Test 2.1.3.3 [port=%0d]", i);
+	     TEST_2_1_3_3(i);
 	  end
 
 	for (i = 1; i < 5; i = i + 1)
 	  begin
-	     $display ("Driving Test 2.1.2.6 [port=%0d]", i);
-	     TEST_2_1_2_6(i);
+	     $display ("Driving Test 2.1.3.4 [port=%0d]", i);
+	     TEST_2_1_3_4(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.1.3.5 [port=%0d]", i);
+	     TEST_2_1_3_5(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.1.3.6 [port=%0d]", i);
+	     TEST_2_1_3_6(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.1.4.1 [port=%0d]", i);
+	     TEST_2_1_4_1(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.1.4.2 [port=%0d]", i);
+	     TEST_2_1_4_2(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.1.4.3 [port=%0d]", i);
+	     TEST_2_1_4_3(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.1.4.4 [port=%0d]", i);
+	     TEST_2_1_4_4(i);
 	  end
 
 	for (i = 1; i < 5; i = i + 1)
@@ -289,6 +445,24 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	  begin
 	     $display ("Driving Test 2.2.1.3 [port=%0d]", i);
 	     TEST_2_2_1_3(i);
+	  end
+	
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.2.2.1 [port=%0d]", i);
+	     TEST_2_2_2_1(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.2.2.2 [port=%0d]", i);
+	     TEST_2_2_2_2(i);
+	  end
+
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     $display ("Driving Test 2.2.2.3 [port=%0d]", i);
+	     TEST_2_2_2_3(i);
 	  end
 	
 	#800 $stop;
