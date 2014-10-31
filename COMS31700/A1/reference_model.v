@@ -87,8 +87,8 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	   end
 	 else if (cmd == CMD_SUB)
 	   begin
-	      //$display("Calculating %d - %d", d2, d1);
-	      r = d2 - d1;
+	      //$display("Calculating %d - %d", d1, d2);
+	      r = d1 - d2;
 	   end
 	 else
 	   begin

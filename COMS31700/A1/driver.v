@@ -1,9 +1,13 @@
-module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2], req_data_out[2], req_cmd_out[3], req_data_out[3], req_cmd_out[4], req_data_out[4]);
+module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2], req_data_out[2], req_cmd_out[3], req_data_out[3], req_cmd_out[4], req_data_out[4], in_rdy, test_id);
    
    output reg 	     c_clk;
    output reg [0:3]  req_cmd_out  [1:4];
    output reg [0:31] req_data_out [1:4];
    output reg [1:7]  reset;
+
+   // Define extra input and output in order to have a feedback loop between the checker and driver.
+   input 	     in_rdy [1:4]; // Used to tell us when the DUV/REF have finished calc and can accept cmds.
+   output string     test_id [1:4]; // Used to inform the checker what test is being performed on each port.
    
    // Define some constants.
    localparam        CMD_NOP = 0;
@@ -31,6 +35,14 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // Drive the clock every 100ns.
    always #100 c_clk = ~c_clk;
 
+   task WAIT_ON_PIPE;
+      input integer i;
+      begin
+	 // Wait for the given pipe to be ready for input (high).
+	 wait (in_rdy[i] != 0) ;
+      end
+   endtask // WAIT_ON_PIPE
+   
    // Task-ified tests.
 
    // TEST GROUP 2.1.1: Simple add no carry.
@@ -38,6 +50,8 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    task TEST_2_1_1_1;
       input integer i;
       begin
+	 WAIT_ON_PIPE(i);
+	 
 	 #200
 	   req_cmd_out[i] = CMD_ADD;
 	 req_data_out[i] = 32'hFFFF0000;
@@ -195,10 +209,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       begin
 	 #200
 	   req_cmd_out[i] = CMD_SUB;
-	 req_data_out[i] = 32'h00000001;
+	 req_data_out[i] = 32'h80000000;
 	 # 200
 	   req_cmd_out[i] = CMD_NOP;
-	 req_data_out[i] = 32'h80000000;
+	 req_data_out[i] = 32'h00000001;
       end
    endtask // TEST_2_1_4_1
    
@@ -208,10 +222,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       begin
 	 #200
 	   req_cmd_out[i] = CMD_SUB;
-	 req_data_out[i] = 32'h0000FFFF;
+	 req_data_out[i] = 32'hFFFF0000;
 	 # 200
 	   req_cmd_out[i] = CMD_NOP;
-	 req_data_out[i] = 32'hFFFF0000;
+	 req_data_out[i] = 32'h0000FFFF;
       end
    endtask // TEST_2_1_4_2
    
@@ -221,10 +235,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       begin
 	 #200
 	   req_cmd_out[i] = CMD_SUB;
-	 req_data_out[i] = 32'h55555555;
+	 req_data_out[i] = 32'hAAAAAAAA;
 	 # 200
 	   req_cmd_out[i] = CMD_NOP;
-	 req_data_out[i] = 32'hAAAAAAAA;
+	 req_data_out[i] = 32'h55555555;
       end
    endtask // TEST_2_1_4_3
    
@@ -234,10 +248,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       begin
 	 #200
 	   req_cmd_out[i] = CMD_SUB;
-	 req_data_out[i] = 32'h2AAAAAAA;
+	 req_data_out[i] = 32'h55555555;
 	 # 200
 	   req_cmd_out[i] = CMD_NOP;
-	 req_data_out[i] = 32'h55555555;
+	 req_data_out[i] = 32'h2AAAAAAA;
       end
    endtask // TEST_2_1_4_1
 
@@ -313,10 +327,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       begin
 	 #200
 	   req_cmd_out[i] = CMD_SUB;
-	 req_data_out[i] = 32'h00000000;
+	 req_data_out[i] = 32'hFFFFFFFF;
 	 #200
 	   req_cmd_out[i] = CMD_NOP;
-	 req_data_out[i] = 32'hFFFFFFFF;
+	 req_data_out[i] = 32'h00000000;
       end
    endtask // TEST_2_2_2_3
    
