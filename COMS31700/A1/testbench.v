@@ -16,6 +16,9 @@ module calc1_testbench;
    wire [0:31] req_data_in [1:4];
    wire [1:7]  reset;
    reg [0:1]   out_prompt [1:4]; // Timing feedback for the reference model.
+
+   integer     i; // Temp loop variable.
+   genvar      ii; // Temp genvar.
    
    // Instantiate the DUV.
    calc1 DUV(duv_out_data[1], duv_out_data[2], duv_out_data[3], duv_out_data[4], duv_out_resp[1], duv_out_resp[2], duv_out_resp[3], duv_out_resp[4], c_clk, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], reset);
@@ -31,15 +34,22 @@ module calc1_testbench;
 
    initial
      begin
-	out_prompt[1] = 0;
+	for (i = 1; i < 5; i = i + 1)
+	  begin
+	     out_prompt[i] = 0;
+	  end
      end
-   
-   always @ (duv_out_data[1])
+
+   generate for (ii = 1; ii < 5; ii = ii + 1)
      begin
-	$display("Going out");
-	
-	out_prompt[1] = duv_out_resp[1];
+	// TODO: This works... but WHY?
+	always @ (duv_out_resp[ii])
+	  begin
+	     // $display("Going out");
+	     out_prompt[ii] = duv_out_resp[ii];
+	  end
      end
+   endgenerate
    
    // TODO: Possible scope for a scoreboard module to help address fairness of scheduling?
    

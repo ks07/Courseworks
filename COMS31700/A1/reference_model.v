@@ -156,46 +156,48 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	 $write(" ]\n");
       end
    endtask // print_queue
+
+   genvar ii; // Special loop variable for generating the concurrent always blocks.
    
-   // Simulation and scheduling code.
-   always
-     @ (negedge c_clk) begin
-	//$display ("%t Pipe State: %d %d %d %d\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
-	//print_queue(arith_queue);
-	//print_queue(shift_queue);
-	
-	for (i = 1; i < 5; i = i + 1)
-	  begin
-	     if (pipe_state[i] == STATE_IDLE)
+   // Simulation and scheduling code. Use a generate block to make multiple always blocks so we can run in parallel.
+   generate for (ii = 1; ii < 5; ii = ii + 1)
+     begin
+	always
+	  @ (negedge c_clk) begin
+	     //$display ("%t Pipe State: %d %d %d %d\n", $time, pipe_state[1], pipe_state[2], pipe_state[3], pipe_state[4]);
+	     //print_queue(arith_queue);
+	     //print_queue(shift_queue);
+	     
+	     if (pipe_state[ii] == STATE_IDLE)
 	       begin
 		  // Reset this stream's output, only if the output is active.
 		  if (output_active != 0)
 		    begin
-		       out_resp[i] = RESP_NONE;
-		       out_data[i] = 0;
+		       out_resp[ii] = RESP_NONE;
+		       out_data[ii] = 0;
 		    end
-	     
-		  if (req_cmd_in[i] != 0)
+		  
+		  if (req_cmd_in[ii] != 0)
 		    begin
 		       // We have a new request on this port, add this to the queue.
-		       //QUEUE(req_cmd_in[i], i);
+		       //QUEUE(req_cmd_in[ii], i);
 		       
 		       // Store inputs.
-		       req_data_buf_A[i] = req_data_in[i];
-		       req_cmd_buf[i] = req_cmd_in[i];
-		       pipe_state[i] = STATE_DATA;
+		       req_data_buf_A[ii] = req_data_in[ii];
+		       req_cmd_buf[ii] = req_cmd_in[ii];
+		       pipe_state[ii] = STATE_DATA;
 		    end
 	       end
-	     else if (pipe_state[i] == STATE_DATA)
+	     else if (pipe_state[ii] == STATE_DATA)
 	       begin
 		  // Store second operand.
-		  req_data_buf_B[i] = req_data_in[i];
-		  pipe_state[i] = STATE_COMP;
+		  req_data_buf_B[ii] = req_data_in[ii];
+		  pipe_state[ii] = STATE_COMP;
 	       end
-	     else if (pipe_state[i] == STATE_COMP)
+	     else if (pipe_state[ii] == STATE_COMP)
 	       begin
 		  // Only allow execution at this time if the DUV is also outputting.
-		  @ (out_prompt[i])
+		  @ (out_prompt[ii])
 		    begin
 		       // At front, GO GO GO!
 		       
@@ -205,6 +207,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 			    output_active = 1;
 			    for (j = 1; j < 5; j = j + 1)
 			      begin
+				 // TODO: THIS WILL GO HORRIBLY WRONG.
 				 // Pull down all outputs.
 				 out_data[j] = 0;
 				 out_resp[j] = 0;
@@ -212,29 +215,29 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 			 end
 		       
 		       // Do the actual calculation.
-		       OP(req_cmd_buf[i], req_data_buf_A[i], req_data_buf_B[i], out_data[i], out_resp[i]);
+		       OP(req_cmd_buf[ii], req_data_buf_A[ii], req_data_buf_B[ii], out_data[ii], out_resp[ii]);
 		       
 		       // If new cmd in jump to ODAT.
-		       if (req_cmd_in[i] != 0)
+		       if (req_cmd_in[ii] != 0)
 			 begin
-			    req_cmd_buf[i] = req_cmd_in[i];
-			    req_data_buf_A[i] = req_data_in[i];
-			    pipe_state[i] = STATE_ODAT;
+			    req_cmd_buf[ii] = req_cmd_in[ii];
+			    req_data_buf_A[ii] = req_data_in[ii];
+			    pipe_state[ii] = STATE_ODAT;
 			 end
 		       else
 			 begin
-			    pipe_state[i] = STATE_IDLE;
+			    pipe_state[ii] = STATE_IDLE;
 			 end
 		    end // if (QUEUE_GATE(i) == 1)
-	       end // if (pipe_state[i] == STATE_COMP)
-	     else if (pipe_state[i] == STATE_ODAT)
+	       end // if (pipe_state[ii] == STATE_COMP)
+	     else if (pipe_state[ii] == STATE_ODAT)
 	       begin
 		  // We have just output a result and have part 1 of a command.
-		  out_resp[i] = RESP_NONE;
-		  out_data[i] = 0;
-		  pipe_state[i] = STATE_COMP;
+		  out_resp[ii] = RESP_NONE;
+		  out_data[ii] = 0;
+		  pipe_state[ii] = STATE_COMP;
 	       end
-	     else if (pipe_state[i] == STATE_DEAD)
+	     else if (pipe_state[ii] == STATE_DEAD)
 	       begin
 		  // This pipe is dead, either uninitialised or an internal error occurred.
 		  // We must wait for a reset signal to leave this state.
@@ -242,10 +245,11 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		  // TODO: Reset should affect all pipes even if they aren't dead - need to compare with DUV/spec.
 		  if (reset[1])
 		    begin
-		       pipe_state[i] = STATE_IDLE;
+		       pipe_state[ii] = STATE_IDLE;
 		    end
-	       end
-	  end // for (i = 1; i < 5; i = i + 1)
-     end // always @ (negedge c_clk)
-
+	       end // if (pipe_state[ii] == STATE_DEAD)
+	  end // always @ (negedge c_clk)
+     end // for (ii = 1; ii < 5; ii = ii + 1)
+   endgenerate
+   
 endmodule // calc1_reference
