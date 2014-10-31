@@ -42,7 +42,6 @@ module calc1_testbench;
 
    generate for (ii = 1; ii < 5; ii = ii + 1)
      begin
-	// TODO: This works... but WHY?
 	always @ (duv_out_resp[ii])
 	  begin
 	     // $display("Going out");
