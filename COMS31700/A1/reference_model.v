@@ -1,4 +1,4 @@
-module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_resp[1], out_resp[2], out_resp[3], out_resp[4], c_clk, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], reset);
+module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_resp[1], out_resp[2], out_resp[3], out_resp[4], c_clk, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], reset, out_prompt);
 
    output reg [0:31] out_data [1:4];
    output reg [0:1]  out_resp [1:4];
@@ -8,6 +8,9 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    input [0:31]      req_data_in [1:4];
    input [1:7] 	     reset;
 
+   // Add a new input so we can rely on the DUV to supply us output timings, as the spec leaves this undefined.
+   input 	     out_prompt [1:4];
+   
    // Define some constants.
    localparam CMD_NOP = 0;
    localparam CMD_ADD = 1;
@@ -43,7 +46,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
    localparam    STATE_ODAT = 3; // Clear result and wait for arg2.
    localparam    STATE_DEAD = 4; // Error state and initial state, cleared by a reset signal.
    integer 	 pipe_state [1:4]; // The current state of each pipe.
-   integer 	 i, j; // Temp counters.
+   integer 	 i, j, k; // Temp counters.
 
    // The DUV only starts output after the first command is process, otherwise is floating.
    // Assume this behaviour to be correct, and emulate here.
@@ -153,6 +156,45 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	 $write(" ]\n");
       end
    endtask // print_queue
+
+   // Fallback on the DUV feedback in order to synchronise timing.
+   always
+     @ (posedge out_prompt[1] or posedge out_prompt[2] or posedge out_prompt[3] or posedge out_prompt[4]) begin
+	// One of the DUV outputs has enabled. LET'S ROCK!
+	#0 for (k = 1; k < 5; k = k + 1)
+	  begin
+	     // TODO: Error handling of only one condition being true.
+	     if (out_prompt[k] && pipe_state[k] == STATE_COMP)
+	       begin
+		  // Set the output active flag, and pull-down floating outputs on first comp.
+		  if (output_active == 0)
+		    begin
+		       output_active = 1;
+		       for (j = 1; j < 5; j = j + 1)
+			 begin
+			    // Pull down all outputs.
+			    out_data[j] = 0;
+			    out_resp[j] = 0;
+			 end
+		    end
+		  
+		  // The DUV is outputting now, and we believe we're in a state to output.
+		  OP(req_cmd_buf[k], req_data_buf_A[k], req_data_buf_B[k], out_data[k], out_resp[k]);
+		  
+		  // If new cmd in jump to ODAT.
+		  if (req_cmd_in[i] != 0)
+		    begin
+		       req_cmd_buf[i] = req_cmd_in[i];
+		       req_data_buf_A[i] = req_data_in[i];
+		       pipe_state[i] = STATE_ODAT;
+		    end
+		  else
+		    begin
+		       pipe_state[i] = STATE_IDLE;
+		    end
+	       end // if (out_prompt[k] && pipe_state[k] == STATE_COMP)
+	  end // for (k = 1; k < 5; k = k + 1)
+     end // always @ (posedge out_prompt[1] or posedge out_prompt[2] or posedge out_prompt[3] or posedge out_prompt[4])	     
    
    // Simulation and scheduling code.
    always
@@ -175,7 +217,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		  if (req_cmd_in[i] != 0)
 		    begin
 		       // We have a new request on this port, add this to the queue.
-		       QUEUE(req_cmd_in[i], i);
+		       //QUEUE(req_cmd_in[i], i);
 		       
 		       // Store inputs.
 		       req_data_buf_A[i] = req_data_in[i];
@@ -191,45 +233,9 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	       end
 	     else if (pipe_state[i] == STATE_COMP)
 	       begin
-		  // Only allow execution at this time if we are at the front of the queue.
-		  if (QUEUE_GATE(i) == 1)
-		    begin
-		       // At front, GO GO GO!
-		       
-		       // Set the output active flag, and pull-down floating outputs on first comp.
-		       if (output_active == 0)
-			 begin
-			    output_active = 1;
-			    for (j = 1; j < 5; j = j + 1)
-			      begin
-				 // Pull down all outputs.
-				 out_data[j] = 0;
-				 out_resp[j] = 0;
-			      end
-			 end
-		       
-		       // Do the actual calculation.
-		       OP(req_cmd_buf[i], req_data_buf_A[i], req_data_buf_B[i], out_data[i], out_resp[i]);
-		       
-		       // If new cmd in jump to ODAT.
-		       if (req_cmd_in[i] != 0)
-			 begin
-			    req_cmd_buf[i] = req_cmd_in[i];
-			    req_data_buf_A[i] = req_data_in[i];
-			    pipe_state[i] = STATE_ODAT;
-			 end
-		       else
-			 begin
-			    pipe_state[i] = STATE_IDLE;
-			 end
-		    end // if (QUEUE_GATE(i) == 1)
-		  else
-		    begin
-		       // Not yet scheduled to run, wait until next clock edge.
-		       //$display("Delaying %d", i);
-		       pipe_state[i] = STATE_COMP; // Let's be explicit.
-		    end // else: !if(QUEUE_GATE(i) == 1)
-	       end // if (pipe_state[i] == STATE_COMP)
+		  // Block execution until we are triggered by the DUV feedback input.
+		  //$display("Delaying %d", i);
+	       end
 	     else if (pipe_state[i] == STATE_ODAT)
 	       begin
 		  // We have just output a result and have part 1 of a command.
