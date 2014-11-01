@@ -90,6 +90,14 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	      //$display("Calculating %d - %d", d1, d2);
 	      r = d1 - d2;
 	   end
+	 else if (cmd == CMD_LSH)
+	   begin
+	      r = d1 << d2;
+	   end
+	 else if (cmd == CMD_RSH)
+	   begin
+	      r = d1 >> d2;
+	   end
 	 else
 	   begin
 	      s = RESP_INOF;

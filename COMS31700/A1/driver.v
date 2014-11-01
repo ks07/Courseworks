@@ -235,6 +235,98 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_2_2_2_3
    
+   // TEST GROUP 3.1.1: Simple left shift
+   
+   task TEST_3_1_1_1;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'hAAAAAAAA, 1);
+      end
+   endtask // TEST_3_1_1_1
+      
+   task TEST_3_1_1_2;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'h55555555, 1);
+      end
+   endtask // TEST_3_1_1_2
+      
+   task TEST_3_1_1_3;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'h0F0F0F0F, 4);
+      end
+   endtask // TEST_3_1_1_3
+   
+   // TEST GROUP 3.1.2: Simple right shift
+   
+   task TEST_3_1_2_1;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'hAAAAAAAA, 1);
+      end
+   endtask // TEST_3_1_2_1
+      
+   task TEST_3_1_2_2;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'h55555555, 1);
+      end
+   endtask // TEST_3_1_2_2
+      
+   task TEST_3_1_2_3;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'hF0F0F0F0, 4);
+      end
+   endtask // TEST_3_1_2_3
+   
+   // TEST GROUP 3.2.1: Long left shift
+   
+   task TEST_3_2_1_1;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'h00000000, 32);
+      end
+   endtask // TEST_3_2_1_1
+      
+   task TEST_3_2_1_2;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'hFFFFFFFF, 32);
+      end
+   endtask // TEST_3_2_1_2
+      
+   task TEST_3_2_1_3;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'h00000001, 31);
+      end
+   endtask // TEST_3_2_1_3
+      
+   task TEST_3_2_1_4;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'hFFFFFFFF, 32'hFFFFFFFF);
+      end
+   endtask // TEST_3_2_1_4
+   
+   // TEST GROUP 3.2.2: Long right shift
+   
+   task TEST_3_2_2_1;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'h00000000, 32);
+      end
+   endtask // TEST_3_2_2_1
+      
+   task TEST_3_2_2_2;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'hFFFFFFFF, 32);
+      end
+   endtask // TEST_3_2_2_2
+      
+   task TEST_3_2_2_3;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'h80000000, 31);
+      end
+   endtask // TEST_3_2_2_3
+      
+   task TEST_3_2_2_4;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'hFFFFFFFF, 32'hFFFFFFFF);
+      end
+   endtask // TEST_3_2_2_4
+   
    initial
      begin
 
@@ -243,7 +335,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	reset[1] = 1;
 	#200
 	  reset[1] = 0;
-
+	
 	$display ("Driving Test 2.1.1.1");
 	TEST_2_1_1_1();
 	
