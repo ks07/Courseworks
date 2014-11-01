@@ -1,12 +1,12 @@
-module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2], req_data_out[2], req_cmd_out[3], req_data_out[3], req_cmd_out[4], req_data_out[4], test_id);
+module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2], req_data_out[2], req_cmd_out[3], req_data_out[3], req_cmd_out[4], req_data_out[4], test_change);
    
    output reg 	     c_clk;
    output reg [0:3]  req_cmd_out  [1:4];
    output reg [0:31] req_data_out [1:4];
    output reg [1:7]  reset;
 
-   // Define extra output to inform checker of the current test.
-   output string     test_id;
+   // Define extra output to inform checker of the test end.
+   output reg 	     test_change;
    
    // Define some constants.
    localparam        CMD_NOP = 0;
@@ -29,10 +29,23 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	     req_data_out[i] = 0;
 	     req_cmd_out[i] = CMD_NOP;
 	  end
+	test_change = 0;
      end
 
    // Drive the clock every 100ns.
    always #100 c_clk = ~c_clk;
+   
+   // Task to wait sufficient times between tests. Make an assumption about DUV response time.
+   task POST_TEST;
+      begin
+	 // Wait 700ns to give the DUV time to settle for the next test.
+	 # 700 ;
+	 // Notify the checker that it should give a PASS/FAIL mark now.
+	 test_change = ~test_change;
+	 // Wait a further 100 to sync us back up with the clock and avoid race condition with test print.
+	 # 100 ;
+      end
+   endtask // POST_TEST
    
    // Task to run a simple test on the driver on all 4 ports.
    task SIMPLE_TEST;
@@ -50,6 +63,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 		req_cmd_out[ii] = CMD_NOP;
 	      req_data_out[ii] = arg2;
 	   end
+	 POST_TEST();
       end
    endtask // SIMPLE_TEST
    
@@ -231,27 +245,21 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	  reset[1] = 0;
 
 	$display ("Driving Test 2.1.1.1");
-	test_id = "2.1.1.1";
 	TEST_2_1_1_1();
 	
 	$display ("Driving Test 2.1.1.2");
-	test_id = "2.1.1.2";
 	TEST_2_1_1_2();
 	
 	$display ("Driving Test 2.1.1.3");
-	test_id = "2.1.1.3";
 	TEST_2_1_1_3();
 	
 	$display ("Driving Test 2.1.1.4");
-	test_id = "2.1.1.4";
 	TEST_2_1_1_4();
 
 	$display ("Driving Test 2.1.2.1");
-	test_id = "2.1.2.1";
 	TEST_2_1_2_1();
 
 	$display ("Driving Test 2.1.2.2");
-	test_id = "2.1.2.2";
 	TEST_2_1_2_2();
 	
 	$display ("Driving Test 2.1.3.1");

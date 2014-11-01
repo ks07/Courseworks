@@ -1,4 +1,4 @@
-module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_resp, test_id);
+module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_resp, test_change);
 
    // In an ideal world, these would always be equal. But there's nothing ideal here.
    input [0:31]   ref_out_data [1:4];
@@ -6,13 +6,35 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
    input [0:1] 	  ref_out_resp [1:4];
    input [0:1] 	  duv_out_resp [1:4];
    input 	  c_clk; // Clock for timing sync.
-   input string   test_id;
+   input 	  test_change;
    
    // Define some constants.
    localparam RSP_NONE = 0;
    localparam RSP_SUCC = 1;
    localparam RSP_INOF = 2; // Invalid command or overflow
    localparam RSP_IERR = 3;
+
+   // Keep track of any fail conditions per test.
+   integer 	  fail_test;
+   
+   initial
+     begin
+	fail_test = 0;
+     end
+
+   always @ (test_change)
+     begin
+	// Test change signifies the driver is stepping to the next test. We should notify PASS/FAIL.
+	if (fail_test == 0)
+	  begin
+	     $display ("PASS");
+	  end
+	else
+	  begin
+	     $display ("FAIL");
+	  end
+	fail_test = 0;
+     end // always @ (test_change)
 
    // Task definition to check for output discrepancies.
    task CONSISTENCY_CHECK;
@@ -21,7 +43,7 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
       integer any_problem;
       begin
 	 any_problem = 0;
-	 $display ("CONSISTENCY CHECK AT %0t:", $time);
+	 $display ("CHECKER (%0t):", $time);
 	 for (i = 1; i < 5; i = i + 1)
 	     begin
 		port_problem = 0;
@@ -43,11 +65,7 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
 	     end // for (i = 1; i < 5; i = i + 1)
 	 if (any_problem != 0)
 	   begin
-	      $display ("TEST %s: FAIL\n", test_id);
-	   end
-	 else
-	   begin
-	      $display ("TEST %s: PASS\n", test_id);
+	      fail_test = 1;
 	   end
       end
    endtask // CONSISTENCY_CHECK
