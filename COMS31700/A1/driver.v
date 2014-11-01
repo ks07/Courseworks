@@ -54,16 +54,17 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       input [0:31] arg2;
       integer 	   ii;
       begin
-	 for (ii = 0; ii < PRT_LIM; ii = ii + 1)
+	 for (ii = 1; ii < PRT_LIM; ii = ii + 1)
 	   begin
-	      #200
+	      $display("Port %0d", ii);
+	      
 		req_cmd_out[ii] = cmd;
 	      req_data_out[ii] = arg1;
 	      #200
 		req_cmd_out[ii] = CMD_NOP;
 	      req_data_out[ii] = arg2;
+	      POST_TEST();
 	   end
-	 POST_TEST();
       end
    endtask // SIMPLE_TEST
    
@@ -335,6 +336,8 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	reset[1] = 1;
 	#200
 	  reset[1] = 0;
+	#400 ;
+	
 	
 	$display ("Driving Test 2.1.1.1");
 	TEST_2_1_1_1();
@@ -401,6 +404,48 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	
 	$display ("Driving Test 2.2.2.3");
 	TEST_2_2_2_3();
+
+	$display ("Driving Test 3.1.1.1");
+	TEST_3_1_1_1();
+
+	$display ("Driving Test 3.1.1.2");
+	TEST_3_1_1_2();
+
+	$display ("Driving Test 3.1.1.3");
+	TEST_3_1_1_3();
+
+	$display ("Driving Test 3.1.2.1");
+	TEST_3_1_2_1();
+
+	$display ("Driving Test 3.1.2.2");
+	TEST_3_1_2_2();
+
+	$display ("Driving Test 3.1.2.3");
+	TEST_3_1_2_3();
+
+	$display ("Driving Test 3.2.1.1");
+	TEST_3_2_1_1();
+
+	$display ("Driving Test 3.2.1.2");
+	TEST_3_2_1_2();
+
+	$display ("Driving Test 3.2.1.3");
+	TEST_3_2_1_3();
+
+	$display ("Driving Test 3.2.1.4");
+	TEST_3_2_1_4();
+
+	$display ("Driving Test 3.2.2.1");
+	TEST_3_2_2_1();
+
+	$display ("Driving Test 3.2.2.2");
+	TEST_3_2_2_2();
+
+	$display ("Driving Test 3.2.2.3");
+	TEST_3_2_2_3();
+
+	$display ("Driving Test 3.2.2.4");
+	TEST_3_2_2_4();
 	
 	#800 $stop;
 	

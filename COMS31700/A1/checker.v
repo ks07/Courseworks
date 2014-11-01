@@ -43,7 +43,7 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
       integer any_problem;
       begin
 	 any_problem = 0;
-	 $display ("CHECKER (%0t):", $time);
+	 //$display ("CHECKER (%0t):", $time);
 	 for (i = 1; i < 5; i = i + 1)
 	     begin
 		port_problem = 0;
@@ -60,7 +60,7 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
 		if (port_problem != 0)
 		  begin
 		     any_problem = 1;
-		     $write ("\n");
+		     $write (" @ t=%0t\n", $time);
 		  end
 	     end // for (i = 1; i < 5; i = i + 1)
 	 if (any_problem != 0)
