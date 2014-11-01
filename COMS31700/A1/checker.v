@@ -1,4 +1,4 @@
-module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_resp);
+module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_resp, test_id);
 
    // In an ideal world, these would always be equal. But there's nothing ideal here.
    input [0:31]   ref_out_data [1:4];
@@ -6,7 +6,8 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
    input [0:1] 	  ref_out_resp [1:4];
    input [0:1] 	  duv_out_resp [1:4];
    input 	  c_clk; // Clock for timing sync.
-
+   input string   test_id;
+   
    // Define some constants.
    localparam RSP_NONE = 0;
    localparam RSP_SUCC = 1;
@@ -20,7 +21,7 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
       integer any_problem;
       begin
 	 any_problem = 0;
-	 $display ("CONSISTENCY CHECK AT %t:", $time);
+	 $display ("CONSISTENCY CHECK AT %0t:", $time);
 	 for (i = 1; i < 5; i = i + 1)
 	     begin
 		port_problem = 0;
@@ -42,11 +43,11 @@ module calc1_checker(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_re
 	     end // for (i = 1; i < 5; i = i + 1)
 	 if (any_problem != 0)
 	   begin
-	      $display ("DISCREPANCIES DETECTED\n");
+	      $display ("TEST %s: FAIL\n", test_id);
 	   end
 	 else
 	   begin
-	      $display ("OUTPUTS CONSISTENT\n");
+	      $display ("TEST %s: PASS\n", test_id);
 	   end
       end
    endtask // CONSISTENCY_CHECK
