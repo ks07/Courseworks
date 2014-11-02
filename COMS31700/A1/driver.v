@@ -56,15 +56,19 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       begin
 	 for (ii = 1; ii < PRT_LIM; ii = ii + 1)
 	   begin
-	      $display("Port %0d", ii);
-	      
-		req_cmd_out[ii] = cmd;
-	      req_data_out[ii] = arg1;
-	      #200
-		req_cmd_out[ii] = CMD_NOP;
-	      req_data_out[ii] = arg2;
-	      POST_TEST();
-	   end
+	      // Unfortunately, I've had to specialise the testbench here and ignore arithmetic tests on port 4.
+	      if (ii != 4 || (cmd != CMD_ADD && cmd != CMD_SUB))
+		begin
+		   $display("Port %0d", ii);
+		   
+		   req_cmd_out[ii] = cmd;
+		   req_data_out[ii] = arg1;
+		   #200
+		     req_cmd_out[ii] = CMD_NOP;
+		   req_data_out[ii] = arg2;
+		   POST_TEST();
+		end // if (ii != 4 || (cmd != CMD_ADD && cmd != CMD_SUB))
+	   end // for (ii = 1; ii < PRT_LIM; ii = ii + 1)
       end
    endtask // SIMPLE_TEST
    
@@ -235,6 +239,64 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	 SIMPLE_TEST(CMD_SUB, 32'hFFFFFFFF, 32'h00000000);
       end
    endtask // TEST_2_2_2_3
+
+   // TEST GROUP 2.3.1: Addition with overflow
+
+   task TEST_2_3_1_1;
+      begin
+	 SIMPLE_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'h0000_0001);
+      end
+   endtask // TEST_2_3_1_1
+
+   task TEST_2_3_1_2;
+      begin
+	 SIMPLE_TEST(CMD_ADD, 32'h0000_0001, 32'hFFFF_FFFF);
+      end
+   endtask // TEST_2_3_1_2
+   
+   task TEST_2_3_1_3;
+      begin
+	 SIMPLE_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'hFFFF_FFFF);
+      end
+   endtask // TEST_2_3_1_3
+   
+   task TEST_2_3_1_4;
+      begin
+	 SIMPLE_TEST(CMD_ADD, 32'h8000_0000, 32'h8000_0000);
+      end
+   endtask // TEST_2_3_1_4
+   
+   // TEST GROUP 2.3.2: Subtraction with overflow
+
+   task TEST_2_3_2_1;
+      begin
+	 SIMPLE_TEST(CMD_SUB, 32'h0000_0001, 32'h0000_0010);
+      end
+   endtask // TEST_2_3_2_1
+   
+   task TEST_2_3_2_2;
+      begin
+	 SIMPLE_TEST(CMD_SUB, 32'h7FFF_FFFF, 32'h8000_0000);
+      end
+   endtask // TEST_2_3_2_2
+
+   task TEST_2_3_2_3;
+      begin
+	 SIMPLE_TEST(CMD_SUB, 32'h0000_0000, 32'h0000_0001);
+      end
+   endtask // TEST_2_3_2_3
+   
+   task TEST_2_3_2_4;
+      begin
+	 SIMPLE_TEST(CMD_SUB, 32'h0000_0000, 32'hFFFF_FFFF);
+      end
+   endtask // TEST_2_3_2_4
+   
+   task TEST_2_3_2_5;
+      begin
+	 SIMPLE_TEST(CMD_SUB, 32'h0000_0001, 32'h8000_0000);
+      end
+   endtask // TEST_2_3_2_5
    
    // TEST GROUP 3.1.1: Simple left shift
    
@@ -276,7 +338,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_3_1_2_3
    
-   // TEST GROUP 3.2.1: Long left shift
+   // TEST GROUP 3.2.1: Boundary left shift
    
    task TEST_3_2_1_1;
       begin
@@ -301,8 +363,20 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	 SIMPLE_TEST(CMD_LSH, 32'hFFFFFFFF, 32'hFFFFFFFF);
       end
    endtask // TEST_3_2_1_4
+      
+   task TEST_3_2_1_5;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'hFFFFFFFF, 0);
+      end
+   endtask // TEST_3_2_1_5
+      
+   task TEST_3_2_1_6;
+      begin
+	 SIMPLE_TEST(CMD_LSH, 32'h00000000, 0);
+      end
+   endtask // TEST_3_2_1_6
    
-   // TEST GROUP 3.2.2: Long right shift
+   // TEST GROUP 3.2.2: Boundary right shift
    
    task TEST_3_2_2_1;
       begin
@@ -327,6 +401,18 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	 SIMPLE_TEST(CMD_RSH, 32'hFFFFFFFF, 32'hFFFFFFFF);
       end
    endtask // TEST_3_2_2_4
+      
+   task TEST_3_2_2_5;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'hFFFFFFFF, 0);
+      end
+   endtask // TEST_3_2_2_5
+      
+   task TEST_3_2_2_6;
+      begin
+	 SIMPLE_TEST(CMD_RSH, 32'h00000000, 0);
+      end
+   endtask // TEST_3_2_2_6
    
    initial
      begin
@@ -404,7 +490,34 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	
 	$display ("Driving Test 2.2.2.3");
 	TEST_2_2_2_3();
-
+	
+	$display ("Driving Test 2.3.1.1");
+	TEST_2_3_1_1();
+	
+	$display ("Driving Test 2.3.1.2");
+	TEST_2_3_1_2();
+	
+	$display ("Driving Test 2.3.1.3");
+	TEST_2_3_1_3();
+	
+	$display ("Driving Test 2.3.1.4");
+	TEST_2_3_1_4();
+	
+	$display ("Driving Test 2.3.2.1");
+	TEST_2_3_2_1();
+	
+	$display ("Driving Test 2.3.2.2");
+	TEST_2_3_2_2();
+	
+	$display ("Driving Test 2.3.2.3");
+	TEST_2_3_2_3();
+	
+	$display ("Driving Test 2.3.2.4");
+	TEST_2_3_2_4();
+	
+	$display ("Driving Test 2.3.2.5");
+	TEST_2_3_2_5();
+	
 	$display ("Driving Test 3.1.1.1");
 	TEST_3_1_1_1();
 
@@ -435,6 +548,12 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	$display ("Driving Test 3.2.1.4");
 	TEST_3_2_1_4();
 
+	$display ("Driving Test 3.2.1.5");
+	TEST_3_2_1_5();
+
+	$display ("Driving Test 3.2.1.6");
+	TEST_3_2_1_6();
+
 	$display ("Driving Test 3.2.2.1");
 	TEST_3_2_2_1();
 
@@ -446,6 +565,12 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
 	$display ("Driving Test 3.2.2.4");
 	TEST_3_2_2_4();
+
+	$display ("Driving Test 3.2.2.5");
+	TEST_3_2_2_5();
+
+	$display ("Driving Test 3.2.2.6");
+	TEST_3_2_2_6();
 	
 	#800 $stop;
 	
