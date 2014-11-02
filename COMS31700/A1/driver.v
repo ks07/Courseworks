@@ -516,7 +516,9 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	#200
 	  reset[1] = 0;
 	#400 ;
-	
+
+	POST_TEST();
+		
 	TEST_2_1_1_1();
 	
 	TEST_2_1_1_2();
