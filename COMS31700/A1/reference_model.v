@@ -70,25 +70,38 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	output_active = 0;
      end // initial begin
    
-   // Task definitions for calc functions
-   task OP;
+   // Task definitions for calc functions. Automatic gives variables local scope, as opposed to static.
+   task automatic OP;
       input  [0:3]  cmd;
       input  [0:31] d1;
       input  [0:31] d2;
       output [0:31] r; // Result
       output [0:1]  s; // Response
+      reg [0:32]    temp; // Use a wider reg to check for overflow.
       begin
 	 // TODO: Support shift and set overflow/error responses.
 	 s = RESP_SUCC;
 	 
 	 if (cmd == CMD_ADD)
 	   begin
-	      r = d1 + d2;
+	      temp = d1 + d2;
+	      if (temp[32] == 1)
+		begin
+		   // We have overflowed.
+		   s = RESP_INOF;
+		end
+	      r = temp[0:31];
 	   end
 	 else if (cmd == CMD_SUB)
 	   begin
 	      //$display("Calculating %d - %d", d1, d2);
-	      r = d1 - d2;
+	      temp = d1 - d2;
+	      if (temp[32] == 1)
+		begin
+		   // Overflowed (or underflow, if you prefer)
+		   s = RESP_INOF;
+		end
+	      r = temp[0:31];
 	   end
 	 else if (cmd == CMD_LSH)
 	   begin
@@ -224,16 +237,23 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		       
 		       // Do the actual calculation.
 		       OP(req_cmd_buf[ii], req_data_buf_A[ii], req_data_buf_B[ii], out_data[ii], out_resp[ii]);
-		       
-		       // If new cmd in jump to ODAT.
-		       if (req_cmd_in[ii] != 0)
+
+		       if (out_resp[ii] == RESP_ERR || out_resp[ii] == RESP_INOF)
 			 begin
+			    // If we output an error state, then we need to halt this pipeline.
+			    $display ("Ref pipe %0d has died @ t=%0t", ii, $time);
+			    pipe_state[ii] = STATE_DEAD;
+			 end
+		       else if (req_cmd_in[ii] != 0)
+			 begin
+		       	    // If new cmd in jump to ODAT.
 			    req_cmd_buf[ii] = req_cmd_in[ii];
 			    req_data_buf_A[ii] = req_data_in[ii];
 			    pipe_state[ii] = STATE_ODAT;
 			 end
 		       else
 			 begin
+			    // All is well, back to sleep.
 			    pipe_state[ii] = STATE_IDLE;
 			 end
 		    end // if (QUEUE_GATE(i) == 1)
@@ -249,12 +269,8 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 	       begin
 		  // This pipe is dead, either uninitialised or an internal error occurred.
 		  // We must wait for a reset signal to leave this state.
-		  // TODO: Check for more than just bit 1 of reset!
 		  // TODO: Reset should affect all pipes even if they aren't dead - need to compare with DUV/spec.
-		  if (reset[1])
-		    begin
-		       pipe_state[ii] = STATE_IDLE;
-		    end
+		  wait (reset[1]) pipe_state[ii] = STATE_IDLE;
 	       end // if (pipe_state[ii] == STATE_DEAD)
 	  end // always @ (negedge c_clk)
      end // for (ii = 1; ii < 5; ii = ii + 1)
