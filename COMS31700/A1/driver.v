@@ -182,6 +182,30 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	 POST_TEST();
       end
    endtask // SEQUENTIAL_TEST
+
+   // Task to send two commands concurrently.
+   task CONCURRENT_TEST;
+      input [0:3]   cmd [1:4];
+      input [0:31]  arg1 [1:4];
+      input [0:31]  arg2 [1:4];
+      integer 	    ii;
+      begin
+	 for (ii = 1; ii < PRT_LIM; ii = ii + 1)
+	   begin
+	      req_cmd_out[ii] = cmd[ii];
+	      req_data_out[ii] = arg1[ii];
+	   end
+	 # 200 ;
+	 for (ii = 1; ii < PRT_LIM; ii = ii + 1)
+	   begin
+	      req_cmd_out[ii] = CMD_NOP;
+	      req_data_out[ii] = arg2[ii];
+	   end
+	 // Extra delay to give time for all commands.
+	 # 2000 ;
+	 POST_TEST();
+      end
+   endtask // SEQUENTIAL_TEST
    
    // Task-ified tests.
 
@@ -576,12 +600,12 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    
    // TEST GROUP 4.1.1: Typical Port Scheduling
    
-   // task TEST_4_1_1_1;
-   //    begin
-   // 	 $display ("Driving Test 4.1.1.1 @ t=%0t", $time);
-   // 	 SEQUENTIAL_TEST(CMD_ADD, 32'hABCD_0000, 32'h0000_1234, '{1,2,3,0});
-   //    end
-   // endtask // TEST_4_1_1_1
+   task TEST_4_1_1_1;
+      begin
+   	 $display ("Driving Test 4.1.1.1 @ t=%0t", $time);
+   	 SEQUENTIAL_TEST(CMD_ADD, 32'hABCD_0000, 32'h0000_1234, '{1,2,3,0});
+      end
+   endtask // TEST_4_1_1_1
    
    task TEST_4_1_1_2;
       begin
@@ -590,12 +614,12 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_4_1_1_2
    
-   // task TEST_4_1_1_3;
-   //    begin
-   // 	 $display ("Driving Test 4.1.1.3 @ t=%0t", $time);
-   // 	 SEQUENTIAL_TEST(CMD_ADD, 32'hABCD_0000, 32'h0000_1234, '{3,2,1,0});
-   //    end
-   // endtask // TEST_4_1_1_3
+   task TEST_4_1_1_3;
+      begin
+   	 $display ("Driving Test 4.1.1.3 @ t=%0t", $time);
+   	 SEQUENTIAL_TEST(CMD_ADD, 32'hABCD_0000, 32'h0000_1234, '{3,2,1,0});
+      end
+   endtask // TEST_4_1_1_3
    
    task TEST_4_1_1_4;
       begin
@@ -603,6 +627,28 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    	 SEQUENTIAL_TEST(CMD_RSH, 32'hABCD_0000, 4, '{4,3,2,1});
       end
    endtask // TEST_4_1_1_4
+
+   // TEST GROUP 4.2.1: Concurrent Operation Scheduling
+
+   task TEST_4_2_1_1;
+      begin
+	 $display ("Driving Test 4.2.1.1 @ t=%0t", $time);
+	 CONCURRENT_TEST('{CMD_ADD, CMD_NOP, CMD_NOP, CMD_LSH},
+			 '{32'h0000_0001, 0, 0, 32'h0000_0F00},
+			 '{32'h0000_0001, 0, 0, 4}
+			 );
+      end
+   endtask // TEST_4_2_1_1
+
+   task TEST_4_2_1_2;
+      begin
+	 $display ("Driving Test 4.2.1.2 @ t=%0t", $time);
+	 CONCURRENT_TEST('{CMD_SUB, CMD_NOP, CMD_NOP, CMD_RSH},
+			 '{32'h0000_0080, 0, 0, 32'h0000_0008},
+			 '{32'h0000_0080, 0, 0, 2}
+			 );
+      end
+   endtask // TEST_4_2_1_2
    
    // TEST GROUP 4.5.1: Inactivity Test
 
@@ -827,6 +873,10 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	//TEST_4_1_1_3();
 	
 	TEST_4_1_1_4();
+
+	TEST_4_2_1_1();
+	
+	TEST_4_2_1_2();
 	
 	TEST_4_5_1_1();
 	
