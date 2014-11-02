@@ -81,27 +81,30 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
       begin
 	 // TODO: Support shift and set overflow/error responses.
 	 s = RESP_SUCC;
+
+	 temp = 0;
 	 
 	 if (cmd == CMD_ADD)
 	   begin
 	      temp = d1 + d2;
-	      if (temp[32] == 1)
+	      //$display ("%b temp (%b), %0t", temp, temp[0], $time);
+	      if (temp[0] == 1)
 		begin
 		   // We have overflowed.
 		   s = RESP_INOF;
 		end
-	      r = temp[0:31];
+	      r = temp[1:32];
 	   end
 	 else if (cmd == CMD_SUB)
 	   begin
 	      //$display("Calculating %d - %d", d1, d2);
 	      temp = d1 - d2;
-	      if (temp[32] == 1)
+	      if (temp[0] == 1)
 		begin
 		   // Overflowed (or underflow, if you prefer)
 		   s = RESP_INOF;
 		end
-	      r = temp[0:31];
+	      r = temp[1:32];
 	   end
 	 else if (cmd == CMD_LSH)
 	   begin
@@ -238,7 +241,7 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		       // Do the actual calculation.
 		       OP(req_cmd_buf[ii], req_data_buf_A[ii], req_data_buf_B[ii], out_data[ii], out_resp[ii]);
 
-		       if (out_resp[ii] == RESP_ERR || out_resp[ii] == RESP_INOF)
+		       if (out_resp[ii] == RESP_IERR || out_resp[ii] == RESP_INOF)
 			 begin
 			    // If we output an error state, then we need to halt this pipeline.
 			    $display ("Ref pipe %0d has died @ t=%0t", ii, $time);
@@ -270,7 +273,10 @@ module calc1_reference (out_data[1], out_data[2], out_data[3], out_data[4], out_
 		  // This pipe is dead, either uninitialised or an internal error occurred.
 		  // We must wait for a reset signal to leave this state.
 		  // TODO: Reset should affect all pipes even if they aren't dead - need to compare with DUV/spec.
-		  wait (reset[1]) pipe_state[ii] = STATE_IDLE;
+		  wait (reset[1])
+		    begin
+		       wait (~reset[1]) pipe_state[ii] = STATE_IDLE;
+		    end
 	       end // if (pipe_state[ii] == STATE_DEAD)
 	  end // always @ (negedge c_clk)
      end // for (ii = 1; ii < 5; ii = ii + 1)

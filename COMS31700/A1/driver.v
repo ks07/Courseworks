@@ -81,6 +81,9 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	 reset[1] = 1;
 	 // Wait a further 400 to give the design time to process the reset.
 	 # 400 ;
+	 // Set reset 0 and wait.
+	 reset[1] = 0;
+	 # 400 ;
 	 // Notify the checker that it should give a PASS/FAIL mark now.
 	 test_change = ~test_change;
 	 // Wait a further 200 to sync us back up with the clock and avoid race condition with test print.
