@@ -1,6 +1,7 @@
 `include "reference_model.v"
 `include "driver.v"
 `include "checker.v"
+`include "fairness_checker.v"
 `uselib lib=calc1_black_box
 
 // Main testbench file. This links the driver and checker with the reference model and DUV.
@@ -17,7 +18,9 @@ module calc1_testbench;
    wire [1:7]  reset;
    reg [0:1]   out_prompt [1:4]; // Timing feedback for the reference model.
    wire        test_change; // Test end signal for the checker.
-
+   wire        fenable;
+   integer     fplease;
+      
    integer     i; // Temp loop variable.
    genvar      ii; // Temp genvar.
    
@@ -28,11 +31,14 @@ module calc1_testbench;
    calc1_reference CREF(ref_out_data[1], ref_out_data[2], ref_out_data[3], ref_out_data[4], ref_out_resp[1], ref_out_resp[2], ref_out_resp[3], ref_out_resp[4], c_clk, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], reset, out_prompt);
 
    // Instantiate the driver to drive tests.
-   calc1_driver DRIVER(c_clk, reset, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], test_change);
+   calc1_driver DRIVER(c_clk, reset, req_cmd_in[1], req_data_in[1], req_cmd_in[2], req_data_in[2], req_cmd_in[3], req_data_in[3], req_cmd_in[4], req_data_in[4], test_change, fenable, fplease);
 
    // Instantiate the checker to compare the DUV against the reference model.
    calc1_checker CHECKER(c_clk, ref_out_data, ref_out_resp, duv_out_data, duv_out_resp, test_change);
 
+   // Instantiate the fairness checker.
+   calc1_fairness FAIRNESS(req_cmd_in, out_prompt, fenable, fplease);
+   
    initial
      begin
 	for (i = 1; i < 5; i = i + 1)
@@ -50,7 +56,5 @@ module calc1_testbench;
 	  end
      end
    endgenerate
-   
-   // TODO: Possible scope for a scoreboard module to help address fairness of scheduling?
    
 endmodule // calc1_testbench

@@ -1,4 +1,4 @@
-module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2], req_data_out[2], req_cmd_out[3], req_data_out[3], req_cmd_out[4], req_data_out[4], test_change);
+module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2], req_data_out[2], req_cmd_out[3], req_data_out[3], req_cmd_out[4], req_data_out[4], test_change, fenable, fplease);
    
    output reg 	     c_clk;
    output reg [0:3]  req_cmd_out  [1:4];
@@ -7,6 +7,11 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
    // Define extra output to inform checker of the test end.
    output reg 	     test_change;
+
+   // Define extra output to enable and disable the fairness checker/scoreboard.
+   output reg 	     fenable;
+   // Extra input to allow the fairness checker to ask for more data.
+   input integer     fplease;
    
    // Define some constants.
    localparam        CMD_NOP = 0;
@@ -854,7 +859,9 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    
    initial
      begin
-
+	// Init fenable to false.
+	fenable = 0;
+	
 	// TEST 1.1.1
 	// Drive reset bit 1 to init the design.
 	reset[1] = 1;
@@ -1010,7 +1017,32 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
 	TEST_5_1_1_11();
 	
-	#800 $stop;
+	#800 ;
+	
+	// TEST 4.7.x: Fairness Monitoring
+
+	// Unfortunately, this is broken, and we don't have time to fix it!
+	 	
+	// Switch to using the fairness checker.
+	// fenable = 1;
+
+	// for (i = 0; i < 100; i = i + 1)
+	//   begin
+	//      @ (fplease) begin
+	// 	if (fplease > 0 && fplease < PRT_LIM)
+	// 	  begin
+	// 	     // Send a new command on given port.
+	// 	     req_cmd_out[fplease] = CMD_LSH;
+	// 	     req_data_out[fplease] = 32'h000F_F000;
+	// 	     # 200 req_cmd_out[fplease] <= CMD_NOP;
+	// 	     # 200 req_data_out[fplease] <= 2;
+	// 	  end
+	//      end
+	//   end // for (i = 0; i < 100; i = i + 1)
+	
+	// # 200 fenable = 0;
+	
+	# 200 $stop;
 	
      end // initial begin
 
