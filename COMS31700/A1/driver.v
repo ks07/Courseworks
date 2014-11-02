@@ -116,26 +116,41 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // SIMPLE_TEST
 
-   // Task to run a sequence of 4 tests across ports.
+   // Task to run a sequence of 4 tests across ports with 100ns delay between cmd arrival.
    task SEQUENTIAL_TEST;
       input [0:3]   cmd;
       input [0:31]  arg1;
       input [0:31]  arg2;
-      input integer port_seq [0:3];
-      input integer delay;
-      integer 	    ii;
-      integer 	    curr_port;
+      input integer ps [0:3];
       begin
 	 // We should be on a clock boundary, need to drive all signals for at least one cycle despite delay.
-	 for (ii = 0; ii < 4; ii = ii + 1)
-	   begin
-	      curr_port = port_seq[ii];
-	      req_cmd_out[curr_port] = cmd;
-	      req_data_out[curr_port] = arg1;
-	      # delay
-		req_cmd_out[curr_port] = CMD_NOP;
-	      req_data_out[curr_port] = arg2;
-	   end
+	 req_cmd_out[ps[0]] = cmd;
+	 req_data_out[ps[0]] = arg1;
+	 // Wait 100 (posedge), ps[1] to join now and switch in 300.
+	 # 100
+	   req_cmd_out[ps[1]] = cmd;
+	 req_data_out[ps[1]] = arg2;
+	 // Wait 100 (negedge), switch first arg and bring in ps[2] to switch in 200.
+	 # 100
+	   req_cmd_out[ps[0]] = CMD_NOP;
+	 req_data_out[ps[0]] = arg2;
+	 req_cmd_out[ps[2]] = cmd;
+	 req_data_out[ps[2]] = arg1;
+	 // Wait 100 (posedge), bring in ps[3] to switch in 300.
+	 # 100
+	   req_cmd_out[ps[3]] = cmd;
+	 req_data_out[ps[3]] = arg1;
+	 // Wait 100 (negedge). Give arg2 of ps[1] and ps[2].
+	 # 100
+	   req_cmd_out[ps[1]] = CMD_NOP;
+	 req_data_out[ps[1]] = arg2;
+	 req_cmd_out[ps[2]] = CMD_NOP;
+	 req_data_out[ps[2]] = arg2;
+	 // Wait 200 (negedge) to switch ps[3].
+	 # 200
+	   req_cmd_out[ps[3]] = CMD_NOP;
+	 req_data_out[ps[3]] = arg2;
+	 
 	 // Extra delay to give time for all commands.
 	 #2000 ;
 	 POST_TEST();
@@ -536,12 +551,18 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // TEST GROUP 4.1.1: Typical Port Scheduling
    
    task TEST_4_1_1_1;
-      integer ii;
       begin
 	 $display ("Driving Test 4.1.1.1 @ t=%0t", $time);
-	 SEQUENTIAL_TEST(CMD_ADD, 32'hABCD_0000, 32'h0000_1234, '{1,2,3,4}, 100);
+	 SEQUENTIAL_TEST(CMD_ADD, 32'hABCD_0000, 32'h0000_1234, '{1,2,3,4});
       end
    endtask // TEST_4_1_1_1
+   
+   task TEST_4_1_1_2;
+      begin
+	 $display ("Driving Test 4.1.1.2 @ t=%0t", $time);
+	 SEQUENTIAL_TEST(CMD_RSH, 32'hABCD_0000, 4, '{1,2,3,4});
+      end
+   endtask // TEST_4_1_1_2
    
    // TEST GROUP 4.5.1: Inactivity Test
 
@@ -760,6 +781,8 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	TEST_3_2_2_6();
 
 	TEST_4_1_1_1();
+
+	TEST_4_1_1_2();
 	
 	TEST_4_5_1_1();
 	
