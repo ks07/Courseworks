@@ -72,6 +72,47 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // SIMPLE_TEST
    
+   // Task to wait sufficient times between tests. Make an assumption about DUV response time.
+   task POST_RESET;
+      begin
+	 // Wait 600ns to give the DUV time to settle for the next test.
+	 # 600 ;
+	 // Drive the reset signal.
+	 reset[1] = 1;
+	 // Wait a further 400 to give the design time to process the reset.
+	 # 400 ;
+	 // Notify the checker that it should give a PASS/FAIL mark now.
+	 test_change = ~test_change;
+	 // Wait a further 200 to sync us back up with the clock and avoid race condition with test print.
+	 # 200 ;
+      end
+   endtask // POST_RESET
+   
+   // Task to run a simple test on the driver on all 4 ports, that should require a reset between runs.
+   task ERROR_TEST;
+      input [0:3] cmd;
+      input [0:31] arg1;
+      input [0:31] arg2;
+      integer 	   ii;
+      begin
+	 for (ii = 1; ii < PRT_LIM; ii = ii + 1)
+	   begin
+	      // Unfortunately, I've had to specialise the testbench here and ignore arithmetic tests on port 4.
+	      if (ii != 4 || (cmd != CMD_ADD && cmd != CMD_SUB))
+		begin
+		   $display("Port %0d", ii);
+		   
+		   req_cmd_out[ii] = cmd;
+		   req_data_out[ii] = arg1;
+		   #200
+		     req_cmd_out[ii] = CMD_NOP;
+		   req_data_out[ii] = arg2;
+		   POST_RESET();
+		end // if (ii != 4 || (cmd != CMD_ADD && cmd != CMD_SUB))
+	   end // for (ii = 1; ii < PRT_LIM; ii = ii + 1)
+      end
+   endtask // SIMPLE_TEST
+   
    // Task-ified tests.
 
    // TEST GROUP 2.1.1: Simple add no carry.
@@ -267,28 +308,28 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    task TEST_2_3_1_1;
       begin
 	 $display ("Driving Test 2.3.1.1 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'h0000_0001);
+	 ERROR_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'h0000_0001);
       end
    endtask // TEST_2_3_1_1
 
    task TEST_2_3_1_2;
       begin
 	 $display ("Driving Test 2.3.1.2 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_ADD, 32'h0000_0001, 32'hFFFF_FFFF);
+	 ERROR_TEST(CMD_ADD, 32'h0000_0001, 32'hFFFF_FFFF);
       end
    endtask // TEST_2_3_1_2
    
    task TEST_2_3_1_3;
       begin
 	 $display ("Driving Test 2.3.1.3 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'hFFFF_FFFF);
+	 ERROR_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'hFFFF_FFFF);
       end
    endtask // TEST_2_3_1_3
    
    task TEST_2_3_1_4;
       begin
 	 $display ("Driving Test 2.3.1.4 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_ADD, 32'h8000_0000, 32'h8000_0000);
+	 ERROR_TEST(CMD_ADD, 32'h8000_0000, 32'h8000_0000);
       end
    endtask // TEST_2_3_1_4
    
@@ -297,35 +338,35 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    task TEST_2_3_2_1;
       begin
 	 $display ("Driving Test 2.3.2.1 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_SUB, 32'h0000_0001, 32'h0000_0010);
+	 ERROR_TEST(CMD_SUB, 32'h0000_0001, 32'h0000_0010);
       end
    endtask // TEST_2_3_2_1
    
    task TEST_2_3_2_2;
       begin
 	 $display ("Driving Test 2.3.2.2 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_SUB, 32'h7FFF_FFFF, 32'h8000_0000);
+	 ERROR_TEST(CMD_SUB, 32'h7FFF_FFFF, 32'h8000_0000);
       end
    endtask // TEST_2_3_2_2
 
    task TEST_2_3_2_3;
       begin
 	 $display ("Driving Test 2.3.2.3 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_SUB, 32'h0000_0000, 32'h0000_0001);
+	 ERROR_TEST(CMD_SUB, 32'h0000_0000, 32'h0000_0001);
       end
    endtask // TEST_2_3_2_3
    
    task TEST_2_3_2_4;
       begin
 	 $display ("Driving Test 2.3.2.4 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_SUB, 32'h0000_0000, 32'hFFFF_FFFF);
+	 ERROR_TEST(CMD_SUB, 32'h0000_0000, 32'hFFFF_FFFF);
       end
    endtask // TEST_2_3_2_4
    
    task TEST_2_3_2_5;
       begin
 	 $display ("Driving Test 2.3.2.5 @ t=%0t", $time);
-	 SIMPLE_TEST(CMD_SUB, 32'h0000_0001, 32'h8000_0000);
+	 ERROR_TEST(CMD_SUB, 32'h0000_0001, 32'h8000_0000);
       end
    endtask // TEST_2_3_2_5
    
