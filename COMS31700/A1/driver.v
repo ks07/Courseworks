@@ -507,6 +507,33 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_3_2_2_6
    
+   // TEST GROUP 4.5.1: Inactivity Test
+
+   task TEST_4_5_1_1;
+      integer ii;
+      begin
+	 $display ("Driving Test 4.5.1.1 @ t=%0t", $time);
+
+	 // Set all four ports simultaneously. Drive no command.
+	 for (ii = 1; ii < PRT_LIM; ii = ii + 1)
+	   begin   
+	      req_cmd_out[ii] = CMD_NOP;
+	      // Drive some data, just to check if any bits leak through.
+	      req_data_out[ii] = 32'hFFFF_FFFF;
+	   end
+
+	 // Wait for a prolonged period to check that the DUV doesn't output when not driven.
+	 for (ii = 0; ii < 10; ii = ii + 1)
+	   begin
+	      // Wait and flip inputs to try and trigger any output change.
+	      #800 req_data_out[ii] = ~req_data_out[ii];
+	   end
+	 
+	 // We should have seen nothing in this time.
+	 POST_TEST();
+      end
+   endtask // TEST_4_5_1_1
+   
    // TEST GROUP 5.1.1: Erroneous command inputs
 
    task TEST_5_1_1_1;
@@ -696,6 +723,8 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
 	TEST_3_2_2_6();
 
+	TEST_4_5_1_1();
+	
 	TEST_5_1_1_1();
 
 	TEST_5_1_1_2();
