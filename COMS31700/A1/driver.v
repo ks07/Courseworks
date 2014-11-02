@@ -79,6 +79,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xFFFF0000 + 0x0000FFFF
    task TEST_2_1_1_1;
       begin
+	 $display ("Driving Test 2.1.1.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'hFFFF0000, 32'h0000FFFF);
       end
    endtask // TEST_2_1_1_1
@@ -86,6 +87,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x0000FFFF + 0xFFFF0000
    task TEST_2_1_1_2;
       begin
+	 $display ("Driving Test 2.1.1.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h0000FFFF, 32'hFFFF0000);
       end
    endtask // TEST_2_1_1_2
@@ -93,6 +95,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x55555555 + 0xAAAAAAAA
    task TEST_2_1_1_3;
       begin
+	 $display ("Driving Test 2.1.1.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h55555555, 32'hAAAAAAAA);
       end
    endtask // TEST_2_1_1_3
@@ -100,6 +103,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xAAAAAAAA + 0x55555555
    task TEST_2_1_1_4;
       begin
+	 $display ("Driving Test 2.1.1.4 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'hAAAAAAAA, 32'h55555555);
       end
    endtask // TEST_2_1_1_4
@@ -109,6 +113,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x0000FFFF - 0x0000FFFF
    task TEST_2_1_2_1;
       begin
+	 $display ("Driving Test 2.1.2.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h0000FFFF, 32'h0000FFFF);
       end
    endtask // TEST_2_1_2_1
@@ -116,6 +121,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xFFFF0000 - 0xFFFF0000
    task TEST_2_1_2_2;
       begin
+	 $display ("Driving Test 2.1.2.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'hFFFF0000, 32'hFFFF0000);
       end
    endtask // TEST_2_1_2_2
@@ -125,6 +131,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x0000FFFF + 0x00000001
    task TEST_2_1_3_1;
       begin
+	 $display ("Driving Test 2.1.3.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h0000FFFF, 32'h00000001);
       end
    endtask // TEST_2_1_3_1
@@ -132,6 +139,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x00000001 + 0x0000FFFF
    task TEST_2_1_3_2;
       begin
+	 $display ("Driving Test 2.1.3.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h00000001, 32'h0000FFFF);
       end
    endtask // TEST_2_1_3_2
@@ -139,6 +147,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x7FFF8000 + 0x00008000
    task TEST_2_1_3_3;
       begin
+	 $display ("Driving Test 2.1.3.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h7FFF8000, 32'h00008000);
       end
    endtask // TEST_2_1_3_3
@@ -146,6 +155,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x00008000 + 0x7FFF8000
    task TEST_2_1_3_4;
       begin
+	 $display ("Driving Test 2.1.3.4 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h00008000, 32'h7FFF8000);
       end
    endtask // TEST_2_1_3_4
@@ -153,6 +163,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x55555555 + 0x55555555
    task TEST_2_1_3_5;
       begin
+	 $display ("Driving Test 2.1.3.5 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h55555555, 32'h55555555);
       end
    endtask // TEST_2_1_3_5
@@ -160,6 +171,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x2AAAAAAA + 0x2AAAAAAA
    task TEST_2_1_3_6;
       begin
+	 $display ("Driving Test 2.1.3.6 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h2AAAAAAA, 32'h2AAAAAAA);
       end
    endtask // TEST_2_1_3_6
@@ -169,6 +181,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x80000000 - 0x00000001
    task TEST_2_1_4_1;
       begin
+	 $display ("Driving Test 2.1.4.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h80000000, 32'h00000001);
       end
    endtask // TEST_2_1_4_1
@@ -176,6 +189,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xFFFF0000 - 0x0000FFFF
    task TEST_2_1_4_2;
       begin
+	 $display ("Driving Test 2.1.4.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'hFFFF0000, 32'h0000FFFF);
       end
    endtask // TEST_2_1_4_2
@@ -183,6 +197,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xAAAAAAAA - 0x55555555
    task TEST_2_1_4_3;
       begin
+	 $display ("Driving Test 2.1.4.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'hAAAAAAAA, 32'h55555555);
       end
    endtask // TEST_2_1_4_3
@@ -190,6 +205,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x55555555 - 0x2AAAAAAA
    task TEST_2_1_4_4;
       begin
+	 $display ("Driving Test 2.1.4.4 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h55555555, 32'h2AAAAAAA);
       end
    endtask // TEST_2_1_4_4
@@ -199,6 +215,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x00000000 + 0x00000000
    task TEST_2_2_1_1;
       begin
+	 $display ("Driving Test 2.2.1.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h00000000, 32'h00000000);
       end
    endtask // TEST_2_2_1_1
@@ -206,6 +223,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xFFFFFFFF + 0x00000000
    task TEST_2_2_1_2;
       begin
+	 $display ("Driving Test 2.2.1.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'hFFFFFFFF, 32'h00000000);
       end
    endtask // TEST_2_2_1_2
@@ -213,6 +231,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x00000000 + 0xFFFFFFFF
    task TEST_2_2_1_3;
       begin
+	 $display ("Driving Test 2.2.1.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h00000000, 32'hFFFFFFFF);
       end
    endtask // TEST_2_2_1_3
@@ -222,6 +241,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0x00000000 - 0x00000000
    task TEST_2_2_2_1;
       begin
+	 $display ("Driving Test 2.2.2.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h00000000, 32'h00000000);
       end
    endtask // TEST_2_2_2_1
@@ -229,6 +249,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xFFFFFFFF - 0xFFFFFFFF
    task TEST_2_2_2_2;
       begin
+	 $display ("Driving Test 2.2.2.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'hFFFFFFFF, 32'hFFFFFFFF);
       end
    endtask // TEST_2_2_2_2
@@ -236,6 +257,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    // 0xFFFFFFFF - 0x00000000
    task TEST_2_2_2_3;
       begin
+	 $display ("Driving Test 2.2.2.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'hFFFFFFFF, 32'h00000000);
       end
    endtask // TEST_2_2_2_3
@@ -244,24 +266,28 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
    task TEST_2_3_1_1;
       begin
+	 $display ("Driving Test 2.3.1.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'h0000_0001);
       end
    endtask // TEST_2_3_1_1
 
    task TEST_2_3_1_2;
       begin
+	 $display ("Driving Test 2.3.1.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h0000_0001, 32'hFFFF_FFFF);
       end
    endtask // TEST_2_3_1_2
    
    task TEST_2_3_1_3;
       begin
+	 $display ("Driving Test 2.3.1.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'hFFFF_FFFF, 32'hFFFF_FFFF);
       end
    endtask // TEST_2_3_1_3
    
    task TEST_2_3_1_4;
       begin
+	 $display ("Driving Test 2.3.1.4 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_ADD, 32'h8000_0000, 32'h8000_0000);
       end
    endtask // TEST_2_3_1_4
@@ -270,30 +296,35 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
    task TEST_2_3_2_1;
       begin
+	 $display ("Driving Test 2.3.2.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h0000_0001, 32'h0000_0010);
       end
    endtask // TEST_2_3_2_1
    
    task TEST_2_3_2_2;
       begin
+	 $display ("Driving Test 2.3.2.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h7FFF_FFFF, 32'h8000_0000);
       end
    endtask // TEST_2_3_2_2
 
    task TEST_2_3_2_3;
       begin
+	 $display ("Driving Test 2.3.2.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h0000_0000, 32'h0000_0001);
       end
    endtask // TEST_2_3_2_3
    
    task TEST_2_3_2_4;
       begin
+	 $display ("Driving Test 2.3.2.4 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h0000_0000, 32'hFFFF_FFFF);
       end
    endtask // TEST_2_3_2_4
    
    task TEST_2_3_2_5;
       begin
+	 $display ("Driving Test 2.3.2.5 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_SUB, 32'h0000_0001, 32'h8000_0000);
       end
    endtask // TEST_2_3_2_5
@@ -302,18 +333,21 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    
    task TEST_3_1_1_1;
       begin
+	 $display ("Driving Test 3.1.1.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'hAAAAAAAA, 1);
       end
    endtask // TEST_3_1_1_1
       
    task TEST_3_1_1_2;
       begin
+	 $display ("Driving Test 3.1.1.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'h55555555, 1);
       end
    endtask // TEST_3_1_1_2
       
    task TEST_3_1_1_3;
       begin
+	 $display ("Driving Test 3.1.1.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'h0F0F0F0F, 4);
       end
    endtask // TEST_3_1_1_3
@@ -322,18 +356,21 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    
    task TEST_3_1_2_1;
       begin
+	 $display ("Driving Test 3.1.2.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'hAAAAAAAA, 1);
       end
    endtask // TEST_3_1_2_1
       
    task TEST_3_1_2_2;
       begin
+	 $display ("Driving Test 3.1.2.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'h55555555, 1);
       end
    endtask // TEST_3_1_2_2
       
    task TEST_3_1_2_3;
       begin
+	 $display ("Driving Test 3.1.2.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'hF0F0F0F0, 4);
       end
    endtask // TEST_3_1_2_3
@@ -342,36 +379,42 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    
    task TEST_3_2_1_1;
       begin
+	 $display ("Driving Test 3.2.1.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'h00000000, 32);
       end
    endtask // TEST_3_2_1_1
       
    task TEST_3_2_1_2;
       begin
+	 $display ("Driving Test 3.2.1.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'hFFFFFFFF, 32);
       end
    endtask // TEST_3_2_1_2
       
    task TEST_3_2_1_3;
       begin
+	 $display ("Driving Test 3.2.1.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'h00000001, 31);
       end
    endtask // TEST_3_2_1_3
       
    task TEST_3_2_1_4;
       begin
+	 $display ("Driving Test 3.2.1.4 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'hFFFFFFFF, 32'hFFFFFFFF);
       end
    endtask // TEST_3_2_1_4
       
    task TEST_3_2_1_5;
       begin
+	 $display ("Driving Test 3.2.1.5 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'hFFFFFFFF, 0);
       end
    endtask // TEST_3_2_1_5
       
    task TEST_3_2_1_6;
       begin
+	 $display ("Driving Test 3.2.1.6 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_LSH, 32'h00000000, 0);
       end
    endtask // TEST_3_2_1_6
@@ -380,36 +423,42 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    
    task TEST_3_2_2_1;
       begin
+	 $display ("Driving Test 3.2.2.1 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'h00000000, 32);
       end
    endtask // TEST_3_2_2_1
       
    task TEST_3_2_2_2;
       begin
+	 $display ("Driving Test 3.2.2.2 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'hFFFFFFFF, 32);
       end
    endtask // TEST_3_2_2_2
       
    task TEST_3_2_2_3;
       begin
+	 $display ("Driving Test 3.2.2.3 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'h80000000, 31);
       end
    endtask // TEST_3_2_2_3
       
    task TEST_3_2_2_4;
       begin
+	 $display ("Driving Test 3.2.2.4 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'hFFFFFFFF, 32'hFFFFFFFF);
       end
    endtask // TEST_3_2_2_4
       
    task TEST_3_2_2_5;
       begin
+	 $display ("Driving Test 3.2.2.5 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'hFFFFFFFF, 0);
       end
    endtask // TEST_3_2_2_5
       
    task TEST_3_2_2_6;
       begin
+	 $display ("Driving Test 3.2.2.6 @ t=%0t", $time);
 	 SIMPLE_TEST(CMD_RSH, 32'h00000000, 0);
       end
    endtask // TEST_3_2_2_6
@@ -424,152 +473,102 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	  reset[1] = 0;
 	#400 ;
 	
-	
-	$display ("Driving Test 2.1.1.1");
 	TEST_2_1_1_1();
 	
-	$display ("Driving Test 2.1.1.2");
 	TEST_2_1_1_2();
 	
-	$display ("Driving Test 2.1.1.3");
 	TEST_2_1_1_3();
 	
-	$display ("Driving Test 2.1.1.4");
 	TEST_2_1_1_4();
 
-	$display ("Driving Test 2.1.2.1");
 	TEST_2_1_2_1();
 
-	$display ("Driving Test 2.1.2.2");
 	TEST_2_1_2_2();
 	
-	$display ("Driving Test 2.1.3.1");
 	TEST_2_1_3_1();
      
-	$display ("Driving Test 2.1.3.2");
 	TEST_2_1_3_2();
 	
-	$display ("Driving Test 2.1.3.3");
 	TEST_2_1_3_3();
 	
-	$display ("Driving Test 2.1.3.4");
 	TEST_2_1_3_4();
 	
-	$display ("Driving Test 2.1.3.5");
 	TEST_2_1_3_5();
 	
-	$display ("Driving Test 2.1.3.6");
 	TEST_2_1_3_6();
 	
-	$display ("Driving Test 2.1.4.1");
 	TEST_2_1_4_1();
 	
-	$display ("Driving Test 2.1.4.2");
 	TEST_2_1_4_2();
 	
-	$display ("Driving Test 2.1.4.3");
 	TEST_2_1_4_3();
 	
-	$display ("Driving Test 2.1.4.4");
 	TEST_2_1_4_4();
 	
-	$display ("Driving Test 2.2.1.1");
 	TEST_2_2_1_1();
 	
-	$display ("Driving Test 2.2.1.2");
 	TEST_2_2_1_2();
 	
-	$display ("Driving Test 2.2.1.3");
 	TEST_2_2_1_3();
 	
-	$display ("Driving Test 2.2.2.1");
 	TEST_2_2_2_1();
 	
-	$display ("Driving Test 2.2.2.2");
 	TEST_2_2_2_2();
 	
-	$display ("Driving Test 2.2.2.3");
 	TEST_2_2_2_3();
 	
-	$display ("Driving Test 2.3.1.1");
 	TEST_2_3_1_1();
 	
-	$display ("Driving Test 2.3.1.2");
 	TEST_2_3_1_2();
 	
-	$display ("Driving Test 2.3.1.3");
 	TEST_2_3_1_3();
 	
-	$display ("Driving Test 2.3.1.4");
 	TEST_2_3_1_4();
 	
-	$display ("Driving Test 2.3.2.1");
 	TEST_2_3_2_1();
 	
-	$display ("Driving Test 2.3.2.2");
 	TEST_2_3_2_2();
 	
-	$display ("Driving Test 2.3.2.3");
 	TEST_2_3_2_3();
 	
-	$display ("Driving Test 2.3.2.4");
 	TEST_2_3_2_4();
 	
-	$display ("Driving Test 2.3.2.5");
 	TEST_2_3_2_5();
 	
-	$display ("Driving Test 3.1.1.1");
 	TEST_3_1_1_1();
 
-	$display ("Driving Test 3.1.1.2");
 	TEST_3_1_1_2();
 
-	$display ("Driving Test 3.1.1.3");
 	TEST_3_1_1_3();
 
-	$display ("Driving Test 3.1.2.1");
 	TEST_3_1_2_1();
 
-	$display ("Driving Test 3.1.2.2");
 	TEST_3_1_2_2();
 
-	$display ("Driving Test 3.1.2.3");
 	TEST_3_1_2_3();
 
-	$display ("Driving Test 3.2.1.1");
 	TEST_3_2_1_1();
 
-	$display ("Driving Test 3.2.1.2");
 	TEST_3_2_1_2();
 
-	$display ("Driving Test 3.2.1.3");
 	TEST_3_2_1_3();
 
-	$display ("Driving Test 3.2.1.4");
 	TEST_3_2_1_4();
 
-	$display ("Driving Test 3.2.1.5");
 	TEST_3_2_1_5();
 
-	$display ("Driving Test 3.2.1.6");
 	TEST_3_2_1_6();
 
-	$display ("Driving Test 3.2.2.1");
 	TEST_3_2_2_1();
 
-	$display ("Driving Test 3.2.2.2");
 	TEST_3_2_2_2();
 
-	$display ("Driving Test 3.2.2.3");
 	TEST_3_2_2_3();
 
-	$display ("Driving Test 3.2.2.4");
 	TEST_3_2_2_4();
 
-	$display ("Driving Test 3.2.2.5");
 	TEST_3_2_2_5();
 
-	$display ("Driving Test 3.2.2.6");
 	TEST_3_2_2_6();
 	
 	#800 $stop;
