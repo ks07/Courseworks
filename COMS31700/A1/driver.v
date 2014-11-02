@@ -507,6 +507,85 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_3_2_2_6
    
+   // TEST GROUP 5.1.1: Erroneous command inputs
+
+   task TEST_5_1_1_1;
+      begin
+	 $display ("Driving Test 5.1.1.1 @ t=%0t", $time);
+	 ERROR_TEST(3, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_1
+   
+   task TEST_5_1_1_2;
+      begin
+	 $display ("Driving Test 5.1.1.2 @ t=%0t", $time);
+	 ERROR_TEST(4, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_2
+   
+   task TEST_5_1_1_3;
+      begin
+	 $display ("Driving Test 5.1.1.3 @ t=%0t", $time);
+	 ERROR_TEST(7, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_3
+   
+   task TEST_5_1_1_4;
+      begin
+	 $display ("Driving Test 5.1.1.4 @ t=%0t", $time);
+	 ERROR_TEST(8, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_4
+   
+   task TEST_5_1_1_5;
+      begin
+	 $display ("Driving Test 5.1.1.5 @ t=%0t", $time);
+	 ERROR_TEST(9, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_5
+   
+   task TEST_5_1_1_6;
+      begin
+	 $display ("Driving Test 5.1.1.6 @ t=%0t", $time);
+	 ERROR_TEST(10, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_6
+   
+   task TEST_5_1_1_7;
+      begin
+	 $display ("Driving Test 5.1.1.7 @ t=%0t", $time);
+	 ERROR_TEST(11, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_7
+   
+   task TEST_5_1_1_8;
+      begin
+	 $display ("Driving Test 5.1.1.8 @ t=%0t", $time);
+	 ERROR_TEST(12, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_8
+   
+   task TEST_5_1_1_9;
+      begin
+	 $display ("Driving Test 5.1.1.9 @ t=%0t", $time);
+	 ERROR_TEST(13, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_9
+   
+   task TEST_5_1_1_10;
+      begin
+	 $display ("Driving Test 5.1.1.10 @ t=%0t", $time);
+	 ERROR_TEST(14, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_10
+   
+   task TEST_5_1_1_11;
+      begin
+	 $display ("Driving Test 5.1.1.11 @ t=%0t", $time);
+	 ERROR_TEST(15, 32'h1234_5678, 32'hFEDC_BA98);
+      end
+   endtask // TEST_5_1_1_11
+   
    initial
      begin
 
@@ -616,6 +695,28 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	TEST_3_2_2_5();
 
 	TEST_3_2_2_6();
+
+	TEST_5_1_1_1();
+
+	TEST_5_1_1_2();
+
+	TEST_5_1_1_3();
+
+	TEST_5_1_1_4();
+
+	TEST_5_1_1_5();
+
+	TEST_5_1_1_6();
+
+	TEST_5_1_1_7();
+
+	TEST_5_1_1_8();
+
+	TEST_5_1_1_9();
+
+	TEST_5_1_1_10();
+
+	TEST_5_1_1_11();
 	
 	#800 $stop;
 	
