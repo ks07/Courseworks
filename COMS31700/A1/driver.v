@@ -93,7 +93,7 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
    
    // Task to run a simple test on the driver on all 4 ports, that should require a reset between runs.
    task ERROR_TEST;
-      input [0:3] cmd;
+      input [0:3]  cmd;
       input [0:31] arg1;
       input [0:31] arg2;
       integer 	   ii;
@@ -115,6 +115,32 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 	   end // for (ii = 1; ii < PRT_LIM; ii = ii + 1)
       end
    endtask // SIMPLE_TEST
+
+   // Task to run a sequence of 4 tests across ports.
+   task SEQUENTIAL_TEST;
+      input [0:3]   cmd;
+      input [0:31]  arg1;
+      input [0:31]  arg2;
+      input integer port_seq [0:3];
+      input integer delay;
+      integer 	    ii;
+      integer 	    curr_port;
+      begin
+	 // We should be on a clock boundary, need to drive all signals for at least one cycle despite delay.
+	 for (ii = 0; ii < 4; ii = ii + 1)
+	   begin
+	      curr_port = port_seq[ii];
+	      req_cmd_out[curr_port] = cmd;
+	      req_data_out[curr_port] = arg1;
+	      # delay
+		req_cmd_out[curr_port] = CMD_NOP;
+	      req_data_out[curr_port] = arg2;
+	   end
+	 // Extra delay to give time for all commands.
+	 #2000 ;
+	 POST_TEST();
+      end
+   endtask // SEQUENTIAL_TEST
    
    // Task-ified tests.
 
@@ -507,6 +533,16 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
       end
    endtask // TEST_3_2_2_6
    
+   // TEST GROUP 4.1.1: Typical Port Scheduling
+   
+   task TEST_4_1_1_1;
+      integer ii;
+      begin
+	 $display ("Driving Test 4.1.1.1 @ t=%0t", $time);
+	 SEQUENTIAL_TEST(CMD_ADD, 32'hABCD_0000, 32'h0000_1234, '{1,2,3,4}, 100);
+      end
+   endtask // TEST_4_1_1_1
+   
    // TEST GROUP 4.5.1: Inactivity Test
 
    task TEST_4_5_1_1;
@@ -723,6 +759,8 @@ module calc1_driver(c_clk, reset, req_cmd_out[1], req_data_out[1], req_cmd_out[2
 
 	TEST_3_2_2_6();
 
+	TEST_4_1_1_1();
+	
 	TEST_4_5_1_1();
 	
 	TEST_5_1_1_1();
