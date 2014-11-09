@@ -55,6 +55,7 @@
 #include<time.h>
 #include<sys/time.h>
 #include<sys/resource.h>
+#include<string.h>
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -235,6 +236,9 @@ int propagate(const t_param params, my_float *restrict *restrict cells, my_float
   int ii,jj;            /* generic counters */
   int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
 
+  // The 0 values will always be the same, simple copy.
+  memcpy(tmp_cells[0], cells[0], sizeof(my_float) * (params.nx*params.ny));
+
   /* loop over _all_ cells */
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
@@ -247,9 +251,6 @@ int propagate(const t_param params, my_float *restrict *restrict cells, my_float
       /* propagate densities to neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
-      // TODO: MEMCPY?!11??!
-      tmp_cells[0][ii *params.nx + jj] = cells[0][ii*params.nx + jj]; /* central cell, */
-                                                                                     /* no movement   */
       tmp_cells[1][ii *params.nx + x_e] = cells[1][ii*params.nx + jj]; /* east */
       tmp_cells[2][y_n*params.nx + jj]  = cells[2][ii*params.nx + jj]; /* north */
       tmp_cells[3][ii *params.nx + x_w] = cells[3][ii*params.nx + jj]; /* west */
