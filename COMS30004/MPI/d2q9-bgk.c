@@ -309,23 +309,22 @@ int collision(const t_param params, my_float *const restrict *const restrict cel
   int curr_cell; // Stop re-calculating the array index repeatedly.
   const int cell_lim = (params.ny * params.nx);
 
+  // Let's try and memcpy this.
+  memcpy(cells[1], tmp_cells[3], sizeof(my_float) * (params.nx*params.ny));
+  memcpy(cells[2], tmp_cells[4], sizeof(my_float) * (params.nx*params.ny));
+  memcpy(cells[3], tmp_cells[1], sizeof(my_float) * (params.nx*params.ny));
+  memcpy(cells[4], tmp_cells[2], sizeof(my_float) * (params.nx*params.ny));
+  memcpy(cells[5], tmp_cells[7], sizeof(my_float) * (params.nx*params.ny));
+  memcpy(cells[6], tmp_cells[8], sizeof(my_float) * (params.nx*params.ny));
+  memcpy(cells[7], tmp_cells[5], sizeof(my_float) * (params.nx*params.ny));
+  memcpy(cells[8], tmp_cells[6], sizeof(my_float) * (params.nx*params.ny));
+
   /* loop over the cells in the grid
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
   for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
-      if(obstacles[curr_cell]) {
-	/* called after propagate, so taking values from scratch space
-	** mirroring, and writing into main grid */
-	cells[1][curr_cell] = tmp_cells[3][curr_cell];
-	cells[2][curr_cell] = tmp_cells[4][curr_cell];
-	cells[3][curr_cell] = tmp_cells[1][curr_cell];
-	cells[4][curr_cell] = tmp_cells[2][curr_cell];
-	cells[5][curr_cell] = tmp_cells[7][curr_cell];
-	cells[6][curr_cell] = tmp_cells[8][curr_cell];
-	cells[7][curr_cell] = tmp_cells[5][curr_cell];
-	cells[8][curr_cell] = tmp_cells[6][curr_cell];
-      } else {
+      if(!obstacles[curr_cell]) {
 	/* don't consider occupied cells */
 	/* compute local density total */
 	local_density = 0.0;
