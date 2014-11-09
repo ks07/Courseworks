@@ -62,11 +62,11 @@
 
 // Add an easy way to switch between single and double precision math.
 #ifdef SINGLE_PRECISION
-#define my_float float
+typedef float my_float;
 #define my_sqrt sqrtf
 #define MY_FLOAT_PATTERN "%f\n"
 #else
-#define my_float double
+typedef double my_float;
 #define my_sqrt sqrt
 #define MY_FLOAT_PATTERN "%lf\n"
 #endif
