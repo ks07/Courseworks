@@ -106,7 +106,6 @@ int initialise(const char* paramfile, const char* obstaclefile,
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles);
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells);
-int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int write_values(const t_param params, t_speed* cells, int* obstacles, my_float* av_vels);
 
@@ -197,7 +196,6 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 {
   accelerate_flow(params,cells,obstacles);
   propagate(params,cells,tmp_cells);
-  rebound(params,cells,tmp_cells,obstacles);
   collision(params,cells,tmp_cells,obstacles);
   return EXIT_SUCCESS; 
 }
@@ -267,34 +265,9 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
   return EXIT_SUCCESS;
 }
 
-int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
-{
-  int curr_cell;  /* generic counters */
-  const int cell_lim = (params.ny * params.nx);
-
-  /* loop over the cells in the grid */
-  for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
-    /* if the cell contains an obstacle */
-    if(obstacles[curr_cell]) {
-	/* called after propagate, so taking values from scratch space
-	** mirroring, and writing into main grid */
-	cells[curr_cell].speeds[1] = tmp_cells[curr_cell].speeds[3];
-	cells[curr_cell].speeds[2] = tmp_cells[curr_cell].speeds[4];
-	cells[curr_cell].speeds[3] = tmp_cells[curr_cell].speeds[1];
-	cells[curr_cell].speeds[4] = tmp_cells[curr_cell].speeds[2];
-	cells[curr_cell].speeds[5] = tmp_cells[curr_cell].speeds[7];
-	cells[curr_cell].speeds[6] = tmp_cells[curr_cell].speeds[8];
-	cells[curr_cell].speeds[7] = tmp_cells[curr_cell].speeds[5];
-	cells[curr_cell].speeds[8] = tmp_cells[curr_cell].speeds[6];
-      }
-    }
-
-  return EXIT_SUCCESS;
-}
-
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
-  int kk;                 /* generic counters */
+  int kk;                         /* generic counters */
   const my_float c_sq = 1.0/3.0;  /* square of speed of sound */
   const my_float w0 = 4.0/9.0;    /* weighting factor */
   const my_float w1 = 1.0/9.0;    /* weighting factor */
@@ -313,8 +286,19 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
   for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
-      /* don't consider occupied cells */
-      if(!obstacles[curr_cell]) {
+      if(obstacles[curr_cell]) {
+	/* called after propagate, so taking values from scratch space
+	** mirroring, and writing into main grid */
+	cells[curr_cell].speeds[1] = tmp_cells[curr_cell].speeds[3];
+	cells[curr_cell].speeds[2] = tmp_cells[curr_cell].speeds[4];
+	cells[curr_cell].speeds[3] = tmp_cells[curr_cell].speeds[1];
+	cells[curr_cell].speeds[4] = tmp_cells[curr_cell].speeds[2];
+	cells[curr_cell].speeds[5] = tmp_cells[curr_cell].speeds[7];
+	cells[curr_cell].speeds[6] = tmp_cells[curr_cell].speeds[8];
+	cells[curr_cell].speeds[7] = tmp_cells[curr_cell].speeds[5];
+	cells[curr_cell].speeds[8] = tmp_cells[curr_cell].speeds[6];
+      } else {
+	/* don't consider occupied cells */
 	/* compute local density total */
 	local_density = 0.0;
 	for(kk=0;kk<NSPEEDS;kk++) {
