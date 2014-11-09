@@ -83,9 +83,6 @@ typedef struct {
   my_float omega;         /* relaxation parameter */
 } t_param;
 
-/* struct to hold the 'speed' values. Altered to hold array of  */
-//typedef my_float** t_speed;
-
 // struct to hold adjacency values.
 typedef struct {
   unsigned int index[NSPEEDS];
