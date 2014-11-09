@@ -257,7 +257,7 @@ void propagate_prep(const t_param params, t_adjacency* adjacency)
       y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
       x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
       // Pre-calculate the adjacent cells to propagate to.
-      adjacency[ii*params.nx + jj].index[0] = ii * params.nx + jj; // Centre TODO: Ignore?
+      //adjacency[ii*params.nx + jj].index[0] = ii * params.nx + jj; // Centre TODO: Ignore?
       adjacency[ii*params.nx + jj].index[1] = ii * params.nx + x_e; // N
       adjacency[ii*params.nx + jj].index[2] = y_n * params.nx + jj; // E
       adjacency[ii*params.nx + jj].index[3] = ii * params.nx + x_w; // W
