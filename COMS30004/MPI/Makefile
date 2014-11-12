@@ -7,8 +7,8 @@ EXES=$(EXE1)
 #CC=tau_cc.sh
 #CC=icc
 CC=mpicc
-#CFLAGS=-O3 -lm -Wall -ffast-math -march=native -DSINGLE_PRECISION
-CFLAGS=-O3 -ipo -xHOST -no-prec-div -no-prec-sqrt -DSINGLE_PRECISION
+CFLAGS=-O3 -lm -Wall -ffast-math -march=native -DSINGLE_PRECISION -std=c99
+#CFLAGS=-O3 -ipo -xHOST -no-prec-div -no-prec-sqrt -DSINGLE_PRECISION
 
 all: $(EXES)
 
