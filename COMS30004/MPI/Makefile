@@ -21,4 +21,4 @@ clean:
 	\rm -f $(EXES)
 
 eclean:
-	\rm OPENMP.e*
+	\rm -f MPI.e*
