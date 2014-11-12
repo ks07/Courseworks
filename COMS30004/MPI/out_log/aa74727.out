@@ -1,0 +1,11 @@
+Running on host node47-001
+Time is Wed Nov 12 14:31:12 GMT 2014
+Directory is /panfs/panasas01/cosc/gf12815/Courseworks/COMS30004/MPI
+PBS job ID is 1807298.master.cm.cluster
+This jobs runs on the following machines:
+node47-001
+==done==
+Reynolds number:		9.757619857788E+00
+Elapsed time:			45.480705 (s)
+Elapsed user CPU time:		45.322109 (s)
+Elapsed system CPU time:	0.031995 (s)
