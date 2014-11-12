@@ -1,0 +1,44 @@
+0) Initial Code (init)
+
+41.9s
+
+1) Merge rebound and collision (f88a1f2)
+
+39.8(6)s
+
+2) Switch from struct array to 9 large arrays (f6a0383)
+
+Much slower! 45.0s Keep at it in case we can do something with this.
+
+3) Take out the typedef and add restrict keywords (16f73f2)
+
+Slower again?! 46.17s
+
+4) Use memcpy in propagate for speed 0 (82c7d34)
+
+45.66s
+
+5) Try marking cell pointers as const. (d6bd57f)
+
+Negligible. 45.65s
+
+6) Try calculating cell adjacency only once and storing indices in a cache. (f9cc748)
+
+Slightly faster: 43.76s
+
+7) Try memcpy before the collision loop, to remove loop rebound. (aa74727)
+
+Slower - potentially double the reads/writes! 45.47s
+
+8) Revert to 6. Try intel compiler mpiicc (icc v15).
+(Needs modules intel-cluster-studio/impi/64/4.1.0/024, languages/intel-compiler-15)
+35.0s!
+
+9) Compare this to icc on [1]
+
+Faster still - 30.36s
+Perhaps this vectorisation lark is a bit too complicated - might be harder for MPI to work with too
+
+10) Revert back to [1], but cherry-pick changes from [6] and 8f17730.
+
+
