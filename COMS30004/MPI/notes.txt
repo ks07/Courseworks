@@ -41,4 +41,5 @@ Perhaps this vectorisation lark is a bit too complicated - might be harder for M
 
 10) Revert back to [1], but cherry-pick changes from [6] and 8f17730.
 
+ICC: 29.24s!
 
