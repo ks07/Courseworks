@@ -34,4 +34,4 @@ echo This jobs runs on the following machines:
 echo `cat $PBS_NODEFILE | uniq`
 
 #! Run the executable
-$application $options
+mpirun $application $options
