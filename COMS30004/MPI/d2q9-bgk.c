@@ -62,11 +62,11 @@
 
 // Add an easy way to switch between single and double precision math.
 #ifdef SINGLE_PRECISION
-#define my_float float
+typedef float my_float;
 #define my_sqrt sqrtf
 #define MY_FLOAT_PATTERN "%f\n"
 #else
-#define my_float double
+typedef double my_float;
 #define my_sqrt sqrt
 #define MY_FLOAT_PATTERN "%lf\n"
 #endif
@@ -87,6 +87,11 @@ typedef struct {
   my_float speeds[NSPEEDS];
 } t_speed;
 
+// struct to hold adjacency indices
+typedef struct {
+  unsigned int index[NSPEEDS];
+} t_adjacency;
+
 enum boolean { FALSE, TRUE };
 
 /*
@@ -96,16 +101,17 @@ enum boolean { FALSE, TRUE };
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
 int initialise(const char* paramfile, const char* obstaclefile,
 	       t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr, 
-	       int** obstacles_ptr, my_float** av_vels_ptr);
+	       int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency);
 
 /* 
 ** The main calculation methods.
 ** timestep calls, in order, the functions:
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
-int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
+int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, t_adjacency* adjacency);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles);
-int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells);
+int propagate_prep(const t_param params, t_adjacency* adjacency);
+int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency);
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int write_values(const t_param params, t_speed* cells, int* obstacles, my_float* av_vels);
 
@@ -146,6 +152,7 @@ int main(int argc, char* argv[])
   double tic,toc;               /* floating point numbers to calculate elapsed wallclock time */
   double usrtim;                /* floating point number to record elapsed user CPU time */
   double systim;                /* floating point number to record elapsed system CPU time */
+  t_adjacency* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
 
   /* parse the command line */
   if(argc != 3) {
@@ -157,14 +164,17 @@ int main(int argc, char* argv[])
   }
 
   /* initialise our data structures and load values from file */
-  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels);
+  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
   /* iterate for maxIters timesteps */
   gettimeofday(&timstr,NULL);
   tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
+  // Can we do this outside the timing? Probably not!
+  propagate_prep(params, adjacency);
+
   for (ii=0;ii<params.maxIters;ii++) {
-    timestep(params,cells,tmp_cells,obstacles);
+    timestep(params,cells,tmp_cells,obstacles,adjacency);
     av_vels[ii] = av_velocity(params,cells,obstacles);
 #ifdef DEBUG
     printf("==timestep: %d==\n",ii);
@@ -192,10 +202,10 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
+int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, t_adjacency* adjacency)
 {
   accelerate_flow(params,cells,obstacles);
-  propagate(params,cells,tmp_cells);
+  propagate(params,cells,tmp_cells,adjacency);
   collision(params,cells,tmp_cells,obstacles);
   return EXIT_SUCCESS; 
 }
@@ -232,7 +242,7 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
   return EXIT_SUCCESS;
 }
 
-int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
+int propagate_prep(const t_param params, t_adjacency* adjacency)
 {
   int ii,jj;            /* generic counters */
   int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
@@ -246,20 +256,42 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
       x_e = (jj + 1) % params.nx;
       y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
       x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
-      /* propagate densities to neighbouring cells, following
-      ** appropriate directions of travel and writing into
-      ** scratch space grid */
-      tmp_cells[ii *params.nx + jj].speeds[0]  = cells[ii*params.nx + jj].speeds[0]; /* central cell, */
-                                                                                     /* no movement   */
-      tmp_cells[ii *params.nx + x_e].speeds[1] = cells[ii*params.nx + jj].speeds[1]; /* east */
-      tmp_cells[y_n*params.nx + jj].speeds[2]  = cells[ii*params.nx + jj].speeds[2]; /* north */
-      tmp_cells[ii *params.nx + x_w].speeds[3] = cells[ii*params.nx + jj].speeds[3]; /* west */
-      tmp_cells[y_s*params.nx + jj].speeds[4]  = cells[ii*params.nx + jj].speeds[4]; /* south */
-      tmp_cells[y_n*params.nx + x_e].speeds[5] = cells[ii*params.nx + jj].speeds[5]; /* north-east */
-      tmp_cells[y_n*params.nx + x_w].speeds[6] = cells[ii*params.nx + jj].speeds[6]; /* north-west */
-      tmp_cells[y_s*params.nx + x_w].speeds[7] = cells[ii*params.nx + jj].speeds[7]; /* south-west */      
-      tmp_cells[y_s*params.nx + x_e].speeds[8] = cells[ii*params.nx + jj].speeds[8]; /* south-east */      
+      //Pre-calculate the adjacent cells to propagate to.
+      //adjacency[ii*params.nx + jj].index[0] = ii * params.nx + jj; // Centre, ignore
+      adjacency[ii*params.nx + jj].index[1] = ii * params.nx + x_e; // N
+      adjacency[ii*params.nx + jj].index[2] = y_n * params.nx + jj; // E
+      adjacency[ii*params.nx + jj].index[3] = ii * params.nx + x_w; // W
+      adjacency[ii*params.nx + jj].index[4] = y_s * params.nx + jj; // S
+      adjacency[ii*params.nx + jj].index[5] = y_n * params.nx + x_e; // NE
+      adjacency[ii*params.nx + jj].index[6] = y_n * params.nx + x_w; // NW
+      adjacency[ii*params.nx + jj].index[7] = y_s * params.nx + x_w; // SW
+      adjacency[ii*params.nx + jj].index[8] = y_s * params.nx + x_e; // SE
     }
+  }
+
+  return EXIT_SUCCESS;
+}
+
+int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
+{
+  int curr_cell; // Stop re-calculating the array index repeatedly.
+  const int cell_lim = (params.ny * params.nx);
+
+  /* loop over _all_ cells */
+  for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
+    /* propagate densities to neighbouring cells, following
+    ** appropriate directions of travel and writing into
+    ** scratch space grid */
+    tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
+                                                                                     /* no movement */
+    tmp_cells[adjacency[curr_cell].index[1]].speeds[1] = cells[curr_cell].speeds[1]; /* east */
+    tmp_cells[adjacency[curr_cell].index[2]].speeds[2] = cells[curr_cell].speeds[2]; /* north */
+    tmp_cells[adjacency[curr_cell].index[3]].speeds[3] = cells[curr_cell].speeds[3]; /* west */
+    tmp_cells[adjacency[curr_cell].index[4]].speeds[4] = cells[curr_cell].speeds[4]; /* south */
+    tmp_cells[adjacency[curr_cell].index[5]].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
+    tmp_cells[adjacency[curr_cell].index[6]].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
+    tmp_cells[adjacency[curr_cell].index[7]].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
+    tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
   }
 
   return EXIT_SUCCESS;
@@ -377,7 +409,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 
 int initialise(const char* paramfile, const char* obstaclefile,
 	       t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr, 
-	       int** obstacles_ptr, my_float** av_vels_ptr)
+	       int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency)
 {
   char   message[1024];  /* message buffer */
   FILE   *fp;            /* file pointer */
@@ -446,6 +478,11 @@ int initialise(const char* paramfile, const char* obstaclefile,
   *obstacles_ptr = malloc(sizeof(int*)*(params->ny*params->nx));
   if (*obstacles_ptr == NULL) 
     die("cannot allocate column memory for obstacles",__LINE__,__FILE__);
+
+  /* adjacency for propagate */
+  *adjacency = malloc(sizeof(t_adjacency) * (params->ny*params->nx));
+  if (*adjacency == NULL)
+    die("cannot allocate adjacency memory",__LINE__,__FILE__);
 
   /* initialise densities */
   w0 = params->density * 4.0/9.0;
