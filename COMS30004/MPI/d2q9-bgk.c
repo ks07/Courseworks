@@ -55,6 +55,7 @@
 #include<time.h>
 #include<sys/time.h>
 #include<sys/resource.h>
+#include "mpi.h"
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -153,14 +154,30 @@ int main(int argc, char* argv[])
   double usrtim;                /* floating point number to record elapsed user CPU time */
   double systim;                /* floating point number to record elapsed system CPU time */
   t_adjacency* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
+  int rank;
+  int size;
 
   /* parse the command line */
   if(argc != 3) {
     usage(argv[0]);
   }
   else{
+    // Init MPI, startup processes. Blocks until all ready.
+    MPI_Init( &argc, &argv );
+
+    // Get size and rank of the current process.
+    MPI_Comm_size( MPI_COMM_WORLD, &size );
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
     paramfile = argv[1];
     obstaclefile = argv[2];
+  }
+
+  //printf("I'm rank %d of %d", rank, size);
+  //MPI_Barrier(MPI_COMM_WORLD);
+  
+  if (rank != 0) {
+    return(EXIT_SUCCESS);
   }
 
   /* initialise our data structures and load values from file */
@@ -715,7 +732,7 @@ void die(const char* message, const int line, const char *file)
   fprintf(stderr, "Error at line %d of file %s:\n", line, file);
   fprintf(stderr, "%s\n",message);
   fflush(stderr);
-  exit(EXIT_FAILURE);
+  MPI_Abort(MPI_COMM_WORLD,EXIT_FAILURE);
 }
 
 void usage(const char* exe)
