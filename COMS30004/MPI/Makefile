@@ -21,5 +21,7 @@ $(EXES): %.exe : %.c
 clean:
 	\rm -f $(EXES)
 
-eclean:
+oclean:
 	\rm -f MPI.e*
+	\rm -f machine.file.*
+	\rm -f OUT
