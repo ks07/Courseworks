@@ -102,7 +102,7 @@ enum boolean { FALSE, TRUE };
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
 int initialise(const char* paramfile, const char* obstaclefile,
 	       t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr, 
-	       int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency);
+	       int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency, int rank, int size);
 
 /* 
 ** The main calculation methods.
@@ -154,8 +154,9 @@ int main(int argc, char* argv[])
   double usrtim;                /* floating point number to record elapsed user CPU time */
   double systim;                /* floating point number to record elapsed system CPU time */
   t_adjacency* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
-  int rank;
-  int size;
+  int rank; // This processes number.
+  int size; // The total number of processes.
+
 
   /* parse the command line */
   if(argc != 3) {
@@ -175,13 +176,9 @@ int main(int argc, char* argv[])
 
   //printf("I'm rank %d of %d", rank, size);
   //MPI_Barrier(MPI_COMM_WORLD);
-  
-  if (rank != 0) {
-    return(EXIT_SUCCESS);
-  }
 
   /* initialise our data structures and load values from file */
-  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
+  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency, rank, size);
 
   /* iterate for maxIters timesteps */
   gettimeofday(&timstr,NULL);
@@ -426,7 +423,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 
 int initialise(const char* paramfile, const char* obstaclefile,
 	       t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr, 
-	       int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency)
+	       int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency, int rank, int size)
 {
   char   message[1024];  /* message buffer */
   FILE   *fp;            /* file pointer */
@@ -435,6 +432,9 @@ int initialise(const char* paramfile, const char* obstaclefile,
   int    blocked;        /* indicates whether a cell is blocked by an obstacle */ 
   int    retval;         /* to hold return value for checking */
   double w0,w1,w2;       /* weighting factors */
+  int slice_start, slice_end; // Start and end index of the current slice.
+  int slice_next, slice_prev; // Ranks of the previous and following slices.
+  int slice_len; // Number of cells per slice.
 
   /* open the parameter file */
   fp = fopen(paramfile,"r");
@@ -481,6 +481,23 @@ int initialise(const char* paramfile, const char* obstaclefile,
   ** a 1D array of these structs.
   */
 
+  // Each grid will now be split into smaller subsections. To make life easy, we will use row based chunks
+  // that are simply row sized chunks of the larger array. We know that any access to higher indices than the current
+  // rank must be to the following slice (as the interactions are only between neighbouring cells). Similar for lower.
+
+  // Set the slice length, rounded to a full row.
+  slice_len = ((int)(params->ny / size)) * params->nx;
+
+  if (slice_len * size != params->ny * params->nx) {
+    die("cannot handle uneven slice divisions!",__LINE__,__FILE__);
+  }
+
+  slice_start = rank * slice_len;
+  slice_end = (rank + 1) * slice_len - 1;
+
+  printf("Slice length: %d (%d - %d)\n", slice_len, slice_start, slice_end);
+  MPI_Barrier(MPI_COMM_WORLD);
+  die("a",1,"f");
   /* main grid */
   *cells_ptr = (t_speed*)malloc(sizeof(t_speed)*(params->ny*params->nx));
   if (*cells_ptr == NULL) 
