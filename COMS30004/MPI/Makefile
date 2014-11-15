@@ -25,3 +25,5 @@ oclean:
 	\rm -f MPI.e*
 	\rm -f machine.file.*
 	\rm -f OUT
+	\rm -f av_vels.dat
+	\rm -f final_state.dat
