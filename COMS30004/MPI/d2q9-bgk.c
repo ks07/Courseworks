@@ -72,6 +72,10 @@ typedef double my_float;
 #define MY_FLOAT_PATTERN "%lf\n"
 #endif
 
+// If true, slices should not communicate in this direction, as they are alone in this axis.
+#define SINGLE_SLICE_Y 0
+#define SINGLE_SLICE_X 1
+
 /* struct to hold the parameter values */
 typedef struct {
   int    nx;            /* no. of cells in x-direction */
@@ -90,6 +94,11 @@ typedef struct {
   int slice_buff_len; // Size of the slice buffer, including overlap for halo.
   int slice_pre; // Start index of the current slice including halo overlap.
   int slice_post; // Last index of the current slice including halo overlap.
+  int slice_inner_start; // Local index of the first non-buffer cell.
+  int slice_inner_end; // Local index of the last non-buffer cell.
+  // Offset for nx and ny is going to be 1, as we only need a single cell border for exchange.
+  int slice_nx; // Number of cells in the x direction in slice (inner).
+  int slice_ny; // Number of cells in the y direction in slice (inner).
 } t_param;
 
 /* struct to hold the 'speed' values */
@@ -253,6 +262,8 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
 
   printf("r:%d %d %d %d\n", params.rank, curr_cell, slice_index(params, curr_cell), cell_lim);
 
+
+  // THIS FUNCTION LOOPS OVER GLOBAL COORDINATES. REMEMBER TO TRANSLATE BEFORE ACCESS.
   for(;curr_cell<cell_lim;curr_cell++) {
     // TODO: We're wasting time doing this with horizontal slices... but maybe this is better in the long run
     if (within_slice(params, curr_cell)) {
@@ -276,6 +287,7 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
     }
   }
 
+
   printf("out of accel, %d\n", params.rank);
   return EXIT_SUCCESS;
 }
@@ -291,28 +303,33 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
   // PROTIP: ii is y, jj is x
 
   /* loop over _all_ cells */
-  for(ii=0;ii<params.ny;ii++) {
-    for(jj=0;jj<params.nx;jj++) {
-      // Check that the given index is within our current workspace.
-      // TODO: We can do this more efficiently, but we only do it once...
-      if (within_slice(params, ii*params.nx + jj)) {
-	curr_cell = slice_index(params, ii*params.nx + jj);
-	/* determine indices of axis-direction neighbours
-	** respecting periodic boundary conditions (wrap around) */
-	y_n = (ii + 1);
-	x_e = (jj + 1) % params.nx;
-	y_s = (ii - 1);
-	x_w = (jj == 0) ? (params.nx - 1) : (jj - 1);
-	// TODO: THIS WILL DEFINITELY BREAK
-	//Pre-calculate the adjacent cells to propagate to.
-	adjacency[curr_cell].index[1] = slice_index(params, ii * params.nx + x_e); // E
-	adjacency[curr_cell].index[2] = slice_index(params, y_n * params.nx + jj); // N
-	adjacency[curr_cell].index[3] = slice_index(params, ii * params.nx + x_w); // W
-	adjacency[curr_cell].index[4] = slice_index(params, y_s * params.nx + jj); // S
-	adjacency[curr_cell].index[5] = slice_index(params, y_n * params.nx + x_e); // NE
-	adjacency[curr_cell].index[6] = slice_index(params, y_n * params.nx + x_w); // NW
-	adjacency[curr_cell].index[7] = slice_index(params, y_s * params.nx + x_w); // SW
-	adjacency[curr_cell].index[8] = slice_index(params, y_s * params.nx + x_e); // SE
+  for(ii=1;ii<params.slice_ny+1;ii++) {
+    for(jj=1;jj<params.slice_nx+1;jj++) {
+      curr_cell = ii*params.nx + jj;
+      /* determine indices of axis-direction neighbours
+      ** respecting periodic boundary conditions (wrap around) */
+      // Unless SINGLE_SLICE_X|Y is set, we do not need to worry about wrap around,
+      // thanks to the presence of buffer space around us. If it is set, then we need to check
+      // if we are on a boundary and borrow our own values from the opposite edge.
+      x_e = (SINGLE_SLICE_X) ? (jj % params.slice_nx) + 1 : (jj + 1);
+      x_w = (SINGLE_SLICE_X && jj == 1) ? params.slice_nx : (jj - 1);
+      y_n = (SINGLE_SLICE_Y) ? (ii % params.slice_ny) + 1 : (ii + 1);
+      y_s = (SINGLE_SLICE_Y && ii == 1) ? params.slice_ny : (ii - 1);
+      // TODO: THIS WILL DEFINITELY BREAK
+      //Pre-calculate the adjacent cells to propagate to.
+      adjacency[curr_cell].index[1] = ii * params.nx + x_e; // E
+      adjacency[curr_cell].index[2] = y_n * params.nx + jj; // N
+      adjacency[curr_cell].index[3] = ii * params.nx + x_w; // W
+      adjacency[curr_cell].index[4] = y_s * params.nx + jj; // S
+      adjacency[curr_cell].index[5] = y_n * params.nx + x_e; // NE
+      adjacency[curr_cell].index[6] = y_n * params.nx + x_w; // NW
+      adjacency[curr_cell].index[7] = y_s * params.nx + x_w; // SW
+      adjacency[curr_cell].index[8] = y_s * params.nx + x_e; // SE
+      for (int kk=1;kk<9;kk++) {
+	if (adjacency[curr_cell].index[kk] < 0 || adjacency[curr_cell].index[kk] >+ params.slice_buff_len) {
+	  printf("%d is out of range in rank %d in cell (%d,%d)\n", adjacency[curr_cell].index[kk], params.rank, jj, ii);
+	  die("SHIIIIIIIIT\n",__LINE__,__FILE__);
+	}
       }
     }
   }
@@ -326,7 +343,7 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
   int curr_cell; // Stop re-calculating the array index repeatedly.
 
   /* loop over _all_ cells */
-  for(curr_cell=params.nx;curr_cell<(params.slice_len+params.nx);++curr_cell) {
+  for(curr_cell=params.slice_inner_start;curr_cell<params.slice_inner_end;++curr_cell) {
     /* propagate densities to neighbouring cells, following
     ** appropriate directions of travel and writing into
     ** scratch space grid */
@@ -527,6 +544,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
     die("cannot handle uneven slice divisions!",__LINE__,__FILE__);
   }
 
+  // Global index of the slice opening.
   params->slice_start = params->rank * params->slice_len;
   params->slice_end = (params->rank + 1) * params->slice_len - 1; // Need to exclude the last element due to 0 indexing.
 
@@ -534,9 +552,21 @@ int initialise(const char* paramfile, const char* obstaclefile,
   params->slice_pre = params->slice_start - params->nx;
   params->slice_post = params->slice_end + params->nx;
 
-  params->slice_buff_len = params->slice_post - params->slice_pre;
+  // BEWARE: TODO: OMG: Above values are probably completely bogus and based on old assumptions.
 
-  printf("Rank: %d, Slice length: %d (%d - %d)\n", params->rank, params->slice_len, params->slice_start, params->slice_end);
+  // Set the inner slice sizes.
+  params->slice_nx = params->nx; // TODO: Support 2d slice grid.
+  params->slice_ny = (int)(params->ny / params->size);
+
+  // Total size of the buffer including exchange space.
+  params->slice_buff_len = (params->slice_nx + 2) * (params->slice_ny + 2);
+
+  // Want to know the index in a local sense for loops
+  params->slice_inner_start = (params->slice_nx + 2) + 1; // ii (=1) * nx (=snx+2) + jj (=1)
+  params->slice_inner_end = params->slice_ny * (params->slice_nx + 2) + params->slice_nx;
+  // Start is obviously 0, with end being ((ny + 2) * (nx + 2)) - 1
+
+  printf("\n\nRank:%d\nSlice len:%d\nSlice start:%d\nSlice end:%d\nSlice pre:%d\nSlice post:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n\n", params->rank, params->slice_len, params->slice_start, params->slice_end, params->slice_pre, params->slice_post, params->slice_inner_start, params->slice_inner_end, params->slice_buff_len);
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* main grid */
