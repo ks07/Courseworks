@@ -245,7 +245,6 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
 {
-  int ii,jj;     /* generic counters */
   int curr_cell = (params.ny - 2) * params.nx; /* modify the 2nd row of the grid */
   int my_cell; // Holds the offset cell index.
   const int cell_lim = curr_cell + params.nx;
@@ -465,7 +464,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 {
   char   message[1024];  /* message buffer */
   FILE   *fp;            /* file pointer */
-  int    ii,jj;          /* generic counters */
+  int    ii;             /* generic counters */
   int    xx,yy;          /* generic array indices */
   int    blocked;        /* indicates whether a cell is blocked by an obstacle */ 
   int    retval;         /* to hold return value for checking */
