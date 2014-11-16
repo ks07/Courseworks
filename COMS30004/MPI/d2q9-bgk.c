@@ -469,8 +469,6 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   }
 
   printf("out of coll, %d\n", params.rank);
-  MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
-  die("",0,"");
   return EXIT_SUCCESS; 
 }
 
@@ -708,7 +706,7 @@ my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
   /* loop over all non-blocked cells */
   for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
       /* ignore occupied cells */
-      if(!obstacles[curr_cell]) {
+    if(within_slice(params, curr_cell) && !obstacles[curr_cell]) {
 	/* local density total */
 	local_density = 0.0;
 	for(kk=0;kk<NSPEEDS;kk++) {
@@ -737,6 +735,9 @@ my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
     }
   }
 
+  printf("out of av_vel, %d %f %d\n", params.rank, tot_u, tot_cells);
+  MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
+  die("",0,"");
   return tot_u / (my_float)tot_cells;
 }
 
