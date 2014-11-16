@@ -358,8 +358,6 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
   }
 
   printf("out of prop, %d\n", params.rank);
-  MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
-  die("",0,"");
   return EXIT_SUCCESS;
 }
 
@@ -377,13 +375,13 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   my_float local_density;         /* sum of densities in a particular cell */
 
   int curr_cell; // Stop re-calculating the array index repeatedly.
-  const int cell_lim = (params.ny * params.nx);
+  const int cell_lim = params.slice_inner_end + 1; //TODO: We are wasting some work, but simplifying the loop. Should we unflatten the loop?
 
   /* loop over the cells in the grid
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
-  for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
+  for(curr_cell=params.slice_inner_start;curr_cell<cell_lim;++curr_cell) {
       if(obstacles[curr_cell]) {
 	/* called after propagate, so taking values from scratch space
 	** mirroring, and writing into main grid */
@@ -470,6 +468,9 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
     }
   }
 
+  printf("out of coll, %d\n", params.rank);
+  MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
+  die("",0,"");
   return EXIT_SUCCESS; 
 }
 
