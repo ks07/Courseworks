@@ -89,16 +89,16 @@ typedef struct {
   int size; // Number of slices.
   int rank; // Index of the current slice.
   int slice_len; // Size of the current slice.
-  int slice_start; // Start index of the current slice in terms of the global space.
-  int slice_end; // Last index of the current slice in terms of the global space.
   int slice_buff_len; // Size of the slice buffer, including overlap for halo.
-  int slice_pre; // Start index of the current slice including halo overlap.
-  int slice_post; // Last index of the current slice including halo overlap.
   int slice_inner_start; // Local index of the first non-buffer cell.
   int slice_inner_end; // Local index of the last non-buffer cell.
   // Offset for nx and ny is going to be 1, as we only need a single cell border for exchange.
   int slice_nx; // Number of cells in the x direction in slice (inner).
   int slice_ny; // Number of cells in the y direction in slice (inner).
+  int slice_global_xs; // The global minimum x coordinate of the current slice.
+  int slice_global_ys; // The global minimum y coordinate of the current slice.
+  int slice_global_xe; // The global maximum x coordinate of the current slice.
+  int slice_global_ye; // The global maximum y coordinate of the current slice.
 } t_param;
 
 /* struct to hold the 'speed' values */
@@ -151,8 +151,9 @@ my_float calc_reynolds(const t_param params, t_speed* cells, int* obstacles);
 /* utility functions */
 void die(const char* message, const int line, const char *file);
 void usage(const char* exe);
+int within_slice_c(const t_param params, const int jj, const int ii);
 int within_slice(const t_param params, const int index);
-int slice_index(const t_param params, const int index);
+//int slice_index(const t_param params, const int index);
 
 /*
 ** main program:
@@ -254,21 +255,18 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
 {
-  int curr_cell = (params.ny - 2) * params.nx; /* modify the 2nd row of the grid */
-  int my_cell; // Holds the offset cell index.
-  const int cell_lim = curr_cell + params.nx;
+  const int ii = params.ny - 2;
+  int jj, myii, myjj, my_cell;
   const my_float w1 = params.density * params.accel / 9.0; /* weighting factors */
   const my_float w2 = params.density * params.accel / 36.0;
 
-  printf("r:%d %d %d %d\n", params.rank, curr_cell, slice_index(params, curr_cell), cell_lim);
-
-
   // THIS FUNCTION LOOPS OVER GLOBAL COORDINATES. REMEMBER TO TRANSLATE BEFORE ACCESS.
-  for(;curr_cell<cell_lim;curr_cell++) {
-    // TODO: We're wasting time doing this with horizontal slices... but maybe this is better in the long run
-    if (within_slice(params, curr_cell)) {
+  for(jj=0;jj<params.nx;jj++) {
+    if (within_slice_c(params, jj, ii)) {
+      myii = ii - params.slice_global_ys; // Get the local y coord.
+      myjj = jj - params.slice_global_xs; // Get the local x coord.
       // Offset curr_cell based upon the slice bounds.
-      my_cell = slice_index(params, curr_cell);
+      my_cell = myii * params.slice_nx + myjj;
       /* if the cell is not occupied and
       ** we don't send a density negative */
       if( !obstacles[my_cell] && 
@@ -482,7 +480,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   char   message[1024];  /* message buffer */
   FILE   *fp;            /* file pointer */
   int    ii;             /* generic counters */
-  int    xx,yy;          /* generic array indices */
+  int    xt,yt,xx,yy;          /* generic array indices */
   int    blocked;        /* indicates whether a cell is blocked by an obstacle */ 
   int    retval;         /* to hold return value for checking */
   double w0,w1,w2;       /* weighting factors */
@@ -544,14 +542,6 @@ int initialise(const char* paramfile, const char* obstaclefile,
     die("cannot handle uneven slice divisions!",__LINE__,__FILE__);
   }
 
-  // Global index of the slice opening.
-  params->slice_start = params->rank * params->slice_len;
-  params->slice_end = (params->rank + 1) * params->slice_len - 1; // Need to exclude the last element due to 0 indexing.
-
-  // Need to store some neighbouring data for HALO exchange.
-  params->slice_pre = params->slice_start - params->nx;
-  params->slice_post = params->slice_end + params->nx;
-
   // BEWARE: TODO: OMG: Above values are probably completely bogus and based on old assumptions.
 
   // Set the inner slice sizes.
@@ -566,8 +556,22 @@ int initialise(const char* paramfile, const char* obstaclefile,
   params->slice_inner_end = params->slice_ny * (params->slice_nx + 2) + params->slice_nx;
   // Start is obviously 0, with end being ((ny + 2) * (nx + 2)) - 1
 
-  printf("\n\nRank:%d\nSlice len:%d\nSlice start:%d\nSlice end:%d\nSlice pre:%d\nSlice post:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n\n", params->rank, params->slice_len, params->slice_start, params->slice_end, params->slice_pre, params->slice_post, params->slice_inner_start, params->slice_inner_end, params->slice_buff_len);
-  MPI_Barrier(MPI_COMM_WORLD);
+  // Global index of the slice opening.
+  params->slice_global_xs = 0;
+  params->slice_global_ys = ((int)(params->ny / params->size)) * params->rank;
+  params->slice_global_xe = params->slice_global_xs + params->slice_nx;
+  params->slice_global_ye = params->slice_global_ys + params->slice_ny;
+
+  {
+    int r = 0;
+    while (r < params->size) {
+      if (params->rank == r) {
+	printf("\n\nRank:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n\n", params->rank, params->slice_len, params->slice_nx, params->slice_global_xs, params->slice_global_xe, params->slice_ny, params->slice_global_ys, params->slice_global_ye, params->slice_inner_start, params->slice_inner_end, params->slice_buff_len);
+      }
+      r++;
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+  }
 
   /* main grid */
   *cells_ptr = (t_speed*)malloc(sizeof(t_speed)*params->slice_buff_len);
@@ -578,7 +582,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   *tmp_cells_ptr = (t_speed*)malloc(sizeof(t_speed)*params->slice_buff_len);
   if (*tmp_cells_ptr == NULL) 
     die("cannot allocate memory for tmp_cells",__LINE__,__FILE__);
-  
+
   /* the map of obstacles */
   *obstacles_ptr = malloc(sizeof(int*)*params->slice_len);
   if (*obstacles_ptr == NULL) 
@@ -634,12 +638,18 @@ int initialise(const char* paramfile, const char* obstaclefile,
     if ( blocked != 1 ) 
       die("obstacle blocked value should be 1",__LINE__,__FILE__);
     // check that the blockage actually is within our bounds.
-    if (within_slice(*params, yy*params->nx + xx)) {
+    if (within_slice_c(*params, xx, yy)) {
       // Calculate the obstacle index in our grid.
-      ii = (yy*params->nx + xx) - params->slice_start;
+      xt=xx;yt=yy;
+      xx = xx - params->slice_global_xs + 1;
+      yy = yy - params->slice_global_ys + 1;
+      ii = (yy * (params->slice_nx + 2)) + xx;
 
-      if (ii >= params->slice_len)
+      // Not particularly bullet proof, but an -ok- sanity check.
+      if (ii > params->slice_inner_end || ii < params->slice_inner_start) {
+	printf("Rank: %d\txx: %d\tyy: %d\tii: %d\txt: %d\tyt: %d\n",params->rank,xx,yy,ii,xt,yt);
 	die("obstacle out of bounds in slice",__LINE__,__FILE__);
+      }
 
       /* assign to array */
       (*obstacles_ptr)[ii] = blocked;
@@ -836,12 +846,24 @@ void usage(const char* exe)
   exit(EXIT_FAILURE);
 }
 
-inline int within_slice(const t_param params, const int index)
+inline int within_slice_c(const t_param params, const int jj, const int ii)
 {
-  return index >= params.slice_start && index <= params.slice_end;
+  // jj == x, ii == y
+  return
+    (jj >= params.slice_global_xs) &&
+    (jj <  params.slice_global_xe) &&
+    (ii >= params.slice_global_ys) &&
+    (ii <  params.slice_global_ye);
 }
 
-inline int slice_index(const t_param params, const int index)
+inline int within_slice(const t_param params, const int index)
 {
-  return index - params.slice_start;
+  const int jj = index % params.nx;
+  const int ii = index / params.nx;
+  return within_slice_c(params, jj, ii);
 }
+
+/* inline int slice_index(const t_param params, const int index) */
+/* { */
+/*   return index - params.slice_start; */
+/* } */
