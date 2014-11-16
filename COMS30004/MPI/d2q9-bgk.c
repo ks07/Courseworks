@@ -157,8 +157,8 @@ int within_slice(const t_param params, const int index);
 
 void pobs(const t_param params, int* obstacles) {
   int ii,jj,curr_cell;
-  for(ii=1;ii<params.slice_ny+1;ii++) {
-    for(jj=1;jj<params.slice_nx+1;jj++) {
+  for(ii=0;ii<params.slice_ny;ii++) {
+    for(jj=0;jj<params.slice_nx;jj++) {
       curr_cell = ii*params.nx + jj;
       printf(obstacles[curr_cell] ? "#" : "_");
     }
@@ -172,19 +172,19 @@ void pobs(const t_param params, int* obstacles) {
 */
 int main(int argc, char* argv[])
 {
-  char*    paramfile = NULL;    /* name of the input parameter file */
-  char*    obstaclefile = NULL; /* name of a the input obstacle file */
-  t_param  params;              /* struct to hold parameter values */
-  t_speed* cells     = NULL;    /* grid containing fluid densities */
-  t_speed* tmp_cells = NULL;    /* scratch space */
-  int*     obstacles = NULL;    /* grid indicating which cells are blocked */
-  my_float*  av_vels   = NULL;    /* a record of the av. velocity computed for each timestep */
-  int      ii;                  /* generic counter */
-  struct timeval timstr;        /* structure to hold elapsed time */
-  struct rusage ru;             /* structure to hold CPU time--system and user */
-  double tic,toc;               /* floating point numbers to calculate elapsed wallclock time */
-  double usrtim;                /* floating point number to record elapsed user CPU time */
-  double systim;                /* floating point number to record elapsed system CPU time */
+  char*    paramfile = NULL;     /* name of the input parameter file */
+  char*    obstaclefile = NULL;  /* name of a the input obstacle file */
+  t_param  params;               /* struct to hold parameter values */
+  t_speed* cells     = NULL;     /* grid containing fluid densities */
+  t_speed* tmp_cells = NULL;     /* scratch space */
+  int*     obstacles = NULL;     /* grid indicating which cells are blocked */
+  my_float*  av_vels   = NULL;   /* a record of the av. velocity computed for each timestep */
+  int      ii;                   /* generic counter */
+  struct timeval timstr;         /* structure to hold elapsed time */
+  struct rusage ru;              /* structure to hold CPU time--system and user */
+  double tic,toc;                /* floating point numbers to calculate elapsed wallclock time */
+  double usrtim;                 /* floating point number to record elapsed user CPU time */
+  double systim;                 /* floating point number to record elapsed system CPU time */
   t_adjacency* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
 
   /* parse the command line */
@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
   pobs(params, obstacles);
-  while(1) {}
+  //  while(1) {}
 
   // Synchronise all processes before we enter the simulation loop.
   MPI_Barrier(MPI_COMM_WORLD);
@@ -277,13 +277,14 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
   // THIS FUNCTION LOOPS OVER GLOBAL COORDINATES. REMEMBER TO TRANSLATE BEFORE ACCESS.
   for(jj=0;jj<params.nx;jj++) {
     if (within_slice_c(params, jj, ii)) {
-      myii = ii - params.slice_global_ys; // Get the local y coord.
-      myjj = jj - params.slice_global_xs; // Get the local x coord.
+      myii = ii - params.slice_global_ys + 1; // Get the local y coord.
+      myjj = jj - params.slice_global_xs + 1; // Get the local x coord.
       // Offset curr_cell based upon the slice bounds.
-      my_cell = myii * params.slice_nx + myjj;
+      my_cell = myii * (params.slice_nx + 2) + myjj;
+      printf("r%d wants to accel %d,%d in my grid %d,%d = %d\n", params.rank, jj, ii, myjj, myii, my_cell);
       /* if the cell is not occupied and
       ** we don't send a density negative */
-      if( !obstacles[my_cell] && 
+      if( !obstacles[(myii - 1)*params.slice_nx+(myjj - 1)] && 
 	  (cells[my_cell].speeds[3] - w1) > 0.0 &&
 	  (cells[my_cell].speeds[6] - w2) > 0.0 &&
 	  (cells[my_cell].speeds[7] - w2) > 0.0 ) {
@@ -317,7 +318,7 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
   /* loop over _all_ cells */
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
-      curr_cell = ii*params.nx + jj;
+      curr_cell = ii*(params.slice_nx+2) + jj;
       /* determine indices of axis-direction neighbours
       ** respecting periodic boundary conditions (wrap around) */
       // Unless SINGLE_SLICE_X|Y is set, we do not need to worry about wrap around,
@@ -327,16 +328,17 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
       x_w = (SINGLE_SLICE_X && jj == 1) ? params.slice_nx : (jj - 1);
       y_n = (SINGLE_SLICE_Y) ? (ii % params.slice_ny) + 1 : (ii + 1);
       y_s = (SINGLE_SLICE_Y && ii == 1) ? params.slice_ny : (ii - 1);
+      printf("prop of %d,%d: xe:%d xw:%d yn:%d ys:%d\n",jj,ii,x_e,x_w,y_n,y_s);
       // TODO: THIS WILL DEFINITELY BREAK
       //Pre-calculate the adjacent cells to propagate to.
-      adjacency[curr_cell].index[1] = ii * params.nx + x_e; // E
-      adjacency[curr_cell].index[2] = y_n * params.nx + jj; // N
-      adjacency[curr_cell].index[3] = ii * params.nx + x_w; // W
-      adjacency[curr_cell].index[4] = y_s * params.nx + jj; // S
-      adjacency[curr_cell].index[5] = y_n * params.nx + x_e; // NE
-      adjacency[curr_cell].index[6] = y_n * params.nx + x_w; // NW
-      adjacency[curr_cell].index[7] = y_s * params.nx + x_w; // SW
-      adjacency[curr_cell].index[8] = y_s * params.nx + x_e; // SE
+      adjacency[curr_cell].index[1] = ii  * (params.slice_nx+2) + x_e; // E
+      adjacency[curr_cell].index[2] = y_n * (params.slice_nx+2) + jj;  // N
+      adjacency[curr_cell].index[3] = ii  * (params.slice_nx+2) + x_w; // W
+      adjacency[curr_cell].index[4] = y_s * (params.slice_nx+2) + jj;  // S
+      adjacency[curr_cell].index[5] = y_n * (params.slice_nx+2) + x_e; // NE
+      adjacency[curr_cell].index[6] = y_n * (params.slice_nx+2) + x_w; // NW
+      adjacency[curr_cell].index[7] = y_s * (params.slice_nx+2) + x_w; // SW
+      adjacency[curr_cell].index[8] = y_s * (params.slice_nx+2) + x_e; // SE
       for (int kk=1;kk<9;kk++) {
 	if (adjacency[curr_cell].index[kk] < 0 || adjacency[curr_cell].index[kk] >+ params.slice_buff_len) {
 	  printf("%d is out of range in rank %d in cell (%d,%d)\n", adjacency[curr_cell].index[kk], params.rank, jj, ii);
@@ -359,7 +361,7 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
   //  for(curr_cell=params.slice_inner_start;curr_cell<params.slice_inner_end;++curr_cell) {
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
-      curr_cell = ii*params.nx + jj;
+      curr_cell = ii*(params.slice_nx+2) + jj;
       /* propagate densities to neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
@@ -382,7 +384,7 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
 
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
-  int kk;                         /* generic counters */
+  int ii,jj,kk,obs_cell;           /* generic counters */
   const my_float c_sq = 1.0/3.0;  /* square of speed of sound */
   const my_float w0 = 4.0/9.0;    /* weighting factor */
   const my_float w1 = 1.0/9.0;    /* weighting factor */
@@ -394,14 +396,18 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   my_float local_density;         /* sum of densities in a particular cell */
 
   int curr_cell; // Stop re-calculating the array index repeatedly.
-  const int cell_lim = params.slice_inner_end + 1; //TODO: We are wasting some work, but simplifying the loop. Should we unflatten the loop?
+  //  const int cell_lim = params.slice_inner_end + 1; //TODO: We are wasting some work, but simplifying the loop. Should we unflatten the loop?
 
   /* loop over the cells in the grid
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
-  for(curr_cell=params.slice_inner_start;curr_cell<cell_lim;++curr_cell) {
-      if(obstacles[curr_cell]) {
+  //for(curr_cell=params.slice_inner_start;curr_cell<cell_lim;++curr_cell) {
+  for(ii=1;ii<params.slice_ny+1;ii++) {
+    for(jj=1;jj<params.slice_nx+1;jj++) {
+      curr_cell = ii*(params.slice_nx+2) + jj;
+      obs_cell = (ii-1)*params.slice_nx + jj - 1;
+      if(obstacles[obs_cell]) {
 	/* called after propagate, so taking values from scratch space
 	** mirroring, and writing into main grid */
 	cells[curr_cell].speeds[1] = tmp_cells[curr_cell].speeds[3];
@@ -484,6 +490,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
 						 + params.omega * 
 						 (d_equ[kk] - tmp_cells[curr_cell].speeds[kk]));
 	}
+      }
     }
   }
 
@@ -610,7 +617,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
     die("cannot allocate memory for obstacles",__LINE__,__FILE__);
 
   /* adjacency for propagate */
-  *adjacency = calloc(params->slice_len, sizeof(t_adjacency));
+  *adjacency = calloc(params->slice_buff_len, sizeof(t_adjacency));
   if (*adjacency == NULL)
     die("cannot allocate adjacency memory",__LINE__,__FILE__);
 
@@ -662,12 +669,14 @@ int initialise(const char* paramfile, const char* obstaclefile,
     if (within_slice_c(*params, xx, yy)) {
       // Calculate the obstacle index in our grid.
       xt=xx;yt=yy;
-      xx = xx - params->slice_global_xs + 1;
-      yy = yy - params->slice_global_ys + 1;
-      ii = (yy * (params->slice_nx + 2)) + xx;
+      xx = xx - params->slice_global_xs;
+      yy = yy - params->slice_global_ys;
+      ii = (yy * params->slice_nx) + xx;
 
-      // Not particularly bullet proof, but an -ok- sanity check.
-      if (ii > params->slice_inner_end || ii < params->slice_inner_start) {
+      //printf("Block: (%d,%d) %d,%d @ %d\n",xt,yt,xx,yy,ii);
+
+      // Sanity check.
+      if (ii < 0 || ii >= params->slice_len) {
 	printf("Rank: %d\txx: %d\tyy: %d\tii: %d\txt: %d\tyt: %d\n",params->rank,xx,yy,ii,xt,yt);
 	die("obstacle out of bounds in slice",__LINE__,__FILE__);
       }
@@ -727,9 +736,9 @@ my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
   //  for(outer_cell=0;outer_cell<cell_lim;++outer_cell) {
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
-      curr_cell = ii*params.nx + jj;
+      curr_cell = ii*(params.slice_nx+2) + jj;
       /* ignore occupied cells */
-      if(!obstacles[curr_cell]) {
+      if(!obstacles[(ii-1)*params.slice_nx + (jj-1)]) {
 	printf("Looking at: %d (%d,%d)\n", curr_cell, jj,ii);
 	/* local density total */
 	local_density = 0.0;
