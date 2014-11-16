@@ -73,7 +73,7 @@ typedef double my_float;
 #endif
 
 // If true, slices should not communicate in this direction, as they are alone in this axis.
-#define SINGLE_SLICE_Y 0
+#define SINGLE_SLICE_Y 1
 #define SINGLE_SLICE_X 1
 
 /* struct to hold the parameter values */
@@ -155,6 +155,17 @@ int within_slice_c(const t_param params, const int jj, const int ii);
 int within_slice(const t_param params, const int index);
 //int slice_index(const t_param params, const int index);
 
+void pobs(const t_param params, int* obstacles) {
+  int ii,jj,curr_cell;
+  for(ii=1;ii<params.slice_ny+1;ii++) {
+    for(jj=1;jj<params.slice_nx+1;jj++) {
+      curr_cell = ii*params.nx + jj;
+      printf(obstacles[curr_cell] ? "#" : "_");
+    }
+    printf("\n");
+  }
+}
+
 /*
 ** main program:
 ** initialise, timestep loop, finalise
@@ -193,14 +204,17 @@ int main(int argc, char* argv[])
   }
 
   // TODO: NOPE
-  if (params.size != 2)
-      die("bad problem size",__LINE__,__FILE__);
+  //  if (params.size != 2)
+  //    die("bad problem size",__LINE__,__FILE__);
 
   printf("I'm rank %d of %d", params.rank, params.size);
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* initialise our data structures and load values from file */
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
+
+  pobs(params, obstacles);
+  while(1) {}
 
   // Synchronise all processes before we enter the simulation loop.
   MPI_Barrier(MPI_COMM_WORLD);
@@ -338,23 +352,28 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
 
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
 {
-  int curr_cell; // Stop re-calculating the array index repeatedly.
+  int ii,jj,curr_cell; // Stop re-calculating the array index repeatedly.
 
   /* loop over _all_ cells */
-  for(curr_cell=params.slice_inner_start;curr_cell<params.slice_inner_end;++curr_cell) {
-    /* propagate densities to neighbouring cells, following
-    ** appropriate directions of travel and writing into
-    ** scratch space grid */
-    tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
-                                                                                     /* no movement */
-    tmp_cells[adjacency[curr_cell].index[1]].speeds[1] = cells[curr_cell].speeds[1]; /* east */
-    tmp_cells[adjacency[curr_cell].index[2]].speeds[2] = cells[curr_cell].speeds[2]; /* north */
-    tmp_cells[adjacency[curr_cell].index[3]].speeds[3] = cells[curr_cell].speeds[3]; /* west */
-    tmp_cells[adjacency[curr_cell].index[4]].speeds[4] = cells[curr_cell].speeds[4]; /* south */
-    tmp_cells[adjacency[curr_cell].index[5]].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
-    tmp_cells[adjacency[curr_cell].index[6]].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
-    tmp_cells[adjacency[curr_cell].index[7]].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
-    tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
+  
+  //  for(curr_cell=params.slice_inner_start;curr_cell<params.slice_inner_end;++curr_cell) {
+  for(ii=1;ii<params.slice_ny+1;ii++) {
+    for(jj=1;jj<params.slice_nx+1;jj++) {
+      curr_cell = ii*params.nx + jj;
+      /* propagate densities to neighbouring cells, following
+      ** appropriate directions of travel and writing into
+      ** scratch space grid */
+      tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
+                                                                                       /* no movement */
+      tmp_cells[adjacency[curr_cell].index[1]].speeds[1] = cells[curr_cell].speeds[1]; /* east */
+      tmp_cells[adjacency[curr_cell].index[2]].speeds[2] = cells[curr_cell].speeds[2]; /* north */
+      tmp_cells[adjacency[curr_cell].index[3]].speeds[3] = cells[curr_cell].speeds[3]; /* west */
+      tmp_cells[adjacency[curr_cell].index[4]].speeds[4] = cells[curr_cell].speeds[4]; /* south */
+      tmp_cells[adjacency[curr_cell].index[5]].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
+      tmp_cells[adjacency[curr_cell].index[6]].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
+      tmp_cells[adjacency[curr_cell].index[7]].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
+      tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
+    }
   }
 
   printf("out of prop, %d\n", params.rank);
@@ -551,9 +570,11 @@ int initialise(const char* paramfile, const char* obstaclefile,
   params->slice_buff_len = (params->slice_nx + 2) * (params->slice_ny + 2);
 
   // Want to know the index in a local sense for loops
-  params->slice_inner_start = (params->slice_nx + 2) + 1; // ii (=1) * nx (=snx+2) + jj (=1)
-  params->slice_inner_end = params->slice_ny * (params->slice_nx + 2) + params->slice_nx;
-  // Start is obviously 0, with end being ((ny + 2) * (nx + 2)) - 1
+  // snx for the adjacent row, 2 for the corners, 1 for the west edge.
+  params->slice_inner_start = params->slice_nx + 2 + 1;
+  // The slice end is nx * ny away. Need to account for buffer space +2(ny - 1)
+  params->slice_inner_end = params->slice_inner_start +
+    (params->slice_nx * params->slice_ny) + (2 * params->slice_ny) - 2;
 
   // Global index of the slice opening.
   params->slice_global_xs = 0;
@@ -561,6 +582,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   params->slice_global_xe = params->slice_global_xs + params->slice_nx;
   params->slice_global_ye = params->slice_global_ys + params->slice_ny;
 
+  // Makeshift critical section so we can print debug info for slice params individually.
   {
     int r = 0;
     while (r < params->size) {
@@ -583,12 +605,12 @@ int initialise(const char* paramfile, const char* obstaclefile,
     die("cannot allocate memory for tmp_cells",__LINE__,__FILE__);
 
   /* the map of obstacles */
-  *obstacles_ptr = malloc(sizeof(int*)*params->slice_len);
+  *obstacles_ptr = malloc(sizeof(int)*params->slice_len);
   if (*obstacles_ptr == NULL) 
     die("cannot allocate memory for obstacles",__LINE__,__FILE__);
 
   /* adjacency for propagate */
-  *adjacency = malloc(sizeof(t_adjacency) * params->slice_len);
+  *adjacency = calloc(params->slice_len, sizeof(t_adjacency));
   if (*adjacency == NULL)
     die("cannot allocate adjacency memory",__LINE__,__FILE__);
 
@@ -691,22 +713,24 @@ int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr
 
 my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
 {
-  int    kk,curr_cell;       /* generic counters */
+  int    ii,jj,kk,curr_cell;       /* generic counters */
   int    tot_cells = 0;  /* no. of cells used in calculation */
   my_float local_density;  /* total density in cell */
   my_float u_x;            /* x-component of velocity for current cell */
   my_float u_y;            /* y-component of velocity for current cell */
   my_float tot_u;          /* accumulated magnitudes of velocity for each cell */
 
-  const int cell_lim = (params.ny * params.nx);
-
   /* initialise */
   tot_u = 0.0;
 
   /* loop over all non-blocked cells */
-  for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
+  //  for(outer_cell=0;outer_cell<cell_lim;++outer_cell) {
+  for(ii=1;ii<params.slice_ny+1;ii++) {
+    for(jj=1;jj<params.slice_nx+1;jj++) {
+      curr_cell = ii*params.nx + jj;
       /* ignore occupied cells */
-    if(within_slice(params, curr_cell) && !obstacles[curr_cell]) {
+      if(!obstacles[curr_cell]) {
+	printf("Looking at: %d (%d,%d)\n", curr_cell, jj,ii);
 	/* local density total */
 	local_density = 0.0;
 	for(kk=0;kk<NSPEEDS;kk++) {
@@ -714,30 +738,31 @@ my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
 	}
 	/* x-component of velocity */
 	u_x = (cells[curr_cell].speeds[1] + 
-		    cells[curr_cell].speeds[5] + 
-		    cells[curr_cell].speeds[8]
-		    - (cells[curr_cell].speeds[3] + 
-		       cells[curr_cell].speeds[6] + 
-		       cells[curr_cell].speeds[7])) / 
+	       cells[curr_cell].speeds[5] + 
+	       cells[curr_cell].speeds[8]
+	       - (cells[curr_cell].speeds[3] + 
+		  cells[curr_cell].speeds[6] + 
+		  cells[curr_cell].speeds[7])) / 
 	  local_density;
 	/* compute y velocity component */
 	u_y = (cells[curr_cell].speeds[2] + 
-		    cells[curr_cell].speeds[5] + 
-		    cells[curr_cell].speeds[6]
-		    - (cells[curr_cell].speeds[4] + 
-		       cells[curr_cell].speeds[7] + 
-		       cells[curr_cell].speeds[8])) /
+	       cells[curr_cell].speeds[5] + 
+	       cells[curr_cell].speeds[6]
+	       - (cells[curr_cell].speeds[4] + 
+		  cells[curr_cell].speeds[7] + 
+		  cells[curr_cell].speeds[8])) /
 	  local_density;
 	/* accumulate the norm of x- and y- velocity components */
 	tot_u += my_sqrt((u_x * u_x) + (u_y * u_y));
 	/* increase counter of inspected cells */
 	++tot_cells;
+      }
     }
   }
 
   printf("out of av_vel, %d %f %d\n", params.rank, tot_u, tot_cells);
   MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
-  die("",0,"");
+  while (1) {}
   return tot_u / (my_float)tot_cells;
 }
 
