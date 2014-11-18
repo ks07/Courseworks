@@ -165,9 +165,9 @@ void pobs(const t_param params, int* obstacles) {
   for(ii=0;ii<params.slice_ny;ii++) {
     for(jj=0;jj<params.slice_nx;jj++) {
       curr_cell = ii*params.nx + jj;
-      //printf(obstacles[curr_cell] ? "#" : "_");
+      printf(obstacles[curr_cell] ? "#" : "_");
     }
-    //printf("\n");
+    printf("\n");
   }
 }
 
@@ -181,11 +181,17 @@ void pack_row(my_float* packed, const int start, const int count, t_speed* cells
   }
 }
 
-void unpack_row(my_float* packed, const int start, const int count, t_speed* cells) {
+void unpack_row(my_float* packed, const int start, const int count, t_speed* cells, int sixtwofive) {
   //printf("Recving into %d + %d\n",start,count);
   for (int ii = 0;ii<count;ii++) {
-    for (int kk = 0;kk<NSPEEDS;kk++) {
-      cells[ii+start].speeds[kk] = packed[ii*NSPEEDS+kk];
+    if (sixtwofive) {
+      cells[ii+start].speeds[6] = packed[ii*NSPEEDS+6];
+      cells[ii+start].speeds[2] = packed[ii*NSPEEDS+2];
+      cells[ii+start].speeds[5] = packed[ii*NSPEEDS+5];
+    } else {
+      cells[ii+start].speeds[7] = packed[ii*NSPEEDS+7];
+      cells[ii+start].speeds[4] = packed[ii*NSPEEDS+4];
+      cells[ii+start].speeds[8] = packed[ii*NSPEEDS+8];
     }
   }
 }
@@ -201,9 +207,9 @@ void print_row(const int rank, const int start, const int count, t_speed* cells)
 void print_grid(const t_param params, t_speed* cells) {
   for (int ii = 0;ii<params.slice_ny+2;ii++) {
     for (int jj = 0;jj<params.slice_nx+2;jj++) {
-      printf("%f,%f,%f\n", cells[ii].speeds[6], cells[ii].speeds[2], cells[ii].speeds[5]);
-      printf("%f,%f,%f\n", cells[ii].speeds[3], cells[ii].speeds[0], cells[ii].speeds[1]);
-      printf("%f,%f,%f\n", cells[ii].speeds[7], cells[ii].speeds[4], cells[ii].speeds[8]);
+      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[6], cells[ii*(params.slice_nx+2)+jj].speeds[2], cells[ii*(params.slice_nx+2)+jj].speeds[5]);
+      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[3], cells[ii*(params.slice_nx+2)+jj].speeds[0], cells[ii*(params.slice_nx+2)+jj].speeds[1]);
+      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[7], cells[ii*(params.slice_nx+2)+jj].speeds[4], cells[ii*(params.slice_nx+2)+jj].speeds[8]);
       printf("\n\n");
     }
     printf("---------\n");
@@ -262,9 +268,9 @@ int main(int argc, char* argv[])
     int r = 0;
     while (r < params.size) {
       if (params.rank == r) {
-	printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len);
-	pobs(params, obstacles);
-	printf("\n\n");
+	//printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len);
+	//pobs(params, obstacles);
+	//printf("\n\n");
       }
       r++;
       MPI_Barrier(MPI_COMM_WORLD);
@@ -314,17 +320,16 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-#define PRINTRANK 0
+#define PRINTRANK 1
 
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, t_adjacency* adjacency)
 {
   const int tag = 0; // Can use to send extra data?
   MPI_Status status; // Struct for send/recv use.
-  int ii;
-  const int rnstart = params.slice_inner_end + 1; // Cell index we receive into from the north.
-  const int snstart = params.slice_inner_end - params.slice_nx - 1; // Cell index we send from to the north.
-  const int rsstart = 0; // Cell index we receive into from the south.
-  const int ssstart = params.slice_nx + 2; // Cell index we send from to the south.
+  const int rnstart = params.slice_inner_end - params.slice_nx - 1; // Cell index we receive into from the north.
+  const int snstart = params.slice_inner_end + 1; // Cell index we send from to the north.
+  const int rsstart = params.slice_nx + 2; // Cell index we receive into from the south.
+  const int ssstart = 0; // Cell index we send from to the south.
   const int count = params.slice_nx + 2; // The count of cells sent in each message.
   const int send_len = count * NSPEEDS; // The length of the buffer needed to send the cells.
   my_float* packed = malloc(sizeof(my_float) * NSPEEDS * count); // Send buffer, to be packed.
@@ -332,34 +337,19 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 
 
   MPI_Barrier(MPI_COMM_WORLD);
-  if (params.rank == PRINTRANK)
-    //print_grid(params,cells);
+  /* if (params.rank == PRINTRANK) */
+  /*   print_grid(params,cells); */
   MPI_Barrier(MPI_COMM_WORLD);
 
   accelerate_flow(params,cells,obstacles);
 
-
   MPI_Barrier(MPI_COMM_WORLD);
-  if (params.rank == PRINTRANK)
+  if (params.rank == PRINTRANK) {
+    //printf("LOLZOR r%d %f", params.rank, cells[8].speeds[5]);
+    //  }
     //print_grid(params,cells);
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  // Perform halo exchange. TODO: Handle other axis. TODO: We can get away with 2 less values if sgl x.
-  if (!SINGLE_SLICE_Y) {
-    // TODO: Better ways to do this?
-    pack_row(packed,snstart,count,cells);
-    // Send to the north, receive from the south.
-    MPI_Sendrecv(packed, send_len, MY_MPI_FLOAT, params.rank_north, tag,
-		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
-		 MPI_COMM_WORLD, &status);
-    unpack_row(recvbuf,rsstart,count,cells);
-    // Send to the south, receive from the north.
-    pack_row(packed,ssstart,count,cells);
-    MPI_Sendrecv(packed, send_len, MY_MPI_FLOAT, params.rank_south, tag,
-		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
-		 MPI_COMM_WORLD, &status);
-    unpack_row(recvbuf,rnstart,count,cells);
   }
+  MPI_Barrier(MPI_COMM_WORLD);
 
   /* MPI_Barrier(MPI_COMM_WORLD); */
   /* if (params.rank == 0) { */
@@ -374,25 +364,50 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 
 
   MPI_Barrier(MPI_COMM_WORLD);
-  if (params.rank == PRINTRANK)
+  //if (params.rank == PRINTRANK)
     //print_grid(params,cells);
   MPI_Barrier(MPI_COMM_WORLD);
 
   propagate(params,cells,tmp_cells,adjacency);
 
+
+  // Perform halo exchange. TODO: Handle other axis. TODO: We can get away with 2 less values if sgl x.
+  if (!SINGLE_SLICE_Y) {
+    // TODO: Better ways to do this?
+    pack_row(packed,snstart,count,tmp_cells);
+    // Send to the north, receive from the south.
+    MPI_Sendrecv(packed, send_len, MY_MPI_FLOAT, params.rank_north, tag,
+		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
+		 MPI_COMM_WORLD, &status);
+    unpack_row(recvbuf,rsstart,count,tmp_cells,1);
+    // Send to the south, receive from the north.
+    pack_row(packed,ssstart,count,tmp_cells);
+    MPI_Sendrecv(packed, send_len, MY_MPI_FLOAT, params.rank_south, tag,
+		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
+		 MPI_COMM_WORLD, &status);
+    unpack_row(recvbuf,rnstart,count,tmp_cells,0);
+  }
+
+
   MPI_Barrier(MPI_COMM_WORLD);
-  if (params.rank == PRINTRANK)
-    //print_grid(params,cells);
+  //if (params.rank == PRINTRANK)
+  //print_grid(params,cells);
   MPI_Barrier(MPI_COMM_WORLD);
 
 
   collision(params,cells,tmp_cells,obstacles);
 
-
   MPI_Barrier(MPI_COMM_WORLD);
-  if (params.rank == PRINTRANK)
-    print_grid(params,cells);
-  MPI_Barrier(MPI_COMM_WORLD);
+  {
+    int r = 0;
+    while (r < params.size) {
+      if (params.rank == r) {
+	print_grid(params,cells);
+      }
+      r++;
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+  }
 
   free(packed);
 
@@ -414,13 +429,15 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
       myjj = jj - params.slice_global_xs + 1; // Get the local x coord.
       // Offset curr_cell based upon the slice bounds.
       my_cell = myii * (params.slice_nx + 2) + myjj;
-      //printf("r%d wants to accel %d,%d in my grid %d,%d = %d\n", params.rank, jj, ii, myjj, myii, my_cell);
+      
       /* if the cell is not occupied and
       ** we don't send a density negative */
       if( !obstacles[(myii - 1)*params.slice_nx+(myjj - 1)] && 
 	  (cells[my_cell].speeds[3] - w1) > 0.0 &&
 	  (cells[my_cell].speeds[6] - w2) > 0.0 &&
 	  (cells[my_cell].speeds[7] - w2) > 0.0 ) {
+	printf("r%d wants to accel %d,%d in my grid %d,%d = %d\n", params.rank, jj, ii, myjj, myii, my_cell);
+	printf("r%d in my %d start:%f\n",params.rank,my_cell,cells[my_cell].speeds[5]);
 	/* increase 'east-side' densities */
 	cells[my_cell].speeds[1] += w1;
 	cells[my_cell].speeds[5] += w2;
@@ -429,6 +446,7 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
 	cells[my_cell].speeds[3] -= w1;
 	cells[my_cell].speeds[6] -= w2;
 	cells[my_cell].speeds[7] -= w2;
+	printf("r%d in my %d start:%f\n",params.rank,my_cell,cells[my_cell].speeds[5]);
       }
     }
   }
@@ -486,6 +504,39 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
 }
 
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
+{
+  int ii,jj;            /* generic counters */
+  int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
+
+  /* loop over _all_ cells */
+  for(ii=1;ii<params.slice_ny+1;ii++) {
+    for(jj=1;jj<params.slice_nx+1;jj++) {
+      /* determine indices of axis-direction neighbours
+      ** respecting periodic boundary conditions (wrap around) */
+      y_n = ii + 1;
+      x_e = (jj % params.slice_nx) + 1;
+      y_s = ii - 1;
+      x_w = (jj == 1) ? params.slice_nx : jj - 1;
+      /* propagate densities to neighbouring cells, following
+      ** appropriate directions of travel and writing into
+      ** scratch space grid */
+      tmp_cells[ii *(params.slice_nx+2) + jj].speeds[0]  = cells[ii*(params.slice_nx+2) + jj].speeds[0]; /* central cell, */
+                                                                                     /* no movement   */
+      tmp_cells[ii *(params.slice_nx+2) + x_e].speeds[1] = cells[ii*(params.slice_nx+2) + jj].speeds[1]; /* east */
+      tmp_cells[y_n*(params.slice_nx+2) + jj].speeds[2]  = cells[ii*(params.slice_nx+2) + jj].speeds[2]; /* north */
+      tmp_cells[ii *(params.slice_nx+2) + x_w].speeds[3] = cells[ii*(params.slice_nx+2) + jj].speeds[3]; /* west */
+      tmp_cells[y_s*(params.slice_nx+2) + jj].speeds[4]  = cells[ii*(params.slice_nx+2) + jj].speeds[4]; /* south */
+      tmp_cells[y_n*(params.slice_nx+2) + x_e].speeds[5] = cells[ii*(params.slice_nx+2) + jj].speeds[5]; /* north-east */
+      tmp_cells[y_n*(params.slice_nx+2) + x_w].speeds[6] = cells[ii*(params.slice_nx+2) + jj].speeds[6]; /* north-west */
+      tmp_cells[y_s*(params.slice_nx+2) + x_w].speeds[7] = cells[ii*(params.slice_nx+2) + jj].speeds[7]; /* south-west */      
+      tmp_cells[y_s*(params.slice_nx+2) + x_e].speeds[8] = cells[ii*(params.slice_nx+2) + jj].speeds[8]; /* south-east */      
+    }
+  }
+
+  return EXIT_SUCCESS;
+}
+
+int NO_propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
 {
   int ii,jj,curr_cell; // Stop re-calculating the array index repeatedly.
 
@@ -766,6 +817,13 @@ int initialise(const char* paramfile, const char* obstaclefile,
     (*cells_ptr)[ii].speeds[6] = w2;
     (*cells_ptr)[ii].speeds[7] = w2;
     (*cells_ptr)[ii].speeds[8] = w2;
+  }
+
+  // TODO: Get rid of me
+  for(ii=0;ii<params->slice_buff_len;ii++) {
+    for(xt=0;xt<NSPEEDS;xt++) {
+      (*tmp_cells_ptr)[ii].speeds[xt] = 1.333337;
+    }
   }
 
   /* first set all cells in obstacle array to zero */ 
