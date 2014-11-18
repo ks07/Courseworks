@@ -150,7 +150,7 @@ my_float total_density(const t_param params, t_speed* cells);
 my_float av_velocity(const t_param params, t_speed* cells, int* obstacles);
 
 /* calculate Reynolds number */
-my_float calc_reynolds(const t_param params, t_speed* cells, int* obstacles);
+my_float calc_reynolds(const t_param params, const my_float av_vel);
 
 /* utility functions */
 void die(const char* message, const int line, const char *file);
@@ -258,26 +258,26 @@ int main(int argc, char* argv[])
   //    die("bad problem size",__LINE__,__FILE__);
 
   //printf("I'm rank %d of %d", params.rank, params.size);
-  MPI_Barrier(MPI_COMM_WORLD);
+  //  MPI_Barrier(MPI_COMM_WORLD);
 
   /* initialise our data structures and load values from file */
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
   // Makeshift critical section so we can print debug info for slice params individually.
-  {
-    int r = 0;
-    while (r < params.size) {
-      if (params.rank == r) {
+  //  {
+    //    int r = 0;
+    //    while (r < params.size) {
+      //      if (params.rank == r) {
 	//printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len);
 	//pobs(params, obstacles);
 	//printf("\n\n");
-      }
-      r++;
-      MPI_Barrier(MPI_COMM_WORLD);
-    }
-  }
+	//      }
+      //      r++;
+      //      MPI_Barrier(MPI_COMM_WORLD);
+      //    }
+    //  }
 
-  // Synchronise all processes before we enter the simulation loop.
+  // Synchronise all processes before we enter the simulation loop. Not really necessary...
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* iterate for maxIters timesteps */
@@ -286,18 +286,17 @@ int main(int argc, char* argv[])
 
   // Can we do this outside the timing? Probably not!
   propagate_prep(params, adjacency);
-  MPI_Barrier(MPI_COMM_WORLD); // TODO: NOPE
+  //MPI_Barrier(MPI_COMM_WORLD); // TODO: NOPE
 
-  //  for (ii=0;ii<params.maxIters;ii++) {
-  ii=0;
+  for (ii=0;ii<params.maxIters;ii++) {
     timestep(params,cells,tmp_cells,obstacles,adjacency);
-    av_vels[ii] = av_velocity(params,cells,obstacles);
+    av_vels[ii] = av_velocity(params,cells,obstacles); // TODO: Only for rank 0?
 #ifdef DEBUG
     printf("==timestep: %d==\n",ii);
-    printf("av velocity: %.12E\n", av_vels[ii]);
+    printf("av velocity: %.12E\n",av_vels[ii]);
     printf("tot density: %.12E\n",total_density(params,cells));
 #endif
-    //}
+  }
   gettimeofday(&timstr,NULL);
   toc=timstr.tv_sec+(timstr.tv_usec/1000000.0);
   getrusage(RUSAGE_SELF, &ru);
@@ -307,11 +306,17 @@ int main(int argc, char* argv[])
   systim=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
   /* write final values and free memory */
-  printf("==done==\n");
-  printf("Reynolds number:\t\t%.12E\n",(double)calc_reynolds(params,cells,obstacles));
-  printf("Elapsed time:\t\t\t%.6lf (s)\n", toc-tic);
-  printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
-  printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+  if (params.rank == 0) { // TODO: Use the final slice for extra operations, as it may have less work!
+    printf("==done==\n");
+    printf("Reynolds number:\t\t%.12E\n",(double)calc_reynolds(params, av_vels[params.maxIters-1]));
+    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc-tic);
+    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
+  while (1) {}
+
   write_values(params,cells,obstacles,av_vels);
   finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
 
@@ -336,20 +341,20 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   my_float* recvbuf = malloc(sizeof(my_float) * NSPEEDS * count); // Recv buffer, to be unpacked.
 
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
   /* if (params.rank == PRINTRANK) */
   /*   print_grid(params,cells); */
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
 
   accelerate_flow(params,cells,obstacles);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (params.rank == PRINTRANK) {
+  //MPI_Barrier(MPI_COMM_WORLD);
+  //if (params.rank == PRINTRANK) {
     //printf("LOLZOR r%d %f", params.rank, cells[8].speeds[5]);
     //  }
     //print_grid(params,cells);
-  }
-  MPI_Barrier(MPI_COMM_WORLD);
+    //}
+  //MPI_Barrier(MPI_COMM_WORLD);
 
   /* MPI_Barrier(MPI_COMM_WORLD); */
   /* if (params.rank == 0) { */
@@ -363,10 +368,10 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   /* MPI_Barrier(MPI_COMM_WORLD); */
 
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
   //if (params.rank == PRINTRANK)
     //print_grid(params,cells);
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
 
   propagate(params,cells,tmp_cells,adjacency);
 
@@ -389,25 +394,25 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   }
 
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
   //if (params.rank == PRINTRANK)
   //print_grid(params,cells);
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
 
 
   collision(params,cells,tmp_cells,obstacles);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  {
-    int r = 0;
-    while (r < params.size) {
-      if (params.rank == r) {
-	print_grid(params,cells);
-      }
-      r++;
-      MPI_Barrier(MPI_COMM_WORLD);
-    }
-  }
+  /* MPI_Barrier(MPI_COMM_WORLD); */
+  /* { */
+  /*   int r = 0; */
+  /*   while (r < params.size) { */
+  /*     if (params.rank == r) { */
+  /* 	print_grid(params,cells); */
+  /*     } */
+  /*     r++; */
+  /*     MPI_Barrier(MPI_COMM_WORLD); */
+  /*   } */
+  /* } */
 
   free(packed);
 
@@ -436,8 +441,7 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
 	  (cells[my_cell].speeds[3] - w1) > 0.0 &&
 	  (cells[my_cell].speeds[6] - w2) > 0.0 &&
 	  (cells[my_cell].speeds[7] - w2) > 0.0 ) {
-	printf("r%d wants to accel %d,%d in my grid %d,%d = %d\n", params.rank, jj, ii, myjj, myii, my_cell);
-	printf("r%d in my %d start:%f\n",params.rank,my_cell,cells[my_cell].speeds[5]);
+	//printf("r%d wants to accel %d,%d in my grid %d,%d = %d\n", params.rank, jj, ii, myjj, myii, my_cell);
 	/* increase 'east-side' densities */
 	cells[my_cell].speeds[1] += w1;
 	cells[my_cell].speeds[5] += w2;
@@ -446,13 +450,12 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
 	cells[my_cell].speeds[3] -= w1;
 	cells[my_cell].speeds[6] -= w2;
 	cells[my_cell].speeds[7] -= w2;
-	printf("r%d in my %d start:%f\n",params.rank,my_cell,cells[my_cell].speeds[5]);
       }
     }
   }
 
 
-  printf("out of accel, %d\n", params.rank);
+  //printf("out of accel, %d\n", params.rank);
   return EXIT_SUCCESS;
 }
 
@@ -499,7 +502,7 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
     }
   }
 
-  printf("out of prop_prep, %d\n", params.rank);
+  //printf("out of prop_prep, %d\n", params.rank);
   return EXIT_SUCCESS;
 }
 
@@ -562,7 +565,7 @@ int NO_propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adj
     }
   }
 
-  printf("out of prop, %d\n", params.rank);
+  //printf("out of prop, %d\n", params.rank);
   return EXIT_SUCCESS;
 }
 
@@ -678,7 +681,7 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
     }
   }
 
-  printf("out of coll, %d\n", params.rank);
+  //printf("out of coll, %d\n", params.rank);
   return EXIT_SUCCESS; 
 }
 
@@ -912,6 +915,8 @@ my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
   my_float u_x;            /* x-component of velocity for current cell */
   my_float u_y;            /* y-component of velocity for current cell */
   my_float tot_u;          /* accumulated magnitudes of velocity for each cell */
+  my_float global_tot_u = 0.0;
+  int global_tot_cells = 0;
 
   /* initialise */
   tot_u = 0.0;
@@ -954,17 +959,25 @@ my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
     }
   }
 
-  printf("out of av_vel, %d %f %d\n", params.rank, tot_u, tot_cells);
-  MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
-  while (1) {}
-  return tot_u / (my_float)tot_cells;
+  //printf("av_vel r%d %lf\n", params.rank, tot_u / (my_float)tot_cells);
+
+  // Use a reduction to sum the totals across processes. TODO: Can we do this in one reduce call?
+  MPI_Reduce(&tot_cells, &global_tot_cells, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&tot_u, &global_tot_u, 1, MY_MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if (params.rank == 0) {
+    // We should have the reduced value.
+    //printf("out of av_vel, %1.9lf\n", global_tot_u / (my_float)global_tot_cells);
+    return global_tot_u / (my_float)global_tot_cells;
+  } else {
+    return NAN;
+  }
 }
 
-my_float calc_reynolds(const t_param params, t_speed* cells, int* obstacles)
+my_float calc_reynolds(const t_param params, const my_float av_vel)
 {
   const my_float viscosity = 1.0 / 6.0 * (2.0 / params.omega - 1.0);
-  
-  return av_velocity(params,cells,obstacles) * params.reynolds_dim / viscosity;
+  return av_vel * params.reynolds_dim / viscosity;
 }
 
 my_float total_density(const t_param params, t_speed* cells)
