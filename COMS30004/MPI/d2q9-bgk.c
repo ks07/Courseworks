@@ -131,7 +131,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 ** timestep calls, in order, the functions:
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
-int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, t_adjacency* adjacency);
+int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, t_adjacency* adjacency, my_float* sendbuf, my_float* recvbuf);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles);
 int propagate_prep(const t_param params, t_adjacency* adjacency);
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency);
@@ -236,6 +236,8 @@ int main(int argc, char* argv[])
   double usrtim;                 /* floating point number to record elapsed user CPU time */
   double systim;                 /* floating point number to record elapsed system CPU time */
   t_adjacency* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
+  my_float* sendbuf; // Send buffer, to be packed.
+  my_float* recvbuf; // Recv buffer, to be unpacked.
 
   /* parse the command line */
   if(argc != 3) {
@@ -263,6 +265,10 @@ int main(int argc, char* argv[])
   /* initialise our data structures and load values from file */
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
+  // Initialise the send and receive buffers.
+  sendbuf = malloc(sizeof(my_float) * NSPEEDS * (params.slice_nx+2));
+  recvbuf = malloc(sizeof(my_float) * NSPEEDS * (params.slice_nx+2));
+
   // Makeshift critical section so we can print debug info for slice params individually.
   //  {
     //    int r = 0;
@@ -289,7 +295,7 @@ int main(int argc, char* argv[])
   //MPI_Barrier(MPI_COMM_WORLD); // TODO: NOPE
 
   for (ii=0;ii<params.maxIters;ii++) {
-    timestep(params,cells,tmp_cells,obstacles,adjacency);
+    timestep(params,cells,tmp_cells,obstacles,adjacency,sendbuf,recvbuf);
     av_vels[ii] = av_velocity(params,cells,obstacles); // TODO: Only for rank 0?
 #ifdef DEBUG
     printf("==timestep: %d==\n",ii);
@@ -320,6 +326,10 @@ int main(int argc, char* argv[])
   write_values(params,cells,obstacles,av_vels);
   finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
 
+  // Free the send/recv buffers.
+  free(sendbuf);
+  free(recvbuf);
+
   MPI_Finalize();
   
   return EXIT_SUCCESS;
@@ -327,7 +337,7 @@ int main(int argc, char* argv[])
 
 #define PRINTRANK 1
 
-int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, t_adjacency* adjacency)
+int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, t_adjacency* adjacency, my_float* sendbuf, my_float* recvbuf)
 {
   const int tag = 0; // Can use to send extra data?
   MPI_Status status; // Struct for send/recv use.
@@ -337,9 +347,6 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   const int ssstart = 0; // Cell index we send from to the south.
   const int count = params.slice_nx + 2; // The count of cells sent in each message.
   const int send_len = count * NSPEEDS; // The length of the buffer needed to send the cells.
-  my_float* packed = malloc(sizeof(my_float) * NSPEEDS * count); // Send buffer, to be packed.
-  my_float* recvbuf = malloc(sizeof(my_float) * NSPEEDS * count); // Recv buffer, to be unpacked.
-
 
   //MPI_Barrier(MPI_COMM_WORLD);
   /* if (params.rank == PRINTRANK) */
@@ -379,15 +386,15 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   // Perform halo exchange. TODO: Handle other axis. TODO: We can get away with 2 less values if sgl x.
   if (!SINGLE_SLICE_Y) {
     // TODO: Better ways to do this?
-    pack_row(packed,snstart,count,tmp_cells);
+    pack_row(sendbuf,snstart,count,tmp_cells);
     // Send to the north, receive from the south.
-    MPI_Sendrecv(packed, send_len, MY_MPI_FLOAT, params.rank_north, tag,
+    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
 		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
 		 MPI_COMM_WORLD, &status);
     unpack_row(recvbuf,rsstart,count,tmp_cells,1);
     // Send to the south, receive from the north.
-    pack_row(packed,ssstart,count,tmp_cells);
-    MPI_Sendrecv(packed, send_len, MY_MPI_FLOAT, params.rank_south, tag,
+    pack_row(sendbuf,ssstart,count,tmp_cells);
+    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
 		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
 		 MPI_COMM_WORLD, &status);
     unpack_row(recvbuf,rnstart,count,tmp_cells,0);
@@ -413,9 +420,6 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   /*     MPI_Barrier(MPI_COMM_WORLD); */
   /*   } */
   /* } */
-
-  free(packed);
-
 
   return EXIT_SUCCESS; 
 }
