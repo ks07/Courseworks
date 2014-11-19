@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script is for verifying results from the COMS35101 Lattice
+# This script is for verifying results from the COMS30004 Lattice
 # Boltzmann coursework. To run it, type (for example):
 # ./check_results results/av_vels_300x200.dat results/final_state_300x200.dat
 # This command should be run from the directory containing your
