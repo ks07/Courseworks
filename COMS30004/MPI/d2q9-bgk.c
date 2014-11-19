@@ -647,6 +647,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   int    blocked;        /* indicates whether a cell is blocked by an obstacle */ 
   int    retval;         /* to hold return value for checking */
   double w0,w1,w2;       /* weighting factors */
+  int extra_rows = 0; // The number of rows extra on the final slice.
 
   /* open the parameter file */
   fp = fopen(paramfile,"r");
@@ -699,11 +700,17 @@ int initialise(const char* paramfile, const char* obstaclefile,
 
   // Store all these values in our copy of params.
   // Set the slice length, rounded to a full row.
-  params->slice_len = ((int)(params->ny / params->size)) * params->nx;
+  //  params->slice_len = ((int)(params->ny / params->size)) * params->nx;
 
-  if (params->slice_len * params->size != params->ny * params->nx) {
-    die("cannot handle uneven slice divisions!",__LINE__,__FILE__);
-  }
+  //if (params->slice_len * params->size != params->ny * params->nx) {
+    // We can't divide the workspace equally between the number of processes we have.
+    // The simple solution is to add the remaining rows to the final slice.
+    //if (params->rank == params->size - 1) {
+      // We are the final slice.
+      // params->slice_len
+    //}
+    //die("cannot handle uneven slice divisions!",__LINE__,__FILE__);
+  //}
 
   // BEWARE: TODO: OMG: Above values are probably completely bogus and based on old assumptions.
   
@@ -712,9 +719,18 @@ int initialise(const char* paramfile, const char* obstaclefile,
   params->rank_north = (params->rank + 1) % params->size;
   params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
 
-  // Set the inner slice sizes.
-  params->slice_nx = params->nx; // TODO: Support 2d slice grid.
+  // Divide the problem space into slices. Currently Y direction only.
+  params->slice_nx = params->nx;
   params->slice_ny = (int)(params->ny / params->size);
+
+  // Add any remaining rows to the final slice.
+  if (params->rank == params->size - 1) {
+    extra_rows = params->ny - (params->slice_ny * params->size);
+    params->slice_ny += extra_rows;
+  }
+
+  // Calculate the slice len.
+  params->slice_len = params->slice_ny * params->nx;
 
   // Total size of the buffer including exchange space.
   params->slice_buff_len = (params->slice_nx + 2) * (params->slice_ny + 2);
@@ -728,7 +744,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 
   // Global index of the slice opening.
   params->slice_global_xs = 0;
-  params->slice_global_ys = ((int)(params->ny / params->size)) * params->rank;
+  params->slice_global_ys = ((int)(params->ny / params->size)) * params->rank; // TODO: Get rid of div
   params->slice_global_xe = params->slice_global_xs + params->slice_nx;
   params->slice_global_ye = params->slice_global_ys + params->slice_ny;
 
