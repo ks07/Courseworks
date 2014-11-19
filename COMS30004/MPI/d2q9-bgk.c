@@ -78,6 +78,11 @@ typedef double my_float;
 #define SINGLE_SLICE_Y 0
 #define SINGLE_SLICE_X 1
 
+// If true, we should run an extra step to store an adjacency mapping for propagate.
+// This should become less efficient if both SINGLE_SLICE values are set false, or if we use
+// very small slice sizes.
+#define USE_PROPAGATION_CACHE 1
+
 /* struct to hold the parameter values */
 typedef struct {
   int    nx;            /* no. of cells in x-direction */
@@ -238,7 +243,9 @@ int main(int argc, char* argv[])
   tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
   // Can we do this outside the timing? Probably not!
+#if USE_PROPAGATION_CACHE
   propagate_prep(params, adjacency);
+#endif
 
   for (ii=0;ii<params.maxIters;ii++) {
     timestep(params,cells,tmp_cells,obstacles,adjacency,sendbuf,recvbuf);
@@ -416,8 +423,6 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
   // Need to prepare propagate in a slicewise manner. This makes things a bit harder.
   int curr_cell;
 
-  // PROTIP: ii is y, jj is x
-
   /* loop over _all_ cells */
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
@@ -432,7 +437,7 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
       y_n = (SINGLE_SLICE_Y) ? (ii % params.slice_ny) + 1 : (ii + 1);
       y_s = (SINGLE_SLICE_Y && ii == 1) ? params.slice_ny : (ii - 1);
       //printf("prop of %d,%d: xe:%d xw:%d yn:%d ys:%d\n",jj,ii,x_e,x_w,y_n,y_s);
-      // TODO: THIS WILL DEFINITELY BREAK
+
       //Pre-calculate the adjacent cells to propagate to.
       adjacency[curr_cell].index[1] = ii  * (params.slice_nx+2) + x_e; // E
       adjacency[curr_cell].index[2] = y_n * (params.slice_nx+2) + jj;  // N
@@ -442,12 +447,6 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
       adjacency[curr_cell].index[6] = y_n * (params.slice_nx+2) + x_w; // NW
       adjacency[curr_cell].index[7] = y_s * (params.slice_nx+2) + x_w; // SW
       adjacency[curr_cell].index[8] = y_s * (params.slice_nx+2) + x_e; // SE
-      for (int kk=1;kk<9;kk++) {
-	if (adjacency[curr_cell].index[kk] < 0 || adjacency[curr_cell].index[kk] >+ params.slice_buff_len) {
-	  printf("%d is out of range in rank %d in cell (%d,%d)\n", adjacency[curr_cell].index[kk], params.rank, jj, ii);
-	  die("SHIIIIIIIIT\n",__LINE__,__FILE__);
-	}
-      }
     }
   }
 
@@ -455,6 +454,37 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
   return EXIT_SUCCESS;
 }
 
+#if USE_PROPAGATE_CACHE
+int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
+{
+  int ii,jj,curr_cell; // Stop re-calculating the array index repeatedly.
+
+  /* loop over _all_ cells */
+  
+  //  for(curr_cell=params.slice_inner_start;curr_cell<params.slice_inner_end;++curr_cell) {
+  for(ii=1;ii<params.slice_ny+1;ii++) {
+    for(jj=1;jj<params.slice_nx+1;jj++) {
+      curr_cell = ii*(params.slice_nx+2) + jj;
+      /* propagate densities to neighbouring cells, following
+      ** appropriate directions of travel and writing into
+      ** scratch space grid */
+      tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
+                                                                                       /* no movement */
+      tmp_cells[adjacency[curr_cell].index[1]].speeds[1] = cells[curr_cell].speeds[1]; /* east */
+      tmp_cells[adjacency[curr_cell].index[2]].speeds[2] = cells[curr_cell].speeds[2]; /* north */
+      tmp_cells[adjacency[curr_cell].index[3]].speeds[3] = cells[curr_cell].speeds[3]; /* west */
+      tmp_cells[adjacency[curr_cell].index[4]].speeds[4] = cells[curr_cell].speeds[4]; /* south */
+      tmp_cells[adjacency[curr_cell].index[5]].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
+      tmp_cells[adjacency[curr_cell].index[6]].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
+      tmp_cells[adjacency[curr_cell].index[7]].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
+      tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
+    }
+  }
+
+  //printf("out of prop, %d\n", params.rank);
+  return EXIT_SUCCESS;
+}
+#else // Non-cached propagate.
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
 {
   int ii,jj;            /* generic counters */
@@ -485,38 +515,10 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
     }
   }
 
-  return EXIT_SUCCESS;
-}
-
-int NO_propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
-{
-  int ii,jj,curr_cell; // Stop re-calculating the array index repeatedly.
-
-  /* loop over _all_ cells */
-  
-  //  for(curr_cell=params.slice_inner_start;curr_cell<params.slice_inner_end;++curr_cell) {
-  for(ii=1;ii<params.slice_ny+1;ii++) {
-    for(jj=1;jj<params.slice_nx+1;jj++) {
-      curr_cell = ii*(params.slice_nx+2) + jj;
-      /* propagate densities to neighbouring cells, following
-      ** appropriate directions of travel and writing into
-      ** scratch space grid */
-      tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
-                                                                                       /* no movement */
-      tmp_cells[adjacency[curr_cell].index[1]].speeds[1] = cells[curr_cell].speeds[1]; /* east */
-      tmp_cells[adjacency[curr_cell].index[2]].speeds[2] = cells[curr_cell].speeds[2]; /* north */
-      tmp_cells[adjacency[curr_cell].index[3]].speeds[3] = cells[curr_cell].speeds[3]; /* west */
-      tmp_cells[adjacency[curr_cell].index[4]].speeds[4] = cells[curr_cell].speeds[4]; /* south */
-      tmp_cells[adjacency[curr_cell].index[5]].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
-      tmp_cells[adjacency[curr_cell].index[6]].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
-      tmp_cells[adjacency[curr_cell].index[7]].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
-      tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
-    }
-  }
-
   //printf("out of prop, %d\n", params.rank);
   return EXIT_SUCCESS;
 }
+#endif
 
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
@@ -745,10 +747,12 @@ int initialise(const char* paramfile, const char* obstaclefile,
   if (*obstacles_ptr == NULL) 
     die("cannot allocate memory for obstacles",__LINE__,__FILE__);
 
+#if USE_PROPAGATION_CACHE
   /* adjacency for propagate */
   *adjacency = calloc(params->slice_buff_len, sizeof(t_adjacency));
   if (*adjacency == NULL)
     die("cannot allocate adjacency memory",__LINE__,__FILE__);
+#endif
 
   /* initialise densities */
   w0 = params->density * 4.0/9.0;
