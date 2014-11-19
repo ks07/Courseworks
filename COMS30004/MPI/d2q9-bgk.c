@@ -76,7 +76,7 @@ typedef double my_float;
 
 // If true, slices should not communicate in this direction, as they are alone in this axis.
 #define SINGLE_SLICE_Y 0
-#define SINGLE_SLICE_X 1
+#define SINGLE_SLICE_X 0
 
 // If true, we should run an extra step to store an adjacency mapping for propagate.
 // This should become less efficient if both SINGLE_SLICE values are set false, or if we use
@@ -148,7 +148,7 @@ int write_values(const t_param params, t_speed* cells, int* obstacles, my_float*
 
 /* finalise, including freeing up allocated memory */
 int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
-	     int** obstacles_ptr, my_float** av_vels_ptr);
+	     int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency);
 
 /* Sum all the densities in the grid.
 ** The total should remain constant from one timestep to the next. */
@@ -211,13 +211,6 @@ int main(int argc, char* argv[])
     obstaclefile = argv[2];
   }
 
-  // TODO: NOPE
-  //  if (params.size != 2)
-  //    die("bad problem size",__LINE__,__FILE__);
-
-  //printf("I'm rank %d of %d", params.rank, params.size);
-  //  MPI_Barrier(MPI_COMM_WORLD);
-
   /* initialise our data structures and load values from file */
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
@@ -225,20 +218,6 @@ int main(int argc, char* argv[])
   const int send_len = (((params.slice_ny > params.slice_nx) ? params.slice_ny : params.slice_nx) + 2) * NSPEEDS; // The length of the buffer needed to send the cells.
   sendbuf = malloc(sizeof(my_float) * send_len);
   recvbuf = malloc(sizeof(my_float) * send_len);
-
-  // Makeshift critical section so we can print debug info for slice params individually.
-  /* { */
-  /*   int r = 0; */
-  /*   while (r < params.size) { */
-  /*     if (params.rank == r) { */
-  /* 	printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nEast:%d\nWest:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.rank_east, params.rank_west, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len); */
-  /* 	pobs(params, obstacles); */
-  /* 	printf("\n\n"); */
-  /*     } */
-  /*     r++; */
-  /*     MPI_Barrier(MPI_COMM_WORLD); */
-  /*   } */
-  /* } */
 
   // Synchronise all processes before we enter the simulation loop. Not really necessary...
   MPI_Barrier(MPI_COMM_WORLD);
@@ -280,7 +259,7 @@ int main(int argc, char* argv[])
 
   write_values(params,cells,obstacles,av_vels);
 
-  finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
+  finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
   // Free the send/recv buffers.
   free(sendbuf);
@@ -311,40 +290,8 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   const int send_len = (((params.slice_ny > params.slice_nx) ? params.slice_ny : params.slice_nx) + 2) * NSPEEDS; // The length of the buffer needed to send the cells.
   int interval; // The number of cells to skip between packing steps.
 
-  //MPI_Barrier(MPI_COMM_WORLD);
-  /* if (params.rank == PRINTRANK) */
-  /*   print_grid(params,cells); */
-  //MPI_Barrier(MPI_COMM_WORLD);
-
   accelerate_flow(params,cells,obstacles);
-
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //if (params.rank == PRINTRANK) {
-    //printf("LOLZOR r%d %f", params.rank, cells[8].speeds[5]);
-    //  }
-    //print_grid(params,cells);
-    //}
-  //MPI_Barrier(MPI_COMM_WORLD);
-
-  /* MPI_Barrier(MPI_COMM_WORLD); */
-  /* if (params.rank == 0) { */
-  /*   // Print the north side of rank 0, i.e. opening of the bucket. */
-  /*   print_row(params.rank,params.slice_inner_end-params.slice_nx,1,cells); */
-  /*   print_row(params.rank,1,1,cells); */
-  /* } else { */
-  /*   // Print the southern overlap of rank 1, should match. */
-  /*   print_row(params.rank,1,1,cells); */
-  /* } */
-  /* MPI_Barrier(MPI_COMM_WORLD); */
-
-
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //if (params.rank == PRINTRANK)
-    //print_grid(params,cells);
-  //MPI_Barrier(MPI_COMM_WORLD);
-
   propagate(params,cells,tmp_cells,adjacency);
-
 
   // Perform halo exchange. TODO: Handle other axis. TODO: We can get away with 2 less values if sgl x.
   if (!SINGLE_SLICE_Y) {
@@ -380,7 +327,7 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
     unpack_col(recvbuf,restart,interval,ycount,tmp_cells,0);
   }
   // Perform the diagonal exchanges in the 2D slicing case.
-  if (!SINGLE_SLICE_X && !SINGLE_SLICE_Y) {
+  if (0==1&&!SINGLE_SLICE_X && !SINGLE_SLICE_Y) {
     // Send NE, Recv SW. Need to use speed 5. Need to send NE buffer cell into SW inner
     MPI_Sendrecv(&(tmp_cells[params.slice_buff_len-1].speeds[5]), 1, MY_MPI_FLOAT, params.rank_ne, tag,
 		 &(tmp_cells[params.slice_nx+3].speeds[5]), 1, MY_MPI_FLOAT, params.rank_sw, tag,
@@ -399,25 +346,7 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 		 MPI_COMM_WORLD, &status);
   }
 
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //if (params.rank == PRINTRANK)
-  //print_grid(params,cells);
-  //MPI_Barrier(MPI_COMM_WORLD);
-
-
   collision(params,cells,tmp_cells,obstacles);
-
-  /* MPI_Barrier(MPI_COMM_WORLD); */
-  /* { */
-  /*   int r = 0; */
-  /*   while (r < params.size) { */
-  /*     if (params.rank == r) { */
-  /* 	print_grid(params,cells); */
-  /*     } */
-  /*     r++; */
-  /*     MPI_Barrier(MPI_COMM_WORLD); */
-  /*   } */
-  /* } */
 
   return EXIT_SUCCESS; 
 }
@@ -571,13 +500,11 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   my_float u_sq;                  /* squared velocity */
   my_float local_density;         /* sum of densities in a particular cell */
   int curr_cell; // Stop re-calculating the array index repeatedly.
-  //  const int cell_lim = params.slice_inner_end + 1; //TODO: We are wasting some work, but simplifying the loop. Should we unflatten the loop?
 
   /* loop over the cells in the grid
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
-  //for(curr_cell=params.slice_inner_start;curr_cell<cell_lim;++curr_cell) {
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
       curr_cell = ii*(params.slice_nx+2) + jj;
@@ -732,10 +659,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   ** a 1D array of these structs.
   */
 
-  // Each grid will now be split into smaller subsections. To make life easy, we will use row based chunks
-  // that are simply row sized chunks of the larger array. We know that any access to higher indices than the current
-  // rank must be to the following slice (as the interactions are only between neighbouring cells). Similar for lower.
-
+  // Each grid will now be split into smaller subsections.
 
   if (SINGLE_SLICE_Y && SINGLE_SLICE_X) {
     // Single sliced in both directions, must be only one process!
@@ -796,10 +720,6 @@ int initialise(const char* paramfile, const char* obstaclefile,
     params->slice_global_ys = (int)(params->rank / 2) * params->slice_ny;
 
     // Set our neighbouring slice indices.
-    // NOTE: THESE ARE FLIPPED, AS OUR CELL INDICES ARE MIRRORED COMPARED TO OUR SLICE RANKS.
-    //params->rank_north = (params->rank + 1) % params->size;
-    //params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
-    //params->rank_east = params->rank_west = params->rank ^ 1; // xor to switch between odd and even.
     int ssx = 2; // The number of columns of slices.
     int ssy = params->size / ssx; // The number of rows of slices.
     int sjj = params->rank & 1; // The x co-ord of this slice in slice grid.
@@ -881,13 +801,6 @@ int initialise(const char* paramfile, const char* obstaclefile,
     (*cells_ptr)[ii].speeds[8] = w2;
   }
 
-  // TODO: Get rid of me
-  for(ii=0;ii<params->slice_buff_len;ii++) {
-    for(xt=0;xt<NSPEEDS;xt++) {
-      (*tmp_cells_ptr)[ii].speeds[xt] = 1.333337;
-    }
-  }
-
   /* first set all cells in obstacle array to zero */ 
   for(ii=0;ii<params->slice_len;ii++) {
     (*obstacles_ptr)[ii] = 0;
@@ -946,7 +859,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 }
 
 int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
-	     int** obstacles_ptr, my_float** av_vels_ptr)
+	     int** obstacles_ptr, my_float** av_vels_ptr, t_adjacency** adjacency)
 {
   /* 
   ** free up allocated memory
@@ -962,6 +875,11 @@ int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr
 
   free(*av_vels_ptr);
   *av_vels_ptr = NULL;
+
+#if USE_PROPAGATION_CACHE
+  free(*adjacency);
+  *adjacency = NULL;
+#endif
 
   return EXIT_SUCCESS;
 }
@@ -981,7 +899,6 @@ my_float av_velocity(const t_param params, t_speed* cells, int* obstacles)
   tot_u = 0.0;
 
   /* loop over all non-blocked cells */
-  //  for(outer_cell=0;outer_cell<cell_lim;++outer_cell) {
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
       curr_cell = ii*(params.slice_nx+2) + jj;
