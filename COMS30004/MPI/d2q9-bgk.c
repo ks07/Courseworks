@@ -292,7 +292,6 @@ int main(int argc, char* argv[])
 
   // Can we do this outside the timing? Probably not!
   propagate_prep(params, adjacency);
-  //MPI_Barrier(MPI_COMM_WORLD); // TODO: NOPE
 
   for (ii=0;ii<params.maxIters;ii++) {
     timestep(params,cells,tmp_cells,obstacles,adjacency,sendbuf,recvbuf);
@@ -320,18 +319,17 @@ int main(int argc, char* argv[])
     printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
   }
 
-  MPI_Barrier(MPI_COMM_WORLD); //TODO: BYE BYE
-  while (1) {}
-
   write_values(params,cells,obstacles,av_vels);
+
   finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
 
   // Free the send/recv buffers.
   free(sendbuf);
   free(recvbuf);
 
+  // Shut down the MPI network.
   MPI_Finalize();
-  
+
   return EXIT_SUCCESS;
 }
 
@@ -1002,70 +1000,91 @@ my_float total_density(const t_param params, t_speed* cells)
 
 int write_values(const t_param params, t_speed* cells, int* obstacles, my_float* av_vels)
 {
-  FILE* fp;                     /* file pointer */
-  int ii,jj,kk;                 /* generic counters */
-  const double c_sq = 1.0/3.0;  /* sq. of speed of sound */
-  double local_density;         /* per grid cell sum of densities */
-  double pressure;              /* fluid pressure in grid cell */
-  double u_x;                   /* x-component of velocity in grid cell */
-  double u_y;                   /* y-component of velocity in grid cell */
-  double u;                     /* norm--root of summed squares--of u_x and u_y */
+  FILE* fp;                                /* file pointer */
+  int ii,jj,kk,my_cell,myii,myjj,obs_cell; /* generic counters */
+  const double c_sq = 1.0/3.0;             /* sq. of speed of sound */
+  double local_density;                    /* per grid cell sum of densities */
+  double pressure;                         /* fluid pressure in grid cell */
+  double u_x;                              /* x-component of velocity in grid cell */
+  double u_y;                              /* y-component of velocity in grid cell */
+  double u;                                /* norm--root of summed squares--of u_x and u_y */
 
-  fp = fopen(FINALSTATEFILE,"w");
-  if (fp == NULL) {
-    die("could not open file output file",__LINE__,__FILE__);
-  }
+  // This function uses hackery beyond your wildest imagination. Don't read on.
+  // I cannot warn you enough. Efficiency does not exist here. If it ain't broke,
+  // don't fix it. Murphy's Law doesn't mean that something bad will happen. It means that
+  // whatever can happen, will happen. I apologise to everyone who has ever trusted me.
+  // Forgive me.
 
+  // THIS FUNCTION LOOPS OVER GLOBAL COORDINATES. REMEMBER TO TRANSLATE BEFORE ACCESS.
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
-      /* an occupied cell */
-      if(obstacles[ii*params.nx + jj]) {
-	u_x = u_y = u = 0.0;
-	pressure = params.density * c_sq;
-      }
-      /* no obstacle */
-      else {
-	local_density = 0.0;
-	for(kk=0;kk<NSPEEDS;kk++) {
-	  local_density += cells[ii*params.nx + jj].speeds[kk];
+      // Check if the current slice should be handling this cell.
+      if (within_slice_c(params, jj, ii)) {
+	myii = ii - params.slice_global_ys + 1; // Get the local y coord.
+	myjj = jj - params.slice_global_xs + 1; // Get the local x coord.
+	// Offset curr_cell based upon the slice bounds.
+	my_cell = myii * (params.slice_nx + 2) + myjj;
+	// The obstacle cell is not indexed the same.
+	obs_cell = (myii-1)*params.slice_nx+(myjj-1);
+      
+	/* an occupied cell */
+	if(obstacles[obs_cell]) {
+	  u_x = u_y = u = 0.0;
+	  pressure = params.density * c_sq;
 	}
-	/* compute x velocity component */
-	u_x = (cells[ii*params.nx + jj].speeds[1] + 
-	       cells[ii*params.nx + jj].speeds[5] +
-	       cells[ii*params.nx + jj].speeds[8]
-	       - (cells[ii*params.nx + jj].speeds[3] + 
-		  cells[ii*params.nx + jj].speeds[6] + 
-		  cells[ii*params.nx + jj].speeds[7]))
-	  / local_density;
-	/* compute y velocity component */
-	u_y = (cells[ii*params.nx + jj].speeds[2] + 
-	       cells[ii*params.nx + jj].speeds[5] + 
-	       cells[ii*params.nx + jj].speeds[6]
-	       - (cells[ii*params.nx + jj].speeds[4] + 
-		  cells[ii*params.nx + jj].speeds[7] + 
-		  cells[ii*params.nx + jj].speeds[8]))
-	  / local_density;
-	/* compute norm of velocity */
-	u = my_sqrt((u_x * u_x) + (u_y * u_y));
-	/* compute pressure */
-	pressure = local_density * c_sq;
-      }
-      /* write to file */
-      fprintf(fp,"%d %d %.12E %.12E %.12E %.12E %d\n",jj,ii,u_x,u_y,u,pressure,obstacles[ii*params.nx + jj]);
+	/* no obstacle */
+	else {
+	  local_density = 0.0;
+	  for(kk=0;kk<NSPEEDS;kk++) {
+	    local_density += cells[my_cell].speeds[kk];
+	  }
+	  /* compute x velocity component */
+	  u_x = (cells[my_cell].speeds[1] + 
+		 cells[my_cell].speeds[5] +
+		 cells[my_cell].speeds[8]
+		 - (cells[my_cell].speeds[3] + 
+		    cells[my_cell].speeds[6] + 
+		    cells[my_cell].speeds[7]))
+	    / local_density;
+	  /* compute y velocity component */
+	  u_y = (cells[my_cell].speeds[2] + 
+		 cells[my_cell].speeds[5] + 
+		 cells[my_cell].speeds[6]
+		 - (cells[my_cell].speeds[4] + 
+		    cells[my_cell].speeds[7] + 
+		    cells[my_cell].speeds[8]))
+	    / local_density;
+	  /* compute norm of velocity */
+	  u = my_sqrt((u_x * u_x) + (u_y * u_y));
+	  /* compute pressure */
+	  pressure = local_density * c_sq;
+	}
+	/* write to file */
+	// THIS IS INSANELY INEFFICIENT, FIX ME
+	fp = fopen(FINALSTATEFILE,(ii == 0 && jj == 0) ? "w" : "a");
+	if (fp == NULL) {
+	  die("could not open file output file",__LINE__,__FILE__);
+	}
+	fprintf(fp,"%d %d %.12E %.12E %.12E %.12E %d\n",jj,ii,u_x,u_y,u,pressure,obstacles[obs_cell]);
+	fclose(fp);
+      } // if within slice
+      // Need to synchronise each process so they don't attempt to write simultaneously.
+      MPI_Barrier(MPI_COMM_WORLD);
+    } // jj for
+  } // ii for
+
+  // Only rank 0 knows the average velocities.
+  if (params.rank == 0) {
+    fp = fopen(AVVELSFILE,"w");
+    if (fp == NULL) {
+      die("could not open file output file",__LINE__,__FILE__);
     }
-  }
+    for (ii=0;ii<params.maxIters;ii++) {
+      fprintf(fp,"%d:\t%.12E\n", ii, (double)av_vels[ii]);
+    }
 
-  fclose(fp);
-
-  fp = fopen(AVVELSFILE,"w");
-  if (fp == NULL) {
-    die("could not open file output file",__LINE__,__FILE__);
+    fclose(fp);
   }
-  for (ii=0;ii<params.maxIters;ii++) {
-    fprintf(fp,"%d:\t%.12E\n", ii, (double)av_vels[ii]);
-  }
-
-  fclose(fp);
 
   return EXIT_SUCCESS;
 }
