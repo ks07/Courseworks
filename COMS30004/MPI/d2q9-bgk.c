@@ -691,21 +691,10 @@ int initialise(const char* paramfile, const char* obstaclefile,
   // that are simply row sized chunks of the larger array. We know that any access to higher indices than the current
   // rank must be to the following slice (as the interactions are only between neighbouring cells). Similar for lower.
 
-  // Store all these values in our copy of params.
-  // Set the slice length, rounded to a full row.
-  //  params->slice_len = ((int)(params->ny / params->size)) * params->nx;
-
-  //if (params->slice_len * params->size != params->ny * params->nx) {
-    // We can't divide the workspace equally between the number of processes we have.
-    // The simple solution is to add the remaining rows to the final slice.
-    //if (params->rank == params->size - 1) {
-      // We are the final slice.
-      // params->slice_len
-    //}
-    //die("cannot handle uneven slice divisions!",__LINE__,__FILE__);
-  //}
-
-  // BEWARE: TODO: OMG: Above values are probably completely bogus and based on old assumptions.
+  // We need to assert that the number of rows we are working on is >= the number of processes.
+  if (params->size > params->ny) {
+    die("problem space is too small for the current processor count",__LINE__,__FILE__);
+  }
   
   // Set our neighbouring slice indices.
   // NOTE: THESE ARE FLIPPED, AS OUR CELL INDICES ARE MIRRORED COMPARED TO OUR SLICE RANKS.
