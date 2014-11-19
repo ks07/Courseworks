@@ -76,7 +76,7 @@ typedef double my_float;
 
 // If true, slices should not communicate in this direction, as they are alone in this axis.
 #define SINGLE_SLICE_Y 0
-#define SINGLE_SLICE_X 1
+#define SINGLE_SLICE_X 0
 
 // If true, we should run an extra step to store an adjacency mapping for propagate.
 // This should become less efficient if both SINGLE_SLICE values are set false, or if we use
@@ -162,8 +162,9 @@ void die(const char* message, const int line, const char *file);
 void usage(const char* exe);
 int within_slice_c(const t_param params, const int jj, const int ii);
 int within_slice(const t_param params, const int index);
-void pack_row(my_float* packed, const int start, const int count, t_speed* cells);
-void unpack_row(my_float* packed, const int start, const int count, t_speed* cells, int sixtwofive);
+void pack_row(my_float* packed, const int start, const int interval, const int count, t_speed* cells);
+void unpack_row(my_float* packed, const int start, const int interval, const int count, t_speed* cells, int sixtwofive);
+void unpack_col(my_float* packed, const int start, const int interval, const int count, t_speed* cells, int fiveoneeight);
 void pobs(const t_param params, int* obstacles);
 void print_grid(const t_param params, t_speed* cells);
 void print_row(const int rank, const int start, const int count, t_speed* cells);
@@ -218,8 +219,9 @@ int main(int argc, char* argv[])
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
   // Initialise the send and receive buffers.
-  sendbuf = malloc(sizeof(my_float) * NSPEEDS * (params.slice_nx+2));
-  recvbuf = malloc(sizeof(my_float) * NSPEEDS * (params.slice_nx+2));
+  const int send_len = (((params.slice_ny > params.slice_nx) ? params.slice_ny : params.slice_nx) + 2) * NSPEEDS; // The length of the buffer needed to send the cells.
+  sendbuf = malloc(sizeof(my_float) * send_len);
+  recvbuf = malloc(sizeof(my_float) * send_len);
 
   // Makeshift critical section so we can print debug info for slice params individually.
   //  {
@@ -297,8 +299,14 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   const int snstart = params.slice_inner_end + 1; // Cell index we send from to the north.
   const int rsstart = params.slice_nx + 2; // Cell index we receive into from the south.
   const int ssstart = 0; // Cell index we send from to the south.
-  const int count = params.slice_nx + 2; // The count of cells sent in each message.
-  const int send_len = count * NSPEEDS; // The length of the buffer needed to send the cells.
+  const int restart = params.slice_nx; // Cell we recv into from the east
+  const int swstart = 0;
+  const int rwstart = 1;
+  const int sestart = params.slice_nx + 1;
+  const int xcount = params.slice_nx + 2; // The count of cells sent in each message.
+  const int ycount = params.slice_ny + 2;
+  const int send_len = (((params.slice_ny > params.slice_nx) ? params.slice_ny : params.slice_nx) + 2) * NSPEEDS; // The length of the buffer needed to send the cells.
+  int interval; // The number of cells to skip between packing steps.
 
   //MPI_Barrier(MPI_COMM_WORLD);
   /* if (params.rank == PRINTRANK) */
@@ -337,21 +345,37 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 
   // Perform halo exchange. TODO: Handle other axis. TODO: We can get away with 2 less values if sgl x.
   if (!SINGLE_SLICE_Y) {
+    interval = 1;
     // TODO: Better ways to do this?
-    pack_row(sendbuf,snstart,count,tmp_cells);
+    pack_row(sendbuf,snstart,interval,xcount,tmp_cells);
     // Send to the north, receive from the south.
     MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
 		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
 		 MPI_COMM_WORLD, &status);
-    unpack_row(recvbuf,rsstart,count,tmp_cells,1);
+    unpack_row(recvbuf,rsstart,interval,xcount,tmp_cells,1);
     // Send to the south, receive from the north.
-    pack_row(sendbuf,ssstart,count,tmp_cells);
+    pack_row(sendbuf,ssstart,interval,xcount,tmp_cells);
     MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
 		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
 		 MPI_COMM_WORLD, &status);
-    unpack_row(recvbuf,rnstart,count,tmp_cells,0);
+    unpack_row(recvbuf,rnstart,interval,xcount,tmp_cells,0);
   }
 
+  if (!SINGLE_SLICE_X) {
+    interval = params.slice_nx + 2;
+    pack_row(sendbuf,sestart,interval,ycount,tmp_cells);
+    // Send to the east, receive from the west.
+    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
+		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
+		 MPI_COMM_WORLD, &status);
+    unpack_col(recvbuf,rwstart,interval,ycount,tmp_cells,1);
+    // Send to the west, receive from the east.
+    pack_row(sendbuf,swstart,interval,ycount,tmp_cells);
+    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
+		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
+		 MPI_COMM_WORLD, &status);
+    unpack_row(recvbuf,restart,interval,ycount,tmp_cells,0);
+  }
 
   //MPI_Barrier(MPI_COMM_WORLD);
   //if (params.rank == PRINTRANK)
@@ -1069,18 +1093,18 @@ inline int within_slice(const t_param params, const int index)
   return within_slice_c(params, jj, ii);
 }
 
-inline void pack_row(my_float* packed, const int start, const int count, t_speed* cells) {
+inline void pack_row(my_float* packed, const int start, const int interval, const int count, t_speed* cells) {
   //printf("Sending from %d + %d\n",start,count);
-  for (int ii = 0;ii<count;ii++) {
+  for (int ii = 0;ii<count;ii+=interval) {
     for (int kk = 0;kk<NSPEEDS;kk++) {
       packed[ii*NSPEEDS+kk] = cells[ii+start].speeds[kk];
     }
   }
 }
 
-inline void unpack_row(my_float* packed, const int start, const int count, t_speed* cells, int sixtwofive) {
+inline void unpack_row(my_float* packed, const int start, const int interval, const int count, t_speed* cells, int sixtwofive) {
   //printf("Recving into %d + %d\n",start,count);
-  for (int ii = 0;ii<count;ii++) {
+  for (int ii = 0;ii<count;ii+=interval) {
     if (sixtwofive) {
       cells[ii+start].speeds[6] = packed[ii*NSPEEDS+6];
       cells[ii+start].speeds[2] = packed[ii*NSPEEDS+2];
@@ -1089,6 +1113,22 @@ inline void unpack_row(my_float* packed, const int start, const int count, t_spe
       cells[ii+start].speeds[7] = packed[ii*NSPEEDS+7];
       cells[ii+start].speeds[4] = packed[ii*NSPEEDS+4];
       cells[ii+start].speeds[8] = packed[ii*NSPEEDS+8];
+    }
+  }
+}
+
+// TODO: Combine with unpack row.
+inline void unpack_col(my_float* packed, const int start, const int interval, const int count, t_speed* cells, int fiveoneeight) {
+  //printf("Recving into %d + %d\n",start,count);
+  for (int ii = 0;ii<count;ii+=interval) {
+    if (fiveoneeight) {
+      cells[ii+start].speeds[5] = packed[ii*NSPEEDS+5];
+      cells[ii+start].speeds[1] = packed[ii*NSPEEDS+1];
+      cells[ii+start].speeds[8] = packed[ii*NSPEEDS+8];
+    } else {
+      cells[ii+start].speeds[6] = packed[ii*NSPEEDS+6];
+      cells[ii+start].speeds[3] = packed[ii*NSPEEDS+3];
+      cells[ii+start].speeds[7] = packed[ii*NSPEEDS+7];
     }
   }
 }
