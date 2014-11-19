@@ -81,7 +81,7 @@ typedef double my_float;
 // If true, we should run an extra step to store an adjacency mapping for propagate.
 // This should become less efficient if both SINGLE_SLICE values are set false, or if we use
 // very small slice sizes.
-#define USE_PROPAGATION_CACHE 1
+#define USE_PROPAGATION_CACHE 0
 
 /* struct to hold the parameter values */
 typedef struct {
@@ -454,14 +454,12 @@ int propagate_prep(const t_param params, t_adjacency* adjacency)
   return EXIT_SUCCESS;
 }
 
-#if USE_PROPAGATE_CACHE
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
 {
+#if USE_PROPAGATE_CACHE
   int ii,jj,curr_cell; // Stop re-calculating the array index repeatedly.
 
   /* loop over _all_ cells */
-  
-  //  for(curr_cell=params.slice_inner_start;curr_cell<params.slice_inner_end;++curr_cell) {
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
       curr_cell = ii*(params.slice_nx+2) + jj;
@@ -480,19 +478,14 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
       tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
     }
   }
-
-  //printf("out of prop, %d\n", params.rank);
-  return EXIT_SUCCESS;
-}
 #else // Non-cached propagate.
-int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjacency* adjacency)
-{
-  int ii,jj;            /* generic counters */
-  int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
+  int ii,jj,curr_cell; /* generic counters */
+  int x_e,x_w,y_n,y_s; /* indices of neighbouring cells */
 
   /* loop over _all_ cells */
   for(ii=1;ii<params.slice_ny+1;ii++) {
     for(jj=1;jj<params.slice_nx+1;jj++) {
+      curr_cell = ii*(params.slice_nx+2) + jj;
       /* determine indices of axis-direction neighbours
       ** respecting periodic boundary conditions (wrap around) */
       y_n = ii + 1;
@@ -502,23 +495,23 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
       /* propagate densities to neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
-      tmp_cells[ii *(params.slice_nx+2) + jj].speeds[0]  = cells[ii*(params.slice_nx+2) + jj].speeds[0]; /* central cell, */
-                                                                                     /* no movement   */
-      tmp_cells[ii *(params.slice_nx+2) + x_e].speeds[1] = cells[ii*(params.slice_nx+2) + jj].speeds[1]; /* east */
-      tmp_cells[y_n*(params.slice_nx+2) + jj].speeds[2]  = cells[ii*(params.slice_nx+2) + jj].speeds[2]; /* north */
-      tmp_cells[ii *(params.slice_nx+2) + x_w].speeds[3] = cells[ii*(params.slice_nx+2) + jj].speeds[3]; /* west */
-      tmp_cells[y_s*(params.slice_nx+2) + jj].speeds[4]  = cells[ii*(params.slice_nx+2) + jj].speeds[4]; /* south */
-      tmp_cells[y_n*(params.slice_nx+2) + x_e].speeds[5] = cells[ii*(params.slice_nx+2) + jj].speeds[5]; /* north-east */
-      tmp_cells[y_n*(params.slice_nx+2) + x_w].speeds[6] = cells[ii*(params.slice_nx+2) + jj].speeds[6]; /* north-west */
-      tmp_cells[y_s*(params.slice_nx+2) + x_w].speeds[7] = cells[ii*(params.slice_nx+2) + jj].speeds[7]; /* south-west */      
-      tmp_cells[y_s*(params.slice_nx+2) + x_e].speeds[8] = cells[ii*(params.slice_nx+2) + jj].speeds[8]; /* south-east */      
+      tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
+                                                                                       /* no movement   */
+      tmp_cells[ii *(params.slice_nx+2) + x_e].speeds[1] = cells[curr_cell].speeds[1]; /* east */
+      tmp_cells[y_n*(params.slice_nx+2) + jj].speeds[2]  = cells[curr_cell].speeds[2]; /* north */
+      tmp_cells[ii *(params.slice_nx+2) + x_w].speeds[3] = cells[curr_cell].speeds[3]; /* west */
+      tmp_cells[y_s*(params.slice_nx+2) + jj].speeds[4]  = cells[curr_cell].speeds[4]; /* south */
+      tmp_cells[y_n*(params.slice_nx+2) + x_e].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
+      tmp_cells[y_n*(params.slice_nx+2) + x_w].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
+      tmp_cells[y_s*(params.slice_nx+2) + x_w].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
+      tmp_cells[y_s*(params.slice_nx+2) + x_e].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
     }
   }
+#endif
 
   //printf("out of prop, %d\n", params.rank);
   return EXIT_SUCCESS;
 }
-#endif
 
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
