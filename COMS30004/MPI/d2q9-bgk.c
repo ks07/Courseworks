@@ -379,6 +379,25 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 		 MPI_COMM_WORLD, &status);
     unpack_col(recvbuf,restart,interval,ycount,tmp_cells,0);
   }
+  // Perform the diagonal exchanges in the 2D slicing case.
+  if (!SINGLE_SLICE_X && !SINGLE_SLICE_Y) {
+    // Send NE, Recv SW. Need to use speed 5. Need to send NE buffer cell into SW inner
+    MPI_Sendrecv(&(tmp_cells[params.slice_buff_len-1].speeds[5]), 1, MY_MPI_FLOAT, params.rank_ne, tag,
+		 &(tmp_cells[params.slice_nx+3].speeds[5]), 1, MY_MPI_FLOAT, params.rank_sw, tag,
+		 MPI_COMM_WORLD, &status);
+    // Send SW, Recv NE. Use speed 7.
+    MPI_Sendrecv(&(tmp_cells[0].speeds[7]), 1, MY_MPI_FLOAT, params.rank_sw, tag,
+		 &(tmp_cells[params.slice_ny*(params.slice_nx+2)+params.slice_nx].speeds[5]), 1, MY_MPI_FLOAT, params.rank_ne, tag,
+		 MPI_COMM_WORLD, &status);
+    // Send NW, Recv SE. Use speed 6. Send NW buffer into SE inner.
+    MPI_Sendrecv(&(tmp_cells[(params.slice_ny+1)*(params.slice_nx+2)].speeds[6]), 1, MY_MPI_FLOAT, params.rank_nw, tag,
+		 &(tmp_cells[params.slice_nx+2+params.slice_nx].speeds[6]), 1, MY_MPI_FLOAT, params.rank_se, tag,
+		 MPI_COMM_WORLD, &status);
+    // Send SE, Recv NW. Use speed 8.
+    MPI_Sendrecv(&(tmp_cells[params.slice_nx+1].speeds[8]), 1, MY_MPI_FLOAT, params.rank_se, tag,
+		 &(tmp_cells[params.slice_ny*(params.slice_nx+2)+1].speeds[8]), 1, MY_MPI_FLOAT, params.rank_nw, tag,
+		 MPI_COMM_WORLD, &status);
+  }
 
   //MPI_Barrier(MPI_COMM_WORLD);
   //if (params.rank == PRINTRANK)
