@@ -157,64 +157,11 @@ void die(const char* message, const int line, const char *file);
 void usage(const char* exe);
 int within_slice_c(const t_param params, const int jj, const int ii);
 int within_slice(const t_param params, const int index);
-//int slice_index(const t_param params, const int index);
-
-// TODO: Give me a prototype.
-void pobs(const t_param params, int* obstacles) {
-  int ii,jj,curr_cell;
-  for(ii=0;ii<params.slice_ny;ii++) {
-    for(jj=0;jj<params.slice_nx;jj++) {
-      curr_cell = ii*params.nx + jj;
-      printf(obstacles[curr_cell] ? "#" : "_");
-    }
-    printf("\n");
-  }
-}
-
-void pack_row(my_float* packed, const int start, const int count, t_speed* cells) {
-  //  my_float* packed = malloc(sizeof(my_float) * NSPEEDS * count);
-  //printf("Sending from %d + %d\n",start,count);
-  for (int ii = 0;ii<count;ii++) {
-    for (int kk = 0;kk<NSPEEDS;kk++) {
-      packed[ii*NSPEEDS+kk] = cells[ii+start].speeds[kk];
-    }
-  }
-}
-
-void unpack_row(my_float* packed, const int start, const int count, t_speed* cells, int sixtwofive) {
-  //printf("Recving into %d + %d\n",start,count);
-  for (int ii = 0;ii<count;ii++) {
-    if (sixtwofive) {
-      cells[ii+start].speeds[6] = packed[ii*NSPEEDS+6];
-      cells[ii+start].speeds[2] = packed[ii*NSPEEDS+2];
-      cells[ii+start].speeds[5] = packed[ii*NSPEEDS+5];
-    } else {
-      cells[ii+start].speeds[7] = packed[ii*NSPEEDS+7];
-      cells[ii+start].speeds[4] = packed[ii*NSPEEDS+4];
-      cells[ii+start].speeds[8] = packed[ii*NSPEEDS+8];
-    }
-  }
-}
-
-void print_row(const int rank, const int start, const int count, t_speed* cells) {
-  for (int ii = start;ii<start+count;ii++) {
-    for (int kk = 0;kk<NSPEEDS;kk++) {
-      //printf("r%d %d.%d: %f\n", rank, ii, kk, cells[ii].speeds[kk]);
-    }
-  }
-}
-
-void print_grid(const t_param params, t_speed* cells) {
-  for (int ii = 0;ii<params.slice_ny+2;ii++) {
-    for (int jj = 0;jj<params.slice_nx+2;jj++) {
-      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[6], cells[ii*(params.slice_nx+2)+jj].speeds[2], cells[ii*(params.slice_nx+2)+jj].speeds[5]);
-      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[3], cells[ii*(params.slice_nx+2)+jj].speeds[0], cells[ii*(params.slice_nx+2)+jj].speeds[1]);
-      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[7], cells[ii*(params.slice_nx+2)+jj].speeds[4], cells[ii*(params.slice_nx+2)+jj].speeds[8]);
-      printf("\n\n");
-    }
-    printf("---------\n");
-  }
-}
+void pack_row(my_float* packed, const int start, const int count, t_speed* cells);
+void unpack_row(my_float* packed, const int start, const int count, t_speed* cells, int sixtwofive);
+void pobs(const t_param params, int* obstacles);
+void print_grid(const t_param params, t_speed* cells);
+void print_row(const int rank, const int start, const int count, t_speed* cells);
 
 /*
 ** main program:
@@ -1120,7 +1067,57 @@ inline int within_slice(const t_param params, const int index)
   return within_slice_c(params, jj, ii);
 }
 
-/* inline int slice_index(const t_param params, const int index) */
-/* { */
-/*   return index - params.slice_start; */
-/* } */
+inline void pack_row(my_float* packed, const int start, const int count, t_speed* cells) {
+  //printf("Sending from %d + %d\n",start,count);
+  for (int ii = 0;ii<count;ii++) {
+    for (int kk = 0;kk<NSPEEDS;kk++) {
+      packed[ii*NSPEEDS+kk] = cells[ii+start].speeds[kk];
+    }
+  }
+}
+
+inline void unpack_row(my_float* packed, const int start, const int count, t_speed* cells, int sixtwofive) {
+  //printf("Recving into %d + %d\n",start,count);
+  for (int ii = 0;ii<count;ii++) {
+    if (sixtwofive) {
+      cells[ii+start].speeds[6] = packed[ii*NSPEEDS+6];
+      cells[ii+start].speeds[2] = packed[ii*NSPEEDS+2];
+      cells[ii+start].speeds[5] = packed[ii*NSPEEDS+5];
+    } else {
+      cells[ii+start].speeds[7] = packed[ii*NSPEEDS+7];
+      cells[ii+start].speeds[4] = packed[ii*NSPEEDS+4];
+      cells[ii+start].speeds[8] = packed[ii*NSPEEDS+8];
+    }
+  }
+}
+
+void pobs(const t_param params, int* obstacles) {
+  int ii,jj,curr_cell;
+  for(ii=0;ii<params.slice_ny;ii++) {
+    for(jj=0;jj<params.slice_nx;jj++) {
+      curr_cell = ii*params.nx + jj;
+      printf(obstacles[curr_cell] ? "#" : "_");
+    }
+    printf("\n");
+  }
+}
+
+void print_row(const int rank, const int start, const int count, t_speed* cells) {
+  for (int ii = start;ii<start+count;ii++) {
+    for (int kk = 0;kk<NSPEEDS;kk++) {
+      printf("r%d %d.%d: %f\n", rank, ii, kk, cells[ii].speeds[kk]);
+    }
+  }
+}
+
+void print_grid(const t_param params, t_speed* cells) {
+  for (int ii = 0;ii<params.slice_ny+2;ii++) {
+    for (int jj = 0;jj<params.slice_nx+2;jj++) {
+      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[6], cells[ii*(params.slice_nx+2)+jj].speeds[2], cells[ii*(params.slice_nx+2)+jj].speeds[5]);
+      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[3], cells[ii*(params.slice_nx+2)+jj].speeds[0], cells[ii*(params.slice_nx+2)+jj].speeds[1]);
+      printf("%f,%f,%f\n", cells[ii*(params.slice_nx+2)+jj].speeds[7], cells[ii*(params.slice_nx+2)+jj].speeds[4], cells[ii*(params.slice_nx+2)+jj].speeds[8]);
+      printf("\n\n");
+    }
+    printf("---------\n");
+  }
+}
