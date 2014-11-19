@@ -76,12 +76,12 @@ typedef double my_float;
 
 // If true, slices should not communicate in this direction, as they are alone in this axis.
 #define SINGLE_SLICE_Y 0
-#define SINGLE_SLICE_X 0
+#define SINGLE_SLICE_X 1
 
 // If true, we should run an extra step to store an adjacency mapping for propagate.
 // This should become less efficient if both SINGLE_SLICE values are set false, or if we use
 // very small slice sizes.
-#define USE_PROPAGATION_CACHE 1
+#define USE_PROPAGATION_CACHE 0
 
 /* struct to hold the parameter values */
 typedef struct {
@@ -99,6 +99,7 @@ typedef struct {
   int rank_south; // Index of the slice to the south.
   int rank_east;
   int rank_west;
+  int rank_nw, rank_ne, rank_sw, rank_se;
   int slice_len; // Size of the current slice.
   int slice_buff_len; // Size of the slice buffer, including overlap for halo.
   int slice_inner_start; // Local index of the first non-buffer cell.
@@ -226,18 +227,18 @@ int main(int argc, char* argv[])
   recvbuf = malloc(sizeof(my_float) * send_len);
 
   // Makeshift critical section so we can print debug info for slice params individually.
-  //  {
-    //    int r = 0;
-    //    while (r < params.size) {
-      //      if (params.rank == r) {
-	//printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len);
-	//pobs(params, obstacles);
-	//printf("\n\n");
-	//      }
-      //      r++;
-      //      MPI_Barrier(MPI_COMM_WORLD);
-      //    }
-    //  }
+  {
+    int r = 0;
+    while (r < params.size) {
+      if (params.rank == r) {
+	printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nEast:%d\nWest:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.rank_east, params.rank_west, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len);
+	pobs(params, obstacles);
+	printf("\n\n");
+      }
+      r++;
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+  }
 
   // Synchronise all processes before we enter the simulation loop. Not really necessary...
   MPI_Barrier(MPI_COMM_WORLD);
@@ -435,7 +436,6 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
       }
     }
   }
-
 
   //printf("out of accel, %d\n", params.rank);
   return EXIT_SUCCESS;
@@ -717,44 +717,86 @@ int initialise(const char* paramfile, const char* obstaclefile,
   // that are simply row sized chunks of the larger array. We know that any access to higher indices than the current
   // rank must be to the following slice (as the interactions are only between neighbouring cells). Similar for lower.
 
-  // We need to assert that the number of rows we are working on is >= the number of processes.
-  if (params->size > params->ny) {
-    die("problem space is too small for the current processor count",__LINE__,__FILE__);
-  }
+
+  if (SINGLE_SLICE_Y && SINGLE_SLICE_X) {
+    // Single sliced in both directions, must be only one process!
+    if (params->size == 1) {
+      params->rank_north = params->rank_south = params->rank_east = params->rank_west = params->rank;
+    } else {
+      die("executable is set to single slice mode, cannot run multiple processes",__LINE__,__FILE__);
+    }
+  } else if (SINGLE_SLICE_X) {
+    // Divide the problem space into slices row wise.
   
-  // Set our neighbouring slice indices.
-  // NOTE: THESE ARE FLIPPED, AS OUR CELL INDICES ARE MIRRORED COMPARED TO OUR SLICE RANKS.
-  params->rank_north = (params->rank + 1) % params->size;
-  params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
-  params->rank_east = params->rank;
-  params->rank_west = params->rank;
+    // We need to assert that the number of rows we are working on is >= the number of processes.
+    if (params->size > params->ny) {
+      die("problem space is too small for the current processor count",__LINE__,__FILE__);
+    }
 
-  // Divide the problem space into slices. Currently Y direction only.
-  params->slice_nx = params->nx;
-  params->slice_ny = (int)(params->ny / params->size);
+    // Set the slice dimensions.
+    params->slice_nx = params->nx;
+    params->slice_ny = (int)(params->ny / params->size);
 
-  // Add any remaining rows to the final slice.
-  if (params->rank == params->size - 1) {
-    extra_rows = params->ny - (params->slice_ny * params->size);
-    params->slice_ny += extra_rows;
+    // Set the global offset for this slice
+    params->slice_global_xs = 0;
+    params->slice_global_ys = params->slice_ny * params->rank;
+
+    // Set our neighbouring slice indices.
+    params->rank_east = params->rank_west = params->rank;
+    params->rank_north = (params->rank + 1) % params->size;
+    params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
+
+    // Add any remaining rows to the final slice.
+    if (params->rank == params->size - 1) {
+      extra_rows = params->ny - (params->slice_ny * params->size);
+      params->slice_ny += extra_rows;
+    }
+  } else if (SINGLE_SLICE_Y) {
+    // TODO: Implement me. Divide the problem space into slices column wise.
+    die("unimplemented",__LINE__,__FILE__);
+  } else {
+    // Split the cells down the middle, to make two columns of ranks.
+    params->slice_nx = (int)(params->nx / 2);
+    params->slice_ny = (int)(2 * params->ny / params->size);
+
+    if ((params->nx & 1) == 1) {
+      // Odd number of columns, add extra to the rightmost slices.
+      if ((params->rank & 1) == 1) {
+	params->slice_nx++;
+      }
+    }
+
+    // The final row of slices need to accomodate any remaining rows in the global grid.
+    if (params->rank >= params->size - 2) {
+      extra_rows = params->ny - (params->slice_ny * (params->size / 2));
+      params->slice_ny += extra_rows;
+    }
+
+    // Set the global offset for this slice
+    params->slice_global_xs = ((params->rank & 1) == 0) ? 0 : (int)(params->nx / 2);
+    params->slice_global_ys = (int)(params->rank / 2) * params->slice_ny;
+
+    // Set our neighbouring slice indices.
+    // NOTE: THESE ARE FLIPPED, AS OUR CELL INDICES ARE MIRRORED COMPARED TO OUR SLICE RANKS.
+    params->rank_north = (params->rank + 1) % params->size;
+    params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
+    params->rank_east = params->rank_west = params->rank ^ 1; // xor to switch between odd and even.
   }
 
-  // Calculate the slice len.
-  params->slice_len = params->slice_ny * params->nx;
+  // Calculate the slice len. Strategy generic
+  params->slice_len = params->slice_ny * params->slice_nx;
 
-  // Total size of the buffer including exchange space.
+  // Total size of the buffer including exchange space. Strategy generic.
   params->slice_buff_len = (params->slice_nx + 2) * (params->slice_ny + 2);
 
-  // Want to know the index in a local sense for loops
+  // Want to know the index in a local sense for loops. Strategy generic.
   // snx for the adjacent row, 2 for the corners, 1 for the west edge.
   params->slice_inner_start = params->slice_nx + 2 + 1;
   // The slice end is nx * ny away. Need to account for buffer space +2(ny - 1)
   params->slice_inner_end = params->slice_inner_start +
     (params->slice_nx * params->slice_ny) + (2 * params->slice_ny) - 2;
 
-  // Global index of the slice opening.
-  params->slice_global_xs = 0;
-  params->slice_global_ys = ((int)(params->ny / params->size)) * params->rank; // TODO: Get rid of div
+  // Global index of the slice ending. Should be strategy generic.
   params->slice_global_xe = params->slice_global_xs + params->slice_nx;
   params->slice_global_ye = params->slice_global_ys + params->slice_ny;
 
@@ -839,7 +881,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
       yy = yy - params->slice_global_ys;
       ii = (yy * params->slice_nx) + xx;
 
-      //printf("Block: (%d,%d) %d,%d @ %d\n",xt,yt,xx,yy,ii);
+      //printf("Block r%d: (%d,%d) %d,%d @ %d\n",params->rank,xt,yt,xx,yy,ii);
 
       // Sanity check.
       if (ii < 0 || ii >= params->slice_len) {
@@ -1126,6 +1168,9 @@ inline void unpack_row(my_float* packed, const int start, const int interval, co
 inline void unpack_col(my_float* packed, const int start, const int interval, const int count, t_speed* cells, int fiveoneeight) {
   //printf("Recving into %d + %d\n",start,count);
   for (int ii = 0;ii<count;ii++) {
+    // When at the edge of the slice, we have a cell where only the outward diagonal
+    // has been set by propagate. Thus, copying the entire outward edge of the cell is writing
+    // bad values to actual cells. This bug is masked in the one way slicing case!
     if (fiveoneeight) {
       cells[ii*interval+start].speeds[5] = packed[ii*NSPEEDS+5];
       cells[ii*interval+start].speeds[1] = packed[ii*NSPEEDS+1];
@@ -1142,7 +1187,7 @@ void pobs(const t_param params, int* obstacles) {
   int ii,jj,curr_cell;
   for(ii=0;ii<params.slice_ny;ii++) {
     for(jj=0;jj<params.slice_nx;jj++) {
-      curr_cell = ii*params.nx + jj;
+      curr_cell = ii*params.slice_nx + jj;
       printf(obstacles[curr_cell] ? "#" : "_");
     }
     printf("\n");
