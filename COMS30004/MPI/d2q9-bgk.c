@@ -97,6 +97,8 @@ typedef struct {
   int rank; // Index of the current slice.
   int rank_north; // Index of the slice to the north.
   int rank_south; // Index of the slice to the south.
+  int rank_east;
+  int rank_west;
   int slice_len; // Size of the current slice.
   int slice_buff_len; // Size of the slice buffer, including overlap for halo.
   int slice_inner_start; // Local index of the first non-buffer cell.
@@ -365,16 +367,16 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
     interval = params.slice_nx + 2;
     pack_row(sendbuf,sestart,interval,ycount,tmp_cells);
     // Send to the east, receive from the west.
-    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
-		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
+    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_east, tag,
+		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_west, tag,
 		 MPI_COMM_WORLD, &status);
     unpack_col(recvbuf,rwstart,interval,ycount,tmp_cells,1);
     // Send to the west, receive from the east.
     pack_row(sendbuf,swstart,interval,ycount,tmp_cells);
-    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_south, tag,
-		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_north, tag,
+    MPI_Sendrecv(sendbuf, send_len, MY_MPI_FLOAT, params.rank_west, tag,
+		 recvbuf, send_len, MY_MPI_FLOAT, params.rank_east, tag,
 		 MPI_COMM_WORLD, &status);
-    unpack_row(recvbuf,restart,interval,ycount,tmp_cells,0);
+    unpack_col(recvbuf,restart,interval,ycount,tmp_cells,0);
   }
 
   //MPI_Barrier(MPI_COMM_WORLD);
@@ -724,6 +726,8 @@ int initialise(const char* paramfile, const char* obstaclefile,
   // NOTE: THESE ARE FLIPPED, AS OUR CELL INDICES ARE MIRRORED COMPARED TO OUR SLICE RANKS.
   params->rank_north = (params->rank + 1) % params->size;
   params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
+  params->rank_east = params->rank;
+  params->rank_west = params->rank;
 
   // Divide the problem space into slices. Currently Y direction only.
   params->slice_nx = params->nx;
@@ -1095,16 +1099,17 @@ inline int within_slice(const t_param params, const int index)
 
 inline void pack_row(my_float* packed, const int start, const int interval, const int count, t_speed* cells) {
   //printf("Sending from %d + %d\n",start,count);
-  for (int ii = 0;ii<count;ii+=interval) {
+  for (int ii = 0;ii<count;ii++) {
     for (int kk = 0;kk<NSPEEDS;kk++) {
-      packed[ii*NSPEEDS+kk] = cells[ii+start].speeds[kk];
+      packed[ii*NSPEEDS+kk] = cells[ii*interval+start].speeds[kk];
     }
   }
 }
 
 inline void unpack_row(my_float* packed, const int start, const int interval, const int count, t_speed* cells, int sixtwofive) {
+  //TODO: Remove interval param
   //printf("Recving into %d + %d\n",start,count);
-  for (int ii = 0;ii<count;ii+=interval) {
+  for (int ii = 0;ii<count;ii++) {
     if (sixtwofive) {
       cells[ii+start].speeds[6] = packed[ii*NSPEEDS+6];
       cells[ii+start].speeds[2] = packed[ii*NSPEEDS+2];
@@ -1120,15 +1125,15 @@ inline void unpack_row(my_float* packed, const int start, const int interval, co
 // TODO: Combine with unpack row.
 inline void unpack_col(my_float* packed, const int start, const int interval, const int count, t_speed* cells, int fiveoneeight) {
   //printf("Recving into %d + %d\n",start,count);
-  for (int ii = 0;ii<count;ii+=interval) {
+  for (int ii = 0;ii<count;ii++) {
     if (fiveoneeight) {
-      cells[ii+start].speeds[5] = packed[ii*NSPEEDS+5];
-      cells[ii+start].speeds[1] = packed[ii*NSPEEDS+1];
-      cells[ii+start].speeds[8] = packed[ii*NSPEEDS+8];
+      cells[ii*interval+start].speeds[5] = packed[ii*NSPEEDS+5];
+      cells[ii*interval+start].speeds[1] = packed[ii*NSPEEDS+1];
+      cells[ii*interval+start].speeds[8] = packed[ii*NSPEEDS+8];
     } else {
-      cells[ii+start].speeds[6] = packed[ii*NSPEEDS+6];
-      cells[ii+start].speeds[3] = packed[ii*NSPEEDS+3];
-      cells[ii+start].speeds[7] = packed[ii*NSPEEDS+7];
+      cells[ii*interval+start].speeds[6] = packed[ii*NSPEEDS+6];
+      cells[ii*interval+start].speeds[3] = packed[ii*NSPEEDS+3];
+      cells[ii*interval+start].speeds[7] = packed[ii*NSPEEDS+7];
     }
   }
 }
