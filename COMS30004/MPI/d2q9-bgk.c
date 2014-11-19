@@ -742,7 +742,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
     params->slice_global_ys = params->slice_ny * params->rank;
 
     // Set our neighbouring slice indices.
-    params->rank_east = params->rank_west = params->rank;
+    params->rank_east = params->rank_west = params->rank_nw = params->rank_sw = params->rank_ne = params->rank_se = params->rank;
     params->rank_north = (params->rank + 1) % params->size;
     params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
 
@@ -778,9 +778,28 @@ int initialise(const char* paramfile, const char* obstaclefile,
 
     // Set our neighbouring slice indices.
     // NOTE: THESE ARE FLIPPED, AS OUR CELL INDICES ARE MIRRORED COMPARED TO OUR SLICE RANKS.
-    params->rank_north = (params->rank + 1) % params->size;
-    params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
-    params->rank_east = params->rank_west = params->rank ^ 1; // xor to switch between odd and even.
+    //params->rank_north = (params->rank + 1) % params->size;
+    //params->rank_south = (params->rank == 0) ? params->size - 1 : params->rank - 1;
+    //params->rank_east = params->rank_west = params->rank ^ 1; // xor to switch between odd and even.
+    int ssx = 2; // The number of columns of slices.
+    int ssy = params->size / ssx; // The number of rows of slices.
+    int sjj = params->rank & 1; // The x co-ord of this slice in slice grid.
+    int sii = params->rank / ssx;
+    int x_e = (sjj + 1) % ssx;
+    int x_w = (sjj == 0) ? ssx - 1 : sjj - 1;
+    int y_n = (sii + 1) % ssy;
+    int y_s = (sii == 0) ? ssy - 1 : sii - 1;
+    if (params->rank != sii * ssx + sjj) {
+      die("We've forgotten who we are!",__LINE__,__FILE__);
+    }
+    params->rank_east  = sii * ssx + x_e;
+    params->rank_north = y_n * ssx + sjj;
+    params->rank_west  = sii * ssx + x_w;
+    params->rank_south = y_s * ssx + sjj;
+    params->rank_ne    = y_n * ssx + x_e;
+    params->rank_nw    = y_n * ssx + x_w;
+    params->rank_sw    = y_s * ssx + x_w;
+    params->rank_se    = y_s * ssx + x_e;
   }
 
   // Calculate the slice len. Strategy generic
