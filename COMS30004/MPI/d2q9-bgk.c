@@ -227,18 +227,18 @@ int main(int argc, char* argv[])
   recvbuf = malloc(sizeof(my_float) * send_len);
 
   // Makeshift critical section so we can print debug info for slice params individually.
-  {
-    int r = 0;
-    while (r < params.size) {
-      if (params.rank == r) {
-	printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nEast:%d\nWest:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.rank_east, params.rank_west, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len);
-	pobs(params, obstacles);
-	printf("\n\n");
-      }
-      r++;
-      MPI_Barrier(MPI_COMM_WORLD);
-    }
-  }
+  /* { */
+  /*   int r = 0; */
+  /*   while (r < params.size) { */
+  /*     if (params.rank == r) { */
+  /* 	printf("\n\nRank:%d\nNorth:%d\nSouth:%d\nEast:%d\nWest:%d\nSlice len:%d\nSlice nx:%d\nSlice global xs:%d\nSlice global xe:%d\nSlice ny:%d\nSlice global ys:%d\nSlice global ye:%d\nSlice inner start:%d\nSlice inner end:%d\nSlice buff len:%d\n", params.rank, params.rank_north, params.rank_south, params.rank_east, params.rank_west, params.slice_len, params.slice_nx, params.slice_global_xs, params.slice_global_xe, params.slice_ny, params.slice_global_ys, params.slice_global_ye, params.slice_inner_start, params.slice_inner_end, params.slice_buff_len); */
+  /* 	pobs(params, obstacles); */
+  /* 	printf("\n\n"); */
+  /*     } */
+  /*     r++; */
+  /*     MPI_Barrier(MPI_COMM_WORLD); */
+  /*   } */
+  /* } */
 
   // Synchronise all processes before we enter the simulation loop. Not really necessary...
   MPI_Barrier(MPI_COMM_WORLD);
