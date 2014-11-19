@@ -81,7 +81,7 @@ typedef double my_float;
 // If true, we should run an extra step to store an adjacency mapping for propagate.
 // This should become less efficient if both SINGLE_SLICE values are set false, or if we use
 // very small slice sizes.
-#define USE_PROPAGATION_CACHE 0
+#define USE_PROPAGATION_CACHE 1
 
 /* struct to hold the parameter values */
 typedef struct {
@@ -512,10 +512,10 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells, t_adjace
       curr_cell = ii*(params.slice_nx+2) + jj;
       /* determine indices of axis-direction neighbours
       ** respecting periodic boundary conditions (wrap around) */
-      y_n = ii + 1;
-      x_e = (jj % params.slice_nx) + 1;
-      y_s = ii - 1;
-      x_w = (jj == 1) ? params.slice_nx : jj - 1;
+      y_n = (SINGLE_SLICE_Y) ? (ii % params.slice_ny) + 1 : (ii + 1);
+      x_e = (SINGLE_SLICE_X) ? (jj % params.slice_nx) + 1 : (jj + 1);
+      y_s = (SINGLE_SLICE_Y && ii == 1) ? params.slice_ny : (ii - 1);
+      x_w = (SINGLE_SLICE_X && jj == 1) ? params.slice_nx : (jj - 1);
       /* propagate densities to neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
