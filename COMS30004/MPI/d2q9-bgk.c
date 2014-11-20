@@ -982,6 +982,7 @@ int write_values(const t_param params, t_speed* cells, int* obstacles, my_float*
   double u_x;                              /* x-component of velocity in grid cell */
   double u_y;                              /* y-component of velocity in grid cell */
   double u;                                /* norm--root of summed squares--of u_x and u_y */
+  int have_fp = 0;
 
   // This function uses hackery beyond your wildest imagination. Don't read on.
   // I cannot warn you enough. Efficiency does not exist here. If it ain't broke,
@@ -993,7 +994,28 @@ int write_values(const t_param params, t_speed* cells, int* obstacles, my_float*
   for(ii=0;ii<params.ny;ii++) {
     for(jj=0;jj<params.nx;jj++) {
       // Check if the current slice should be handling this cell.
+      if (!within_slice_c(params, jj, ii)) {
+	// Close the fp if we have it and we don't need it this iter.
+	if (have_fp) {
+	  fclose(fp);
+	  have_fp = 0;
+	}
+      }
+
+      // Need to sync here, so that all ranks that are not writing this turn do not
+      // have the file opened. The rank that needs the file may or may not already have
+      // the file opened for writing.
+      MPI_Barrier(MPI_COMM_WORLD);
+
       if (within_slice_c(params, jj, ii)) {
+	// If we don't already have the fp, then open.
+	if (!have_fp) {
+	  fp = fopen(FINALSTATEFILE,(ii == 0 && jj == 0) ? "w" : "a");
+	  if (fp == NULL) {
+	    die("could not open file output file",__LINE__,__FILE__);
+	  }
+	  have_fp = 1;
+	}
 	myii = ii - params.slice_global_ys + 1; // Get the local y coord.
 	myjj = jj - params.slice_global_xs + 1; // Get the local x coord.
 	// Offset curr_cell based upon the slice bounds.
@@ -1035,17 +1057,24 @@ int write_values(const t_param params, t_speed* cells, int* obstacles, my_float*
 	}
 	/* write to file */
 	// THIS IS INSANELY INEFFICIENT, FIX ME
-	fp = fopen(FINALSTATEFILE,(ii == 0 && jj == 0) ? "w" : "a");
-	if (fp == NULL) {
-	  die("could not open file output file",__LINE__,__FILE__);
-	}
+	//fp = fopen(FINALSTATEFILE,(ii == 0 && jj == 0) ? "w" : "a");
+	//if (fp == NULL) {
+	  //die("could not open file output file",__LINE__,__FILE__);
+	//}
 	fprintf(fp,"%d %d %.12E %.12E %.12E %.12E %d\n",jj,ii,u_x,u_y,u,pressure,obstacles[obs_cell]);
-	fclose(fp);
+	//fclose(fp);
       } // if within slice
+
       // Need to synchronise each process so they don't attempt to write simultaneously.
       MPI_Barrier(MPI_COMM_WORLD);
     } // jj for
   } // ii for
+
+  // The last iter will leave the file opened.
+  if (have_fp) {
+    fclose(fp);
+    have_fp = 0;
+  }
 
   // Only rank 0 knows the average velocities.
   if (params.rank == 0) {
