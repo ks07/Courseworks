@@ -3,11 +3,11 @@
 EXE1=d2q9-bgk.exe
 EXES=$(EXE1)
 
-CC=mpicc
-#CC=mpiicc
-CFLAGS=-O3 -lm -Wall -ffast-math -march=native -DSINGLE_PRECISION -std=c99
+#CC=mpicc
+CC=mpiicc
+#CFLAGS=-O3 -lm -Wall -ffast-math -march=native -DSINGLE_PRECISION -std=c99
 #CFLAGS=-O3 -lm -Wall -march=native -std=c99 -g
-#CFLAGS=-O3 -ipo -xHOST -no-prec-div -no-prec-sqrt -DSINGLE_PRECISION -std=c99
+CFLAGS=-O3 -ipo -xHOST -no-prec-div -no-prec-sqrt -DSINGLE_PRECISION -std=c99
 
 all: $(EXES)
 
