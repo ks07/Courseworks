@@ -711,7 +711,8 @@ int initialise(const char* paramfile, const char* obstaclefile,
 
     // The final row of slices need to accomodate any remaining rows in the global grid.
     if (params->rank >= params->size - 2) {
-      extra_rows = params->ny - (params->slice_ny * (params->size / 2));
+      //extra_rows = params->ny - (params->slice_ny * params->size);
+      extra_rows = (int)((2 * params->ny) % params->size);
       params->slice_ny += extra_rows;
     }
 
