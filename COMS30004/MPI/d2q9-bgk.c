@@ -214,6 +214,11 @@ int main(int argc, char* argv[])
   /* initialise our data structures and load values from file */
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, &adjacency);
 
+  /* if (params.rank == 62 || params.rank == 63) { */
+  /*   printf("r%d has sny: %d ys %d ye %d\n",params.rank,params.slice_ny,params.slice_global_ys,params.slice_global_ye); */
+  /* } */
+  /* while(1) {} */
+
   // Initialise the send and receive buffers.
   const int send_len = (((params.slice_ny > params.slice_nx) ? params.slice_ny : params.slice_nx) + 2) * NSPEEDS; // The length of the buffer needed to send the cells.
   sendbuf = malloc(sizeof(my_float) * send_len);
@@ -709,16 +714,17 @@ int initialise(const char* paramfile, const char* obstaclefile,
       }
     }
 
+    params->slice_global_ys = (int)(params->rank / 2) * params->slice_ny;
+
     // The final row of slices need to accomodate any remaining rows in the global grid.
     if (params->rank >= params->size - 2) {
       //extra_rows = params->ny - (params->slice_ny * params->size);
-      extra_rows = (int)((2 * params->ny) % params->size);
+      extra_rows = (int)((params->ny * 2) % params->size) / 2;
       params->slice_ny += extra_rows;
     }
 
     // Set the global offset for this slice
     params->slice_global_xs = ((params->rank & 1) == 0) ? 0 : (int)(params->nx / 2);
-    params->slice_global_ys = (int)(params->rank / 2) * params->slice_ny;
 
     // Set our neighbouring slice indices.
     int ssx = 2; // The number of columns of slices.
