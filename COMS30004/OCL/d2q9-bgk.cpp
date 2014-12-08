@@ -133,7 +133,7 @@ int write_values(const t_param params, std::vector<t_speed> &cells, std::vector<
 my_float total_density(const t_param params, std::vector<t_speed> &cells);
 
 /* compute average velocity */
-my_float av_velocity(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
+//my_float av_velocity(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
 
 /* calculate Reynolds number */
 my_float calc_reynolds(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
@@ -155,6 +155,8 @@ int main(int argc, char* argv[])
   std::vector<t_speed>* tmp_cells = NULL;    /* scratch space */
   std::vector<int>*     obstacles = NULL;    /* grid indicating which cells are blocked */
   std::vector<my_float>  av_vels;    /* a record of the av. velocity computed for each timestep */
+  std::vector<my_float>  tot_u;
+  std::vector<int>  tot_cells;
   int      ii;                  /* generic counter */
   struct timeval timstr;        /* structure to hold elapsed time */
   struct rusage ru;             /* structure to hold CPU time--system and user */
@@ -199,21 +201,30 @@ int main(int argc, char* argv[])
     /* initialise our data structures and load values from file */
     initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, av_vels, &adjacency);
 
+    tot_u.reserve(params.maxIters);
+    tot_cells.reserve(params.maxIters);
+
     // Read in and compile OpenCL kernels
     cl::Program pp_program(context, util::loadProgram("./propagate_prep.cl"), false);
     cl::Program cl_collision(context, util::loadProgram("./collision.cl"), false);
     cl::Program cl_propagate(context, util::loadProgram("./propagate.cl"), false);
     cl::Program cl_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
+    cl::Program cl_av_velocity(context, util::loadProgram("./av_velocity.cl"), false);
+
+    // Potential build flags:
+    // "-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math"
+    try {
     pp_program.build();
     cl_collision.build();
-    try {
     cl_propagate.build();
     cl_accelerate_flow.build();
+    cl_av_velocity.build();
     
     cl::make_kernel<cl::Buffer> propagate_prep(pp_program, "propagate_prep");
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> collision(cl_collision, "collision");
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> propagate(cl_propagate, "propagate");
     cl::make_kernel<t_param, cl::Buffer, cl::Buffer> accelerate_flow(cl_accelerate_flow, "accelerate_flow");
+    cl::make_kernel<t_param, cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer, int> av_velocity(cl_av_velocity, "av_velocity");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -221,6 +232,8 @@ int main(int argc, char* argv[])
     cl::Buffer cl_cells = cl::Buffer(context, cells->begin(), cells->end(), false);
     cl::Buffer cl_tmp_cells = cl::Buffer(context, tmp_cells->begin(), tmp_cells->end(), false);
     cl::Buffer cl_obstacles = cl::Buffer(context, obstacles->begin(), obstacles->end(), true);
+    cl::Buffer cl_tot_u = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * params.maxIters);
+    cl::Buffer cl_tot_cells = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * params.maxIters);
 
     propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx)), cl_adjacency);
     std::cout << "called" << std::endl;
@@ -231,7 +244,7 @@ int main(int argc, char* argv[])
     //std::vector<t_adjacency> adj(params.nx*params.ny);
     //    adj[0].index[1] = 42;
     // Copy device memory back to host/
-    cl::copy(queue, cl_adjacency, adjacency->begin(), adjacency->end());
+    //cl::copy(queue, cl_adjacency, adjacency->begin(), adjacency->end());
     //  (*adjacency)[0].index[0] = 999;
     //std::cout << "lol the thing\n" << adj[0].index[1] << std::endl ; 
 
@@ -262,16 +275,29 @@ int main(int argc, char* argv[])
 
     collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
 
-    // Block on finish then copy back.
-    queue.finish();
-    cl::copy(queue, cl_cells, cells->begin(), cells->end());
 
-    av_vels[ii] = av_velocity(params,*cells,*obstacles);
+    //av_vels[ii] = av_velocity(params,*cells,*obstacles);
+    if (ii % 1000 == 0)
+      std::cout << "ONE CHANCE, ONE OPPORTUNITY " << ii << std::endl;
+    av_velocity(cl::EnqueueArgs(queue, cl::NDRange(1)), params, cl_cells, cl_obstacles, cl_tot_u, cl_tot_cells, ii); 
+
 #ifdef DEBUG
     printf("==timestep: %d==\n",ii);
     printf("av velocity: %.12E\n", av_vels[ii]);
     printf("tot density: %.12E\n",total_density(params,*cells));
 #endif
+  }
+
+  std::cout << "out of simulation" << std::endl;
+  
+  // Block on finish then copy back.
+  queue.finish();
+  cl::copy(queue, cl_cells, cells->begin(), cells->end());
+  cl::copy(queue, cl_tot_u, tot_u.begin(), tot_u.end());
+  cl::copy(queue, cl_tot_cells, tot_cells.begin(), tot_cells.end());
+
+  for (ii=0;ii<params.maxIters;ii++) {
+    av_vels[ii] = tot_u[ii] / (float)tot_cells[ii];
   }
 
   gettimeofday(&timstr,NULL);
@@ -294,9 +320,8 @@ int main(int argc, char* argv[])
 
   } catch (cl::Error &err) {
     std::cout << "Exception\n";
-    //clGetProgramBuildInfo(pp_program, device, CL_PROGRAM_BUILD_LOG, (size_t)1000, blog, NULL);
     std::cerr << err.what() << "(" << err_code(err.err()) << std::endl; 
-    std::string blog = cl_accelerate_flow.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    std::string blog = cl_av_velocity.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     std::cerr << blog << std::endl;
   }
 
