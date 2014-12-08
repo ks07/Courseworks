@@ -1,17 +1,35 @@
+#define NSPEEDS 9
+
+/* struct to hold the parameter values */
+//typedef struct {
+//  int    nx;            /* no. of cells in x-direction */
+//  int    ny;            /* no. of cells in y-direction */
+//  int    maxIters;      /* no. of iterations */
+//  int    reynolds_dim;  /* dimension for Reynolds number */
+//  float density;       /* density per link */
+//  float accel;         /* density redistribution */
+//  float omega;         /* relaxation parameter */
+//} t_param;
+
+/* struct to hold the 'speed' values */
+typedef struct {
+  float speeds[NSPEEDS];
+} t_speed;
+
 // 1D kernel, run as ny * nx
-__kernel void collision(const t_param params, __global t_speed* cells, __global t_speed* tmp_cells, __global int* obstacles)
+__kernel void collision(const float omega, __global t_speed* cells, __global t_speed* tmp_cells, __global int* obstacles)
 {
-  //Mark obstacles as const or __constant?
+  //Mark obstacles as const or _constant?
   int kk;                         /* generic counters */
-  const my_float c_sq = 1.0/3.0;  /* square of speed of sound */
-  const my_float w0 = 4.0/9.0;    /* weighting factor */
-  const my_float w1 = 1.0/9.0;    /* weighting factor */
-  const my_float w2 = 1.0/36.0;   /* weighting factor */
-  my_float u_x,u_y;               /* av. velocities in x and y directions */
-  my_float u[NSPEEDS];            /* directional velocities */
-  my_float d_equ[NSPEEDS];        /* equilibrium densities */
-  my_float u_sq;                  /* squared velocity */
-  my_float local_density;         /* sum of densities in a particular cell */
+  const float c_sq = 1.0/3.0;  /* square of speed of sound */
+  const float w0 = 4.0/9.0;    /* weighting factor */
+  const float w1 = 1.0/9.0;    /* weighting factor */
+  const float w2 = 1.0/36.0;   /* weighting factor */
+  float u_x,u_y;               /* av. velocities in x and y directions */
+  float u[NSPEEDS];            /* directional velocities */
+  float d_equ[NSPEEDS];        /* equilibrium densities */
+  float u_sq;                  /* squared velocity */
+  float local_density;         /* sum of densities in a particular cell */
 
   int curr_cell; // Stop re-calculating the array index repeatedly.
   //const int cell_lim = (params.ny * params.nx);
@@ -102,9 +120,9 @@ __kernel void collision(const t_param params, __global t_speed* cells, __global 
 	/* relaxation step */
 	for(kk=0;kk<NSPEEDS;kk++) {
 	  cells[curr_cell].speeds[kk] = (tmp_cells[curr_cell].speeds[kk]
-						 + params.omega * 
+						 + omega * 
 						 (d_equ[kk] - tmp_cells[curr_cell].speeds[kk]));
 	}
-    }
+    
   }
 }
