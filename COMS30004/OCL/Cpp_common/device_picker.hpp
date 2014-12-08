@@ -22,16 +22,13 @@
 
 unsigned getDeviceList(std::vector<cl::Device>& devices)
 {
-  cl_int err;
-
   // Get list of platforms
   std::vector<cl::Platform> platforms;
   cl::Platform::get(&platforms);
 
   // Enumerate devices
-  for (int i = 0; i < platforms.size(); i++)
+  for (unsigned int i = 0; i < platforms.size(); i++)
   {
-    cl_uint num = 0;
     std::vector<cl::Device> plat_devices;
     platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &plat_devices);
     devices.insert(devices.end(), plat_devices.begin(), plat_devices.end());
@@ -80,7 +77,7 @@ void parseArguments(int argc, char *argv[], cl_uint *deviceIndex)
       else
       {
         std::cout << "\nDevices:\n";
-        for (int i = 0; i < numDevices; i++)
+        for (unsigned int i = 0; i < numDevices; i++)
         {
           std::string name;
           getDeviceName(devices[i], name);
