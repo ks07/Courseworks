@@ -117,7 +117,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
 int timestep(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles, const std::vector<t_adjacency> &adjacency);
-int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
+//int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
 //int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency);
 //int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency);
 //int collision(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles);
@@ -203,13 +203,17 @@ int main(int argc, char* argv[])
     cl::Program pp_program(context, util::loadProgram("./propagate_prep.cl"), false);
     cl::Program cl_collision(context, util::loadProgram("./collision.cl"), false);
     cl::Program cl_propagate(context, util::loadProgram("./propagate.cl"), false);
+    cl::Program cl_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
     pp_program.build();
     cl_collision.build();
     try {
     cl_propagate.build();
+    cl_accelerate_flow.build();
+    
     cl::make_kernel<cl::Buffer> propagate_prep(pp_program, "propagate_prep");
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> collision(cl_collision, "collision");
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> propagate(cl_propagate, "propagate");
+    cl::make_kernel<t_param, cl::Buffer, cl::Buffer> accelerate_flow(cl_accelerate_flow, "accelerate_flow");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -239,14 +243,16 @@ int main(int argc, char* argv[])
   // Can we do this outside the timing? Probably not!
   //propagate_prep(params, *adjacency);
 
+  // Copy into buffers. TODO: NO COPIES, BAD.
+  //cl::copy(queue, cells->begin(), cells->end(), cl_cells);
+  //cl::copy(queue, tmp_cells->begin(), tmp_cells->end(), cl_tmp_cells);
+
   for (ii=0;ii<params.maxIters;ii++) {
     //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
 
-    accelerate_flow(params,*cells,*obstacles);
+    //accelerate_flow(params,*cells,*obstacles);
 
-    // Copy into buffers. TODO: NO COPIES, BAD.
-    cl::copy(queue, cells->begin(), cells->end(), cl_cells);
-    //cl::copy(queue, tmp_cells->begin(), tmp_cells->end(), cl_tmp_cells);
+    accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
 
     //propagate(params,*cells,*tmp_cells,*adjacency);
 
@@ -290,7 +296,7 @@ int main(int argc, char* argv[])
     std::cout << "Exception\n";
     //clGetProgramBuildInfo(pp_program, device, CL_PROGRAM_BUILD_LOG, (size_t)1000, blog, NULL);
     std::cerr << err.what() << "(" << err_code(err.err()) << std::endl; 
-    std::string blog = cl_propagate.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    std::string blog = cl_accelerate_flow.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     std::cerr << blog << std::endl;
   }
 
@@ -305,37 +311,37 @@ int main(int argc, char* argv[])
 //   return EXIT_SUCCESS; 
 // }
 
-int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles)
-{
-  int ii,jj;     /* generic counters */
-  my_float w1,w2;  /* weighting factors */
+// int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles)
+// {
+//   int ii,jj;     /* generic counters */
+//   my_float w1,w2;  /* weighting factors */
   
-  /* compute weighting factors */
-  w1 = params.density * params.accel / 9.0;
-  w2 = params.density * params.accel / 36.0;
+//   /* compute weighting factors */
+//   w1 = params.density * params.accel / 9.0;
+//   w2 = params.density * params.accel / 36.0;
 
-  /* modify the 2nd row of the grid */
-  ii=params.ny - 2;
-  for(jj=0;jj<params.nx;jj++) {
-    /* if the cell is not occupied and
-    ** we don't send a density negative */
-    if( !obstacles[ii*params.nx + jj] && 
-	(cells[ii*params.nx + jj].speeds[3] - w1) > 0.0 &&
-	(cells[ii*params.nx + jj].speeds[6] - w2) > 0.0 &&
-	(cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 ) {
-      /* increase 'east-side' densities */
-      cells[ii*params.nx + jj].speeds[1] += w1;
-      cells[ii*params.nx + jj].speeds[5] += w2;
-      cells[ii*params.nx + jj].speeds[8] += w2;
-      /* decrease 'west-side' densities */
-      cells[ii*params.nx + jj].speeds[3] -= w1;
-      cells[ii*params.nx + jj].speeds[6] -= w2;
-      cells[ii*params.nx + jj].speeds[7] -= w2;
-    }
-  }
+//   /* modify the 2nd row of the grid */
+//   ii=params.ny - 2;
+//   for(jj=0;jj<params.nx;jj++) {
+//     /* if the cell is not occupied and
+//     ** we don't send a density negative */
+//     if( !obstacles[ii*params.nx + jj] && 
+// 	(cells[ii*params.nx + jj].speeds[3] - w1) > 0.0 &&
+// 	(cells[ii*params.nx + jj].speeds[6] - w2) > 0.0 &&
+// 	(cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 ) {
+//       /* increase 'east-side' densities */
+//       cells[ii*params.nx + jj].speeds[1] += w1;
+//       cells[ii*params.nx + jj].speeds[5] += w2;
+//       cells[ii*params.nx + jj].speeds[8] += w2;
+//       /* decrease 'west-side' densities */
+//       cells[ii*params.nx + jj].speeds[3] -= w1;
+//       cells[ii*params.nx + jj].speeds[6] -= w2;
+//       cells[ii*params.nx + jj].speeds[7] -= w2;
+//     }
+//   }
 
-  return EXIT_SUCCESS;
-}
+//   return EXIT_SUCCESS;
+// }
 
 // int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency)
 // {

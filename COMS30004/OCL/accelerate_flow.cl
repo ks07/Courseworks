@@ -1,3 +1,21 @@
+#define NSPEEDS 9
+
+/* struct to hold the parameter values */
+typedef struct {
+  int    nx;            /* no. of cells in x-direction */
+  int    ny;            /* no. of cells in y-direction */
+  int    maxIters;      /* no. of iterations */
+  int    reynolds_dim;  /* dimension for Reynolds number */
+  float density;       /* density per link */
+  float accel;         /* density redistribution */
+  float omega;         /* relaxation parameter */
+} t_param;
+
+/* struct to hold the 'speed' values */
+typedef struct {
+  float speeds[NSPEEDS];
+} t_speed;
+
 __kernel void accelerate_flow(const t_param params, __global t_speed* cells, __global int* obstacles)
 {
   // const (__global) vs __constant?
