@@ -1,4 +1,16 @@
-__kernel void propagate(const t_param params, __global t_speed* cells, __global t_speed* tmp_cells, __global t_adjacency* adjacency)
+#define NSPEEDS 9
+
+/* struct to hold the 'speed' values */
+typedef struct {
+  float speeds[NSPEEDS];
+} t_speed;
+
+// struct to hold adjacency indices
+typedef struct {
+  unsigned int index[NSPEEDS];
+} t_adjacency;
+
+__kernel void propagate(__global t_speed* cells, __global t_speed* tmp_cells, __global t_adjacency* adjacency)
 {
   // Constant adjacency... or no adjacency?
   int curr_cell; // Stop re-calculating the array index repeatedly.

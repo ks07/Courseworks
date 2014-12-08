@@ -119,7 +119,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 int timestep(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles, const std::vector<t_adjacency> &adjacency);
 int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
 //int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency);
-int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency);
+//int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency);
 //int collision(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles);
 int write_values(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles, std::vector<my_float> &av_vels);
 
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
     obstaclefile = argv[2];
   }
   
-  try {
+  //  try {
     // OpenCL setup. From HandsOnOpenCL
     cl_uint deviceIndex = 0;
     parseArguments(argc, argv, &deviceIndex);
@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
     }
 
     cl::Device device = devices[deviceIndex];
-
+    //try{
     std::string name;
     getDeviceName(device, name);
     std::cout << "\nUsing OpenCL device: " << name << "\n";
@@ -202,10 +202,14 @@ int main(int argc, char* argv[])
     // Read in and compile OpenCL kernels
     cl::Program pp_program(context, util::loadProgram("./propagate_prep.cl"), false);
     cl::Program cl_collision(context, util::loadProgram("./collision.cl"), false);
+    cl::Program cl_propagate(context, util::loadProgram("./propagate.cl"), false);
     pp_program.build();
     cl_collision.build();
+    try {
+    cl_propagate.build();
     cl::make_kernel<cl::Buffer> propagate_prep(pp_program, "propagate_prep");
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> collision(cl_collision, "collision");
+    cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> propagate(cl_propagate, "propagate");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -239,12 +243,16 @@ int main(int argc, char* argv[])
     //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
 
     accelerate_flow(params,*cells,*obstacles);
-    propagate(params,*cells,*tmp_cells,*adjacency);
-    //collision(params,cells,tmp_cells,obstacles);
 
     // Copy into buffers. TODO: NO COPIES, BAD.
-    //cl::copy(queue, cells->begin(), cells->end(), cl_cells);
-    cl::copy(queue, tmp_cells->begin(), tmp_cells->end(), cl_tmp_cells);
+    cl::copy(queue, cells->begin(), cells->end(), cl_cells);
+    //cl::copy(queue, tmp_cells->begin(), tmp_cells->end(), cl_tmp_cells);
+
+    //propagate(params,*cells,*tmp_cells,*adjacency);
+
+    propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
+
+    //collision(params,cells,tmp_cells,obstacles);
 
     collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
 
@@ -281,8 +289,9 @@ int main(int argc, char* argv[])
   } catch (cl::Error &err) {
     std::cout << "Exception\n";
     //clGetProgramBuildInfo(pp_program, device, CL_PROGRAM_BUILD_LOG, (size_t)1000, blog, NULL);
-    //std::string blog = cl_collision.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     std::cerr << err.what() << "(" << err_code(err.err()) << std::endl; 
+    std::string blog = cl_propagate.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    std::cerr << blog << std::endl;
   }
 
   return EXIT_SUCCESS;
@@ -358,30 +367,30 @@ int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vect
 //   return EXIT_SUCCESS;
 // }
 
-int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency)
-{
-  int curr_cell; // Stop re-calculating the array index repeatedly.
-  const int cell_lim = (params.ny * params.nx);
+// int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency)
+// {
+//   int curr_cell; // Stop re-calculating the array index repeatedly.
+//   const int cell_lim = (params.ny * params.nx);
 
-  /* loop over _all_ cells */
-  for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
-    /* propagate densities to neighbouring cells, following
-    ** appropriate directions of travel and writing into
-    ** scratch space grid */
-    tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
-                                                                                     /* no movement */
-    tmp_cells[adjacency[curr_cell].index[1]].speeds[1] = cells[curr_cell].speeds[1]; /* east */
-    tmp_cells[adjacency[curr_cell].index[2]].speeds[2] = cells[curr_cell].speeds[2]; /* north */
-    tmp_cells[adjacency[curr_cell].index[3]].speeds[3] = cells[curr_cell].speeds[3]; /* west */
-    tmp_cells[adjacency[curr_cell].index[4]].speeds[4] = cells[curr_cell].speeds[4]; /* south */
-    tmp_cells[adjacency[curr_cell].index[5]].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
-    tmp_cells[adjacency[curr_cell].index[6]].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
-    tmp_cells[adjacency[curr_cell].index[7]].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
-    tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
-  }
+//   /* loop over _all_ cells */
+//   for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
+//     /* propagate densities to neighbouring cells, following
+//     ** appropriate directions of travel and writing into
+//     ** scratch space grid */
+//     tmp_cells[curr_cell].speeds[0] = cells[curr_cell].speeds[0];                     /* central cell, */
+//                                                                                      /* no movement */
+//     tmp_cells[adjacency[curr_cell].index[1]].speeds[1] = cells[curr_cell].speeds[1]; /* east */
+//     tmp_cells[adjacency[curr_cell].index[2]].speeds[2] = cells[curr_cell].speeds[2]; /* north */
+//     tmp_cells[adjacency[curr_cell].index[3]].speeds[3] = cells[curr_cell].speeds[3]; /* west */
+//     tmp_cells[adjacency[curr_cell].index[4]].speeds[4] = cells[curr_cell].speeds[4]; /* south */
+//     tmp_cells[adjacency[curr_cell].index[5]].speeds[5] = cells[curr_cell].speeds[5]; /* north-east */
+//     tmp_cells[adjacency[curr_cell].index[6]].speeds[6] = cells[curr_cell].speeds[6]; /* north-west */
+//     tmp_cells[adjacency[curr_cell].index[7]].speeds[7] = cells[curr_cell].speeds[7]; /* south-west */
+//     tmp_cells[adjacency[curr_cell].index[8]].speeds[8] = cells[curr_cell].speeds[8]; /* south-east */
+//   }
 
-  return EXIT_SUCCESS;
-}
+//   return EXIT_SUCCESS;
+// }
 
 // int collision(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles)
 // {
