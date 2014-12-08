@@ -49,6 +49,8 @@
 ** if you choose a different obstacle file.
 */
 
+#define __CL_ENABLE_EXCEPTIONS
+
 #include<cmath>
 #include<cstdio>
 #include<cstdlib>
@@ -57,6 +59,10 @@
 #include<sys/resource.h>
 #include<vector>
 #include<iostream>
+#include<CL/cl.hpp>
+#include "util.hpp"
+#include "device_picker.hpp"
+#include "err_code.h"
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -112,7 +118,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 */
 int timestep(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles, const std::vector<t_adjacency> &adjacency);
 int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
-int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency);
+//int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency);
 int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency);
 int collision(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles);
 int write_values(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles, std::vector<my_float> &av_vels);
@@ -165,17 +171,70 @@ int main(int argc, char* argv[])
     paramfile = argv[1];
     obstaclefile = argv[2];
   }
+  //try {
+    // OpenCL setup. From HandsOnOpenCL
+    cl_uint deviceIndex = 0;
+    parseArguments(argc, argv, &deviceIndex);
+  
+    std::vector<cl::Device> devices;
+    unsigned numDevices = getDeviceList(devices);
 
-  /* initialise our data structures and load values from file */
-  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, av_vels, &adjacency);
-  std::cout << av_vels.capacity();
-  std::cout << "\n";
+    if (deviceIndex >= numDevices) {
+      std::cout << "Invalid device index (try '--list')\n";
+      return EXIT_FAILURE;
+    }
+
+    cl::Device device = devices[deviceIndex];
+
+    std::string name;
+    getDeviceName(device, name);
+    std::cout << "\nUsing OpenCL device: " << name << "\n";
+
+    std::vector<cl::Device> chosen_device;
+    chosen_device.push_back(device);
+    cl::Context context(chosen_device);
+    cl::CommandQueue queue(context, device);
+
+    /* initialise our data structures and load values from file */
+    initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, av_vels, &adjacency);
+
+    // Read in and compile the OpenCL kernel for propagate_prep
+    cl::Program pp_program(context, util::loadProgram("./propagate_prep.cl"), false);
+    pp_program.build();
+    cl::make_kernel<cl::Buffer> propagate_prep(pp_program, "propagate_prep");
+
+    // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
+    //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
+    cl::Buffer cl_adjacency = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(t_adjacency) * params.nx * params.ny);
+
+    propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx)), cl_adjacency);
+    std::cout << "called" << std::endl;
+    // End OpenCL operations
+
+    try{
+    queue.finish();
+  } catch (cl::Error &err) {
+    std::cout << "Exception\n";
+    //clGetProgramBuildInfo(pp_program, device, CL_PROGRAM_BUILD_LOG, (size_t)1000, blog, NULL);
+    //std::string blog = pp_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    std::cerr << err.what() << "(" << err_code(err.err())  << std::endl;
+    
+  }
+
+    //std::vector<t_adjacency> adj(params.nx*params.ny);
+    //    adj[0].index[1] = 42;
+    // Copy device memory back to host/
+    cl::copy(queue, cl_adjacency, adjacency->begin(), adjacency->end());
+    //  (*adjacency)[0].index[0] = 999;
+    //std::cout << "lol the thing\n" << adj[0].index[1] << std::endl ; 
+
+
   /* iterate for maxIters timesteps */
   gettimeofday(&timstr,NULL);
   tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
   // Can we do this outside the timing? Probably not!
-  propagate_prep(params, *adjacency);
+  //propagate_prep(params, *adjacency);
 
   for (ii=0;ii<params.maxIters;ii++) {
     timestep(params,*cells,*tmp_cells,*obstacles,*adjacency);
@@ -246,35 +305,35 @@ int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vect
   return EXIT_SUCCESS;
 }
 
-int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency)
-{
-  int ii,jj;            /* generic counters */
-  int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
+// int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency)
+// {
+//   int ii,jj;            /* generic counters */
+//   int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
 
-  /* loop over _all_ cells */
-  for(ii=0;ii<params.ny;ii++) {
-    for(jj=0;jj<params.nx;jj++) {
-      /* determine indices of axis-direction neighbours
-      ** respecting periodic boundary conditions (wrap around) */
-      y_n = (ii + 1) % params.ny;
-      x_e = (jj + 1) % params.nx;
-      y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
-      x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
-      //Pre-calculate the adjacent cells to propagate to.
-      //adjacency[ii*params.nx + jj].index[0] = ii * params.nx + jj; // Centre, ignore
-      adjacency[ii*params.nx + jj].index[1] = ii * params.nx + x_e; // N
-      adjacency[ii*params.nx + jj].index[2] = y_n * params.nx + jj; // E
-      adjacency[ii*params.nx + jj].index[3] = ii * params.nx + x_w; // W
-      adjacency[ii*params.nx + jj].index[4] = y_s * params.nx + jj; // S
-      adjacency[ii*params.nx + jj].index[5] = y_n * params.nx + x_e; // NE
-      adjacency[ii*params.nx + jj].index[6] = y_n * params.nx + x_w; // NW
-      adjacency[ii*params.nx + jj].index[7] = y_s * params.nx + x_w; // SW
-      adjacency[ii*params.nx + jj].index[8] = y_s * params.nx + x_e; // SE
-    }
-  }
+//   /* loop over _all_ cells */
+//   for(ii=0;ii<params.ny;ii++) {
+//     for(jj=0;jj<params.nx;jj++) {
+//       /* determine indices of axis-direction neighbours
+//       ** respecting periodic boundary conditions (wrap around) */
+//       y_n = (ii + 1) % params.ny;
+//       x_e = (jj + 1) % params.nx;
+//       y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
+//       x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
+//       //Pre-calculate the adjacent cells to propagate to.
+//       //adjacency[ii*params.nx + jj].index[0] = ii * params.nx + jj; // Centre, ignore
+//       adjacency[ii*params.nx + jj].index[1] = ii * params.nx + x_e; // N
+//       adjacency[ii*params.nx + jj].index[2] = y_n * params.nx + jj; // E
+//       adjacency[ii*params.nx + jj].index[3] = ii * params.nx + x_w; // W
+//       adjacency[ii*params.nx + jj].index[4] = y_s * params.nx + jj; // S
+//       adjacency[ii*params.nx + jj].index[5] = y_n * params.nx + x_e; // NE
+//       adjacency[ii*params.nx + jj].index[6] = y_n * params.nx + x_w; // NW
+//       adjacency[ii*params.nx + jj].index[7] = y_s * params.nx + x_w; // SW
+//       adjacency[ii*params.nx + jj].index[8] = y_s * params.nx + x_e; // SE
+//     }
+//   }
 
-  return EXIT_SUCCESS;
-}
+//   return EXIT_SUCCESS;
+// }
 
 int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency)
 {
