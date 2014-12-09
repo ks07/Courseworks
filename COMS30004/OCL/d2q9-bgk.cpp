@@ -107,9 +107,9 @@ enum boolean { FALSE, TRUE };
 */
 
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
-int initialise(const char* paramfile, const char* obstaclefile,
-	       t_param* params, std::vector<t_speed>** cells_ptr, std::vector<t_speed>** tmp_cells_ptr, 
-	       std::vector<int>** obstacles_ptr, std::vector<my_float> &av_vels, std::vector<t_adjacency>** adjacency);
+int initialise(const char* paramfile, const char* obstaclefile, t_param* params, std::vector<t_speed>** cells_ptr,
+	       std::vector<t_speed>** tmp_cells_ptr, std::vector<int>** obstacles_ptr, unsigned int &obstacle_count,
+	       std::vector<my_float> &av_vels, std::vector<t_adjacency>** adjacency);
 
 /* 
 ** The main calculation methods.
@@ -155,8 +155,7 @@ int main(int argc, char* argv[])
   std::vector<t_speed>* tmp_cells = NULL;    /* scratch space */
   std::vector<int>*     obstacles = NULL;    /* grid indicating which cells are blocked */
   std::vector<my_float>  av_vels;    /* a record of the av. velocity computed for each timestep */
-  std::vector<my_float>  tot_u;
-  std::vector<int>  tot_cells;
+  std::vector<my_float>  partial_tot_u;
   int      ii;                  /* generic counter */
   struct timeval timstr;        /* structure to hold elapsed time */
   struct rusage ru;             /* structure to hold CPU time--system and user */
@@ -164,6 +163,7 @@ int main(int argc, char* argv[])
   double usrtim;                /* floating point number to record elapsed user CPU time */
   double systim;                /* floating point number to record elapsed system CPU time */
   std::vector<t_adjacency>* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
+  unsigned int obstacle_count = 0;
 
   /* parse the command line */
   if(argc != 3) {
@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
     obstaclefile = argv[2];
   }
   
-  //  try {
+  //try {
     // OpenCL setup. From HandsOnOpenCL
     cl_uint deviceIndex = 0;
     parseArguments(argc, argv, &deviceIndex);
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
     //try{
     std::string name;
     getDeviceName(device, name);
-    std::cout << "\nUsing OpenCL device: " << name << "\n";
+    std::cout << "Using OpenCL device: " << name << "\n";
 
     std::vector<cl::Device> chosen_device;
     chosen_device.push_back(device);
@@ -199,10 +199,9 @@ int main(int argc, char* argv[])
     cl::CommandQueue queue(context, device);
 
     /* initialise our data structures and load values from file */
-    initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, av_vels, &adjacency);
+    initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, obstacle_count, av_vels, &adjacency);
 
-    tot_u.reserve(params.maxIters);
-    tot_cells.reserve(params.maxIters);
+    av_vels.reserve(params.maxIters);
 
     // Read in and compile OpenCL kernels
     cl::Program pp_program(context, util::loadProgram("./propagate_prep.cl"), false);
@@ -213,18 +212,46 @@ int main(int argc, char* argv[])
 
     // Potential build flags:
     // "-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math"
-    try {
+      try {
+
+    std::cout << "Beginning kernel build..." << std::endl;
+
     pp_program.build();
     cl_collision.build();
     cl_propagate.build();
     cl_accelerate_flow.build();
     cl_av_velocity.build();
     
+    std::cout << "Kernel build complete" << std::endl;
+
+    // Set variables to divide work in reduction.
+    ::size_t nwork_groups;
+    ::size_t work_group_size = 8; //max_size ???
+    const ::size_t unit_length = 36; // TODO: How does this value effect performance/correctness?
+    // Get kernel object to query information
+    cl::Kernel ko_av_velocity(cl_av_velocity, "av_velocity");
+    work_group_size = ko_av_velocity.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
+    // From the work_group_size (the number of workers per group), problem size, and a constant work unit size
+    // we can calculate the number of work groups needed.
+    nwork_groups = (params.ny*params.nx) / (work_group_size*unit_length);
+    // Need to check the edge case where we have a tiny problem with big compute device.
+    if (nwork_groups < 1) {
+      nwork_groups = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // Reset the groups to the number of compute units. (So 1 WG on 1 core)
+      work_group_size = (params.ny*params.nx) / (nwork_groups*unit_length); // Reset the work group size to fit the new group count.
+    }
+
+
+    printf(
+	   " %d work groups of size %d.  %ld Integration steps\n",
+	   (int)nwork_groups,
+	   (int)work_group_size,
+	   work_group_size*unit_length*nwork_groups);
+
     cl::make_kernel<cl::Buffer> propagate_prep(pp_program, "propagate_prep");
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> collision(cl_collision, "collision");
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> propagate(cl_propagate, "propagate");
     cl::make_kernel<t_param, cl::Buffer, cl::Buffer> accelerate_flow(cl_accelerate_flow, "accelerate_flow");
-    cl::make_kernel<t_param, cl::Buffer, cl::Buffer, cl::Buffer, cl::Buffer, int> av_velocity(cl_av_velocity, "av_velocity");
+    cl::make_kernel<int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer> av_velocity(cl_av_velocity, "av_velocity");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -232,22 +259,17 @@ int main(int argc, char* argv[])
     cl::Buffer cl_cells = cl::Buffer(context, cells->begin(), cells->end(), false);
     cl::Buffer cl_tmp_cells = cl::Buffer(context, tmp_cells->begin(), tmp_cells->end(), false);
     cl::Buffer cl_obstacles = cl::Buffer(context, obstacles->begin(), obstacles->end(), true);
-    cl::Buffer cl_tot_u = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * params.maxIters);
-    cl::Buffer cl_tot_cells = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * params.maxIters);
+    cl::Buffer cl_round_tot_u = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * nwork_groups); // Buffer to hold partial sums for reduction.
+
+    // Vector on host so we can sum the partial sums ourselves.
+    partial_tot_u.resize(nwork_groups);
 
     propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx)), cl_adjacency);
-    std::cout << "called" << std::endl;
-    // End OpenCL operations
 
+    // End OpenCL operations
     queue.finish();
 
-    //std::vector<t_adjacency> adj(params.nx*params.ny);
-    //    adj[0].index[1] = 42;
-    // Copy device memory back to host/
-    //cl::copy(queue, cl_adjacency, adjacency->begin(), adjacency->end());
-    //  (*adjacency)[0].index[0] = 999;
-    //std::cout << "lol the thing\n" << adj[0].index[1] << std::endl ; 
-
+    std::cout << "Trundling into the timestep loop." << std::endl;
 
   /* iterate for maxIters timesteps */
   gettimeofday(&timstr,NULL);
@@ -262,24 +284,22 @@ int main(int argc, char* argv[])
 
   for (ii=0;ii<params.maxIters;ii++) {
     //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
-
-    //accelerate_flow(params,*cells,*obstacles);
-
     accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
-
-    //propagate(params,*cells,*tmp_cells,*adjacency);
-
     propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
-
-    //collision(params,cells,tmp_cells,obstacles);
-
     collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
+    av_velocity(cl::EnqueueArgs(queue, cl::NDRange((params.nx*params.ny) / unit_length), cl::NDRange(work_group_size)), unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
 
+    queue.finish();
 
-    //av_vels[ii] = av_velocity(params,*cells,*obstacles);
-    if (ii % 1000 == 0)
-      std::cout << "ONE CHANCE, ONE OPPORTUNITY " << ii << std::endl;
-    av_velocity(cl::EnqueueArgs(queue, cl::NDRange(1)), params, cl_cells, cl_obstacles, cl_tot_u, cl_tot_cells, ii); 
+    // Copy the partial sums off the device
+    cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
+
+    // Do the final summation on the host
+    float tot_u = 0.0;
+    for (unsigned int i = 0; i < nwork_groups; i++) {
+      tot_u += partial_tot_u.at(i);
+    }
+    av_vels[ii] = tot_u / ((params.ny*params.nx) - obstacle_count);
 
 #ifdef DEBUG
     printf("==timestep: %d==\n",ii);
@@ -293,12 +313,12 @@ int main(int argc, char* argv[])
   // Block on finish then copy back.
   queue.finish();
   cl::copy(queue, cl_cells, cells->begin(), cells->end());
-  cl::copy(queue, cl_tot_u, tot_u.begin(), tot_u.end());
-  cl::copy(queue, cl_tot_cells, tot_cells.begin(), tot_cells.end());
+  //cl::copy(queue, cl_tot_u, tot_u.begin(), tot_u.end());
+  //cl::copy(queue, cl_tot_cells, tot_cells.begin(), tot_cells.end());
 
-  for (ii=0;ii<params.maxIters;ii++) {
-    av_vels[ii] = tot_u[ii] / (float)tot_cells[ii];
-  }
+  // for (ii=0;ii<params.maxIters;ii++) {
+  //   av_vels[ii] = tot_u[ii] / (float)tot_cells[ii];
+  // }
 
   gettimeofday(&timstr,NULL);
   toc=timstr.tv_sec+(timstr.tv_usec/1000000.0);
@@ -535,7 +555,7 @@ int main(int argc, char* argv[])
 
 int initialise(const char* paramfile, const char* obstaclefile,
 	       t_param* params, std::vector<t_speed>** cells_ptr, std::vector<t_speed>** tmp_cells_ptr, 
-	       std::vector<int>** obstacles_ptr, std::vector<my_float> &av_vels, std::vector<t_adjacency>** adjacency)
+	       std::vector<int>** obstacles_ptr, unsigned int &obstacle_count, std::vector<my_float> &av_vels, std::vector<t_adjacency>** adjacency)
 {
   char   message[1024];  /* message buffer */
   FILE   *fp;            /* file pointer */
@@ -643,6 +663,8 @@ int initialise(const char* paramfile, const char* obstaclefile,
     }
   }
 
+  obstacle_count = 0;
+
   /* open the obstacle data file */
   fp = fopen(obstaclefile,"r");
   if (fp == NULL) {
@@ -661,6 +683,10 @@ int initialise(const char* paramfile, const char* obstaclefile,
       die("obstacle y-coord out of range",__LINE__,__FILE__);
     if ( blocked != 1 ) 
       die("obstacle blocked value should be 1",__LINE__,__FILE__);
+    // if not already blocked, add to count. This check is not strictly necessary.
+    if ((**obstacles_ptr)[yy*params->nx + xx] != 1) {
+      obstacle_count++;
+    }
     /* assign to array */
     (**obstacles_ptr)[yy*params->nx + xx] = blocked;
   }
