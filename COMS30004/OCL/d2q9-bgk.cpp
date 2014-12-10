@@ -227,19 +227,28 @@ int main(int argc, char* argv[])
     // Set variables to divide work in reduction.
     ::size_t nwork_groups;
     ::size_t work_group_size = 8; //max_size ???
-    const ::size_t unit_length = 36; // TODO: How does this value effect performance/correctness?
+    const ::size_t unit_length = 2; // TODO: How does this value effect performance/correctness?
     // Get kernel object to query information
     cl::Kernel ko_av_velocity(cl_av_velocity, "av_velocity");
     work_group_size = ko_av_velocity.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
     // From the work_group_size (the number of workers per group), problem size, and a constant work unit size
     // we can calculate the number of work groups needed.
     nwork_groups = (params.ny*params.nx) / (work_group_size*unit_length);
+
+
+    printf(
+	   " %d work groups of size %d.  %ld Integration steps\n",
+	   (int)nwork_groups,
+	   (int)work_group_size,
+	   work_group_size*unit_length*nwork_groups);
+
     // Need to check the edge case where we have a tiny problem with big compute device.
     if (nwork_groups < 1) {
+      // This case is just broken? No attempt at actually dividing the problem space evenly?
+      std::cout << "WTF" << std::endl;
       nwork_groups = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // Reset the groups to the number of compute units. (So 1 WG on 1 core)
       work_group_size = (params.ny*params.nx) / (nwork_groups*unit_length); // Reset the work group size to fit the new group count.
     }
-
 
     printf(
 	   " %d work groups of size %d.  %ld Integration steps\n",
@@ -287,7 +296,7 @@ int main(int argc, char* argv[])
     accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
     propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
     collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
-    av_velocity(cl::EnqueueArgs(queue, cl::NDRange((params.nx*params.ny) / unit_length), cl::NDRange(work_group_size)), unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
+    av_velocity(cl::EnqueueArgs(queue, cl::NDRange(params.nx*params.ny/unit_length), cl::NDRange(work_group_size)), unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
 
     queue.finish();
 
