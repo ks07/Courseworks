@@ -7,7 +7,7 @@ typedef struct {
 
 void reduce(__local float*, __global float*);
 
-__kernel void av_velocity(const unsigned int unit_len, const __global t_speed* cells, const __global int* obstacles, __local float* l_tot_u, __global float* round_tot_u)
+__kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global t_speed* cells, const __global int* obstacles, __local float* l_tot_u, __global float* round_tot_u)
 {
   int   kk,curr_cell;   /* generic counters */
   float local_density;  /* total density in cell */
@@ -28,28 +28,28 @@ __kernel void av_velocity(const unsigned int unit_len, const __global t_speed* c
     // Use the global size to jump ahead to form the tree structure of reduction.
     // For all the elements in this work
     /* ignore occupied cells */
-    if(!obstacles[curr_cell]) {
+    if(curr_cell < global_lim && !obstacles[curr_cell]) {
       /* local density total */
       local_density = 0.0;
       for(kk=0;kk<NSPEEDS;kk++) {
-	local_density += cells[curr_cell].speeds[kk];
+  	local_density += cells[curr_cell].speeds[kk];
       }
       /* x-component of velocity */
       u_x = (cells[curr_cell].speeds[1] +
-	     cells[curr_cell].speeds[5] +
-	     cells[curr_cell].speeds[8]
-	     - (cells[curr_cell].speeds[3] +
-		cells[curr_cell].speeds[6] +
-		cells[curr_cell].speeds[7])) /
-	local_density;
+  	     cells[curr_cell].speeds[5] +
+  	     cells[curr_cell].speeds[8]
+  	     - (cells[curr_cell].speeds[3] +
+  		cells[curr_cell].speeds[6] +
+  		cells[curr_cell].speeds[7])) /
+  	local_density;
       /* compute y velocity component */
       u_y = (cells[curr_cell].speeds[2] +
-	     cells[curr_cell].speeds[5] +
-	     cells[curr_cell].speeds[6]
-	     - (cells[curr_cell].speeds[4] +
-		cells[curr_cell].speeds[7] +
-		cells[curr_cell].speeds[8])) /
-	local_density;
+  	     cells[curr_cell].speeds[5] +
+  	     cells[curr_cell].speeds[6]
+  	     - (cells[curr_cell].speeds[4] +
+  		cells[curr_cell].speeds[7] +
+  		cells[curr_cell].speeds[8])) /
+  	local_density;
       /* accumulate the norm of x- and y- velocity components */
       l_u += sqrt((u_x * u_x) + (u_y * u_y));
     }

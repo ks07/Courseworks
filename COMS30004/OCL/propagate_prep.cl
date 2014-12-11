@@ -12,12 +12,12 @@ __kernel void propagate_prep(__global t_adjacency* adjacency)
   // If we move adjacency to constant, then this kernel is unnecessary
   int ii,jj;            /* generic counters */
   int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
-  const int nx = get_global_size(0); // Avoid needing to import params
-  const int ny = get_global_size(1);
 
   /* loop over _all_ cells */
   //for(ii=0;ii<params.ny;ii++) {
   //for(jj=0;jj<params.nx;jj++) {
+  const int ny = get_global_size(0); // Avoid needing to import params
+  const int nx = get_global_size(1);
   ii = get_global_id(0);
   jj = get_global_id(1);
       /* determine indices of axis-direction neighbours
@@ -28,8 +28,8 @@ __kernel void propagate_prep(__global t_adjacency* adjacency)
       x_w = (jj == 0) ? (jj + nx - 1) : (jj - 1);
       //Pre-calculate the adjacent cells to propagate to.
       //adjacency[ii*params.nx + jj].index[0] = ii * params.nx + jj; // Centre, ignore
-      adjacency[ii*nx + jj].index[1] = ii  * nx + x_e; // N
-      adjacency[ii*nx + jj].index[2] = y_n * nx + jj;  // E
+      adjacency[ii*nx + jj].index[1] = ii  * nx + x_e; // E
+      adjacency[ii*nx + jj].index[2] = y_n * nx + jj;  // N
       adjacency[ii*nx + jj].index[3] = ii  * nx + x_w; // W
       adjacency[ii*nx + jj].index[4] = y_s * nx + jj;  // S
       adjacency[ii*nx + jj].index[5] = y_n * nx + x_e; // NE

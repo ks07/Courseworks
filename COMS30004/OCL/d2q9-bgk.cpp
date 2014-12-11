@@ -228,13 +228,19 @@ int main(int argc, char* argv[])
     ::size_t nwork_groups;
     ::size_t work_group_size = 8; //max_size ???
     const ::size_t unit_length = 2; // TODO: How does this value effect performance/correctness?
+
+    // Reduction kernels are usually expecting power of 2 dimensions. This is also good, because for whatever reason
+    // KERNEL_WORK_GROUP_SIZE seems to have a thing for powers of 2. Round up to the nearest 
+    ::size_t padded_prob_size = pow(2, ceil(log(params.nx*params.ny) / log(2)));
+
+    std::cout << "Padded problem size for reduction is: " << padded_prob_size << std::endl;
+
     // Get kernel object to query information
     cl::Kernel ko_av_velocity(cl_av_velocity, "av_velocity");
     work_group_size = ko_av_velocity.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
     // From the work_group_size (the number of workers per group), problem size, and a constant work unit size
     // we can calculate the number of work groups needed.
-    nwork_groups = (params.ny*params.nx) / (work_group_size*unit_length);
-
+    nwork_groups = padded_prob_size / (work_group_size*unit_length);
 
     printf(
 	   " %d work groups of size %d.  %ld Integration steps\n",
@@ -247,7 +253,7 @@ int main(int argc, char* argv[])
       // This case is just broken? No attempt at actually dividing the problem space evenly?
       std::cout << "WTF" << std::endl;
       nwork_groups = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(); // Reset the groups to the number of compute units. (So 1 WG on 1 core)
-      work_group_size = (params.ny*params.nx) / (nwork_groups*unit_length); // Reset the work group size to fit the new group count.
+      work_group_size = padded_prob_size / (nwork_groups*unit_length); // Reset the work group size to fit the new group count.
     }
 
     printf(
@@ -260,7 +266,7 @@ int main(int argc, char* argv[])
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> collision(cl_collision, "collision");
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> propagate(cl_propagate, "propagate");
     cl::make_kernel<t_param, cl::Buffer, cl::Buffer> accelerate_flow(cl_accelerate_flow, "accelerate_flow");
-    cl::make_kernel<int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer> av_velocity(cl_av_velocity, "av_velocity");
+    cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer> av_velocity(cl_av_velocity, "av_velocity");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -296,7 +302,7 @@ int main(int argc, char* argv[])
     accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
     propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
     collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
-    av_velocity(cl::EnqueueArgs(queue, cl::NDRange(params.nx*params.ny/unit_length), cl::NDRange(work_group_size)), unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
+    av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
 
     queue.finish();
 
