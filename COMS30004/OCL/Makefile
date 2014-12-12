@@ -12,7 +12,7 @@ CXX=g++
 
 CPP_COMMON=./Cpp_common
 
-INC=-I $(CPP_COMMON)
+INC=-I $(CPP_COMMON) -I /usr/local/cuda/include/
 
 LIBS=-L /usr/local/cuda/lib64/ -lm -lOpenCL -lrt
 

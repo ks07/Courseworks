@@ -165,8 +165,12 @@ int main(int argc, char* argv[])
   std::vector<t_adjacency>* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
   unsigned int obstacle_count = 0;
 
+  // OpenCL setup. From HandsOnOpenCL
+  cl_uint deviceIndex = 0;
+  parseArguments(argc, argv, &deviceIndex);
+
   /* parse the command line */
-  if(argc != 3) {
+  if(argc < 3) {
     usage(argv[0]);
   }
   else{
@@ -175,9 +179,6 @@ int main(int argc, char* argv[])
   }
   
   //try {
-    // OpenCL setup. From HandsOnOpenCL
-    cl_uint deviceIndex = 0;
-    parseArguments(argc, argv, &deviceIndex);
   
     std::vector<cl::Device> devices;
     unsigned numDevices = getDeviceList(devices);
@@ -237,7 +238,7 @@ int main(int argc, char* argv[])
 
     // Get kernel object to query information
     cl::Kernel ko_av_velocity(cl_av_velocity, "av_velocity");
-    work_group_size = ko_av_velocity.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
+    work_group_size = 1024;//ko_av_velocity.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
     // From the work_group_size (the number of workers per group), problem size, and a constant work unit size
     // we can calculate the number of work groups needed.
     nwork_groups = padded_prob_size / (work_group_size*unit_length);
@@ -279,7 +280,7 @@ int main(int argc, char* argv[])
     // Vector on host so we can sum the partial sums ourselves.
     partial_tot_u.resize(nwork_groups);
 
-    propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx)), cl_adjacency);
+    propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx), cl::NDRange(5,70)), cl_adjacency);
 
     // End OpenCL operations
     queue.finish();
@@ -299,9 +300,9 @@ int main(int argc, char* argv[])
 
   for (ii=0;ii<params.maxIters;ii++) {
     //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
-    accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
-    propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
-    collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
+    accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx), cl::NDRange(100)), params, cl_cells, cl_obstacles);
+    propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), cl::NDRange(100)), cl_cells, cl_tmp_cells, cl_adjacency);
+    collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), cl::NDRange(100)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
     av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
 
     queue.finish();
