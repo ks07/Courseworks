@@ -205,11 +205,11 @@ int main(int argc, char* argv[])
     av_vels.reserve(params.maxIters);
 
     // Read in and compile OpenCL kernels
-    cl::Program pp_program(context, util::loadProgram("./propagate_prep.cl"), false);
-    cl::Program cl_collision(context, util::loadProgram("./collision.cl"), false);
-    cl::Program cl_propagate(context, util::loadProgram("./propagate.cl"), false);
-    cl::Program cl_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
-    cl::Program cl_av_velocity(context, util::loadProgram("./av_velocity.cl"), false);
+    cl::Program clprog_propagate_prep(context, util::loadProgram("./propagate_prep.cl"), false);
+    cl::Program clprog_collision(context, util::loadProgram("./collision.cl"), false);
+    cl::Program clprog_propagate(context, util::loadProgram("./propagate.cl"), false);
+    cl::Program clprog_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
+    cl::Program clprog_av_velocity(context, util::loadProgram("./av_velocity.cl"), false);
 
     // Potential build flags:
     // "-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math"
@@ -217,11 +217,11 @@ int main(int argc, char* argv[])
 
     std::cout << "Beginning kernel build..." << std::endl;
 
-    pp_program.build();
-    cl_collision.build();
-    cl_propagate.build();
-    cl_accelerate_flow.build();
-    cl_av_velocity.build();
+    clprog_propagate_prep.build();
+    clprog_collision.build();
+    clprog_propagate.build();
+    clprog_accelerate_flow.build();
+    clprog_av_velocity.build();
     
     std::cout << "Kernel build complete" << std::endl;
 
@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
     std::cout << "Padded problem size for reduction is: " << padded_prob_size << std::endl;
 
     // Get kernel object to query information
-    cl::Kernel ko_av_velocity(cl_av_velocity, "av_velocity");
+    cl::Kernel ko_av_velocity(clprog_av_velocity, "av_velocity");
     work_group_size = 1024;//ko_av_velocity.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(device);
     // From the work_group_size (the number of workers per group), problem size, and a constant work unit size
     // we can calculate the number of work groups needed.
@@ -263,11 +263,11 @@ int main(int argc, char* argv[])
 	   (int)work_group_size,
 	   work_group_size*unit_length*nwork_groups);
 
-    cl::make_kernel<cl::Buffer> propagate_prep(pp_program, "propagate_prep");
-    cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> collision(cl_collision, "collision");
-    cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> propagate(cl_propagate, "propagate");
-    cl::make_kernel<t_param, cl::Buffer, cl::Buffer> accelerate_flow(cl_accelerate_flow, "accelerate_flow");
-    cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer> av_velocity(cl_av_velocity, "av_velocity");
+    cl::make_kernel<cl::Buffer> cl_propagate_prep(clprog_propagate_prep, "propagate_prep");
+    cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> cl_collision(clprog_collision, "collision");
+    cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> cl_propagate(clprog_propagate, "propagate");
+    cl::make_kernel<t_param, cl::Buffer, cl::Buffer> cl_accelerate_flow(clprog_accelerate_flow, "accelerate_flow");
+    cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer> cl_av_velocity(clprog_av_velocity, "av_velocity");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
     // Vector on host so we can sum the partial sums ourselves.
     partial_tot_u.resize(nwork_groups);
 
-    propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx), cl::NDRange(5,70)), cl_adjacency);
+    cl_propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx), cl::NDRange(5,70)), cl_adjacency);
 
     // End OpenCL operations
     queue.finish();
@@ -300,10 +300,10 @@ int main(int argc, char* argv[])
 
   for (ii=0;ii<params.maxIters;ii++) {
     //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
-    accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx), cl::NDRange(100)), params, cl_cells, cl_obstacles);
-    propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), cl::NDRange(100)), cl_cells, cl_tmp_cells, cl_adjacency);
-    collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), cl::NDRange(100)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
-    av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
+    cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx), cl::NDRange(100)), params, cl_cells, cl_obstacles);
+    cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), cl::NDRange(100)), cl_cells, cl_tmp_cells, cl_adjacency);
+    cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), cl::NDRange(100)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
+    cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
 
     queue.finish();
 
@@ -355,10 +355,10 @@ int main(int argc, char* argv[])
   
 
   } catch (cl::Error &err) {
-    std::cout << "Exception\n";
-    std::cerr << err.what() << "(" << err_code(err.err()) << std::endl; 
-    std::string blog = cl_av_velocity.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-    std::cerr << blog << std::endl;
+    std::cout << "Exception" << std::endl;
+    std::cerr << err.what() << "(" << err_code(err.err()) << ")" << std::endl; 
+    //std::string blog = clprog_av_velocity.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    //std::cerr << blog << std::endl;
   }
 
   return EXIT_SUCCESS;
