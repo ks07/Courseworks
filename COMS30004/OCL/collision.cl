@@ -1,5 +1,3 @@
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-
 #define NSPEEDS 9
 
 /* struct to hold the parameter values */
@@ -31,7 +29,7 @@ __kernel void collision(const float omega, __global t_speed* cells, __global t_s
   float u[NSPEEDS];            /* directional velocities */
   float d_equ[NSPEEDS];        /* equilibrium densities */
   float u_sq;                  /* squared velocity */
-  double local_density;         /* sum of densities in a particular cell */
+  float local_density;         /* sum of densities in a particular cell */
 
   int curr_cell; // Stop re-calculating the array index repeatedly.
   //const int cell_lim = (params.ny * params.nx);
@@ -62,19 +60,19 @@ __kernel void collision(const float omega, __global t_speed* cells, __global t_s
 	}
 
 	/* compute x velocity component */
-	u_x = ((tmp_cells[curr_cell].speeds[1] + 
-		tmp_cells[curr_cell].speeds[5] + 
-		tmp_cells[curr_cell].speeds[8])
+	u_x = (tmp_cells[curr_cell].speeds[1] + 
+	       tmp_cells[curr_cell].speeds[5] + 
+	       tmp_cells[curr_cell].speeds[8]
 	       - (tmp_cells[curr_cell].speeds[3] + 
 		  tmp_cells[curr_cell].speeds[6] + 
 		  tmp_cells[curr_cell].speeds[7]))
 	  / local_density;
 
 	/* compute y velocity component */
-	u_y = ((tmp_cells[curr_cell].speeds[2] + 
-		tmp_cells[curr_cell].speeds[5] + 
-		tmp_cells[curr_cell].speeds[6])
-	       - (tmp_cells[curr_cell].speeds[4] +
+	u_y = (tmp_cells[curr_cell].speeds[2] + 
+	       tmp_cells[curr_cell].speeds[5] + 
+	       tmp_cells[curr_cell].speeds[6]
+	       - (tmp_cells[curr_cell].speeds[4] + 
 		  tmp_cells[curr_cell].speeds[7] + 
 		  tmp_cells[curr_cell].speeds[8]))
 	  / local_density;
@@ -121,21 +119,10 @@ __kernel void collision(const float omega, __global t_speed* cells, __global t_s
 					 - u_sq / (2.0 * c_sq));
 	/* relaxation step */
 	for(kk=0;kk<NSPEEDS;kk++) {
-	  cells[curr_cell].speeds[kk] = 0.0f;//(tmp_cells[curr_cell].speeds[kk]
-					//	 + omega * 
-					//	 (d_equ[kk] - tmp_cells[curr_cell].speeds[kk]));
+	  cells[curr_cell].speeds[kk] = (tmp_cells[curr_cell].speeds[kk]
+						 + omega * 
+						 (d_equ[kk] - tmp_cells[curr_cell].speeds[kk]));
 	}
-	cells[curr_cell].speeds[0] = tmp_cells[curr_cell].speeds[1];
-	cells[curr_cell].speeds[1] = tmp_cells[curr_cell].speeds[5];
-	cells[curr_cell].speeds[2] = tmp_cells[curr_cell].speeds[8];
-	cells[curr_cell].speeds[3] = tmp_cells[curr_cell].speeds[3];
-        cells[curr_cell].speeds[4] = tmp_cells[curr_cell].speeds[6];
-        cells[curr_cell].speeds[5] = tmp_cells[curr_cell].speeds[7];
-	cells[curr_cell].speeds[6] = (tmp_cells[curr_cell].speeds[1] + tmp_cells[curr_cell].speeds[5] + tmp_cells[curr_cell].speeds[8]) - (tmp_cells[curr_cell].speeds[3] + tmp_cells[curr_cell].speeds[6] + tmp_cells[curr_cell].speeds[7]);
-	double tmp = ((double)cells[curr_cell].speeds[6] / (double)local_density);
-	cells[curr_cell].speeds[7] = (float)tmp;
-	//	cells[curr_cell].speeds[7] = ((tmp_cells[curr_cell].speeds[1] + tmp_cells[curr_cell].speeds[5] + tmp_cells[curr_cell].speeds[8]) - (tmp_cells[curr_cell].speeds[3] + tmp_cells[curr_cell].speeds[6] + tmp_cells[curr_cell].speeds[7])) / local_density;
-        cells[curr_cell].speeds[8] = u_x;
     
   }
 }
