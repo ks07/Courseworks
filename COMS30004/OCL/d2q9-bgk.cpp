@@ -217,11 +217,11 @@ int main(int argc, char* argv[])
 
     std::cout << "Beginning kernel build..." << std::endl;
 
-    clprog_propagate_prep.build();
-    clprog_collision.build();
-    clprog_propagate.build();
-    clprog_accelerate_flow.build();
-    clprog_av_velocity.build();
+    clprog_propagate_prep.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
+    clprog_collision.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
+    clprog_propagate.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
+    clprog_accelerate_flow.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
+    clprog_av_velocity.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     
     std::cout << "Kernel build complete" << std::endl;
 

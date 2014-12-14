@@ -20,7 +20,7 @@ ifndef DEVICE
 	DEVICE = CL_DEVICE_TYPE_DEFAULT
 endif
 
-CXXFLAGS=-O3 -Wall -march=native -DSINGLE_PRECISION -DDEVICE=$(DEVICE)
+CXXFLAGS=-O3 -ffast-math -Wall -march=native -DSINGLE_PRECISION -DDEVICE=$(DEVICE)
 
 all: $(EXES)
 
