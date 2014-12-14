@@ -108,7 +108,7 @@ enum boolean { FALSE, TRUE };
 
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
 int initialise(const char* paramfile, const char* obstaclefile, t_param* params, std::vector<t_speed>** cells_ptr,
-	       std::vector<t_speed>** tmp_cells_ptr, std::vector<int>** obstacles_ptr, unsigned int &obstacle_count,
+	       std::vector<t_speed>** tmp_cells_ptr, std::vector<cl_char>** obstacles_ptr, unsigned int &obstacle_count,
 	       std::vector<my_float> &av_vels, std::vector<t_adjacency>** adjacency);
 
 /* 
@@ -116,12 +116,12 @@ int initialise(const char* paramfile, const char* obstaclefile, t_param* params,
 ** timestep calls, in order, the functions:
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
-int timestep(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles, const std::vector<t_adjacency> &adjacency);
+int timestep(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<cl_char> &obstacles, const std::vector<t_adjacency> &adjacency);
 //int accelerate_flow(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
 //int propagate_prep(const t_param params, std::vector<t_adjacency> &adjacency);
 //int propagate(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, const std::vector<t_adjacency> &adjacency);
 //int collision(const t_param params, std::vector<t_speed> &cells, std::vector<t_speed> &tmp_cells, std::vector<int> &obstacles);
-int write_values(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles, std::vector<my_float> &av_vels);
+int write_values(const t_param params, std::vector<t_speed> &cells, std::vector<cl_char> &obstacles, std::vector<my_float> &av_vels);
 
 /* finalise, including freeing up allocated memory */
 //TODO: Fix finalise
@@ -136,7 +136,7 @@ my_float total_density(const t_param params, std::vector<t_speed> &cells);
 //my_float av_velocity(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
 
 /* calculate Reynolds number */
-my_float calc_reynolds(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles);
+my_float calc_reynolds(const t_param params, std::vector<t_speed> &cells, std::vector<cl_char> &obstacles);
 
 /* utility functions */
 void die(const char* message, const int line, const char *file);
@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
   t_param  params;              /* struct to hold parameter values */
   std::vector<t_speed>* cells     = NULL;    /* grid containing fluid densities */
   std::vector<t_speed>* tmp_cells = NULL;    /* scratch space */
-  std::vector<int>*     obstacles = NULL;    /* grid indicating which cells are blocked */
+  std::vector<cl_char>*     obstacles = NULL;    /* grid indicating which cells are blocked */
   std::vector<my_float>  av_vels;    /* a record of the av. velocity computed for each timestep */
   std::vector<my_float>  partial_tot_u;
   int      ii;                  /* generic counter */
@@ -571,7 +571,7 @@ int main(int argc, char* argv[])
 
 int initialise(const char* paramfile, const char* obstaclefile,
 	       t_param* params, std::vector<t_speed>** cells_ptr, std::vector<t_speed>** tmp_cells_ptr, 
-	       std::vector<int>** obstacles_ptr, unsigned int &obstacle_count, std::vector<my_float> &av_vels, std::vector<t_adjacency>** adjacency)
+	       std::vector<cl_char>** obstacles_ptr, unsigned int &obstacle_count, std::vector<my_float> &av_vels, std::vector<t_adjacency>** adjacency)
 {
   char   message[1024];  /* message buffer */
   FILE   *fp;            /* file pointer */
@@ -642,7 +642,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   // *obstacles_ptr = (int*)malloc(sizeof(int*)*(params->ny*params->nx));
   // if (*obstacles_ptr == NULL) 
   //   die("cannot allocate column memory for obstacles",__LINE__,__FILE__);
-  *obstacles_ptr = new std::vector<int>(params->ny*params->nx);
+  *obstacles_ptr = new std::vector<cl_char>(params->ny*params->nx);
 
   /* adjacency for propagate */
   // *adjacency = (t_adjacency*)malloc(sizeof(t_adjacency) * (params->ny*params->nx));
@@ -740,7 +740,7 @@ int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr
   return EXIT_SUCCESS;
 }
 
-my_float av_velocity(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles)
+my_float av_velocity(const t_param params, std::vector<t_speed> &cells, std::vector<cl_char> &obstacles)
 {
   int    kk,curr_cell;       /* generic counters */
   int    tot_cells = 0;  /* no. of cells used in calculation */
@@ -789,7 +789,7 @@ my_float av_velocity(const t_param params, std::vector<t_speed> &cells, std::vec
   return tot_u / (my_float)tot_cells;
 }
 
-my_float calc_reynolds(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles)
+my_float calc_reynolds(const t_param params, std::vector<t_speed> &cells, std::vector<cl_char> &obstacles)
 {
   const my_float viscosity = 1.0 / 6.0 * (2.0 / params.omega - 1.0);
   
@@ -812,7 +812,7 @@ my_float total_density(const t_param params, std::vector<t_speed> &cells)
   return total;
 }
 
-int write_values(const t_param params, std::vector<t_speed> &cells, std::vector<int> &obstacles, std::vector<my_float> &av_vels)
+int write_values(const t_param params, std::vector<t_speed> &cells, std::vector<cl_char> &obstacles, std::vector<my_float> &av_vels)
 {
   FILE* fp;                     /* file pointer */
   int ii,jj,kk;                 /* generic counters */

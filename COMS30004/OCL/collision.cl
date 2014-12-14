@@ -19,7 +19,7 @@ typedef struct {
 } t_speed;
 
 // 1D kernel, run as ny * nx
-__kernel void collision(const float omega, __global t_speed* cells, const __global t_speed* tmp_cells, const __global int* obstacles)
+__kernel void collision(const float omega, __global t_speed* cells, const __global t_speed* tmp_cells, const __global char* obstacles)
 {
   //Mark obstacles as const or _constant?
   int kk;                         /* generic counters */

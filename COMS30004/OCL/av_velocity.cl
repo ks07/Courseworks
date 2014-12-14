@@ -7,7 +7,7 @@ typedef struct {
 
 void reduce(__local float*, __global float*);
 
-__kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global t_speed* cells, const __global int* obstacles, __local float* l_tot_u, __global float* round_tot_u)
+__kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global t_speed* cells, const __global char* obstacles, __local float* l_tot_u, __global float* round_tot_u)
 {
   int   kk,curr_cell;   /* generic counters */
   float local_density;  /* total density in cell */
