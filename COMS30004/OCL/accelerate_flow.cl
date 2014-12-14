@@ -16,7 +16,7 @@ typedef struct {
   float speeds[NSPEEDS];
 } t_speed;
 
-__kernel void accelerate_flow(const t_param params, __global t_speed* cells, __global int* obstacles)
+__kernel void accelerate_flow(const t_param params, __global t_speed* cells, const __global int* obstacles)
 {
   // const (__global) vs __constant?
   int ii,jj;     /* generic counters */

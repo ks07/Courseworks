@@ -19,7 +19,7 @@ typedef struct {
 } t_speed;
 
 // 1D kernel, run as ny * nx
-__kernel void collision(const float omega, __global t_speed* cells, __global t_speed* tmp_cells, __global int* obstacles)
+__kernel void collision(const float omega, __global t_speed* cells, const __global t_speed* tmp_cells, const __global int* obstacles)
 {
   //Mark obstacles as const or _constant?
   int kk;                         /* generic counters */
@@ -33,15 +33,12 @@ __kernel void collision(const float omega, __global t_speed* cells, __global t_s
   double u_sq;                  /* squared velocity */
   double local_density;         /* sum of densities in a particular cell */
 
-  int curr_cell; // Stop re-calculating the array index repeatedly.
-  //const int cell_lim = (params.ny * params.nx);
-
   /* loop over the cells in the grid
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
   //for(curr_cell=0;curr_cell<cell_lim;++curr_cell) {
-  curr_cell = get_global_id(0);
+  const int curr_cell = get_global_id(0);
       if(obstacles[curr_cell]) {
 	/* called after propagate, so taking values from scratch space
 	** mirroring, and writing into main grid */

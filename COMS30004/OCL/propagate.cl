@@ -10,7 +10,7 @@ typedef struct {
   unsigned int index[NSPEEDS];
 } t_adjacency;
 
-__kernel void propagate(__global t_speed* cells, __global t_speed* tmp_cells, __global t_adjacency* adjacency)
+__kernel void propagate(const __global t_speed* cells, __global t_speed* tmp_cells, const __global t_adjacency* adjacency)
 {
   // Constant adjacency... or no adjacency?
   int curr_cell; // Stop re-calculating the array index repeatedly.
