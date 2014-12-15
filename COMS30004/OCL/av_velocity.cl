@@ -31,6 +31,7 @@ __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit
     if(curr_cell < global_lim && !obstacles[curr_cell]) {
       /* local density total */
       local_density = 0.0;
+      #pragma unroll
       for(kk=0;kk<NSPEEDS;kk++) {
   	local_density += cells[curr_cell].speeds[kk];
       }

@@ -54,6 +54,7 @@ __kernel void collision(const float omega, __global t_speed* cells, const __glob
 	/* don't consider occupied cells */
 	/* compute local density total */
 	local_density = 0.0;
+	#pragma unroll
 	for(kk=0;kk<NSPEEDS;kk++) {
 	  local_density += tmp_cells[curr_cell].speeds[kk];
 	}
@@ -117,6 +118,7 @@ __kernel void collision(const float omega, __global t_speed* cells, const __glob
 					 + (u[8] * u[8]) / (2.0 * c_sq * c_sq)
 					 - u_sq / (2.0 * c_sq));
 	/* relaxation step */
+	#pragma unroll
 	for(kk=0;kk<NSPEEDS;kk++) {
 	  cells[curr_cell].speeds[kk] = (tmp_cells[curr_cell].speeds[kk]
 						 + omega * 
