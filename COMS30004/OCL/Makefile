@@ -38,3 +38,4 @@ oclean:
 	\rm -f OUT
 	\rm -f av_vels.dat
 	\rm -f final_state.dat
+	\rm -f opencl_profile_0.*
