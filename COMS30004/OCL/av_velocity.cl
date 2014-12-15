@@ -9,29 +9,32 @@ void reduce(const __local float*, __global float*, const unsigned int);
 
 __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global float* cells, const __global char* obstacles, __local float* l_tot_u, __global float* round_tot_u, const unsigned int round)
 {
-  int   kk,curr_cell;   /* generic counters */
+  unsigned int   kk,curr_cell;   /* generic counters */
   float local_density;  /* total density in cell */
   float u_x;            /* x-component of velocity for current cell */
   float u_y;            /* y-component of velocity for current cell */
 
   // Reduction specific vars. Taken from Exercise09, HandsOnOpenCL
   float l_u = 0.0; // Private accumulator
-  int work_group_size = get_local_size(0); // The number of elements belonging to each work group.
-  int local_id = get_local_id(0); // Our rank inside the work group. We can only synchronise within work groups.
-  int group_id = get_group_id(0); // Our workgroup's id.
+  const int worker_count = get_local_size(0); // The number of workers in each work group.
+  const int group_item_total = worker_count * unit_len;
+  const int local_id = get_local_id(0); // Our rank inside the work group. We can only synchronise within work groups.
+  const int group_id = get_group_id(0); // Our workgroup's id.
 
   // Calculate our starting position from our group's position and our local id.
-  int istart = (group_id * work_group_size + local_id)  * unit_len;
-  int iend = istart + unit_len;
+  const int istart = (group_item_total * group_id) + local_id;
+  const int istep = worker_count;
+  const int iend = istart + (istep * unit_len);
 
-  for (curr_cell = istart; curr_cell < iend; curr_cell++) {
+
+  for (curr_cell = istart; curr_cell < iend; curr_cell += istep) {
     // Use the global size to jump ahead to form the tree structure of reduction.
     // For all the elements in this work
     /* ignore occupied cells */
     if(curr_cell < global_lim && !obstacles[curr_cell]) {
       /* local density total */
       local_density = 0.0;
-      #pragma unroll
+#pragma unroll 9
       for(kk=0;kk<NSPEEDS;kk++) {
   	local_density += cells[kk*global_lim + curr_cell];
       }
