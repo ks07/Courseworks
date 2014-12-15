@@ -54,3 +54,7 @@ $EXE "../cfgs/input_700x500.params" "../cfgs/obstacles_700x500_lip.dat" "$EXTRA_
 $CHECK "../refs/av_vels_700x500_lip.dat" "../refs/final_state_700x500_lip.dat" &&
 
 print_test "ALL TESTS PASSED!"
+
+if [ "$?" -ne 0 ]; then
+    wc -l *.diff
+fi
