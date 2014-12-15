@@ -210,10 +210,9 @@ int main(int argc, char* argv[])
     cl::Program clprog_propagate(context, util::loadProgram("./propagate.cl"), false);
     cl::Program clprog_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
     cl::Program clprog_av_velocity(context, util::loadProgram("./av_velocity.cl"), false);
+    cl::Program clprog_final_reduce(context, util::loadProgram("./final_reduce.cl"), false);
 
-    // Potential build flags:
-    // "-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math"
-      try {
+    try {
 
     std::cout << "Beginning kernel build..." << std::endl;
 
@@ -222,6 +221,7 @@ int main(int argc, char* argv[])
     clprog_propagate.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     clprog_accelerate_flow.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     clprog_av_velocity.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
+    clprog_final_reduce.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     
     std::cout << "Kernel build complete" << std::endl;
 
@@ -268,6 +268,7 @@ int main(int argc, char* argv[])
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> cl_propagate(clprog_propagate, "propagate");
     cl::make_kernel<t_param, cl::Buffer, cl::Buffer> cl_accelerate_flow(clprog_accelerate_flow, "accelerate_flow");
     cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer, int> cl_av_velocity(clprog_av_velocity, "av_velocity");
+    cl::make_kernel<int, int, cl::Buffer> cl_final_reduce(clprog_final_reduce, "final_reduce");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -308,18 +309,13 @@ int main(int argc, char* argv[])
 
   std::cout << "summing" << std::endl;
 
-  //const int red_wg_count = (padded_prob_size/unit_length) / work_group_size;
-
+  cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters)), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
   queue.finish();
   // Copy the partial sums off the device
   cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
   for (ii=0;ii<params.maxIters;ii++) {
-    // Do the final summation on the host
-    float tot_u = 0.0;
-    for (unsigned int i = 0; i < nwork_groups; i++) {
-      tot_u += partial_tot_u.at(ii*nwork_groups + i);
-    }
-    av_vels[ii] = tot_u / ((params.ny*params.nx) - obstacle_count);
+    // Copy to correct host location. TODO: We could modify the file write routine to use the copied vector.
+    av_vels[ii] = partial_tot_u[ii*nwork_groups];
   }
 
   std::cout << "out of simulation" << std::endl;
