@@ -14,12 +14,12 @@
 //} t_param;
 
 /* struct to hold the 'speed' values */
-typedef struct {
-  float speeds[NSPEEDS];
-} t_speed;
+/* typedef struct { */
+/*   float speeds[NSPEEDS]; */
+/* } t_speed; */
 
 // 1D kernel, run as ny * nx
-__kernel void collision(const float omega, __global t_speed* cells, const __global t_speed* tmp_cells, const __global char* obstacles)
+__kernel void collision(const float omega, __global float* cells, const __global float* tmp_cells, const __global char* obstacles)
 {
   //Mark obstacles as const or _constant?
   int kk;                         /* generic counters */
@@ -42,39 +42,39 @@ __kernel void collision(const float omega, __global t_speed* cells, const __glob
       if(obstacles[curr_cell]) {
 	/* called after propagate, so taking values from scratch space
 	** mirroring, and writing into main grid */
-	cells[curr_cell].speeds[1] = tmp_cells[curr_cell].speeds[3];
-	cells[curr_cell].speeds[2] = tmp_cells[curr_cell].speeds[4];
-	cells[curr_cell].speeds[3] = tmp_cells[curr_cell].speeds[1];
-	cells[curr_cell].speeds[4] = tmp_cells[curr_cell].speeds[2];
-	cells[curr_cell].speeds[5] = tmp_cells[curr_cell].speeds[7];
-	cells[curr_cell].speeds[6] = tmp_cells[curr_cell].speeds[8];
-	cells[curr_cell].speeds[7] = tmp_cells[curr_cell].speeds[5];
-	cells[curr_cell].speeds[8] = tmp_cells[curr_cell].speeds[6];
+	cells[1*get_global_size(0) + curr_cell] = tmp_cells[3*get_global_size(0) + curr_cell];
+	cells[2*get_global_size(0) + curr_cell] = tmp_cells[4*get_global_size(0) + curr_cell];
+	cells[3*get_global_size(0) + curr_cell] = tmp_cells[1*get_global_size(0) + curr_cell];
+	cells[4*get_global_size(0) + curr_cell] = tmp_cells[2*get_global_size(0) + curr_cell];
+	cells[5*get_global_size(0) + curr_cell] = tmp_cells[7*get_global_size(0) + curr_cell];
+	cells[6*get_global_size(0) + curr_cell] = tmp_cells[8*get_global_size(0) + curr_cell];
+	cells[7*get_global_size(0) + curr_cell] = tmp_cells[5*get_global_size(0) + curr_cell];
+	cells[8*get_global_size(0) + curr_cell] = tmp_cells[6*get_global_size(0) + curr_cell];
       } else {
 	/* don't consider occupied cells */
 	/* compute local density total */
 	local_density = 0.0;
 	#pragma unroll
 	for(kk=0;kk<NSPEEDS;kk++) {
-	  local_density += tmp_cells[curr_cell].speeds[kk];
+	  local_density += tmp_cells[kk*get_global_size(0) + curr_cell];
 	}
 
 	/* compute x velocity component */
-	u_x = (tmp_cells[curr_cell].speeds[1] + 
-	       tmp_cells[curr_cell].speeds[5] + 
-	       tmp_cells[curr_cell].speeds[8]
-	       - (tmp_cells[curr_cell].speeds[3] + 
-		  tmp_cells[curr_cell].speeds[6] + 
-		  tmp_cells[curr_cell].speeds[7]))
+	u_x = (tmp_cells[1*get_global_size(0) + curr_cell] + 
+	       tmp_cells[5*get_global_size(0) + curr_cell] + 
+	       tmp_cells[8*get_global_size(0) + curr_cell]
+	       - (tmp_cells[3*get_global_size(0) + curr_cell] + 
+		  tmp_cells[6*get_global_size(0) + curr_cell] + 
+		  tmp_cells[7*get_global_size(0) + curr_cell]))
 	  / local_density;
 
 	/* compute y velocity component */
-	u_y = (tmp_cells[curr_cell].speeds[2] + 
-	       tmp_cells[curr_cell].speeds[5] + 
-	       tmp_cells[curr_cell].speeds[6]
-	       - (tmp_cells[curr_cell].speeds[4] + 
-		  tmp_cells[curr_cell].speeds[7] + 
-		  tmp_cells[curr_cell].speeds[8]))
+	u_y = (tmp_cells[2*get_global_size(0) + curr_cell] + 
+	       tmp_cells[5*get_global_size(0) + curr_cell] + 
+	       tmp_cells[6*get_global_size(0) + curr_cell]
+	       - (tmp_cells[4*get_global_size(0) + curr_cell] + 
+		  tmp_cells[7*get_global_size(0) + curr_cell] + 
+		  tmp_cells[8*get_global_size(0) + curr_cell]))
 	  / local_density;
 
 	/* velocity squared */ 
@@ -120,10 +120,9 @@ __kernel void collision(const float omega, __global t_speed* cells, const __glob
 	/* relaxation step */
 	#pragma unroll
 	for(kk=0;kk<NSPEEDS;kk++) {
-	  cells[curr_cell].speeds[kk] = (tmp_cells[curr_cell].speeds[kk]
-						 + omega * 
-						 (d_equ[kk] - tmp_cells[curr_cell].speeds[kk]));
+	  cells[kk*get_global_size(0) + curr_cell] = (tmp_cells[kk*get_global_size(0) + curr_cell]
+						      + omega * 
+						      (d_equ[kk] - tmp_cells[kk*get_global_size(0) + curr_cell]));
 	}
-    
-  }
+      }
 }

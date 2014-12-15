@@ -1,13 +1,13 @@
 #define NSPEEDS 9
 
 /* struct to hold the 'speed' values */
-typedef struct {
-  float speeds[NSPEEDS];
-} t_speed;
+/* typedef struct { */
+/*   float speeds[NSPEEDS]; */
+/* } t_speed; */
 
 void reduce(const __local float*, __global float*, const unsigned int);
 
-__kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global t_speed* cells, const __global char* obstacles, __local float* l_tot_u, __global float* round_tot_u, const unsigned int round)
+__kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global float* cells, const __global char* obstacles, __local float* l_tot_u, __global float* round_tot_u, const unsigned int round)
 {
   int   kk,curr_cell;   /* generic counters */
   float local_density;  /* total density in cell */
@@ -33,23 +33,23 @@ __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit
       local_density = 0.0;
       #pragma unroll
       for(kk=0;kk<NSPEEDS;kk++) {
-  	local_density += cells[curr_cell].speeds[kk];
+  	local_density += cells[kk*global_lim + curr_cell];
       }
       /* x-component of velocity */
-      u_x = (cells[curr_cell].speeds[1] +
-  	     cells[curr_cell].speeds[5] +
-  	     cells[curr_cell].speeds[8]
-  	     - (cells[curr_cell].speeds[3] +
-  		cells[curr_cell].speeds[6] +
-  		cells[curr_cell].speeds[7])) /
+      u_x = (cells[1*global_lim + curr_cell] +
+  	     cells[5*global_lim + curr_cell] +
+  	     cells[8*global_lim + curr_cell]
+  	     - (cells[3*global_lim + curr_cell] +
+  		cells[6*global_lim + curr_cell] +
+  		cells[7*global_lim + curr_cell])) /
   	local_density;
       /* compute y velocity component */
-      u_y = (cells[curr_cell].speeds[2] +
-  	     cells[curr_cell].speeds[5] +
-  	     cells[curr_cell].speeds[6]
-  	     - (cells[curr_cell].speeds[4] +
-  		cells[curr_cell].speeds[7] +
-  		cells[curr_cell].speeds[8])) /
+      u_y = (cells[2*global_lim + curr_cell] +
+  	     cells[5*global_lim + curr_cell] +
+  	     cells[6*global_lim + curr_cell]
+  	     - (cells[4*global_lim + curr_cell] +
+  		cells[7*global_lim + curr_cell] +
+  		cells[8*global_lim + curr_cell])) /
   	local_density;
       /* accumulate the norm of x- and y- velocity components */
       l_u += sqrt((u_x * u_x) + (u_y * u_y));
