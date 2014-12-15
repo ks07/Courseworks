@@ -39,10 +39,10 @@ $EXE "../cfgs/input_128x256.params" "../cfgs/obstacles_128x256_sandwich.dat" "$E
 
 $CHECK "../refs/av_vels_128x256_sandwich.dat" "../refs/final_state_128x256_sandwich.dat" &&
 
-# 1024
+# 1024 (Profile this run)
 print_test "1024x1024_box" &&
 
-$EXE "../cfgs/input_1024x1024.params" "../cfgs/obstacles_1024x1024_box.dat" "$EXTRA_ARGS" &&
+COMPUTE_PROFILE=1 $EXE "../cfgs/input_1024x1024.params" "../cfgs/obstacles_1024x1024_box.dat" "$EXTRA_ARGS" &&
 
 $CHECK "../refs/av_vels_1024x1024_box.dat" "../refs/final_state_1024x1024_box.dat" &&
 
