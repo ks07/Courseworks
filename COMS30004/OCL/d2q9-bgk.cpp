@@ -208,7 +208,6 @@ int main(int argc, char* argv[])
     cl::Program clprog_propagate_prep(context, util::loadProgram("./propagate_prep.cl"), false);
     cl::Program clprog_collision(context, util::loadProgram("./collision.cl"), false);
     cl::Program clprog_propagate(context, util::loadProgram("./propagate.cl"), false);
-    cl::Program clprog_simple_propagate(context, util::loadProgram("./simple_propagate.cl"), false);
     cl::Program clprog_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
     cl::Program clprog_av_velocity(context, util::loadProgram("./av_velocity.cl"), false);
 
@@ -221,7 +220,6 @@ int main(int argc, char* argv[])
     clprog_propagate_prep.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     clprog_collision.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     clprog_propagate.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
-    clprog_simple_propagate.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     clprog_accelerate_flow.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     clprog_av_velocity.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
     
@@ -268,7 +266,6 @@ int main(int argc, char* argv[])
     cl::make_kernel<cl::Buffer> cl_propagate_prep(clprog_propagate_prep, "propagate_prep");
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> cl_collision(clprog_collision, "collision");
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> cl_propagate(clprog_propagate, "propagate");
-    cl::make_kernel<cl::Buffer, cl::Buffer> cl_simple_propagate(clprog_simple_propagate, "propagate");
     cl::make_kernel<t_param, cl::Buffer, cl::Buffer> cl_accelerate_flow(clprog_accelerate_flow, "accelerate_flow");
     cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer> cl_av_velocity(clprog_av_velocity, "av_velocity");
 
@@ -304,8 +301,7 @@ int main(int argc, char* argv[])
   for (ii=0;ii<params.maxIters;ii++) {
     //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
     cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
-    //cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
-    cl_simple_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx)), cl_cells, cl_tmp_cells);
+    cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
     cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
     cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
 
@@ -361,8 +357,8 @@ int main(int argc, char* argv[])
   } catch (cl::Error &err) {
     std::cout << "Exception" << std::endl;
     std::cerr << err.what() << "(" << err_code(err.err()) << ")" << std::endl; 
-    std::string blog = clprog_simple_propagate.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-    std::cerr << blog << std::endl;
+    //std::string blog = clprog_av_velocity.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    //std::cerr << blog << std::endl;
   }
 
   return EXIT_SUCCESS;
