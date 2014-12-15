@@ -22,13 +22,13 @@ __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit
 
   // Calculate our starting position from our group's position and our local id.
   int istart = (group_id * work_group_size + local_id)  * unit_len;
-  int iend = min(istart + unit_len, global_lim);
+  int iend = istart + unit_len;
 
   for (curr_cell = istart; curr_cell < iend; curr_cell++) {
     // Use the global size to jump ahead to form the tree structure of reduction.
     // For all the elements in this work
     /* ignore occupied cells */
-    if(!obstacles[curr_cell]) {
+    if(curr_cell < global_lim && !obstacles[curr_cell]) {
       /* local density total */
       local_density = 0.0;
       for(kk=0;kk<NSPEEDS;kk++) {
