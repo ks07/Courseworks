@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> cl_collision(clprog_collision, "collision");
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> cl_propagate(clprog_propagate, "propagate");
     cl::make_kernel<t_param, cl::Buffer, cl::Buffer> cl_accelerate_flow(clprog_accelerate_flow, "accelerate_flow");
-    cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer> cl_av_velocity(clprog_av_velocity, "av_velocity");
+    cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer, int> cl_av_velocity(clprog_av_velocity, "av_velocity");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     //cl::Buffer cl_adjacency = cl::Buffer(context, adjacency->begin(), adjacency->end(), false);
@@ -275,10 +275,10 @@ int main(int argc, char* argv[])
     cl::Buffer cl_cells = cl::Buffer(context, cells->begin(), cells->end(), false);
     cl::Buffer cl_tmp_cells = cl::Buffer(context, tmp_cells->begin(), tmp_cells->end(), false);
     cl::Buffer cl_obstacles = cl::Buffer(context, obstacles->begin(), obstacles->end(), true);
-    cl::Buffer cl_round_tot_u = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * nwork_groups); // Buffer to hold partial sums for reduction.
+    cl::Buffer cl_round_tot_u = cl::Buffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * nwork_groups * params.maxIters); // Buffer to hold partial sums for reduction.
 
     // Vector on host so we can sum the partial sums ourselves.
-    partial_tot_u.resize(nwork_groups);
+    partial_tot_u.resize(nwork_groups * params.maxIters);
 
     cl_propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx)), cl_adjacency);
 
@@ -303,25 +303,23 @@ int main(int argc, char* argv[])
     cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
     cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
     cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
-    cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u);
+    cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(float) * work_group_size), cl_round_tot_u, ii);
+  }
 
-    queue.finish();
+  std::cout << "summing" << std::endl;
 
-    // Copy the partial sums off the device
-    cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
+  //const int red_wg_count = (padded_prob_size/unit_length) / work_group_size;
 
+  queue.finish();
+  // Copy the partial sums off the device
+  cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
+  for (ii=0;ii<params.maxIters;ii++) {
     // Do the final summation on the host
     float tot_u = 0.0;
     for (unsigned int i = 0; i < nwork_groups; i++) {
-      tot_u += partial_tot_u.at(i);
+      tot_u += partial_tot_u.at(ii*nwork_groups + i);
     }
     av_vels[ii] = tot_u / ((params.ny*params.nx) - obstacle_count);
-
-#ifdef DEBUG
-    printf("==timestep: %d==\n",ii);
-    printf("av velocity: %.12E\n", av_vels[ii]);
-    printf("tot density: %.12E\n",total_density(params,*cells));
-#endif
   }
 
   std::cout << "out of simulation" << std::endl;
@@ -357,8 +355,8 @@ int main(int argc, char* argv[])
   } catch (cl::Error &err) {
     std::cout << "Exception" << std::endl;
     std::cerr << err.what() << "(" << err_code(err.err()) << ")" << std::endl; 
-    //std::string blog = clprog_av_velocity.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
-    //std::cerr << blog << std::endl;
+    std::string blog = clprog_av_velocity.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    std::cerr << blog << std::endl;
   }
 
   return EXIT_SUCCESS;

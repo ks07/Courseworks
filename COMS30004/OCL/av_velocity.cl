@@ -5,9 +5,9 @@ typedef struct {
   float speeds[NSPEEDS];
 } t_speed;
 
-void reduce(__local float*, __global float*);
+void reduce(const __local float*, __global float*, const unsigned int);
 
-__kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global t_speed* cells, const __global char* obstacles, __local float* l_tot_u, __global float* round_tot_u)
+__kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global t_speed* cells, const __global char* obstacles, __local float* l_tot_u, __global float* round_tot_u, const unsigned int round)
 {
   int   kk,curr_cell;   /* generic counters */
   float local_density;  /* total density in cell */
@@ -62,15 +62,16 @@ __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit
   barrier(CLK_LOCAL_MEM_FENCE);
 
   // Let unit 0 do the reduction into global.
-  reduce(l_tot_u, round_tot_u);
+  reduce(l_tot_u, round_tot_u, round);
 
   // Need to write to result array, outside of kernel?
 }
 
-void reduce(__local float* local_sums, __global float* partial_sums) {
-  int num_wrk_items = get_local_size(0);
-  int local_id     = get_local_id(0);
-  int group_id     = get_group_id(0);
+void reduce(const __local float* local_sums, __global float* partial_sums, const unsigned int round) {
+  const unsigned int num_wrk_items = get_local_size(0);
+  const unsigned int local_id      = get_local_id(0);
+  const unsigned int group_id      = get_group_id(0);
+  const unsigned int ps_offset     = round * get_num_groups(0);
 
   float sum;
   int i;
@@ -82,6 +83,6 @@ void reduce(__local float* local_sums, __global float* partial_sums) {
       sum += local_sums[i];
     }
 
-    partial_sums[group_id] = sum;
+    partial_sums[ps_offset + group_id] = sum;
   }
 }
