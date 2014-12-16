@@ -1,7 +1,7 @@
 #!/bin/bash
 EXE="./d2q9-bgk.exe"
 CHECK="../check_results"
-EXTRA_ARGS="--device 0"
+EXTRA_ARGS="$MY_OCL_ARGS"
 
 print_test() {
     if hash figlet 2>/dev/null; then
