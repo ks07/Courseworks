@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
   for (ii=0;ii<params.maxIters;ii++) {
     //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
     cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
-    cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
+    cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx*NSPEEDS)), cl_cells, cl_tmp_cells, cl_adjacency);
     cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
     cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(cl_float) * work_group_size), cl_round_tot_u, ii);
   }
