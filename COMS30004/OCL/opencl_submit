@@ -10,10 +10,12 @@
 
 
 #! application name
-application="d2q9-bgk.exe"
+#application="d2q9-bgk.exe"
+application="./run_tests.sh"
 
 #! Run options for the application
-options="cfgs/input_128x128.params cfgs/obstacles_128x128_box.dat"
+#options="cfgs/input_128x128.params cfgs/obstacles_128x128_box.dat"
+options=""
 
 ###############################################################
 ### You should not have to change anything below this line ####
@@ -32,4 +34,4 @@ echo `cat $PBS_GPUFILE | uniq`
 
 
 #! Run the executable
-$application $options
+time $application $options

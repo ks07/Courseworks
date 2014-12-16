@@ -15,6 +15,10 @@ print_test() {
     fi
 }
 
+SHOULD_PROFILE=0
+if [ "$1" = "-profile" ]; then
+    SHOULD_PROFILE=1
+fi
 
 make oclean && make clean && make &&
 
@@ -42,7 +46,7 @@ $CHECK "../refs/av_vels_128x256_sandwich.dat" "../refs/final_state_128x256_sandw
 # 1024 (Profile this run)
 print_test "1024x1024_box" &&
 
-COMPUTE_PROFILE=1 $EXE "../cfgs/input_1024x1024.params" "../cfgs/obstacles_1024x1024_box.dat" "$EXTRA_ARGS" &&
+COMPUTE_PROFILE=$SHOULD_PROFILE $EXE "../cfgs/input_1024x1024.params" "../cfgs/obstacles_1024x1024_box.dat" "$EXTRA_ARGS" &&
 
 $CHECK "../refs/av_vels_1024x1024_box.dat" "../refs/final_state_1024x1024_box.dat" &&
 

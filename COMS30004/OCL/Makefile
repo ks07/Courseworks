@@ -33,7 +33,7 @@ clean:
 	\rm -f $(EXES)
 
 oclean:
-	\rm -f MPI.e*
+	\rm -f OpenCL.e*
 	\rm -f machine.file.*
 	\rm -f OUT
 	\rm -f av_vels.dat
