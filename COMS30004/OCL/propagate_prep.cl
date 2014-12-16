@@ -22,10 +22,10 @@ __kernel void propagate_prep(__global unsigned int* adjacency)
   jj = get_global_id(1);
       /* determine indices of axis-direction neighbours
       ** respecting periodic boundary conditions (wrap around) */
-      y_n = (ii + 1) % ny;
-      x_e = (jj + 1) % nx;
-      y_s = (ii == 0) ? (ii + ny - 1) : (ii - 1);
-      x_w = (jj == 0) ? (jj + nx - 1) : (jj - 1);
+      y_s = (ii + 1) % ny;
+      x_w = (jj + 1) % nx;
+      y_n = (ii == 0) ? (ii + ny - 1) : (ii - 1);
+      x_e = (jj == 0) ? (jj + nx - 1) : (jj - 1);
       //Pre-calculate the adjacent cells to propagate to.
       adjacency[0*nx*ny + ii*nx + jj] = 0*nx*ny + ii  * nx + jj; // Centre, ignore
       adjacency[1*nx*ny + ii*nx + jj] = 1*nx*ny + ii  * nx + x_e; // E
