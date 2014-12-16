@@ -140,6 +140,8 @@ my_float calc_reynolds(const t_param params, std::vector<my_float> &cells, std::
 void die(const char* message, const int line, const char *file);
 void usage(const char* exe);
 
+void init_context_bcp3(cl::Context& context, cl::Device& device);
+
 /*
 ** main program:
 ** initialise, timestep loop, finalise
@@ -165,36 +167,42 @@ int main(int argc, char* argv[])
 
   // OpenCL setup. From HandsOnOpenCL
   cl_uint deviceIndex = 0;
-  parseArguments(argc, argv, &deviceIndex);
+
+  cl::Context context;
+  cl::Device device;
+  std::string name;
 
   /* parse the command line */
   if(argc < 3) {
     usage(argv[0]);
-  }
-  else{
+  } else if (argc == 3) {
     paramfile = argv[1];
     obstaclefile = argv[2];
-  }
-  
-  //try {
-  
+    init_context_bcp3(context, device);
+  } else {
     std::vector<cl::Device> devices;
     unsigned numDevices = getDeviceList(devices);
-
+ 
     if (deviceIndex >= numDevices) {
       std::cout << "Invalid device index (try '--list')\n";
       return EXIT_FAILURE;
     }
 
-    cl::Device device = devices[deviceIndex];
-    //try{
-    std::string name;
-    getDeviceName(device, name);
-    std::cout << "Using OpenCL device: " << name << "\n";
+    device = devices[deviceIndex];
+    parseArguments(argc, argv, &deviceIndex);
 
     std::vector<cl::Device> chosen_device;
     chosen_device.push_back(device);
-    cl::Context context(chosen_device);
+    context = cl::Context(chosen_device);
+
+    paramfile = argv[1];
+    obstaclefile = argv[2];
+  }
+  
+  //try {
+    getDeviceName(device, name);
+    std::cout << "Using OpenCL device: " << name << "\n";
+
     cl::CommandQueue queue(context, device);
 
     /* initialise our data structures and load values from file */
@@ -890,4 +898,68 @@ void usage(const char* exe)
 {
   fprintf(stderr, "Usage: %s <paramfile> <obstaclefile>\n", exe);
   exit(EXIT_FAILURE);
+}
+
+//
+// Use this function to create a context and device OpenCL handle on
+// Blue Crystal Phase 3. Care has to be taken in order to use the
+// GPU assigned by the cluster queue system. This function takes
+// care of this for you.
+//
+void init_context_bcp3(cl::Context& context, cl::Device& device)
+{
+  //
+  // Get the index into the device array allocated by the queue on BCP3
+  //
+  char* path = std::getenv("PBS_GPUFILE");
+  if (path == NULL)
+    {
+      std::cerr << "Error: PBS_GPUFILE environment variable not set by queue\n";
+      exit(-1);
+    }
+  std::ifstream gpufile(path);
+  if (!gpufile.is_open())
+    {
+      std::cerr << "Error: PBS_GPUFILE not found\n";
+      exit(-1);
+    }
+
+  std::string line;
+  std::getline(gpufile, line);
+  char c = line.at(line.size() - 1);
+  int device_index = strtol(&c, NULL, 10);
+
+  gpufile.close();
+
+  cl_int err;
+
+  // Query platforms
+  std::vector<cl::Platform> platforms;
+  err = cl::Platform::get(&platforms);
+  if (err != CL_SUCCESS) {std::cerr << "Error getting platforms: "<< err << "\n"; exit(-1);}
+
+  // Get devices for each platform - stop when found a GPU
+  std::vector<cl::Device> devices;
+
+  unsigned int i;
+  for (i = 0; i < platforms.size(); i++)
+    {
+      err = platforms[i].getDevices(CL_DEVICE_TYPE_GPU, &devices);
+      if (err == CL_SUCCESS && devices.size() > 0)
+	break;
+    }
+  if (devices.size() == 0)
+    {
+      std::cerr << "Error: no GPUs found";
+      exit(-1);
+    }
+
+  // Assign the device id
+  device = devices[device_index];
+
+  // Create the context
+  std::vector<cl::Device> chosen_device;
+  chosen_device.push_back(device);
+  context = cl::Context(chosen_device, NULL, NULL, NULL, &err);
+  if (err != CL_SUCCESS) {std::cerr << "Error creating context: " << err << "\n"; exit(-1);}
 }
