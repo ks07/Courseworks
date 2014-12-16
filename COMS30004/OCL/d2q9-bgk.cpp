@@ -165,9 +165,6 @@ int main(int argc, char* argv[])
   std::vector<cl_uint>* adjacency = NULL; /* store adjacency for each cell in each direction for propagate. */
   unsigned int obstacle_count = 0;
 
-  // OpenCL setup. From HandsOnOpenCL
-  cl_uint deviceIndex = 0;
-
   cl::Context context;
   cl::Device device;
   std::string name;
@@ -180,16 +177,18 @@ int main(int argc, char* argv[])
     obstaclefile = argv[2];
     init_context_bcp3(context, device);
   } else {
+    // OpenCL setup. From HandsOnOpenCL
+    cl_uint deviceIndex = 0;
     std::vector<cl::Device> devices;
     unsigned numDevices = getDeviceList(devices);
- 
+
     if (deviceIndex >= numDevices) {
       std::cout << "Invalid device index (try '--list')\n";
       return EXIT_FAILURE;
     }
 
-    device = devices[deviceIndex];
     parseArguments(argc, argv, &deviceIndex);
+    device = devices[deviceIndex];
 
     std::vector<cl::Device> chosen_device;
     chosen_device.push_back(device);
