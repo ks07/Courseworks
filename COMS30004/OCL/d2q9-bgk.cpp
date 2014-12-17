@@ -68,16 +68,9 @@
 #define FINALSTATEFILE  "final_state.dat"
 #define AVVELSFILE      "av_vels.dat"
 
-// Add an easy way to switch between single and double precision math.
-#ifdef SINGLE_PRECISION
-typedef float my_float;
+typedef cl_float my_float;
 #define my_sqrt sqrtf
 #define MY_FLOAT_PATTERN "%f\n"
-#else
-typedef double my_float;
-#define my_sqrt sqrt
-#define MY_FLOAT_PATTERN "%lf\n"
-#endif
 
 /* struct to hold the parameter values */
 typedef struct {
@@ -89,16 +82,6 @@ typedef struct {
   my_float accel;         /* density redistribution */
   my_float omega;         /* relaxation parameter */
 } t_param;
-
-// /* struct to hold the 'speed' values */
-// typedef struct {
-//   my_float speeds[NSPEEDS];
-// } t_speed;
-
-// struct to hold adjacency indices
-// typedef struct {
-//   unsigned int index[NSPEEDS];
-// } t_adjacency;
 
 /*
 ** function prototypes
@@ -114,7 +97,6 @@ int initialise(const char* paramfile, const char* obstaclefile, t_param* params,
 ** timestep calls, in order, the functions:
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
-int timestep(const t_param params, std::vector<my_float> &cells, std::vector<my_float> &tmp_cells, std::vector<cl_char> &obstacles, const std::vector<cl_uint> &adjacency);
 int write_values(const t_param params, std::vector<my_float> &cells, std::vector<cl_char> &obstacles, std::vector<my_float> &av_vels, const unsigned int nwork_groups);
 
 /* finalise, including freeing up allocated memory */
@@ -210,7 +192,6 @@ int main(int argc, char* argv[])
   cl::Program clprog_final_reduce(context, util::loadProgram("./final_reduce.cl"), false);
 
   try {
-
     std::cout << "Beginning kernel build..." << std::endl;
 
     clprog_propagate_prep.build("-cl-single-precision-constant -cl-denorms-are-zero -cl-strict-aliasing -cl-mad-enable -cl-no-signed-zeros -cl-fast-relaxed-math");
@@ -260,6 +241,9 @@ int main(int argc, char* argv[])
 	   (int)work_group_size,
 	   work_group_size*unit_length*nwork_groups);
 
+    // Vector on host so we can sum the partial sums ourselves.
+    partial_tot_u.resize(nwork_groups * params.maxIters);
+
     cl::make_kernel<cl::Buffer> cl_propagate_prep(clprog_propagate_prep, "propagate_prep");
     cl::make_kernel<my_float, cl::Buffer, cl::Buffer, cl::Buffer> cl_collision(clprog_collision, "collision");
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> cl_propagate(clprog_propagate, "propagate");
@@ -273,10 +257,6 @@ int main(int argc, char* argv[])
     cl::Buffer cl_tmp_cells = cl::Buffer(context, tmp_cells->begin(), tmp_cells->end(), false);
     cl::Buffer cl_obstacles = cl::Buffer(context, obstacles->begin(), obstacles->end(), true);
     cl::Buffer cl_round_tot_u = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(cl_float) * nwork_groups * params.maxIters); // Buffer to hold partial sums for reduction.
-
-    // Vector on host so we can sum the partial sums ourselves.
-    partial_tot_u.resize(nwork_groups * params.maxIters);
-
     cl_propagate_prep(cl::EnqueueArgs(queue, cl::NDRange(params.ny, params.nx)), cl_adjacency);
 
     // End OpenCL operations
@@ -299,9 +279,6 @@ int main(int argc, char* argv[])
     queue.finish();
     // Copy the partial sums off the device
     cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
-  
-    // Block on finish then copy back.
-    queue.finish();
     cl::copy(queue, cl_cells, cells->begin(), cells->end());
 
     gettimeofday(&timstr,NULL);
@@ -326,6 +303,8 @@ int main(int argc, char* argv[])
     std::cerr << err.what() << "(" << err_code(err.err()) << ")" << std::endl; 
     std::string blog = clprog_propagate.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     std::cerr << blog << std::endl;
+
+    return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;
