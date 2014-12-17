@@ -1,18 +1,13 @@
 #define NSPEEDS 9
 
-/* struct to hold the 'speed' values */
-/* typedef struct { */
-/*   float speeds[NSPEEDS]; */
-/* } t_speed; */
-
 void reduce(const __local float*, __global float*, const unsigned int);
 
 __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit_len, const __global float* cells, const __global char* obstacles, __local float* l_tot_u, __global float* round_tot_u, const unsigned int round)
 {
-  unsigned int   kk,curr_cell;   /* generic counters */
-  float local_density;  /* total density in cell */
-  float u_x;            /* x-component of velocity for current cell */
-  float u_y;            /* y-component of velocity for current cell */
+  unsigned int kk,curr_cell; /* generic counters */
+  float local_density;       /* total density in cell */
+  float u_x;                 /* x-component of velocity for current cell */
+  float u_y;                 /* y-component of velocity for current cell */
 
   // Reduction specific vars. Taken from Exercise09, HandsOnOpenCL
   float l_u = 0.0; // Private accumulator
@@ -25,7 +20,6 @@ __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit
   const int istart = (group_item_total * group_id) + local_id;
   const int istep = worker_count;
   const int iend = istart + (istep * unit_len);
-
 
   for (curr_cell = istart; curr_cell < iend; curr_cell += istep) {
     // Use the global size to jump ahead to form the tree structure of reduction.
@@ -67,8 +61,6 @@ __kernel void av_velocity(const unsigned int global_lim, const unsigned int unit
 
   // Let unit 0 do the reduction into global.
   reduce(l_tot_u, round_tot_u, round);
-
-  // Need to write to result array, outside of kernel?
 }
 
 void reduce(const __local float* local_sums, __global float* partial_sums, const unsigned int round) {
@@ -77,13 +69,10 @@ void reduce(const __local float* local_sums, __global float* partial_sums, const
   const unsigned int group_id      = get_group_id(0);
   const unsigned int ps_offset     = round * get_num_groups(0);
 
-  float sum;
-  int i;
+  float sum = 0.0f;
 
   if (local_id == 0) {
-    sum = 0.0f;
-
-    for (i=0; i<num_wrk_items; i++) {
+    for (int i=0; i<num_wrk_items; i++) {
       sum += local_sums[i];
     }
 

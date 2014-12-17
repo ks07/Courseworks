@@ -1,5 +1,4 @@
 __kernel void final_reduce(const unsigned int nwork_groups, const unsigned int cell_cnt, __global float* round_tot_u) {
-  //for (ii=0;ii<params.maxIters;ii++) {
   const unsigned int iter = get_global_id(0);
   float tot_u = 0.0;
 

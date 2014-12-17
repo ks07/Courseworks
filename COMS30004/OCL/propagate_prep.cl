@@ -1,17 +1,16 @@
-__kernel void propagate_prep(__global unsigned int* adjacency)
-{
-  int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
-
+__kernel void propagate_prep(__global unsigned int* adjacency) {
   const unsigned int ny = get_global_size(0);
   const unsigned int nx = get_global_size(1);
   const unsigned int ii = get_global_id(0);
   const unsigned int jj = get_global_id(1);
+
   /* determine indices of axis-direction neighbours
   ** respecting periodic boundary conditions (wrap around) */
-  y_s = (ii + 1) % ny;
-  x_w = (jj + 1) % nx;
-  y_n = (ii == 0) ? (ii + ny - 1) : (ii - 1);
-  x_e = (jj == 0) ? (jj + nx - 1) : (jj - 1);
+  const unsigned int y_s = (ii + 1) % ny;
+  const unsigned int x_w = (jj + 1) % nx;
+  const unsigned int y_n = (ii == 0) ? (ii + ny - 1) : (ii - 1);
+  const unsigned int x_e = (jj == 0) ? (jj + nx - 1) : (jj - 1);
+
   //Pre-calculate the adjacent cells to propagate to.
   adjacency[0*nx*ny + ii*nx + jj] = 0*nx*ny + ii  * nx + jj; // Centre, ignore
   adjacency[1*nx*ny + ii*nx + jj] = 1*nx*ny + ii  * nx + x_e; // E
