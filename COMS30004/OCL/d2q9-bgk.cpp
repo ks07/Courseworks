@@ -107,7 +107,7 @@ typedef struct {
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
 int initialise(const char* paramfile, const char* obstaclefile, t_param* params, std::vector<my_float>** cells_ptr,
 	       std::vector<my_float>** tmp_cells_ptr, std::vector<cl_char>** obstacles_ptr, unsigned int &obstacle_count,
-	       std::vector<my_float> &av_vels, std::vector<cl_uint>** adjacency);
+	       std::vector<cl_uint>** adjacency);
 
 /* 
 ** The main calculation methods.
@@ -150,8 +150,7 @@ int main(int argc, char* argv[])
   std::vector<my_float>* cells     = NULL;    /* grid containing fluid densities */
   std::vector<my_float>* tmp_cells = NULL;    /* scratch space */
   std::vector<cl_char>*     obstacles = NULL;    /* grid indicating which cells are blocked */
-  std::vector<my_float>  av_vels;    /* a record of the av. velocity computed for each timestep */
-  std::vector<my_float>  partial_tot_u;
+  std::vector<my_float>  partial_tot_u; // a record of the av. velocity computed for each timestep
   int      ii;                  /* generic counter */
   struct timeval timstr;        /* structure to hold elapsed time */
   struct rusage ru;             /* structure to hold CPU time--system and user */
@@ -194,26 +193,23 @@ int main(int argc, char* argv[])
     obstaclefile = argv[2];
   }
   
-  //try {
-    getDeviceName(device, name);
-    std::cout << "Using OpenCL device: " << name << "\n";
+  getDeviceName(device, name);
+  std::cout << "Using OpenCL device: " << name << "\n";
 
-    cl::CommandQueue queue(context, device);
+  cl::CommandQueue queue(context, device);
 
-    /* initialise our data structures and load values from file */
-    initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, obstacle_count, av_vels, &adjacency);
+  /* initialise our data structures and load values from file */
+  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, obstacle_count, &adjacency);
 
-    av_vels.reserve(params.maxIters);
+  // Read in and compile OpenCL kernels
+  cl::Program clprog_propagate_prep(context, util::loadProgram("./propagate_prep.cl"), false);
+  cl::Program clprog_collision(context, util::loadProgram("./collision.cl"), false);
+  cl::Program clprog_propagate(context, util::loadProgram("./propagate.cl"), false);
+  cl::Program clprog_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
+  cl::Program clprog_av_velocity(context, util::loadProgram("./av_velocity.cl"), false);
+  cl::Program clprog_final_reduce(context, util::loadProgram("./final_reduce.cl"), false);
 
-    // Read in and compile OpenCL kernels
-    cl::Program clprog_propagate_prep(context, util::loadProgram("./propagate_prep.cl"), false);
-    cl::Program clprog_collision(context, util::loadProgram("./collision.cl"), false);
-    cl::Program clprog_propagate(context, util::loadProgram("./propagate.cl"), false);
-    cl::Program clprog_accelerate_flow(context, util::loadProgram("./accelerate_flow.cl"), false);
-    cl::Program clprog_av_velocity(context, util::loadProgram("./av_velocity.cl"), false);
-    cl::Program clprog_final_reduce(context, util::loadProgram("./final_reduce.cl"), false);
-
-    try {
+  try {
 
     std::cout << "Beginning kernel build..." << std::endl;
 
@@ -286,54 +282,44 @@ int main(int argc, char* argv[])
     // End OpenCL operations
     queue.finish();
 
-  std::cout << "Trundling into the timestep loop." << std::endl;
+    std::cout << "Trundling into the timestep loop." << std::endl;
 
-  /* iterate for maxIters timesteps */
-  gettimeofday(&timstr,NULL);
-  tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
+    /* iterate for maxIters timesteps */
+    gettimeofday(&timstr,NULL);
+    tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
-  for (ii=0;ii<params.maxIters;ii++) {
-    //timestep(params,*cells,*tmp_cells,*obstacles,*adjacency); //TODO: Make me nice again?
-    cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
-    cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
-    cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
-    cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(cl_float) * work_group_size), cl_round_tot_u, ii);
-  }
+    for (ii=0;ii<params.maxIters;ii++) {
+      cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
+      cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
+      cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
+      cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(cl_float) * work_group_size), cl_round_tot_u, ii);
+    }
 
-  std::cout << "summing" << std::endl;
-
-  cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters)), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
-  queue.finish();
-  // Copy the partial sums off the device
-  cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
-  // for (ii=0;ii<params.maxIters;ii++) {
-  //   // Copy to correct host location. TODO: We could modify the file write routine to use the copied vector.
-  //   av_vels[ii] = partial_tot_u[ii*nwork_groups];
-  // }
-
-  std::cout << "out of simulation" << std::endl;
+    cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters)), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
+    queue.finish();
+    // Copy the partial sums off the device
+    cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
   
-  // Block on finish then copy back.
-  queue.finish();
-  cl::copy(queue, cl_cells, cells->begin(), cells->end());
+    // Block on finish then copy back.
+    queue.finish();
+    cl::copy(queue, cl_cells, cells->begin(), cells->end());
 
-  gettimeofday(&timstr,NULL);
-  toc=timstr.tv_sec+(timstr.tv_usec/1000000.0);
-  getrusage(RUSAGE_SELF, &ru);
-  timstr=ru.ru_utime;        
-  usrtim=timstr.tv_sec+(timstr.tv_usec/1000000.0);
-  timstr=ru.ru_stime;        
-  systim=timstr.tv_sec+(timstr.tv_usec/1000000.0);
+    gettimeofday(&timstr,NULL);
+    toc=timstr.tv_sec+(timstr.tv_usec/1000000.0);
+    getrusage(RUSAGE_SELF, &ru);
+    timstr=ru.ru_utime;        
+    usrtim=timstr.tv_sec+(timstr.tv_usec/1000000.0);
+    timstr=ru.ru_stime;        
+    systim=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
-  /* write final values and free memory */
-  printf("==done==\n");
-  printf("Reynolds number:\t\t%.12E\n",(double)calc_reynolds(params,*cells,*obstacles));
-  printf("Elapsed time:\t\t\t%.6lf (s)\n", toc-tic);
-  printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
-  printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
-  write_values(params,*cells,*obstacles,partial_tot_u,nwork_groups);
-  //  finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
-  
+    /* write final values and free memory */
+    printf("==done==\n");
+    printf("Reynolds number:\t\t%.12E\n",(double)calc_reynolds(params,*cells,*obstacles));
+    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc-tic);
+    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+    write_values(params,*cells,*obstacles,partial_tot_u,nwork_groups);
+    //  finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);  
 
   } catch (cl::Error &err) {
     std::cout << "Exception" << std::endl;
@@ -347,7 +333,7 @@ int main(int argc, char* argv[])
 
 int initialise(const char* paramfile, const char* obstaclefile,
 	       t_param* params, std::vector<my_float>** cells_ptr, std::vector<my_float>** tmp_cells_ptr, 
-	       std::vector<cl_char>** obstacles_ptr, unsigned int &obstacle_count, std::vector<my_float> &av_vels, std::vector<cl_uint>** adjacency)
+	       std::vector<cl_char>** obstacles_ptr, unsigned int &obstacle_count, std::vector<cl_uint>** adjacency)
 {
   char   message[1024];  /* message buffer */
   FILE   *fp;            /* file pointer */
@@ -403,27 +389,15 @@ int initialise(const char* paramfile, const char* obstaclefile,
   */
 
   /* main grid */
-  // *cells_ptr = (my_float*)malloc(sizeof(my_float)*(params->ny*params->nx));
-  // if (*cells_ptr == NULL) 
-  //   die("cannot allocate memory for cells",__LINE__,__FILE__);
   *cells_ptr = new std::vector<my_float>(params->ny*params->nx*NSPEEDS);
 
   /* 'helper' grid, used as scratch space */
-  // *tmp_cells_ptr = (my_float*)malloc(sizeof(my_float)*(params->ny*params->nx));
-  // if (*tmp_cells_ptr == NULL) 
-  //   die("cannot allocate memory for tmp_cells",__LINE__,__FILE__);
   *tmp_cells_ptr = new std::vector<my_float>(params->ny*params->nx*NSPEEDS);
   
   /* the map of obstacles */
-  // *obstacles_ptr = (int*)malloc(sizeof(int*)*(params->ny*params->nx));
-  // if (*obstacles_ptr == NULL) 
-  //   die("cannot allocate column memory for obstacles",__LINE__,__FILE__);
   *obstacles_ptr = new std::vector<cl_char>(params->ny*params->nx);
 
   /* adjacency for propagate */
-  // *adjacency = (t_adjacency*)malloc(sizeof(t_adjacency) * (params->ny*params->nx));
-  // if (*adjacency == NULL)
-  //   die("cannot allocate adjacency memory",__LINE__,__FILE__);
   *adjacency = new std::vector<cl_uint>(params->ny*params->nx*NSPEEDS);
 
   /* initialise densities */
@@ -486,12 +460,6 @@ int initialise(const char* paramfile, const char* obstaclefile,
   
   /* and close the file */
   fclose(fp);
-
-  /* 
-  ** allocate space to hold a record of the avarage velocities computed 
-  ** at each timestep
-  */
-  av_vels.reserve(params->maxIters);
 
   return EXIT_SUCCESS;
 }
