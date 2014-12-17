@@ -99,21 +99,21 @@ __kernel void collision(const float omega, __global float* cells, const __global
 				   - u_sq / (2.0 * c_sq));
   /* relaxation step */
   cells[curr_cell] = obstacles[curr_cell] ? cells[curr_cell]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[0] + omega * (d_equ[0] - tmp_speeds[0]));
   cells[1*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[3]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[1] + omega * (d_equ[1] - tmp_speeds[1]));
   cells[2*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[4]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[2] + omega * (d_equ[2] - tmp_speeds[2]));
   cells[3*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[1]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[3] + omega * (d_equ[3] - tmp_speeds[3]));
   cells[4*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[2]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[4] + omega * (d_equ[4] - tmp_speeds[4]));
   cells[5*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[7]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[5] + omega * (d_equ[5] - tmp_speeds[5]));
   cells[6*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[8]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[6] + omega * (d_equ[6] - tmp_speeds[6]));
   cells[7*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[5]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[7] + omega * (d_equ[7] - tmp_speeds[7]));
   cells[8*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[6]
-    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+    : (tmp_speeds[8] + omega * (d_equ[8] - tmp_speeds[8]));
 }
