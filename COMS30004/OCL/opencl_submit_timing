@@ -3,7 +3,7 @@
 #PBS -N OpenCL_Timing
 #PBS -o OUT
 #PBS -q hpc-course
-#PBS -l nodes=1:ppn=16:gpus=1,walltime=00:03:30
+#PBS -l nodes=1:ppn=16:gpus=1,walltime=00:02:30
 #PBS -n
 
 #! Mail to user if job aborts
@@ -16,7 +16,7 @@ application="./run_timing.sh"
 
 #! Run options for the application
 #options="cfgs/input_128x128.params cfgs/obstacles_128x128_box.dat"
-options=""
+options="-profile"
 
 ###############################################################
 ### You should not have to change anything below this line ####
