@@ -18,42 +18,55 @@ __kernel void collision(const float omega, __global float* cells, const __global
   ** are in the scratch-space grid */
   const unsigned int curr_cell = get_global_id(0);
 
+  // Read from tmp_cells into private before the conditional, as both branches need it.
+  const float tmp_speeds[NSPEEDS] = {
+    tmp_cells[0*get_global_size(0) + curr_cell],
+    tmp_cells[1*get_global_size(0) + curr_cell],
+    tmp_cells[2*get_global_size(0) + curr_cell],
+    tmp_cells[3*get_global_size(0) + curr_cell],
+    tmp_cells[4*get_global_size(0) + curr_cell],
+    tmp_cells[5*get_global_size(0) + curr_cell],
+    tmp_cells[6*get_global_size(0) + curr_cell],
+    tmp_cells[7*get_global_size(0) + curr_cell],
+    tmp_cells[8*get_global_size(0) + curr_cell]
+  };
+
   if(obstacles[curr_cell]) {
     /* called after propagate, so taking values from scratch space
     ** mirroring, and writing into main grid */
-    cells[1*get_global_size(0) + curr_cell] = tmp_cells[3*get_global_size(0) + curr_cell];
-    cells[2*get_global_size(0) + curr_cell] = tmp_cells[4*get_global_size(0) + curr_cell];
-    cells[3*get_global_size(0) + curr_cell] = tmp_cells[1*get_global_size(0) + curr_cell];
-    cells[4*get_global_size(0) + curr_cell] = tmp_cells[2*get_global_size(0) + curr_cell];
-    cells[5*get_global_size(0) + curr_cell] = tmp_cells[7*get_global_size(0) + curr_cell];
-    cells[6*get_global_size(0) + curr_cell] = tmp_cells[8*get_global_size(0) + curr_cell];
-    cells[7*get_global_size(0) + curr_cell] = tmp_cells[5*get_global_size(0) + curr_cell];
-    cells[8*get_global_size(0) + curr_cell] = tmp_cells[6*get_global_size(0) + curr_cell];
+    cells[1*get_global_size(0) + curr_cell] = tmp_speeds[3];
+    cells[2*get_global_size(0) + curr_cell] = tmp_speeds[4];
+    cells[3*get_global_size(0) + curr_cell] = tmp_speeds[1];
+    cells[4*get_global_size(0) + curr_cell] = tmp_speeds[2];
+    cells[5*get_global_size(0) + curr_cell] = tmp_speeds[7];
+    cells[6*get_global_size(0) + curr_cell] = tmp_speeds[8];
+    cells[7*get_global_size(0) + curr_cell] = tmp_speeds[5];
+    cells[8*get_global_size(0) + curr_cell] = tmp_speeds[6];
   } else {
     /* don't consider occupied cells */
     /* compute local density total */
     local_density = 0.0;
 #pragma unroll 9
     for(kk=0;kk<NSPEEDS;kk++) {
-      local_density += tmp_cells[kk*get_global_size(0) + curr_cell];
+      local_density += tmp_speeds[kk];
     }
 
     /* compute x velocity component */
-    u_x = (tmp_cells[1*get_global_size(0) + curr_cell] + 
-	   tmp_cells[5*get_global_size(0) + curr_cell] + 
-	   tmp_cells[8*get_global_size(0) + curr_cell]
-	   - (tmp_cells[3*get_global_size(0) + curr_cell] + 
-	      tmp_cells[6*get_global_size(0) + curr_cell] + 
-	      tmp_cells[7*get_global_size(0) + curr_cell]))
+    u_x = (tmp_speeds[1] + 
+	   tmp_speeds[5] + 
+	   tmp_speeds[8]
+	   - (tmp_speeds[3] + 
+	      tmp_speeds[6] + 
+	      tmp_speeds[7]))
       / local_density;
 
     /* compute y velocity component */
-    u_y = (tmp_cells[2*get_global_size(0) + curr_cell] + 
-	   tmp_cells[5*get_global_size(0) + curr_cell] + 
-	   tmp_cells[6*get_global_size(0) + curr_cell]
-	   - (tmp_cells[4*get_global_size(0) + curr_cell] + 
-	      tmp_cells[7*get_global_size(0) + curr_cell] + 
-	      tmp_cells[8*get_global_size(0) + curr_cell]))
+    u_y = (tmp_speeds[2] + 
+	   tmp_speeds[5] + 
+	   tmp_speeds[6]
+	   - (tmp_speeds[4] + 
+	      tmp_speeds[7] + 
+	      tmp_speeds[8]))
       / local_density;
 
     /* velocity squared */ 
@@ -99,9 +112,7 @@ __kernel void collision(const float omega, __global float* cells, const __global
     /* relaxation step */
 #pragma unroll 9
     for(kk=0;kk<NSPEEDS;kk++) {
-      cells[kk*get_global_size(0) + curr_cell] = (tmp_cells[kk*get_global_size(0) + curr_cell]
-						  + omega * 
-						  (d_equ[kk] - tmp_cells[kk*get_global_size(0) + curr_cell]));
+      cells[kk*get_global_size(0) + curr_cell] = (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
     }
   }
 }
