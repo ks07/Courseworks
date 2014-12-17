@@ -3,7 +3,8 @@
 #PBS -N OpenCL_Tests
 #PBS -o OUT
 #PBS -q hpc-course
-#PBS -l nodes=1:ppn=1:gpus=1,walltime=00:03:00
+#PBS -l nodes=1:ppn=16:gpus=1,walltime=00:03:00
+#PBS -n
 
 #! Mail to user if job aborts
 #PBS -m a
