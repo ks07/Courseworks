@@ -98,19 +98,22 @@ __kernel void collision(const float omega, __global float* cells, const __global
 				   + (u[8] * u[8]) / (2.0 * c_sq * c_sq)
 				   - u_sq / (2.0 * c_sq));
   /* relaxation step */
-  if (obstacles[curr_cell]) {
-    cells[1*get_global_size(0) + curr_cell] = tmp_speeds[3];
-    cells[2*get_global_size(0) + curr_cell] = tmp_speeds[4];
-    cells[3*get_global_size(0) + curr_cell] = tmp_speeds[1];
-    cells[4*get_global_size(0) + curr_cell] = tmp_speeds[2];
-    cells[5*get_global_size(0) + curr_cell] = tmp_speeds[7];
-    cells[6*get_global_size(0) + curr_cell] = tmp_speeds[8];
-    cells[7*get_global_size(0) + curr_cell] = tmp_speeds[5];
-    cells[8*get_global_size(0) + curr_cell] = tmp_speeds[6];
-  } else {
-#pragma unroll 9
-    for(kk=0;kk<NSPEEDS;kk++) {
-      cells[kk*get_global_size(0) + curr_cell] = (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
-    }
-  }
+  cells[curr_cell] = obstacles[curr_cell] ? cells[curr_cell]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[1*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[3]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[2*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[4]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[3*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[1]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[4*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[2]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[5*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[7]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[6*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[8]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[7*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[5]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
+  cells[8*get_global_size(0) + curr_cell] = obstacles[curr_cell] ? tmp_speeds[6]
+    : (tmp_speeds[kk] + omega * (d_equ[kk] - tmp_speeds[kk]));
 }
