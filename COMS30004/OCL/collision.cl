@@ -23,15 +23,15 @@ __kernel void collision(const float omega, __global float* cells, const __global
 {
   //Mark obstacles as const or _constant?
   int kk;                         /* generic counters */
-  const double c_sq = 1.0/3.0;  /* square of speed of sound */
-  const double w0 = 4.0/9.0;    /* weighting factor */
-  const double w1 = 1.0/9.0;    /* weighting factor */
-  const double w2 = 1.0/36.0;   /* weighting factor */
-  double u_x,u_y;               /* av. velocities in x and y directions */
-  double u[NSPEEDS];            /* directional velocities */
-  double d_equ[NSPEEDS];        /* equilibrium densities */
-  double u_sq;                  /* squared velocity */
-  double local_density;         /* sum of densities in a particular cell */
+  const float c_sq = 1.0/3.0;  /* square of speed of sound */
+  const float w0 = 4.0/9.0;    /* weighting factor */
+  const float w1 = 1.0/9.0;    /* weighting factor */
+  const float w2 = 1.0/36.0;   /* weighting factor */
+  float u_x,u_y;               /* av. velocities in x and y directions */
+  float u[NSPEEDS];            /* directional velocities */
+  float d_equ[NSPEEDS];        /* equilibrium densities */
+  float u_sq;                  /* squared velocity */
+  float local_density;         /* sum of densities in a particular cell */
 
   /* loop over the cells in the grid
   ** NB the collision step is called after
