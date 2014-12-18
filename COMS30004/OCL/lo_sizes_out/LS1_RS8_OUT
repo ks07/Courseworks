@@ -1,0 +1,13 @@
+Using OpenCL device: GeForce GTX 670
+Beginning kernel build...
+Kernel build complete
+Padded problem size for reduction is: 1048576
+ 128 work groups of size 1024.  1048576 Integration steps
+ 128 work groups of size 1024.  1048576 Integration steps
+Trundling into the timestep loop.
+==done==
+Reynolds number:		4.896891117096E+00
+Elapsed time:			791.616739 (s)
+Elapsed user CPU time:		297.993365 (s)
+Elapsed system CPU time:	492.832138 (s)
+Verification passed.
