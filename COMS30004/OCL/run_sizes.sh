@@ -17,6 +17,7 @@ print_test() {
 }
 
 run_test() {
+    SOUTFILE="sizes_out/LS${1}_RS${2}_FS{3}_OUT"
     print_test "Timing with ${@}"
     make clean
     if (( $# == 1 )); then
@@ -26,8 +27,8 @@ run_test() {
     elif (( $# == 3 )); then
 	make CPPFLAGS="-DLOCAL_SIZE=${1} -DREDUCTION_SIZE=${2} -DFINAL_R_SIZE=${3}"
     fi
-    $EXE "../cfgs/input_1024x1024.params" "../cfgs/obstacles_1024x1024_box.dat" "$EXTRA_ARGS" > "sizes_out/LS${1}_RS${2}_OUT" &&
-    $CHECK "../refs/av_vels_1024x1024_box.dat" "../refs/final_state_1024x1024_box.dat" "$CHECK_ARGS" >> "sizes_out/LS${1}_RS${2}_OUT"
+    $EXE "../cfgs/input_1024x1024.params" "../cfgs/obstacles_1024x1024_box.dat" "$EXTRA_ARGS" > "$SOUTFILE" 2>&1 &&
+    $CHECK "../refs/av_vels_1024x1024_box.dat" "../refs/final_state_1024x1024_box.dat" "$CHECK_ARGS" >> "$SOUTFILE" 2>&1
 }
 
 mkdir sizes_out
