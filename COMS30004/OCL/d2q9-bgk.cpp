@@ -49,6 +49,18 @@
 ** if you choose a different obstacle file.
 */
 
+#ifndef LOCAL_SIZE
+#define LWGS1 cl::NullRange
+#else
+#define LWGS1 cl::NDRange(LOCAL_SIZE)
+#endif
+
+#ifndef REDUCTION_SIZE
+#define URS 2
+#else
+#define URS REDUCTION_SIZE
+#endif
+
 #define __CL_ENABLE_EXCEPTIONS
 
 #include<cmath>
@@ -205,8 +217,8 @@ int main(int argc, char* argv[])
 
     // Set variables to divide work in reduction.
     ::size_t nwork_groups;
-    ::size_t work_group_size = 8; //max_size ???
-    const ::size_t unit_length = 2; // TODO: How does this value effect performance/correctness?
+    ::size_t work_group_size = 8;
+    const ::size_t unit_length = URS;
 
     // Reduction kernels are usually expecting power of 2 dimensions. This is also good, because for whatever reason
     // KERNEL_WORK_GROUP_SIZE seems to have a thing for powers of 2. Round up to the nearest 
@@ -269,13 +281,13 @@ int main(int argc, char* argv[])
     tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
     for (ii=0;ii<params.maxIters;ii++) {
-      cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx)), params, cl_cells, cl_obstacles);
-      cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), cl_cells, cl_tmp_cells, cl_adjacency);
-      cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx)), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
+      cl_accelerate_flow(cl::EnqueueArgs(queue, cl::NDRange(params.nx), LWGS1), params, cl_cells, cl_obstacles);
+      cl_propagate(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), LWGS1), cl_cells, cl_tmp_cells, cl_adjacency);
+      cl_collision(cl::EnqueueArgs(queue, cl::NDRange(params.ny*params.nx), LWGS1), params.omega, cl_cells, cl_tmp_cells, cl_obstacles);
       cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(cl_float) * work_group_size), cl_round_tot_u, ii);
     }
 
-    cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters)), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
+    cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters), LWGS1), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
     queue.finish();
     // Copy the partial sums off the device
     cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());

@@ -20,7 +20,7 @@ CXXFLAGS=-O3 -ffast-math -Wall -march=native -DSINGLE_PRECISION -DDEVICE=$(DEVIC
 all: $(EXES)
 
 $(EXES): %.exe : %.cpp
-	$(CXX) $^ $(INC) $(CXXFLAGS) $(LIBS) -o $@
+	$(CXX) $^ $(INC) $(CPPFLAGS) $(CXXFLAGS) $(LIBS) -o $@
 
 .PHONY: all clean
 
