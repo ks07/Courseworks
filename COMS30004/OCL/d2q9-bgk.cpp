@@ -63,8 +63,10 @@
 
 #ifndef FINAL_R_SIZE
 #define FRS cl::NullRange
+#define FRS_PAD_TO 1
 #else
 #define FRS FINAL_R_SIZE
+#define FRS_PAD_TO FINAL_R_SIZE
 #endif
 
 #define __CL_ENABLE_EXCEPTIONS
@@ -231,7 +233,7 @@ int main(int argc, char* argv[])
     ::size_t padded_prob_size = pow(2, ceil(log(params.nx*params.ny) / log(2)));
 
     // Find a padded size to try the final reduce as a multiple of preferred size (32).
-    ::size_t padded_fred_size = params.maxIters + (params.maxIters % 32);
+    ::size_t padded_fred_size = params.maxIters + (FRS_PAD_TO - params.maxIters % FRS_PAD_TO);
 
     std::cout << "Padded problem size for reduction is: " << padded_prob_size << std::endl;
 
