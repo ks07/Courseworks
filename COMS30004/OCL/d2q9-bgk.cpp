@@ -61,6 +61,12 @@
 #define URS REDUCTION_SIZE
 #endif
 
+#ifndef FINAL_R_SIZE
+#define FRS cl::NullRange
+#else
+#define FRS FINAL_R_SIZE
+#endif
+
 #define __CL_ENABLE_EXCEPTIONS
 
 #include<cmath>
@@ -287,7 +293,7 @@ int main(int argc, char* argv[])
       cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(cl_float) * work_group_size), cl_round_tot_u, ii);
     }
 
-    cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters), LWGS1), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
+    cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters), FRS), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
     queue.finish();
     // Copy the partial sums off the device
     cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());
