@@ -17,7 +17,7 @@ print_test() {
 }
 
 run_test() {
-    SOUTFILE="sizes_out/LS${1}_RS${2}_FS{3}_OUT"
+    SOUTFILE="sizes_out/LS${1}_RS${2}_FS${3}_OUT"
     print_test "Timing with ${@}"
     make clean
     if (( $# == 1 )); then
