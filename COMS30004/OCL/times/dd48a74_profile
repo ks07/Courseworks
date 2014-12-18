@@ -1,0 +1,9 @@
+kernel           gpu_time     cpu_time   invocations  avg_time_gpu
+memcpyDtoHasync  8678.336     34.737     2            4339.168
+memcpyHtoDasync  12118.624    36.433     3            4039.54133333
+propagate_prep   5897.536     24.52      1            5897.536
+collision        6794219.84   48222.713  10000        679.421984
+propagate        8396760.704  47273.23   10000        839.6760704
+accelerate_flow  82082.336    48304.061  10000        8.2082336
+av_velocity      9842249.12   51568.105  10000        984.224912
+final_reduce     1631.552     5.862      1            1631.552

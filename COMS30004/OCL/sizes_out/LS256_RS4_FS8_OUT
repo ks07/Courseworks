@@ -1,0 +1,13 @@
+Using OpenCL device: Tesla K20m
+Beginning kernel build...
+Kernel build complete
+Padded problem size for reduction is: 1048576
+ 256 work groups of size 1024.  1048576 Integration steps
+ 256 work groups of size 1024.  1048576 Integration steps
+Trundling into the timestep loop.
+==done==
+Reynolds number:		4.896891117096E+00
+Elapsed time:			21.359006 (s)
+Elapsed user CPU time:		18.239227 (s)
+Elapsed system CPU time:	5.764123 (s)
+Verification passed.

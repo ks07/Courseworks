@@ -1,0 +1,86 @@
+Running on host node46-001
+Time is Wed Dec 17 14:11:29 GMT 2014
+Directory is /panfs/panasas01/cosc/gf12815/Courseworks/COMS30004/OCL
+PBS job ID is 2067177.master.cm.cluster
+This jobs runs on the following GPUs:
+node46-001-gpu0
+\rm -f OpenCL*.e*
+\rm -f machine.file.*
+\rm -f OUT
+\rm -f av_vels.dat
+\rm -f final_state.dat
+\rm -f opencl_profile_0.*
+\rm -f d2q9-bgk.exe
+g++ d2q9-bgk.cpp -I ./Cpp_common -I /usr/local/cuda/include/ -O3 -ffast-math -Wall -march=native -DSINGLE_PRECISION -DDEVICE=CL_DEVICE_TYPE_DEFAULT -L /usr/local/cuda/lib64/ -lm -lOpenCL -lrt -o d2q9-bgk.exe
+===================
+Run 0
+===================
+Using OpenCL device: Tesla K20m
+Beginning kernel build...
+Kernel build complete
+Padded problem size for reduction is: 1048576
+ 512 work groups of size 1024.  1048576 Integration steps
+ 512 work groups of size 1024.  1048576 Integration steps
+Trundling into the timestep loop.0
+summing
+out of simulation
+==done==
+Reynolds number:		4.896399497986E+00
+Elapsed time:			32.161439 (s)
+Elapsed user CPU time:		25.181171 (s)
+Elapsed system CPU time:	9.678528 (s)
+Verification passed.
+===================
+Run 1
+===================
+Using OpenCL device: Tesla K20m
+Beginning kernel build...
+Kernel build complete
+Padded problem size for reduction is: 1048576
+ 512 work groups of size 1024.  1048576 Integration steps
+ 512 work groups of size 1024.  1048576 Integration steps
+Trundling into the timestep loop.0
+summing
+out of simulation
+==done==
+Reynolds number:		4.896399497986E+00
+Elapsed time:			32.165193 (s)
+Elapsed user CPU time:		25.308152 (s)
+Elapsed system CPU time:	9.564545 (s)
+===================
+Run 2
+===================
+Using OpenCL device: Tesla K20m
+Beginning kernel build...
+Kernel build complete
+Padded problem size for reduction is: 1048576
+ 512 work groups of size 1024.  1048576 Integration steps
+ 512 work groups of size 1024.  1048576 Integration steps
+Trundling into the timestep loop.0
+summing
+out of simulation
+==done==
+Reynolds number:		4.896399497986E+00
+Elapsed time:			32.167741 (s)
+Elapsed user CPU time:		25.097184 (s)
+Elapsed system CPU time:	9.730520 (s)
+===================
+Run 3
+===================
+Using OpenCL device: Tesla K20m
+Beginning kernel build...
+Kernel build complete
+Padded problem size for reduction is: 1048576
+ 512 work groups of size 1024.  1048576 Integration steps
+ 512 work groups of size 1024.  1048576 Integration steps
+Trundling into the timestep loop.0
+summing
+out of simulation
+==done==
+Reynolds number:		4.896399497986E+00
+Elapsed time:			32.161036 (s)
+Elapsed user CPU time:		25.120181 (s)
+Elapsed system CPU time:	9.703524 (s)
+===================
+ALL TESTS PASSED!
+===================
