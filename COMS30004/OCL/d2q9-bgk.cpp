@@ -230,6 +230,9 @@ int main(int argc, char* argv[])
     // KERNEL_WORK_GROUP_SIZE seems to have a thing for powers of 2. Round up to the nearest 
     ::size_t padded_prob_size = pow(2, ceil(log(params.nx*params.ny) / log(2)));
 
+    // Find a padded size to try the final reduce as a multiple of preferred size (32).
+    ::size_t padded_fred_size = params.maxIters + (params.maxIters % 32);
+
     std::cout << "Padded problem size for reduction is: " << padded_prob_size << std::endl;
 
     // Get kernel object to query information
@@ -267,7 +270,7 @@ int main(int argc, char* argv[])
     cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer> cl_propagate(clprog_propagate, "propagate");
     cl::make_kernel<t_param, cl::Buffer, cl::Buffer> cl_accelerate_flow(clprog_accelerate_flow, "accelerate_flow");
     cl::make_kernel<int, int, cl::Buffer, cl::Buffer, cl::LocalSpaceArg, cl::Buffer, int> cl_av_velocity(clprog_av_velocity, "av_velocity");
-    cl::make_kernel<int, int, cl::Buffer> cl_final_reduce(clprog_final_reduce, "final_reduce");
+    cl::make_kernel<int, int, cl::Buffer, int> cl_final_reduce(clprog_final_reduce, "final_reduce");
 
     // Create OpenCL buffer TODO: Don't bother with this copy operation and keep fully on device... or copy to constant memory?
     cl::Buffer cl_adjacency = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(cl_uint) * params.nx * params.ny * NSPEEDS);
@@ -293,7 +296,7 @@ int main(int argc, char* argv[])
       cl_av_velocity(cl::EnqueueArgs(queue, cl::NDRange(padded_prob_size/unit_length), cl::NDRange(work_group_size)), params.nx*params.ny, unit_length, cl_cells, cl_obstacles, cl::Local(sizeof(cl_float) * work_group_size), cl_round_tot_u, ii);
     }
 
-    cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(params.maxIters), FRS), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u);
+    cl_final_reduce(cl::EnqueueArgs(queue, cl::NDRange(padded_fred_size), FRS), nwork_groups, (params.ny*params.nx - obstacle_count), cl_round_tot_u, params.maxIters);
     queue.finish();
     // Copy the partial sums off the device
     cl::copy(queue, cl_round_tot_u, partial_tot_u.begin(), partial_tot_u.end());

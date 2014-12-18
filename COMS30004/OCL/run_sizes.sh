@@ -37,7 +37,8 @@ mkdir sizes_out
 # Local sizes must divide the global space (1024^2/1024^2/40000)
 for LOCAL_SIZE in 8 16 32 64 128 256; do
     for REDUCTION_SIZE in 2 4 8 16 32 64; do
-	for FINAL_R_SIZE in 8 10 16 25; do
+#	for FINAL_R_SIZE in 8 10 16 25; do
+	FINAL_R_SIZE=32
 	    run_test $LOCAL_SIZE $REDUCTION_SIZE $FINAL_R_SIZE
 	done
     done
