@@ -51,12 +51,14 @@
 
 #ifndef LOCAL_SIZE
 #define LWGS1 cl::NullRange
+//#define LWGS1 128
 #else
 #define LWGS1 cl::NDRange(LOCAL_SIZE)
 #endif
 
 #ifndef REDUCTION_SIZE
-#define URS 2
+//#define URS 2
+#define URS 16
 #else
 #define URS REDUCTION_SIZE
 #endif
