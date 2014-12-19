@@ -29,7 +29,43 @@ unit driver_u {
 
    out_data1_p : in simple_port of uint(bits:32) is instance; // read by sn
    keep out_data1_p.hdl_path() == "~/calc1_sn/out_data1";
-  
+
+   req2_cmd_in_p : out simple_port of uint(bits:4) is instance; // driven by sn
+   keep req2_cmd_in_p.hdl_path() == "~/calc1_sn/req2_cmd_in";
+
+   req2_data_in_p : out simple_port of uint(bits:32) is instance; // driven by sn
+   keep req2_data_in_p.hdl_path() == "~/calc1_sn/req2_data_in";
+
+   out_resp2_p : in simple_port of uint(bits:2) is instance; // read by sn
+   keep out_resp2_p.hdl_path() == "~/calc1_sn/out_resp2";
+
+   out_data2_p : in simple_port of uint(bits:32) is instance; // read by sn
+   keep out_data2_p.hdl_path() == "~/calc1_sn/out_data2";
+
+   req3_cmd_in_p : out simple_port of uint(bits:4) is instance; // driven by sn
+   keep req3_cmd_in_p.hdl_path() == "~/calc1_sn/req3_cmd_in";
+
+   req3_data_in_p : out simple_port of uint(bits:32) is instance; // driven by sn
+   keep req3_data_in_p.hdl_path() == "~/calc1_sn/req3_data_in";
+
+   out_resp3_p : in simple_port of uint(bits:2) is instance; // read by sn
+   keep out_resp3_p.hdl_path() == "~/calc1_sn/out_resp3";
+
+   out_data3_p : in simple_port of uint(bits:32) is instance; // read by sn
+   keep out_data3_p.hdl_path() == "~/calc1_sn/out_data3";
+
+   req4_cmd_in_p : out simple_port of uint(bits:4) is instance; // driven by sn
+   keep req4_cmd_in_p.hdl_path() == "~/calc1_sn/req4_cmd_in";
+
+   req4_data_in_p : out simple_port of uint(bits:32) is instance; // driven by sn
+   keep req4_data_in_p.hdl_path() == "~/calc1_sn/req4_data_in";
+
+   out_resp4_p : in simple_port of uint(bits:2) is instance; // read by sn
+   keep out_resp4_p.hdl_path() == "~/calc1_sn/out_resp4";
+
+   out_data4_p : in simple_port of uint(bits:32) is instance; // read by sn
+   keep out_data4_p.hdl_path() == "~/calc1_sn/out_data4";  
+
 
    instructions_to_drive : list of instruction_s;
 
@@ -56,19 +92,57 @@ unit driver_u {
    drive_instruction(ins : instruction_s, i : int) @clk is {
 
       // display generated command and data
-      outf("Command %s = %s\n", i, ins.cmd_in);
+      outf("Command %s on port %s = %s\n", i, ins.port, ins.cmd_in);
       out("Op1     = ", ins.din1);
       out("Op2     = ", ins.din2);
       out();
 
       // drive data into calculator port 1
-      req1_cmd_in_p$  = pack(NULL, ins.cmd_in);
-      req1_data_in_p$ = pack(NULL, ins.din1);
-         
+      case ins.port {
+      	   0: {
+		req1_cmd_in_p$  = pack(NULL, ins.cmd_in);
+      		req1_data_in_p$ = pack(NULL, ins.din1);
+	   };
+	   1: {
+		req2_cmd_in_p$  = pack(NULL, ins.cmd_in);
+      		req2_data_in_p$ = pack(NULL, ins.din1);
+	   };
+           2: {
+		req3_cmd_in_p$  = pack(NULL, ins.cmd_in);
+      		req3_data_in_p$ = pack(NULL, ins.din1);
+	   };
+           3: {
+		req4_cmd_in_p$  = pack(NULL, ins.cmd_in);
+      		req4_data_in_p$ = pack(NULL, ins.din1);
+	   };
+	   default: {
+	   	out("illegal instruction port");
+	   };
+      };
+      
       wait cycle;
 
-      req1_cmd_in_p$  = 0000;  
-      req1_data_in_p$ = pack(NULL, ins.din2);
+      case ins.port {
+      	   0: {
+		req1_cmd_in_p$  = 0000;
+      		req1_data_in_p$ = pack(NULL, ins.din2);
+	   };
+	   1: {
+		req2_cmd_in_p$  = 0000;
+      		req2_data_in_p$ = pack(NULL, ins.din2);
+	   };
+           2: {
+		req3_cmd_in_p$  = 0000;
+      		req3_data_in_p$ = pack(NULL, ins.din2);
+	   };
+           3: {
+		req4_cmd_in_p$  = 0000;
+      		req4_data_in_p$ = pack(NULL, ins.din2);
+	   };
+	   default: {
+	   	out("illegal instruction port");
+	   };
+      };
          
    }; // drive_instruction
 
@@ -76,9 +150,28 @@ unit driver_u {
    collect_response(ins : instruction_s) @clk is {
 
       wait @resp; -- wait for the response
-         
-      ins.resp = out_resp1_p$;
-      ins.dout = out_data1_p$;
+
+      case ins.port {
+      	   0: {
+		ins.resp = out_resp1_p$;
+		ins.dout = out_data1_p$;
+	   };
+	   1: {
+		ins.resp = out_resp2_p$;
+		ins.dout = out_data2_p$;
+	   };
+           2: {
+		ins.resp = out_resp3_p$;
+		ins.dout = out_data3_p$;
+	   };
+           3: {
+		ins.resp = out_resp4_p$;
+		ins.dout = out_data4_p$;
+	   };
+	   default: {
+	   	out("illegal instruction port");
+	   };
+      };
 
    }; // collect_response
 
