@@ -99,19 +99,19 @@ unit driver_u {
 
       // drive data into calculator port 1
       case ins.port {
-      	   0: {
+      	   1: {
 		req1_cmd_in_p$  = pack(NULL, ins.cmd_in);
       		req1_data_in_p$ = pack(NULL, ins.din1);
 	   };
-	   1: {
+	   2: {
 		req2_cmd_in_p$  = pack(NULL, ins.cmd_in);
       		req2_data_in_p$ = pack(NULL, ins.din1);
 	   };
-           2: {
+           3: {
 		req3_cmd_in_p$  = pack(NULL, ins.cmd_in);
       		req3_data_in_p$ = pack(NULL, ins.din1);
 	   };
-           3: {
+           4: {
 		req4_cmd_in_p$  = pack(NULL, ins.cmd_in);
       		req4_data_in_p$ = pack(NULL, ins.din1);
 	   };
@@ -123,19 +123,19 @@ unit driver_u {
       wait cycle;
 
       case ins.port {
-      	   0: {
+      	   1: {
 		req1_cmd_in_p$  = 0000;
       		req1_data_in_p$ = pack(NULL, ins.din2);
 	   };
-	   1: {
+	   2: {
 		req2_cmd_in_p$  = 0000;
       		req2_data_in_p$ = pack(NULL, ins.din2);
 	   };
-           2: {
+           3: {
 		req3_cmd_in_p$  = 0000;
       		req3_data_in_p$ = pack(NULL, ins.din2);
 	   };
-           3: {
+           4: {
 		req4_cmd_in_p$  = 0000;
       		req4_data_in_p$ = pack(NULL, ins.din2);
 	   };
@@ -152,19 +152,19 @@ unit driver_u {
       wait @resp; -- wait for the response
 
       case ins.port {
-      	   0: {
+      	   1: {
 		ins.resp = out_resp1_p$;
 		ins.dout = out_data1_p$;
 	   };
-	   1: {
+	   2: {
 		ins.resp = out_resp2_p$;
 		ins.dout = out_data2_p$;
 	   };
-           2: {
+           3: {
 		ins.resp = out_resp3_p$;
 		ins.dout = out_data3_p$;
 	   };
-           3: {
+           4: {
 		ins.resp = out_resp4_p$;
 		ins.dout = out_data4_p$;
 	   };

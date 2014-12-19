@@ -11,7 +11,9 @@ type opcode_t : [ NOP, ADD, SUB, INV, INV1, SHL, SHR ] (bits:4);
 
 struct instruction_s {
 
-   %port   : uint (bits:2);
+   port   : uint (bits:3);
+   keep port > 0;
+   keep port < 5;
    %cmd_in : opcode_t;
    %din1   : uint (bits:32);
    %din2   : uint (bits:32);
