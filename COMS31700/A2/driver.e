@@ -71,8 +71,10 @@ unit driver_u {
 
 
    event clk is fall(clk_p$)@sim;
-   event resp is change(out_resp1_p$)@sim;
-
+   event resp1 is change(out_resp1_p$)@sim;
+   event resp2 is change(out_resp2_p$)@sim;
+   event resp3 is change(out_resp3_p$)@sim;
+   event resp4 is change(out_resp4_p$)@sim;
 
    drive_reset() @clk is {
       var i : int;
@@ -149,22 +151,24 @@ unit driver_u {
 
    collect_response(ins : instruction_s) @clk is {
 
-      wait @resp; -- wait for the response
-
       case ins.port {
       	   1: {
+                wait @resp1; -- wait for the response
 		ins.resp = out_resp1_p$;
 		ins.dout = out_data1_p$;
 	   };
 	   2: {
+                wait @resp2; -- wait for the response
 		ins.resp = out_resp2_p$;
 		ins.dout = out_data2_p$;
 	   };
            3: {
+                wait @resp3; -- wait for the response
 		ins.resp = out_resp3_p$;
 		ins.dout = out_data3_p$;
 	   };
            4: {
+                wait @resp4; -- wait for the response
 		ins.resp = out_resp4_p$;
 		ins.dout = out_data4_p$;
 	   };

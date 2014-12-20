@@ -8,13 +8,17 @@
 
 extend instruction_s {
    keep cmd_in in [ADD,SUB,SHL,SHR];
-   keep din1 < 100;
-   keep din2 < 10;
+   keep din1 < 0xFFFF_FFFF;
+   keep din1 >= 0;
+   keep din2 < 0xFFFF_FFFF;
+   keep din2 >= 0;
+   keep port > 0;
+   keep port < 5;
 }; // extend instruction_s
 
 
 extend driver_u {
-   keep instructions_to_drive.size() == 10;
+   keep instructions_to_drive.size() == 120;
 }; // extend driver_u
 
 

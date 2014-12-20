@@ -21,9 +21,9 @@ extend sys {
 
    setup() is also {
 
-      set_check("...", ERROR_CONTINUE);   // don't quit the simulation on error
-//      set_config(gen, seed, random);      // use random seed for generation
-//      set_config(run, tick_max, 10088766);
+ //     set_check("...", ERROR_CONTINUE);   // don't quit the simulation on error
+      set_config(gen, seed, random);      // use random seed for generation
+      set_config(run, tick_max, 10088766);
 
    }; 
 
