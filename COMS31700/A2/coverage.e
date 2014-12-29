@@ -11,9 +11,10 @@ extend instruction_s {
    event instruction_complete;
 
    cover instruction_complete is {
+      item port;
       item cmd_in;
       item resp;
-      cross cmd_in, resp;
+      cross port, cmd_in, resp;
    }
 
 }; // extend instruction_s
