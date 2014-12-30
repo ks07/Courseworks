@@ -56,7 +56,7 @@ assign out_data2 = delayed_port2;
 // KIE - place to change port connections  
    initial 
      begin
-	error_found = 4'b0000; // turns on all bugs
+//	error_found = 4'b0000; // turns on all bugs
 //  error_found = 4'b0000; // KIE local bugs can be modified here
     scan_in = 0;
 	a_clk = 0;
