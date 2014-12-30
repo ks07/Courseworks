@@ -33,20 +33,124 @@ extend instruction_s {
 
      check_response(ins : instruction_s) is only {
 
-       check that ins.resp == 01;
-       check that ins.dout == (ins.din1 + ins.din2) else
-       dut_error(appendf("[R==>Port %d invalid output.<==R]\n \
-                          Instruction %s %d %d,\n \
-                          expected %032.32b \t %d,\n \
-                          received %032.32b \t %d.\n", 
-                          ins.port, ins.cmd_in, ins.din1, ins.din2, 
+       var expected_response : uint(bits:2);
+
+       if ((ins.din1 + ins.din2) < ins.din1) || ((ins.din1 + ins.din2) < ins.din2) {
+           expected_response = 02;
+       } else {
+           expected_response = 01;
+       };
+
+       check that ins.resp == expected_response && ins.dout == (ins.din1 + ins.din2) else
+       dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
+                          Instruction %s %u %u,\n \
+                          response exp: %u rcv: %u \n \
+                          expected %032.32b \t %u,\n \
+                          received %032.32b \t %u.\n", 
+                          ins.port, ins.cmd_in, ins.din1, ins.din2,
+                          expected_response, ins.resp,
                           (ins.din1 + ins.din2),
                           (ins.din1 + ins.din2), 
                           ins.dout,ins.dout));
 
      }; // check_response
 
+   }; // when
+
+   when SUB'cmd_in instruction_s {
+
+     check_response(ins : instruction_s) is only {
+       var expected_response : uint(bits:2);
+
+       if ((ins.din1 - ins.din2) > ins.din1) || ((ins.din1 - ins.din2) > ins.din2) {
+           expected_response = 02;
+       } else {
+           expected_response = 01;
+       };
+
+       check that ins.resp == expected_response && ins.dout == (ins.din1 - ins.din2) else
+           dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
+                          Instruction %s %u %u,\n \
+                          response exp: %u rcv: %u \n \
+                          expected %032.32b \t %u,\n \
+                          received %032.32b \t %u.\n",
+                          ins.port, ins.cmd_in, ins.din1, ins.din2,
+                          expected_response, ins.resp,
+                          (ins.din1 - ins.din2),
+                          (ins.din1 - ins.din2),
+                          ins.dout,ins.dout));
+       
+
+     }; // check_response
+
    }; // when 
+
+   when SHL'cmd_in instruction_s { 
+
+     check_response(ins : instruction_s) is only {
+       check that ins.resp == 01 && ins.dout == (ins.din1 << ins.din2) else
+       dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
+                          Instruction %s %u %u,\n \
+                          response exp: %u rcv: %u \n \
+                          expected %032.32b \t %u,\n \
+                          received %032.32b \t %u.\n", 
+                          ins.port, ins.cmd_in, ins.din1, ins.din2,
+                          1, ins.resp,
+                          (ins.din1 << ins.din2),
+                          (ins.din1 << ins.din2), 
+                          ins.dout,ins.dout));
+
+     }; // check_response
+
+   }; // when
+
+   when SHR'cmd_in instruction_s { 
+
+     check_response(ins : instruction_s) is only {
+       check that ins.resp == 01 && ins.dout == (ins.din1 >> ins.din2) else
+       dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
+                          Instruction %s %u %u,\n \
+                          response exp: %u rcv: %u \n \
+                          expected %032.32b \t %u,\n \
+                          received %032.32b \t %u.\n", 
+                          ins.port, ins.cmd_in, ins.din1, ins.din2,
+                          1, ins.resp,
+                          (ins.din1 >> ins.din2),
+                          (ins.din1 >> ins.din2), 
+                          ins.dout,ins.dout));
+
+     }; // check_response
+
+   }; // when
+
+   when INV'cmd_in instruction_s { 
+
+     check_response(ins : instruction_s) is only {
+       check that ins.resp == 02 else
+       dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
+                          Instruction %s %u %u,\n \
+                          response exp: %u rcv: %u \n", 
+                          ins.port, ins.cmd_in, ins.din1, ins.din2,
+                          2, ins.resp));
+
+     }; // check_response
+
+   }; // when
+
+   when INV1'cmd_in instruction_s { 
+
+     check_response(ins : instruction_s) is only {
+       check that ins.resp == 02 else
+       dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
+                          Instruction %s %u %u,\n \
+                          response exp: %u rcv: %u \n", 
+                          ins.port, ins.cmd_in, ins.din1, ins.din2,
+                          2, ins.resp));
+
+     }; // check_response
+
+   }; // when
+
 
 }; // extend instruction_s
 
