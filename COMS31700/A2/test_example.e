@@ -7,10 +7,11 @@
 <'
 
 extend instruction_s {
-   keep cmd_in in [ADD,SUB,SHL,SHR];
+   keep cmd_in in [ADD,SUB,SHL,SHR,INV,INV1];
+   keep soft cmd_in == select {10: [INV,INV1]; 90: [ADD,SUB,SHL,SHR]};
    keep din1 < 0xFFFF_FFFF;
    keep din1 >= 0;
-   keep soft din1 == select {25: [3..4]; 50: 2};
+//   keep soft din1 == select {25: [3..4]; 50: 2};
    keep din2 < 0xFFFF_FFFF;
    keep din2 >= 0;
    keep port > 0;
