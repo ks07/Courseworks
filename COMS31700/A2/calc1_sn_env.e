@@ -23,7 +23,7 @@ extend sys {
 
       set_check("...", ERROR_CONTINUE);   // don't quit the simulation on error
       set_config(gen, seed, random);      // use random seed for generation
-      set_config(run, tick_max, 10088766);
+      set_config(run, tick_max, 100887660);
 
    }; 
 
