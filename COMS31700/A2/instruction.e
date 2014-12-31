@@ -88,7 +88,15 @@ extend instruction_s {
    when SHL'cmd_in instruction_s { 
 
      check_response(ins : instruction_s) is only {
-       check that ins.resp == 01 && ins.dout == (ins.din1 << ins.din2) else
+       var exp_dout : uint;
+
+       if ins.din2 > 31 {
+         exp_dout = 0;
+       } else {
+         exp_dout = (ins.din1 << ins.din2);
+       };
+
+       check that ins.resp == 01 && ins.dout == exp_dout else
        dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
                           Instruction %s %u %u,\n \
                           response exp: %u rcv: %u \n \
@@ -96,8 +104,7 @@ extend instruction_s {
                           received %032.32b \t %u.\n", 
                           ins.port, ins.cmd_in, ins.din1, ins.din2,
                           1, ins.resp,
-                          (ins.din1 << ins.din2),
-                          (ins.din1 << ins.din2), 
+                          exp_dout,exp_dout,
                           ins.dout,ins.dout));
 
      }; // check_response
@@ -107,7 +114,15 @@ extend instruction_s {
    when SHR'cmd_in instruction_s { 
 
      check_response(ins : instruction_s) is only {
-       check that ins.resp == 01 && ins.dout == (ins.din1 >> ins.din2) else
+       var exp_dout : uint;
+
+       if ins.din2 > 31 {
+         exp_dout = 0;
+       } else {
+         exp_dout = (ins.din1 >> ins.din2);
+       }; 
+
+       check that ins.resp == 01 && ins.dout == exp_dout else
        dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
                           Instruction %s %u %u,\n \
                           response exp: %u rcv: %u \n \
@@ -115,8 +130,7 @@ extend instruction_s {
                           received %032.32b \t %u.\n", 
                           ins.port, ins.cmd_in, ins.din1, ins.din2,
                           1, ins.resp,
-                          (ins.din1 >> ins.din2),
-                          (ins.din1 >> ins.din2), 
+                          exp_dout,exp_dout,
                           ins.dout,ins.dout));
 
      }; // check_response
