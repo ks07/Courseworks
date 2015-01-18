@@ -90,7 +90,6 @@ unit driver_u {
 
    }; // drive_reset
 
-
    drive_instruction(ins : instruction_s, i : int) @clk is {
 
       // display generated command and data
@@ -182,14 +181,21 @@ unit driver_u {
 
    drive() @clk is {
 
+      var need_reset : bool;
+
       drive_reset();
 
       for each (ins) in instructions_to_drive do {
        
          drive_instruction(ins, index);
          collect_response(ins);
-         ins.check_response(ins);
+         need_reset = ins.check_response(ins);
          wait cycle;
+
+         // Reset the DUV if this instruction needs it.
+	 if need_reset then {
+             drive_reset();
+         };
 
       }; // for each instruction
 

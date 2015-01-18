@@ -21,7 +21,7 @@ struct instruction_s {
    !resp   : uint (bits:2);
    !dout   : uint (bits:32);
 
-   check_response(ins : instruction_s) is empty;
+   check_response(ins : instruction_s): bool is empty;
 
 }; // struct instruction_s
 
@@ -31,7 +31,7 @@ extend instruction_s {
    // example check for correct addition
    when ADD'cmd_in instruction_s { 
 
-     check_response(ins : instruction_s) is only {
+     check_response(ins : instruction_s): bool is only {
 
        var expected_response : uint(bits:2);
 
@@ -40,6 +40,8 @@ extend instruction_s {
        } else {
            expected_response = 01;
        };
+
+       result = (expected_response == 2);
 
        check that ins.resp == expected_response && ins.dout == (ins.din1 + ins.din2) else
        dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
@@ -52,14 +54,13 @@ extend instruction_s {
                           (ins.din1 + ins.din2),
                           (ins.din1 + ins.din2), 
                           ins.dout,ins.dout));
-
      }; // check_response
 
    }; // when
 
    when SUB'cmd_in instruction_s {
 
-     check_response(ins : instruction_s) is only {
+     check_response(ins : instruction_s): bool is only {
        var expected_response : uint(bits:2);
 
        if ((ins.din1 - ins.din2) > ins.din1) || ((ins.din1 - ins.din2) > ins.din2) {
@@ -67,6 +68,8 @@ extend instruction_s {
        } else {
            expected_response = 01;
        };
+
+       result = (expected_response == 2);
 
        check that ins.resp == expected_response && ins.dout == (ins.din1 - ins.din2) else
            dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
@@ -87,7 +90,7 @@ extend instruction_s {
 
    when SHL'cmd_in instruction_s { 
 
-     check_response(ins : instruction_s) is only {
+     check_response(ins : instruction_s): bool is only {
        var exp_dout : uint;
 
        if ins.din2 > 31 {
@@ -95,6 +98,8 @@ extend instruction_s {
        } else {
          exp_dout = (ins.din1 << ins.din2);
        };
+
+       result = FALSE;
 
        check that ins.resp == 01 && ins.dout == exp_dout else
        dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
@@ -113,14 +118,16 @@ extend instruction_s {
 
    when SHR'cmd_in instruction_s { 
 
-     check_response(ins : instruction_s) is only {
+     check_response(ins : instruction_s): bool is only {
        var exp_dout : uint;
 
        if ins.din2 > 31 {
          exp_dout = 0;
        } else {
          exp_dout = (ins.din1 >> ins.din2);
-       }; 
+       };
+
+       result = FALSE;
 
        check that ins.resp == 01 && ins.dout == exp_dout else
        dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
@@ -139,7 +146,8 @@ extend instruction_s {
 
    when INV'cmd_in instruction_s { 
 
-     check_response(ins : instruction_s) is only {
+     check_response(ins : instruction_s): bool is only {
+       result = TRUE;
        check that ins.resp == 02 else
        dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
                           Instruction %s %u %u,\n \
@@ -153,7 +161,8 @@ extend instruction_s {
 
    when INV1'cmd_in instruction_s { 
 
-     check_response(ins : instruction_s) is only {
+     check_response(ins : instruction_s): bool is only {
+       result = TRUE;
        check that ins.resp == 02 else
        dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
                           Instruction %s %u %u,\n \
