@@ -71,10 +71,10 @@ unit driver_u {
 
 
    event clk is fall(clk_p$)@sim;
-   event resp1 is change(out_resp1_p$)@sim;
-   event resp2 is change(out_resp2_p$)@sim;
-   event resp3 is change(out_resp3_p$)@sim;
-   event resp4 is change(out_resp4_p$)@sim;
+   event resp1 is change(out_resp1_p$)@clk;
+   event resp2 is change(out_resp2_p$)@clk;
+   event resp3 is change(out_resp3_p$)@clk;
+   event resp4 is change(out_resp4_p$)@clk;
 
    drive_reset() @clk is {
       var i : int;
