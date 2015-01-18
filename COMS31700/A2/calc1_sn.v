@@ -41,7 +41,7 @@ module calc1_sn;
 
    initial 
      begin
-        error_found = 4'b0011; // turns on all bugs
+        error_found = 4'b1011; // adder_5_13_weirdness/left_shift_bonus_bit?/resp/p4
         scan_in = 0;
         a_clk = 0;
         b_clk = 0;
