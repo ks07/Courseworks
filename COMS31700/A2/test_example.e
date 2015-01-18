@@ -9,13 +9,16 @@
 extend instruction_s {
    keep port > 0;
    keep port < 5;
-   keep cmd_in in [ADD,SUB,SHL,SHR,INV,INV1];
+   keep cmd_in in [ADD,SUB,SHL,SHR,INV0,INV1,INV2,INV3,INV4,INV5,INV6,INV7,INV8,INV9,INVA];
    keep din1 < 0xFFFF_FFFF;
    keep din1 >= 0;
    keep din2 < 0xFFFF_FFFF;
    keep din2 >= 0;
 
-   keep soft cmd_in == select {1: [INV,INV1]; 99: [ADD,SUB,SHL,SHR]};
+   keep soft cmd_in == select {
+     5: [INV0,INV1,INV2,INV3,INV4,INV5,INV6,INV7,INV8,INV9,INVA];
+     95: [ADD,SUB,SHL,SHR]
+   };
 
    // Bias shift distances to <34, to hit cases where we shouldn't just get 0s.
    keep soft cmd_in in [SHL,SHR] => din2 == select {

@@ -6,14 +6,12 @@
 
 <'
 
-type opcode_t : [ NOP, ADD, SUB, INV, INV1, SHL, SHR ] (bits:4);
+type opcode_t : [ NOP, ADD, SUB, INV0, INV1, SHL, SHR, INV2, INV3, INV4, INV5, INV6, INV7, INV8, INV9, INVA ] (bits:4);
 
 
 struct instruction_s {
 
    port   : uint (bits:3);
-   keep port > 0;
-   keep port < 5;
    %cmd_in : opcode_t;
    %din1   : uint (bits:32);
    %din2   : uint (bits:32);
@@ -27,6 +25,10 @@ struct instruction_s {
 
 
 extend instruction_s {
+
+   // Add a field to get around the variance control field single value problem.
+   is_inv : bool;
+   keep is_inv == (cmd_in in [ INV0, INV1, INV2, INV3, INV4, INV5, INV6, INV7, INV8, INV9, INVA ]);
 
    // example check for correct addition
    when ADD'cmd_in instruction_s { 
@@ -144,22 +146,7 @@ extend instruction_s {
 
    }; // when
 
-   when INV'cmd_in instruction_s { 
-
-     check_response(ins : instruction_s): bool is only {
-       result = TRUE;
-       check that ins.resp == 02 else
-       dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
-                          Instruction %s %u %u,\n \
-                          response exp: %u rcv: %u \n", 
-                          ins.port, ins.cmd_in, ins.din1, ins.din2,
-                          2, ins.resp));
-
-     }; // check_response
-
-   }; // when
-
-   when INV1'cmd_in instruction_s { 
+   when is_inv instruction_s { 
 
      check_response(ins : instruction_s): bool is only {
        result = TRUE;
