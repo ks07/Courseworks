@@ -65,15 +65,23 @@ extend instruction_s {
      check_response(ins : instruction_s): bool is only {
        var expected_response : uint(bits:2);
 
-       if ((ins.din1 - ins.din2) > ins.din1) || ((ins.din1 - ins.din2) > ins.din2) {
+       // If only we could re-use the sum_res from the test generation...
+       var my_sum_res : int(bits:33);
+       my_sum_res = ins.din1 - ins.din2;
+
+       var expected_data : uint(bits:32);
+
+       if (my_sum_res < 0) {
            expected_response = 02;
+	   expected_data = ins.din1 - ins.din2;
        } else {
            expected_response = 01;
+	   expected_data = my_sum_res;
        };
 
        result = (expected_response == 2);
 
-       check that ins.resp == expected_response && ins.dout == (ins.din1 - ins.din2) else
+       check that ins.resp == expected_response && ins.dout == expected_data else
            dut_error(appendf("[R==>Port %u invalid output.<==R]\n \
                           Instruction %s %u %u,\n \
                           response exp: %u rcv: %u \n \
@@ -81,8 +89,8 @@ extend instruction_s {
                           received %032.32b \t %u.\n",
                           ins.port, ins.cmd_in, ins.din1, ins.din2,
                           expected_response, ins.resp,
-                          (ins.din1 - ins.din2),
-                          (ins.din1 - ins.din2),
+                          expected_data,
+                          expected_data,
                           ins.dout,ins.dout));
        
 
