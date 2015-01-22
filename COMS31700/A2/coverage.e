@@ -11,9 +11,9 @@ extend instruction_s {
    event instruction_complete;
 
    cover instruction_complete is {
-      item port using illegal=port>4||port<1;
-      item cmd_in using illegal=cmd_in==NOP;
-      item resp using illegal=resp<1||resp>2;
+      item port using illegal = port>4||port<1;
+      item cmd_in using illegal = cmd_in==NOP;
+      item resp using illegal = resp<1||resp>2;
       cross port, cmd_in, resp;
    }
 
