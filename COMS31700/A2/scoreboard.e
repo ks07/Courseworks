@@ -1,35 +1,65 @@
 <'
 
-import instruction_s;
+-- Simple scoreboard-eque unit to check port priorities.
+-- A traditional scoreboard will not be useful here, as there can only be 4 commands
+-- in the DUV at a time (one per port), and we can only drive an input after that port
+-- has given a response. Thus, we will simply hold a counter for the number of commands
+-- processed per port, and give an indication of their average response time.
+unit scoreboard_u {
 
--- Simple struct to hold DUV output from monitor.
-struct response_s {
-  !port   : uint (bits:2);
-  !resp   : uint (bits:2);
-  !dout   : uint (bits:32);
-};
+  -- Use two monitors to get info from DUV.
+--  in_mon : monitor_u is instance;
+--  keep in_mon.scbd == this;
 
--- Simple scoreboard to check port priorities.
-unit scoreboard {
-  !expected_packets_1 : list of instruction_s;
-  !expected_packets_2 : list of instruction_s;
-  !expected_packets_3 : list of instruction_s;
-  !expected_packets_4 : list of instruction_s;
+  -- Use 5 length lists so we can index as 1..4
+  !drive_count[5] : list of uint;
+  !resp_count[5]  : list of uint;
+  !total_time[5]  : list of time;
+  !drive_time[5]  : list of time;
 
-  add_packet(p_in : instruction_s) is {
-    -- Add packet to the relevant list. This is the easiest way to match input with output,
-    -- as the DUV response doesn't really indicate the matching input, other than through
-    -- the assumption that input on a port will match the next output on that same port.
-    case ins.port {
-      1: { expected_packets_1.add(p_in); };
-      2: { expected_packets_2.add(p_in); };
-      3: { expected_packets_3.add(p_in); };
-      4: { expected_packets_4.add(p_in); };
-      default: { out("illegal port"); };
+  add_packet(port : uint) is {
+    -- Use sys.time to get the current sim time.
+--    out("PACKET DRIVEN ", port);
+    drive_time[port] = sys.time;
+    drive_count[port] = drive_count[port] + 1;
+  };
+
+  check_packet(port : uint) is {
+    var check_time : time;
+    check_time = sys.time;
+
+    -- Update the total time spent on this port.
+    total_time[port] = total_time[port] + check_time - drive_time[port];
+    resp_count[port] = resp_count[port] + 1;
+  };
+
+  // Reset should clear the scoreboard.
+  reset() is {
+    for p from 0 to 4 do {
+      drive_count[p] = 0;
+      resp_count[p] = 0;
+      total_time[p] = 0;
+      drive_time[p] = 0;
     };
   };
 
-  check_packet(p_out : response_s) is {
-    --case p_out
+  quit() is first {
+    out("Scoreboard finalised.");
+    out("Commands processed per port:");
+    for p from 1 to 4 do {
+      if resp_count[p] != drive_count[p] {
+        dut_error("Response count doesn't match drive count on port ", p, " ", resp_count[p], " ", drive_count[p]);
+      };
+      out(p, " ", resp_count[p]);
+    };
   };
+};
+
+-- Add a scoreboard to the global sys space.
+extend sys {
+
+   scoreboard : scoreboard_u is instance;
+
+};
+
 '>

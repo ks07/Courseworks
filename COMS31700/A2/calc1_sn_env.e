@@ -13,11 +13,13 @@ import instruction;       //  pull in instruction data structure definitions
 import driver;            //  pull in driver definitions
 import coverage;          //  pull in coverage metric and collection events
 import test_example;      //  pull in current test data
-
+import scoreboard;
+import monitor;
 
 extend sys {
 
    driver : driver_u is instance;
+//   scoreboard : scoreboard_u is instance;
 
    setup() is also {
 

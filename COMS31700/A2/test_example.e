@@ -60,6 +60,10 @@ extend instruction_s {
 
 extend driver_u {
    keep instructions_to_drive.size() == 120;
+   keep parallel_drive_1.size() == 300;
+   keep parallel_drive_2.size() == 300;
+   keep parallel_drive_3.size() == 300;
+   keep parallel_drive_4.size() == 300;
 }; // extend driver_u
 
 

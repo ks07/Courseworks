@@ -23,7 +23,6 @@ struct instruction_s {
 
 }; // struct instruction_s
 
-
 extend instruction_s {
 
    // Add a field to get around the variance control field single value problem.
@@ -172,6 +171,40 @@ extend instruction_s {
 
 }; // extend instruction_s
 
+type instruction_kind: [standard, stress1, stress2, stress3, stress4];
+
+extend instruction_s {
+  // Add a field to indicate what mode we are in.
+  !kind : instruction_kind;
+  is_stress : bool;
+
+  keep soft kind == standard;
+
+  keep is_stress == (kind in [stress1, stress2, stress3, stress4]);
+
+  keep gen (kind) before (is_stress);
+
+  when is_stress {
+    // For stress testing, restrict packets to non-error states.
+    keep cmd_in in [SHL,SHR];
+  }; // is_stress
+
+  when stress1 {
+    keep port == 1;
+  };
+
+  when stress2 {
+    keep port == 2;
+  };
+
+  when stress3 {
+    keep port == 3;
+  };
+
+  when stress4 {
+    keep port == 4;
+  };
+};
 
 '>
 

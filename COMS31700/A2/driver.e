@@ -10,6 +10,8 @@
 
 <'
 
+import instruction;
+
 unit driver_u {
 
    clk_p : inout simple_port of bit is instance; // can be driven or read by sn
@@ -69,6 +71,11 @@ unit driver_u {
 
    instructions_to_drive : list of instruction_s;
 
+   -- List of instructions to drive simultaneously on all 4 ports.
+   parallel_drive_1 : list of stress1 instruction_s;
+   parallel_drive_2 : list of stress2 instruction_s;
+   parallel_drive_3 : list of stress3 instruction_s;
+   parallel_drive_4 : list of stress4 instruction_s;
 
    event clk is fall(clk_p$)@sim;
    event resp1 is change(out_resp1_p$)@clk;
@@ -93,7 +100,7 @@ unit driver_u {
    drive_instruction(ins : instruction_s, i : int) @clk is {
 
       // display generated command and data
-      outf("Command %s on port %s = %s\n", i, ins.port, ins.cmd_in);
+      outf("Command %s on port %s = %s at %u\n", i, ins.port, ins.cmd_in, sys.time);
       out("Op1     = ", ins.din1);
       out("Op2     = ", ins.din2);
       out();
@@ -178,6 +185,49 @@ unit driver_u {
 
    }; // collect_response
 
+   drive_parallel(p : uint) @clk is {
+      case p {
+        1: {
+	  for each (ins) in parallel_drive_1 do {
+	    drive_instruction(ins, index);
+	    collect_response(ins);
+	    wait cycle;
+	  };
+	};
+        2: {
+	  for each (ins) in parallel_drive_2 do {
+	    drive_instruction(ins, index);
+	    collect_response(ins);
+	    wait cycle;
+	  };
+	};
+        3: {
+	  for each (ins) in parallel_drive_3 do {
+	    drive_instruction(ins, index);
+	    collect_response(ins);
+	    wait cycle;
+	  };
+	};
+        4: {
+	  for each (ins) in parallel_drive_4 do {
+	    drive_instruction(ins, index);
+	    collect_response(ins);
+	    wait cycle;
+	  };
+	};
+      }; // case p
+
+      // The first driver thread to reach the end of it's queue will stop the test. Any thread with a
+      // large disparity indicates a potential bias in port handling.
+      out("Stopping simulation, finished stress test on port ", p);
+
+      // On stop, inform the scoreboard.
+//      sys.scoreboard.end_of_test();
+	// Use quit() TCM instead!
+
+      stop_run();
+
+   }; // drive_parallel
 
    drive() @clk is {
 
@@ -186,7 +236,6 @@ unit driver_u {
       drive_reset();
 
       for each (ins) in instructions_to_drive do {
-       
          drive_instruction(ins, index);
          collect_response(ins);
          need_reset = ins.check_response(ins);
@@ -200,8 +249,34 @@ unit driver_u {
       }; // for each instruction
 
       wait [10] * cycle;
-      stop_run();
 
+      // Reset the DUV, then start driving the stress tests to exercise the priority logic.
+      drive_reset();
+
+      // gen parallel_drive_1 keeping {
+      //   instruction_s.kind == instruction_kind.stress;
+      // 	.port == 1;
+      // };
+      // gen parallel_drive_2 keeping {
+      //   .kind == stress;
+      // 	.port == 2;
+      // };
+      // gen parallel_drive_3 keeping {
+      //   .kind == stress;
+      // 	.port == 3;
+      // };
+      // gen parallel_drive_4 keeping {
+      //   .kind == stress;
+      // 	.port == 4;
+      // };
+
+      // Run the parallel drivers simultaneously using start. The first to finish will end the simulation.
+      start drive_parallel(4);
+      start drive_parallel(1);
+      start drive_parallel(2);
+      start drive_parallel(3);
+
+      
    }; // drive
 
 
