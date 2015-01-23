@@ -20,7 +20,9 @@ extend instruction_s {
       -- they always return 1, so we ignore 2).
       cross port, cmd_in, resp using illegal = (cmd_in in [SHL,SHR] && resp != 1), 
         ignore = (cmd_in in [ INV0, INV1, INV2, INV3, INV4, INV5, INV6, INV7, INV8, INV9, INVA ] && resp != 1);
+   };
 
+   cover instruction_complete is also {
       // Get power-of-two coverage for both operands. This helps us ensure we have generated a nice spread of data inputs.
       // This should flag up interesting cases being missed such as data of 0, or small/large data.
       // Unfortunately, hitting a high coverage metric here will be difficult.
@@ -33,7 +35,7 @@ extend instruction_s {
 //                            range([0xFF00_0000..0xFFFF_FFFF], "high quarter", UNDEF, 256);
 //    };
 //    item din2 using
-   }
+   };
 
 }; // extend instruction_s
 
