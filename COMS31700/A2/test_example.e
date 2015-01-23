@@ -16,8 +16,8 @@ extend instruction_s {
    keep din2 >= 0;
 
    keep soft cmd_in == select {
-     5: [INV0,INV1,INV2,INV3,INV4,INV5,INV6,INV7,INV8,INV9,INVA];
-     95: [ADD,SUB,SHL,SHR]
+     10: [INV0,INV1,INV2,INV3,INV4,INV5,INV6,INV7,INV8,INV9,INVA];
+     90: [ADD,SUB,SHL,SHR]
    };
 
    // Bias shift distances to <34, to hit cases where we shouldn't just get 0s.
@@ -59,7 +59,7 @@ extend instruction_s {
 
 
 extend driver_u {
-   keep instructions_to_drive.size() == 120;
+   keep instructions_to_drive.size() == 1000;
    keep parallel_drive_1.size() == 300;
    keep parallel_drive_2.size() == 300;
    keep parallel_drive_3.size() == 300;
