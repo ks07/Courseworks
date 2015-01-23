@@ -47,10 +47,11 @@ unit scoreboard_u {
     out("Scoreboard finalised.");
     out("Commands processed per port:");
     for p from 1 to 4 do {
-      if resp_count[p] != drive_count[p] {
-        dut_error("Response count doesn't match drive count on port ", p, " ", resp_count[p], " ", drive_count[p]);
+      // We should have seen at most 2 more drives than responses (due to simultaneous TCM execution and the quit condition!)
+      if (drive_count[p] - resp_count[p]) > 2 {
+        dut_error("Response count mismatch on port ", p, " ", resp_count[p], " ", drive_count[p]);
       };
-      out(p, " ", resp_count[p]);
+      out(p, " has responded to ", resp_count[p]);
     };
   };
 };
