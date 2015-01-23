@@ -171,7 +171,7 @@ extend instruction_s {
 
 }; // extend instruction_s
 
-type instruction_kind: [standard, stress1, stress2, stress3, stress4];
+type instruction_kind: [standard, stress1, stress2, stress3, stress4, cprg];
 
 extend instruction_s {
   // Add a field to indicate what mode we are in.

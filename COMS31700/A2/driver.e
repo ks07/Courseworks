@@ -71,6 +71,8 @@ unit driver_u {
 
    instructions_to_drive : list of instruction_s;
 
+   cprg_instructions_to_drive : list of cprg instruction_s;
+
    -- List of instructions to drive simultaneously on all 4 ports.
    parallel_drive_1 : list of stress1 instruction_s;
    parallel_drive_2 : list of stress2 instruction_s;
@@ -252,25 +254,26 @@ unit driver_u {
 
       wait [10] * cycle;
 
-      // Reset the DUV, then start driving the stress tests to exercise the priority logic.
+      // Reset the DUV, then start driving the cprg tests.
       drive_reset();
 
-      // gen parallel_drive_1 keeping {
-      //   instruction_s.kind == instruction_kind.stress;
-      // 	.port == 1;
-      // };
-      // gen parallel_drive_2 keeping {
-      //   .kind == stress;
-      // 	.port == 2;
-      // };
-      // gen parallel_drive_3 keeping {
-      //   .kind == stress;
-      // 	.port == 3;
-      // };
-      // gen parallel_drive_4 keeping {
-      //   .kind == stress;
-      // 	.port == 4;
-      // };
+      for each (ins) in cprg_instructions_to_drive do {
+         drive_instruction(ins, index);
+         collect_response(ins);
+         need_reset = ins.check_response(ins);
+         wait cycle;
+
+         // Reset the DUV if this instruction needs it.
+	 if need_reset then {
+             drive_reset();
+         };
+
+      }; // for each instruction
+
+      wait [10] * cycle;
+
+      // Reset the DUV, then start driving the stress tests to exercise the priority logic.
+      drive_reset();
 
       // Run the parallel drivers simultaneously using start. The first to finish will end the simulation.
       start drive_parallel(4);
@@ -278,7 +281,6 @@ unit driver_u {
       start drive_parallel(2);
       start drive_parallel(3);
 
-      
    }; // drive
 
 
