@@ -18,31 +18,40 @@ extend instruction_s {
    keep soft cmd_in == select {
      10: [INV0,INV1,INV2,INV3,INV4,INV5,INV6,INV7,INV8,INV9,INVA];
      90: [ADD,SUB,SHL,SHR]
-   };
+   }; 
+
+   // Add a log2 representation of each data in, so we can use the iterator approach to get full range coverage!
+   din1_log : uint [0..32];
+   din2_log : uint [0..32];
+
+   keep din1 < ipow(2, din1_log);
+   keep soft din1 >= ipow(2, din1_log - 1); // Use a soft constraint so we don't cause errors when log = 0!
+   keep din2 < ipow(2, din2_log);
+   keep soft din2 >= ipow(2, din2_log - 1);
 
    // Bias shift distances to <34, to hit cases where we shouldn't just get 0s.
-   keep soft cmd_in in [SHL,SHR] => din2 == select {
-     33: [0..16];
-     33: [17..33];
-     33: [34..0xFFFF_FFFF];
-   };
+   // keep soft cmd_in in [SHL,SHR] => din2 == select {
+   //   33: [0..16];
+   //   33: [17..33];
+   //   33: [34..0xFFFF_FFFF];
+   // };
 
    // Bias sum results to < MAX_INT, to increase the number of resp 1 additions we expect.
-   keep soft cmd_in == ADD => din1 + din2 == select {
-     80: [0..0xFFFF_FFFF];
-     20: [0x1_0000_0000..0x1_FFFF_FFFE];
-   };
+   // keep soft cmd_in == ADD => din1 + din2 == select {
+   //   80: [0..0xFFFF_FFFF];
+   //   20: [0x1_0000_0000..0x1_FFFF_FFFE];
+   // };
 
    // Bias subtraction results to > 0. Hard to do this in a simple constraint!
-   when SUB'cmd_in instruction_s {
-     sum_res : int(bits:33);
-     keep sum_res == din1 - din2;
-     keep soft sum_res == select {
-       20: [-4294967296..-1];
-       80: [0..0x0_FFFF_FFFF];
-     };
-     keep gen (sum_res) before (din1,din2); // Generate the target sum first!
-   };
+   // when SUB'cmd_in instruction_s {
+   //   sum_res : int(bits:33);
+   //   keep sum_res == din1 - din2;
+   //   keep soft sum_res == select {
+   //     20: [-4294967296..-1];
+   //     80: [0..0x0_FFFF_FFFF];
+   //   };
+   //   keep gen (sum_res) before (din1,din2); // Generate the target sum first!
+   // };
 
 //   keep soft cmd_in == SUB => din1 < din2;
 
@@ -59,7 +68,10 @@ extend instruction_s {
 
 
 extend driver_u {
-   keep instructions_to_drive.size() == 1000;
+//   keep instructions_to_drive.size() == 10000;
+
+   keep instructions_to_drive.is_all_iterations(.cmd_in, .din1_log, .din2_log);
+
    keep parallel_drive_1.size() == 300;
    keep parallel_drive_2.size() == 300;
    keep parallel_drive_3.size() == 300;
