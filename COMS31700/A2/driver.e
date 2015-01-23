@@ -97,13 +97,15 @@ unit driver_u {
 
    }; // drive_reset
 
-   drive_instruction(ins : instruction_s, i : int) @clk is {
+   drive_instruction(ins : instruction_s, i : int, loud : bool = TRUE) @clk is {
 
       // display generated command and data
-      outf("Command %s on port %s = %s at %u\n", i, ins.port, ins.cmd_in, sys.time);
-      out("Op1     = ", ins.din1);
-      out("Op2     = ", ins.din2);
-      out();
+      if loud then {
+        outf("Command %s on port %s = %s at %u\n", i, ins.port, ins.cmd_in, sys.time);
+        out("Op1     = ", ins.din1);
+        out("Op2     = ", ins.din2);
+        out();
+      };
 
       // drive data into calculator port 1
       case ins.port {
@@ -189,28 +191,28 @@ unit driver_u {
       case p {
         1: {
 	  for each (ins) in parallel_drive_1 do {
-	    drive_instruction(ins, index);
+	    drive_instruction(ins, index, FALSE);
 	    collect_response(ins);
 	    wait cycle;
 	  };
 	};
         2: {
 	  for each (ins) in parallel_drive_2 do {
-	    drive_instruction(ins, index);
+	    drive_instruction(ins, index, FALSE);
 	    collect_response(ins);
 	    wait cycle;
 	  };
 	};
         3: {
 	  for each (ins) in parallel_drive_3 do {
-	    drive_instruction(ins, index);
+	    drive_instruction(ins, index, FALSE);
 	    collect_response(ins);
 	    wait cycle;
 	  };
 	};
         4: {
 	  for each (ins) in parallel_drive_4 do {
-	    drive_instruction(ins, index);
+	    drive_instruction(ins, index, FALSE);
 	    collect_response(ins);
 	    wait cycle;
 	  };

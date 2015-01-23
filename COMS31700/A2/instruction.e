@@ -187,6 +187,11 @@ extend instruction_s {
   when is_stress {
     // For stress testing, restrict packets to non-error states.
     keep cmd_in in [SHL,SHR];
+
+    // We don't particularly want to see checker output when stress testing.
+    check_response(ins : instruction_s): bool is only {
+      result = TRUE;
+    };
   }; // is_stress
 
   when stress1 {
