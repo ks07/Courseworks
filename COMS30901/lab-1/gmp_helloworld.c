@@ -10,7 +10,7 @@ int main( int argc, char* argv[] ) {
   gmp_scanf( "%Zd",  x );
   gmp_scanf( "%Zd",  y );
 
-  mpz_sub( r, x, y );
+  mpz_mul( r, x, y );
 
   gmp_printf( "%Zd\n", r );
 
