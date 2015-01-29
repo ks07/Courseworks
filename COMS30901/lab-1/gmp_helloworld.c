@@ -14,7 +14,7 @@ int main( int argc, char* argv[] ) {
 
   mpz_add( r0, x, y );
 
-  x_n = mpz_size(x);
+  x_n = mpz_size(x); // Same as abs of _mp_size
   y_n = mpz_size(y);
 
   if ( y_n > x_n ) {
@@ -23,8 +23,6 @@ int main( int argc, char* argv[] ) {
 
   mp_limb_t c = mpn_add( x->_mp_d, x->_mp_d, x_n, y->_mp_d, y_n);
 
-  //  (x->_mp_size)++;
-  //  printf("%lu %lu\n", x->_mp_size, x_n);
   if (c > 0) {
     // check that we have enough space
     //if (abs(x->_mp_size) == x->_mp_alloc) {
