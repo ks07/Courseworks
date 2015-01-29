@@ -1,0 +1,582 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-gb" xml:lang="en-gb">
+<title>COMS30106 Assignment 1</title>
+   <head>
+    <title>Bristol University | Department of Computer Science</title>
+    <base target="_top" />
+    
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta content="University of Bristol" name="DCTERMS.creator" />
+    <meta content="en-GB" name="DCTERMS.language" />
+    <meta content="2013-09-09" name="DCTERMS.modified" />
+    <meta content="2013-07-15" name="DCTERMS.created" />
+    <meta content="text/html" name="DCTERMS.format" />
+    <meta content="University of Bristol" name="DCTERMS.publisher" />
+    <meta content="http://www.bristol.ac.uk/university/web/terms-conditions.html" name="DCTERMS.rights" />
+    
+    <link rel="icon" href="http://www.bristol.ac.uk/favicon.gif" type="image/gif" />
+    
+    <link rel="stylesheet" type="text/css" media="screen" href="/styles/uob_2013/normalize.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/styles/uob_2013/uobcms_corporate.css" />
+    <link rel="stylesheet" type="text/css" media="screen and (min-width: 1150px)" href="/styles/uob_2013/desktop.css" />
+    <link rel="stylesheet" type="text/css" media="print"  href="/styles/uob_2013/uobcms_print.css" />
+    <link rel="stylesheet" type="text/css" media="print"  href="/styles/uob_2013/boxes.css" />
+    <link rel="stylesheet" type="text/css" media="print"  href="/styles/uob_2013/sliders.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/styles/uob_2013/efl-menu.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/styles/uob_2013/homepage-base.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/styles/uob_2013/computer_science.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/styles/uob_2013/department.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/styles/uob_2013/news.css" />
+    
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/scripts/uob_2013/dependencies/jquery.cycle2.min.js"></script>
+    <script type="text/javascript" src="/scripts/uob_2013/sm-slider.min.js"></script>
+    <script type="text/javascript" src="/scripts/uob_2013/utilities/utilities.js"></script>
+    <script type="text/javascript" src="/scripts/uob_2013/respond.min.js"></script>
+    <script type="text/javascript" src="/scripts/uob_2013/cs_script.js"></script>
+    <script type="text/javascript" src="/scripts/csyear.js"></script>
+    <script type="text/javascript" src="/scripts/uob_2013/cs_bodyscript.js"></script> 
+<body id='age'>
+    <!--NAVIGATION-->
+<div class="uob-mainnav-container clearfix" id="top"> <a class="skip-to-content" href="#uobcms-content">Skip to main content</a> 
+  <div id="csnav">
+    
+  <!-- start content : corporate header -->
+  <ul class="width-master uob-mainnav" role="navigation" id="csmenu">
+    <li class="u-m-dropdown-item u-m-home"> <a class="u-m-link u-m-dropdown-link"  tabindex="0" id="uob-mainnav-year"><span id='year1'>2013-4</span></a>
+      <div class="dropdown dropdown_year">
+        <div class="layout-container">
+          <div class="row">
+            <div class="grid_4 column column-ug">
+              <ul class="list-no-style">
+                <li><a tabindex="-1" class='icon-backward' href="/lib/lastyear.jsp"> Last year</a></li>
+                <li><a tabindex="-1" class='icon-forward' href="/lib/nextyear.jsp"> Next year</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </li>
+     <li class="u-m-university"> <a class="u-m-link" href="http://www.bris.ac.uk/engineering/departments/computerscience/courses/"  tabindex="0"> Courses and programmes</a> </li>
+    <!--
+    <li class="u-m-dropdown-item"> <a class="u-m-link u-m-dropdown-link"  tabindex="0" id="uob-mainnav-study">Courses and Programmes</a>
+      <div class="dropdown dropdown-study">
+        <div class="layout-container">
+          <div class="row">
+            <div class="grid_4 column column-ug">
+              <h2><a href="#" tabindex="-1">Undergraduate study</a></h2>
+              <ul class="list-no-style">
+                <li><a tabindex="-1" href="#">&nbsp;</a></li>
+                <li><a tabindex="-1" href="#">Computer Science BSc</a></li>
+                <li><a tabindex="-1" href="#">Computer Science MEng</a></li>
+                <li><a tabindex="-1" href="#">Mathematics and Computer Science</a></li>
+                <li><a tabindex="-1" href="#">Computer Science with Study Abroad</a></li>
+                <li><a tabindex="-1" href="#">Computer Science with Study in Continental Europe</a></li>
+                <li><a tabindex="-1" href="#">&nbsp;</a></li>
+              </ul>
+              <h2><a tabindex="-1" href="#">MSc taught programmes</a></h2>
+              <ul class="list-no-style">
+                <li><a tabindex="-1" href="#">&nbsp;</a></li>
+                <li><a tabindex="-1" href="#">Advanced Computing</a></li>
+                <li><a tabindex="-1" href="#">Advanced Computing (Internet Technologies with Security)</a></li>
+                <li><a tabindex="-1" href="#">Advanced Computing (Machine Learning, Data Mining and High-Performance Computing)</a></li>
+                <li><a tabindex="-1" href="#">Advanced Microelectronic Systems Engineering</a></li>
+                <li><a tabindex="-1" href="#">Computer Science (Conversion)</a></li>
+                <li><a tabindex="-1" href="#">Advanced Computing (Creative Technology)</a></li>
+                <li><a tabindex="-1" href="#">&nbsp;</a></li>
+              </ul>
+            </div>
+            <div class="grid_4 column column-study-related"> </div>
+          </div>
+        </div>
+      </div> 
+    </li>
+    -->
+    <li class="u-m-university"> <a class="u-m-link" href="http://www.bris.ac.uk/engineering/departments/computerscience/research/"  tabindex="0"> Research</a> </li>
+    <li class="u-m-faculties"> <a class="u-m-link" href="/People/"  tabindex="0"> People</a> </li>
+    <li class="u-m-business"> <a class="u-m-link" href="/Teaching/" tabindex="0"> Teaching</a> </li>
+    <li class="u-m-business"> <a class="u-m-link" href="/Partners/" tabindex="0"> Industrial partners</a> </li>
+    <li class="u-m-news"> <a class="u-m-link" href="/news/" tabindex="0"> News</a> </li>
+    <li class="u-m-contact"> <a class="u-m-link" href="/theindex.html" tabindex="0"> Index</a> </li>
+    <!--
+    <li class="u-m-contact"><a class="u-m-link" href="#top" onclick="toggle_visibility();">University Menu</a>
+    </li>
+    -->
+  </ul>
+  <!-- end content : corporate header -->   
+  </div>   
+  <div id="uobnav" style="display: none;">
+    <ul class="width-master uob-mainnav" role="navigation">
+    <li class="u-m-home">
+        <a class="u-m-link" href="http://www.bristol.ac.uk/">Home</a>
+    </li>
+    <li class="u-m-dropdown-item">
+        <a class="u-m-link u-m-dropdown-link"  tabindex="0" id="uob-mainnav-study">Study at Bristol</a>
+        <div class="dropdown dropdown-study">
+            <div class="layout-container">
+                <div class="row">
+                    <div class="grid_4 column column-ug">
+                        <h2><a href="http://www.bristol.ac.uk/prospectus/undergraduate/2014" tabindex="-1">Undergraduate study</a></h2>
+						<ul class="list-no-style">
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/undergraduate/2014/prog_index" class="btn btn-d-pink btn-full-width icon-search">Find a course</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/undergraduate/2014/watch/">Why choose Bristol?</a></li>
+							<li><a tabindex="-1" href="http://www.bris.ac.uk/prospectus/undergraduate/2014/accommodation.html">Accommodation</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/undergraduate/2014/fees-funding/">Fees and funding</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/undergraduate/2014/student-life/">Student life</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/opendays/">Open days</a></li>
+                        </ul>
+                    </div>
+                    <div class="grid_4 column column-pg">
+                        <h2><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/postgraduate/2013">Postgraduate study</a></h2>
+						<ul class="list-no-style">
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/postgraduate/2014/search.html" class="btn btn-d-aqua btn-full-width icon-search">Find a course or programme</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/postgraduate/2014/apply/">How to apply</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/postgraduate/2014/accommodation.html">Accommodation</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/postgraduate/2014/fees-funding.html">Fees and funding</a></li>
+							<li><a tabindex="-1" href="http://www.bristol.ac.uk/prospectus/postgraduate/2014/further-info.html#video-watch">Why choose Bristol?</a></li>
+                        </ul>
+                    </div>
+                    <div class="grid_4 column column-study-related">
+                        <div class="module module-overlay module-overlay-d-lime">
+                            <h3 class="module-heading">
+                                <a tabindex="-1" href="http://www.bristol.ac.uk/international/"><span class="module-heading-bg">International students</span>
+                                <span class="module-image"><img src="/images/module-international.jpg" alt="International students" width="300" height="150" /></span>
+                            </a></h3>
+                        </div>
+                        <div class="module module-overlay  module-overlay-d-lime">
+                            <h3 class="module-heading">
+                                <a tabindex="-1" href="http://www.bristol.ac.uk/applicants/"><span class="module-heading-bg">Current undergraduate applicants</span>
+                                <span class="module-image"><img src="/images/module-applicants.jpg" alt="Current applicants" width="300" height="150" /></span>
+                            </a></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--end of study dropdown-->
+    </li>
+    <li class="u-m-university">
+        <a class="u-m-link" href="http://www.bristol.ac.uk/university/"  tabindex="0">Explore the University</a>
+    </li>
+    <li class="u-m-faculties">
+        <a class="u-m-link" href="http://www.bristol.ac.uk/faculties/"  tabindex="0">Schools &amp; faculties</a>
+    </li>
+    <li class="u-m-research">
+        <a class="u-m-link" href="http://www.bristol.ac.uk/research/" tabindex="0">Research</a>
+    </li>
+    <li class="u-m-business">
+        <a class="u-m-link" href="http://www.bristol.ac.uk/business/" tabindex="0">Business</a>
+    </li>
+    <li class="u-m-news">
+        <a class="u-m-link" href="http://www.bristol.ac.uk/news/" tabindex="0">News</a>
+    </li>
+    <li class="u-m-contact">
+        <a class="u-m-link" href="http://www.bristol.ac.uk/contacting-people/" tabindex="0">People</a>
+    </li>
+    <li class="u-m-contact"><a class="u-m-link" href="#top" onclick="toggle_visibility();">CS Menu</a>
+    </li>
+</ul>  
+  </div>    
+</div>       
+
+<!--BANNER-->
+<div class="uob-header-container"> 
+  <div class="uob-header width-master" role="banner"> 
+
+    <div id="uoblogo"><a accesskey="1" title="University of Bristol homepage" href="http://www.bristol.ac.uk/"><span>University of Bristol</span></a></div>
+    <div class="maintitle" id="maintitle1"><span id="title1"><a href="/">Department of Computer Science</a></span></div>
+
+    <form class="uob-search" role="search" action="http://www.bristol.ac.uk/cgi-bin/search" onSubmit="return (this.words.value !== '')">
+      <input type="hidden" value='cs.bris.ac.uk' name='sitesearch' />
+      <input type="hidden" name="uob_ou" value="Department of Computer Science" />
+      <input type="text" name="words" id="search" class="uob-search-field" value="" size="18" title="enter search keywords" onFocus="this.style.backgroundImage='none'" onBlur="if (this.value === '') {this.style.backgroundImage='url(/images/google_custom_search_watermark.gif)'}" />
+      <input type="submit" id="submitwords" name="submitwords" value="search" class="uob-search-button" />
+    </form>
+
+  </div>
+</div>  
+
+
+<div id="deptnav" class='bar2'>
+      <ul class='width-master'>
+         <li class='public'>
+            <a href='/Teaching/Resources/COMS30106/' class='navlink'>COMS30106</a>
+         </li>
+         <li class='public'>
+            <a href='https://wwwa.fen.bris.ac.uk/COMS30106/' class='navlink'>SAFE</a>
+         </li>
+         <li class='public'>
+            <a href='/forum/index.jsp&#63;title=COMS30106' class='navlink'>Forum</a>
+         </li>
+         <li class='public'>
+            <a href='/handbook/general/unit.jsp&#63;unit=COMS30106' class='navlink'>Handbook</a>
+         </li>
+         <li class='public'>
+            <a href='/Teaching/secure/unit.jsp&#63;unit=COMS30106' class='navlink'>Manage</a>
+         </li>
+      </ul>
+</div>
+
+
+
+<div id="uobcms-wrapper" class="width-master"> 
+
+
+
+<h1> 		 Assignment 1 </h1>
+
+<h2>Assignment 1 overview</h2>
+
+<p>
+The learning goals covered in this assignment:
+</p><p>
+<ol>
+<li>
+Prolog - facts, predicates; querying them and writing your own
+</li><li>
+Introducing searching
+</li><li>
+Introducing backtracking
+</li>
+</ol>
+
+
+
+<h2> About the code</h2>
+<p>
+Download the zip file for assignment 1 <a href="assignment1.zip">here</a>.<br>
+Use <a href="assignment1fix.zip">this file</a> if you're experiencing problems with an older SWI-Prolog version such as the one currently on the Linux computers.
+</p>
+<p>
+There are two files you will need to look at:
+<br/>
+<code>assignment1.pl</code>
+<br/>
+<code>library/assignment1_library.pl</code>
+</p><p>
+To find the answers you should not change anything in the library file (though you may
+want to make a small change in order to test Q5b). 
+You will have to use some of the predicates though.
+<br/>
+<br/>
+Note. The only predicates you can call in the library files are declared in the module call at the 
+top of this library file.
+</p>
+
+
+
+<h2>Before starting</h2>
+<p>
+<ol>
+<li>Open <code>assignment1.pl</code>. Change the candidate_number fact to use your own candidate number.</li>
+<li>Read the readme.txt file for info on how to run these assignments</li>
+</ol>
+</p>
+
+
+
+
+<h2> The world and agents</h2>
+
+<ul>
+<li>Start assignment 1 (see readme.txt) and view the web page. Make sure you have 
+run both the <code>?-start.</code> and <code>?-reset.</code> queries.
+<li>You should see a grid world, and an agent at a particular position in this world.
+<li>The agent can move around the grid horizontally or vertically (north, south, east or west).
+<li>The questions in this assignment look at how we move within and search this world using prolog.
+<li>The prolog code is linked with this web page and javascript is used to display the 
+world. You don't need to worry about this though, you'll just be using the 2 prolog 
+files we've supplied for this assignment Of course, feel free to take a look 
+if you wish!
+<li>You will notice a term <code>p(X,Y)</code> is used. This represents a position in the grid world. 
+</ul>
+
+
+
+
+<h2>Submission instructions</h2>
+<p>
+You should submit a single prolog file with name in the following format <code>ailp_assigment1_candidate-number.pl</code>.
+
+</p><p>
+E.g. <code>ailp_assignment1_12345.pl</code>
+</p><p>
+This file will contain the answers to each question in the form of a prolog fact or predicate.
+</p><p>
+At the top of the prolog file give the candidate number fact:
+</p><p>
+candidate_number(12345).
+</p>
+<p>
+The answers should be of 1 of the following types:
+<ul>
+<li>A prolog query, e.g. <code>q1(prolog_query).</code></li>
+<li>A number, e.g. <code>q1(1).</code></li>
+<li>A prolog list e.g. <code>q1([1,2,3,4]).</code></li>
+<li>A prolog predicate e.g. an implementation of <code>q8_spiral/1</code>.</li>
+</ul>
+</p>
+<p>
+If you load your answer script into prolog using for example <code>?-consult('ailp_assignment1_12345.pl').</code>,
+then your answers should be returned when you give the following queries:
+<br/>
+<code>?-q1(A1).</code>
+<br/>
+<code>?-q2(A2).</code>
+<br/>
+etc ...
+</p>
+
+<p style="font-weight:bold">
+***** Check that this runs before submitting *****
+</p>
+
+
+
+
+
+<h2>Questions</h2>
+
+
+
+
+<h2>Part A: Querying prolog <!--'Get a feel for the code' questions - students should look at the code
+and make simple commands to call different predicates-->
+</h2>
+
+</p><p>
+Q1. After using the <code>?-reset.</code> query and pressing step in the web page, you should be able
+to see your agent at its start position.
+What prolog query would you use to retrieve this position?
+</p><p>
+Answer example: <code>q1(prolog_query).</code>
+</p><p>
+Q2. Using the <code>new_pos/3</code> predicate, answer the following:
+</p><p>
+Q2a. Suppose your agent is at position <code>p(1,1)</code> and should 
+move east. Write a query to retrieve the new position of your agent.
+</p><p>
+Answer example: <code>q2a(prolog_query).</code>
+</p><p>
+Q2b. Suppose your agent is at position <code>p(1,1)</code> and wants to 
+move north. Write a query to retrieve the new position of your agent. 
+</p><p>
+As you can see this query DOES NOT succeed.
+On what line of <code>assignment1.pl</code> does prolog fail?
+</p><p>
+Answer example: <code>q2b(7).</code>
+</p>
+<p>NB. If you change the code above this line then the line numbers may change - so make sure you give the line number as in the original file.</p>
+Q3. 
+Look at the code and find the predicates (with 1 argument) that specify which direction the agent can move in.
+If an agent moves by simply calling this predicate, moving to the new position, then backtracking to retrieve another
+direction by calling this predicate again, what is the order of the directions that the agent will 
+move in?
+</p><p>
+Answer example: <code>q3([n,e,s,w]).</code>
+</p><p>
+
+
+
+
+<h2>Part B: Visualising search <!--'Look at the visualisation' questions - This looks at routes through the space
+using the web page-->
+</h2>
+<p>
+A path is a sequence of adjacent positions representing how the agent moves in the world.  
+
+</p><p>
+Q4. Run the query <code>?-next(L).</code>
+</p><p>
+Q4a.
+At some point the agent finds itself at a dead end and starts backtracking. 
+What is the path from the starting position right until the first dead end, just before the agent starts backtracking? 
+(make sure you give the whole path in your answer)
+</p><p>
+Answer example: <code>q4a([p(1, 1), p(1, 2), p(1, 3)]).</code>
+</p><p>
+Q4b.
+After backtracking once and thereby avoiding the first dead end, give the full path from the starting position to the second dead end. 
+</p><p>
+Answer example: <code>q4b([p(1, 1), p(1, 2), p(2, 2), p(2, 3)]).</code>
+</p>
+</p><p>
+Q4c.
+Give the first full path covering the whole grid found by the agent. <br>
+Hint: you may want to disable the visualisation to speed things up, by commenting out these lines: <br>
+<code>	%ailp_show_move(P,P1),</code><br>
+<code>	%do_command([mower,console,PsA],_R),</code>
+</p><p>
+Answer example: <code>q4c([p(1, 1), p(2, 1), p(3, 1), p(4, 1)]).</code>
+</p>
+Q4d.
+Give the second full path covering the whole grid found by the agent. <br>
+</p><p>
+Answer example: <code>q4d([p(1, 1), p(2, 1), p(3, 1), p(4, 1)]).</code>
+</p>
+<p>
+NB. Your answers to Q4c / Q4d may be the same as Q4a / Q4b, as the agent may cover the whole board without backtracking,
+and may also cover the whole board after backtracking a single time.
+</p>
+
+
+<h2>Part C: Coding questions <!-- students need to write some predicates of their own, in order to traverse
+the world in different ways-->
+</h2>
+</p><p>
+Q5. 
+Look in <code>assignment_library.pl</code> and find the predicate <code>ailp_show_move/2</code>.
+This predicate moves your agent between squares in the grid.
+</p><p>
+Q5a.
+Write a predicate called <code>q5_corner_move/0</code> that moves the agent between all 4 corner squares in the world, in any order.
+The agent should not visit any other squares.
+</p><p>
+Answer: The <code>q5_corner_move/0</code> predicate you have declared.
+We should be able to run <code>?-q5_corner_move.</code> to see the visualisation
+in the web browser.
+</p><p>
+Q5b.
+The ailp_grid_size predicate changes the size of the grid.
+If you change this predicate to 5 for example, does your <code>q5_corner_move/0</code> predicate
+still work?
+<br/><br/>
+Write another predicate <code>q5_corner_move2/0</code> that uses this <code>ailp_grid_size/1</code>
+predicate so that the agent moves between the corners no matter the size of the grid.
+(i.e. the locations are not hard coded)
+</p><p>
+Answer: The <code>q5_corner_move2/0</code> predicate you have declared.
+We should be able to run <code>?-q5_corner_move2.</code> to see the visualisation
+in the web browser.
+</p><p>
+NB. Don't forget to change the grid size back after you have tested this!
+</p><p>
+Q6. Write a predicate <code>q6_spiral/1</code> that has a single argument.
+The agent should start in one of the outer squares (any square next to the edge of the board), 
+and cover the board in a spiral (either clockwise or anticlockwise) such that it ends in one of the 4 central positions.
+</p><p>
+NB: The <code>?-reset.</code> query sets the agents position to your start position, so the first thing your predicate will need to 
+do is move the agent to an outer square (of your choice) if it is not already on one of these.
+</p><p>
+Answer: The <code>q6_spiral/1</code> predicate that you have declared (and other predicates you write, if any, that are called by <code>q6_spiral/1</code>).
+We should be able to run <code>?-q6_spiral(X).</code> to find the path and see the visualisation
+in the web browser.
+</p><p>
+NB. Use recursion / backtracking for this question.
+</p>
+</div>
+
+<!--FOOTER-->
+<!--UOB EDITED FOOTER-->
+<div class="uob-mega-footer-container clearfix"> 
+  <!-- navigation object : shared footer --> 
+  <!-- start content : corporate footer -->
+  <div class="uob-mega-footer width-master">
+    <div class="uob-mega-footer-col uob-mega-footer-col-1">
+      <h4>Department of Computer Science </h4>
+      <p class="uob-mega-footer-address"> University of Bristol<br/>
+        Department of Computer Science<br/>
+        Merchant Venturers Building<br/>
+        Woodland Road<br/>
+        Bristol BS8 1UB UK<br/>
+        +44 (0)117 331 5663 </p>
+      <h4>Information for</h4>
+      <ul class="list-users">
+        <li><a href="http://www.bris.ac.uk/engineering/departments/computerscience/courses/">Prospective students</a></li>
+        <li><a href="http://www.cs.bris.ac.uk/Partners/">Industrial partners</a></li>
+      </ul>
+      <h4>University social media </h4>
+    </div>
+    <div class="uob-mega-footer-col mega-footer-col-2">
+      <h4><a href="http://www.bris.ac.uk/engineering/departments/computerscience/research/">Research Groups</a></h4>
+      <ul>
+        <li><a href="http://www.bris.ac.uk/engineering/research/research-groups/vi-lab.html">Visual Information Laboratory</a></li>
+        <li><a href="http://www.bris.ac.uk/engineering/research/research-groups/cryptography.html">Cryptography</a></li>
+        <li><a href="http://www.bris.ac.uk/engineering/research/research-groups/interactiongraphics.html">Interaction and Graphics</a></li>
+        <li><a href="http://www.bris.ac.uk/engineering/research/research-groups/microelectronics.html">Microelectronics</a></li>
+        <!--<li><a href="http://www.bristol.ac.uk/prospectusrequest/">Request a prospectus</a></li>-->
+        <li><a href="http://www.bris.ac.uk/engineering/research/research-groups/intelligentsys.html">Intelligent Systems</a></li>
+      </ul>
+      <h4><a href="http://www.bristol.ac.uk/research/">Research</a> Centres</h4>
+      <ul>
+        <!--<li><a href="http://www.bristol.ac.uk/research/vision.html">Research vision</a></li>-->
+        <li><a href="https://www.acrc.bris.ac.uk">Advanced Computing Research Centre</a></li>
+        <li><a href="http://www.brl.ac.uk">Bristol Robotics Laboratory</a></li>
+        <li><a href="http://www.cs.bris.ac.uk/Research/ITLaw/">Centre for IT and Law</a></li>
+        <li><a href="http://www.cs.bris.ac.uk/Research/QuantumComputing/">Quantum Computation and Information</a></li>
+      </ul>
+    </div>
+    <div class="uob-mega-footer-col uob-mega-footer-col-3">
+      <h4><a href="http://www.bristol.ac.uk/university/">Explore the University</a></h4>
+      <ul>
+        <li><a href="http://www.bristol.ac.uk/maps/">Maps and travel</a></li>
+        <li><a href="http://www.bristol.ac.uk/university/visit/">Tours and visits</a></li>
+        <li><a href="http://www.bristol.ac.uk/citybristol/">Photo gallery</a></li>
+        <!--<li><a href="http://www.bristol.ac.uk/university/history/">History of the University</a></li>-->
+        <li><a href="http://www.bristol.ac.uk/university/governance/">Governance</a></li>
+        <li><a href="http://www.bristol.ac.uk/citybristol/">Explore the city of Bristol</a></li>
+      </ul>
+      <!--<h4><a href="http://www.bristol.ac.uk/business/">Business and enterprise</a></h4>
+			<ul>
+				<li><a href="http://www.bristol.ac.uk/research/business.html">Research collaboration</a></li>
+				<li><a href="http://www.bristol.ac.uk/red/">Research and Enterprise Development</a></li>
+			</ul>-->
+      <h4>&nbsp;</h4>
+      <h4><a href="http://www.bristol.ac.uk/jobs/">University Jobs</a></h4>
+      <ul>
+        <li><a href="http://www.bristol.ac.uk/jobs/">Working at Bristol</a></li>
+        <li><a href="http://www.bristol.ac.uk/jobs/find/index.html/">Job listings</a></li>
+      </ul>
+    </div>
+    <div class="uob-mega-footer-col uob-mega-footer-col-4">
+      <h4><a href="http://www.bristol.ac.uk/index/">A&ndash;Z of the University</a></h4>
+      <ul class="uob-mega-footer-a-z clearfix">
+        <li><a href="http://www.bristol.ac.uk/index/0">#</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/a">A</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/b">B</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/c">C</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/d">D</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/e">E</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/f">F</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/g">G</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/h">H</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/i">I</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/j">J</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/k">K</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/l">L</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/m">M</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/n">N</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/o">O</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/p">P</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/q">Q</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/r">R</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/s">S</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/t">T</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/u">U</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/v">V</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/w">W</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/x">X</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/y">Y</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/z">Z</a></li>
+        <li><a href="http://www.bristol.ac.uk/index/full" class="see-all">See all</a></li>
+      </ul>
+      <ul role="contentinfo">
+        <li><a href="http://www.bristol.ac.uk/help/">Help</a></li>
+        <li><a href="http://www.bristol.ac.uk/web/policies/terms-conditions.html">Terms and conditions</a></li>
+        <li><a href="http://www.bristol.ac.uk/web/policies/privacy-policy.html">Privacy and cookie policy</a></li>
+        <li><a href="http://www.bristol.ac.uk/web/policies/terms-conditions.html#copyright">&copy; 1995-2014 University of Bristol</a></li>
+      </ul>
+    </div>
+  </div>
+  <!-- end content : corporate footer --> 
+</div>
+</body>
+
+</html>
+
+
+
+
+
+
