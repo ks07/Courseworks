@@ -88,7 +88,7 @@ do_command(Command, Result) :-
 :- http_handler('/results', api_method_results, []).
 
 server_host('http://127.0.0.1').
-server_port(8000).
+server_port(56626).
 server_url(Url) :-
 	server_host(Host),
 	server_port(Port),
