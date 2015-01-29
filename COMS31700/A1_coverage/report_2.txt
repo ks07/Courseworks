@@ -1,0 +1,146 @@
+Coverage Report Summary Data by file
+
+File: alu_input_stage.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                        4         4         0     100.0
+    Branches                    16        14         2      87.5
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: alu_output_stage.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                       11        11         0     100.0
+    Branches                    24        22         2      91.6
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: calc1.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                        8         7         1      87.5
+    Branches                     2         1         1      50.0
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: checker.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                       19        19         0     100.0
+    Branches                    10        10         0     100.0
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: driver.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                      320       316         4      98.7
+    Branches                     6         5         1      83.3
+    Conditions                  11         9         2      81.8
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: exdbin_mac.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                     1046      1046         0     100.0
+    Branches                     8         8         0     100.0
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions               4599      3138      1461      68.2
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: holdreg.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                        9         9         0     100.0
+    Branches                    10        10         0     100.0
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: mux_out.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                        2         2         0     100.0
+    Branches                     8         8         0     100.0
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: priority.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                       43        42         1      97.6
+    Branches                    86        82         4      95.3
+    Conditions                  52        50         2      96.1
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       4         4         0     100.0
+    Transitions                  6         6         0     100.0
+
+File: reference_model.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                       60        40        20      66.6
+    Branches                    44        29        15      65.9
+    Conditions                  15         2        13      13.3
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: shifter.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                       70        70         0     100.0
+    Branches                  4228      2756      1472      65.1
+    Conditions                 192       128        64      66.6
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
+File: testbench.v
+    Enabled Coverage        Active      Hits    Misses % Covered
+    ----------------        ------      ----    ------ ---------
+    Stmts                        5         5         0     100.0
+    Branches                     0         0         0     100.0
+    Conditions                   0         0         0     100.0
+    Fec Conditions               0         0         0     100.0
+    Expressions                  0         0         0     100.0
+    Fec Expressions              0         0         0     100.0
+    States                       0         0         0     100.0
+    Transitions                  0         0         0     100.0
+
