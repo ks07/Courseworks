@@ -11,7 +11,17 @@ Perform stage 1:
 void stage1() {
 
   // fill in this function with solution
+  mpz_t N, e, m, tmp;
+  mpz_inits(N,e,m,tmp,NULL);
 
+  while (gmp_scanf("%ZX %ZX %ZX ",N,e,m) != EOF) {
+    //gmp_printf("%ZX\n%ZX\n%ZX\n",N,e,m);
+
+    // Encrypt: y = m ^ e mod N
+    mpz_powm_sec(tmp, m, e, N);
+
+    gmp_printf("%ZX\n",tmp);
+  }
 }
 
 /*
