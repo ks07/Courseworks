@@ -10,7 +10,6 @@ Perform stage 1:
 
 void stage1() {
 
-  // fill in this function with solution
   mpz_t N, e, m, tmp;
   mpz_inits(N,e,m,tmp,NULL);
 
@@ -34,8 +33,17 @@ Perform stage 2:
 
 void stage2() {
 
-  // fill in this function with solution
+  mpz_t N, d, p, q, d_p, d_q, i_p, i_q, c, tmp;
+  mpz_inits(N,d,p,q,d_p,d_q,i_p,i_q,c,tmp,NULL);
 
+  while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",N,d,p,q,d_p,d_q,i_p,i_q,c) != EOF) {
+    //gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",N,d,p,q,d_p,d_q,i_p,i_q,c);
+
+    // Decrypt: m = c ^ d mod N
+    mpz_powm_sec(tmp, c, d, N);
+
+    gmp_printf("%ZX\n",tmp);
+  }
 }
 
 /*
