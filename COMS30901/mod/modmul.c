@@ -56,8 +56,24 @@ Perform stage 3:
 
 void stage3() {
 
-  // fill in this function with solution
+  mpz_t p, q, g, h, m, y, c_1, c_2, tmp, tmp2;
+  mpz_inits(p,q,g,h,m,y,c_1,c_2,tmp,tmp2,NULL);
 
+  while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX ",p,q,g,h,m) != EOF) {
+    //    gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",p,q,g,h,m);
+
+    // Encrypt: c_1 = g^(y mod q) mod p, random 0<y<q
+    // c_2 = m * h^(y mod q) mod p
+    
+    // Set a fixed y = 1 for testing.
+    mpz_set_ui(y, 1);
+    mpz_powm_sec(c_1, g, y, p);
+    mpz_powm_sec(tmp, h, y, p);
+    mpz_mul(tmp2, tmp, m);
+    mpz_powm_ui(c_2, tmp2, 1, p);
+
+    gmp_printf("%ZX\n%ZX\n",c_1,c_2);
+  }
 }
 
 /*
