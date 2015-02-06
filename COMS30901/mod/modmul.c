@@ -56,11 +56,39 @@ Perform stage 3:
 
 void stage3() {
 
+  FILE *dev_random;
+  unsigned char in_char;
+  unsigned long int seed = 0;
+
   gmp_randstate_t randstate;
   mpz_t p, q, g, h, m, y, c_1, c_2, tmp, tmp2;
   mpz_inits(p,q,g,h,m,y,c_1,c_2,tmp,tmp2,NULL);
   gmp_randinit_mt(randstate); // Use the Mersenne Twister for random number generation.
-  gmp_randseed_ui(randstate, 1); // TODO: Set the seed from a source of randomness.
+
+  dev_random = fopen("/dev/random", "r");
+
+  if (dev_random == NULL) {
+    fprintf(stderr, "ERROR: Failed to open random source /dev/random\n");
+  } else {
+    const size_t char_count = ((sizeof seed) / (sizeof in_char));
+    for (size_t i = 0; i < char_count; i++) {
+      in_char = fgetc(dev_random);
+      //printf("Read char: %X\n", in_char);
+      if (feof(dev_random)) {
+	printf("Error: Out of random bits! (read: %zu)\n", i);
+	break;
+      }
+
+      seed = seed << (8 * sizeof in_char);
+      //printf("Shifted Seed: %lX\n", seed);
+      seed = seed | in_char;
+      //printf("And Seed: %lX\n", seed);
+    }
+  }
+
+  //printf("RNG Seed: %lX\n", seed);
+
+  gmp_randseed_ui(randstate, seed);
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX ",p,q,g,h,m) != EOF) {
     //    gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",p,q,g,h,m);
@@ -69,7 +97,7 @@ void stage3() {
     // c_2 = m * h^(y mod q) mod p
     
     // Set a fixed y = 1 for testing.
-    mpz_set_ui(y, 1);
+    //    mpz_set_ui(y, 1);
 
     // Set a random y for real implementation.
     mpz_urandomm(y, randstate, q);
