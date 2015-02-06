@@ -84,6 +84,8 @@ void stage3() {
       seed = seed | in_char;
       //printf("And Seed: %lX\n", seed);
     }
+
+    fclose(dev_random);
   }
 
   //printf("RNG Seed: %lX\n", seed);
