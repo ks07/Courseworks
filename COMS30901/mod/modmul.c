@@ -86,8 +86,23 @@ Perform stage 4:
 
 void stage4() {
 
-  // fill in this function with solution
+  mpz_t p, q, g, x, c_1, c_2, i_c_1, tmp, m;
+  mpz_inits(p,q,g,x,c_1,c_2,i_c_1,tmp,m,NULL);
 
+  while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX ",p,q,g,x,c_1,c_2) != EOF) {
+
+    // Decrypt: m = c_2 * c_1^(-x mod q) mod p
+    // ==> c_2 * c_1^(-1)^(x mod q) mod p
+
+    // TODO: Should we mod x?
+    mpz_invert(tmp, c_1, p);
+    mpz_powm_sec(i_c_1, tmp, x, p);
+
+    mpz_mul(tmp, i_c_1, c_2);
+    mpz_powm_ui(m, tmp, 1, p);
+
+    gmp_printf("%ZX\n",m);
+  }
 }
 
 /*
