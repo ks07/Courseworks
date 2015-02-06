@@ -56,8 +56,11 @@ Perform stage 3:
 
 void stage3() {
 
+  gmp_randstate_t randstate;
   mpz_t p, q, g, h, m, y, c_1, c_2, tmp, tmp2;
   mpz_inits(p,q,g,h,m,y,c_1,c_2,tmp,tmp2,NULL);
+  gmp_randinit_mt(randstate); // Use the Mersenne Twister for random number generation.
+  gmp_randseed_ui(randstate, 1); // TODO: Set the seed from a source of randomness.
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX ",p,q,g,h,m) != EOF) {
     //    gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",p,q,g,h,m);
@@ -67,6 +70,10 @@ void stage3() {
     
     // Set a fixed y = 1 for testing.
     mpz_set_ui(y, 1);
+
+    // Set a random y for real implementation.
+    mpz_urandomm(y, randstate, q);
+
     mpz_powm_sec(c_1, g, y, p);
     mpz_powm_sec(tmp, h, y, p);
     mpz_mul(tmp2, tmp, m);
