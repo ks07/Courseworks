@@ -39,11 +39,11 @@ next(P,L) :-
 
 next(_,Ps,Ps) :- complete(Ps).
 next(P,Ps,R) :-
-	m(M),
-	new_pos(P,M,P1),
-	\+ memberchk(P1,Ps),
-	ailp_show_move(P,P1),
-	term_to_atom([P1|Ps],PsA),
-	do_command([mower,console,PsA],_R),
-	next(P1,[P1|Ps],R).
+	m(M), %% Pick a direction, breadthwise: sewn
+	new_pos(P,M,P1), %% find a new pos with the direction
+	\+ memberchk(P1,Ps), %% if p1 is in ps then this fails
+	ailp_show_move(P,P1),  %% Vis
+	term_to_atom([P1|Ps],PsA), %% atom in pl is empty list, string, symbol (var)... fail otherwise. true if term/atom unify... vis
+	do_command([mower,console,PsA],_R), %% Vis
+	next(P1,[P1|Ps],R). %% Recurse to next pos
 

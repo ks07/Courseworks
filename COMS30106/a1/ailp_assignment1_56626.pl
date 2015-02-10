@@ -20,27 +20,33 @@ q4c([p(3, 3), p(3, 4), p(4, 4), p(4, 3), p(4, 2), p(3, 2), p(2, 2), p(2, 3), p(2
 %% Second path has a lot of backtracking
 q4d([p(3, 3), p(3, 4), p(4, 4), p(4, 3), p(4, 2), p(4, 1), p(3, 1), p(3, 2), p(2, 2), p(2, 3), p(2, 4), p(1, 4), p(1, 3), p(1, 2), p(1, 1), p(2, 1)]).
 
+%% Dumb hard-coded solution
 %% q5_corner_move :-
-%% 	ailp_show_move(p(0, 0), p(0, 4)),
-%% 	ailp_show_move(p(0, 4), p(4, 4)),
-%% 	ailp_show_move(p(4, 4), p(4, 0)),
-%% 	ailp_show_move(p(4, 0), p(0, 0)).
+%% 	ailp_start_position(S),
+%% 	ailp_show_move(S, p(1, 1)),
+%% 	ailp_show_move(p(1, 1), p(1, 4)),
+%% 	ailp_show_move(p(1, 4), p(4, 4)),
+%% 	ailp_show_move(p(4, 4), p(4, 1)),
+%% 	ailp_show_move(p(4, 1), p(1, 1)).
 
+%% Dumb over-engineered solution
 q5_corner_move :-
-	q5_corner_move_corners(C),
-	q5_corner_move_step([C]).
+	ailp_start_position(S),
+	term_to_atom([S],PathA),
+	do_command([mower,console,PathA],_),
+	q5_corner_move_step(S,[S]).
 
-q5_corner_move_corners(p(0, 0)).
-q5_corner_move_corners(p(0, 4)).
+q5_corner_move_corners(p(1, 1)).
+q5_corner_move_corners(p(1, 4)).
 q5_corner_move_corners(p(4, 4)).
-q5_corner_move_corners(p(4, 0)).
+q5_corner_move_corners(p(4, 1)).
 
-q5_corner_move_step(Path) :-
-	length(Path, 4).
-q5_corner_move_step(Path) :-
+q5_corner_move_step(_, Path) :-
+	length(Path, 5).
+q5_corner_move_step(Pos, Path) :-
 	q5_corner_move_corners(C),
 	\+ memberchk(C, Path),
-	Path = [P1|_],
-	write(P1), nl,
-	ailp_show_move(P1, C),
-	q5_corner_move_step([C|Path]).
+	ailp_show_move(Pos, C),
+	term_to_atom([C|Path],PathA),
+	do_command([mower,console,PathA],_),
+	q5_corner_move_step(C, [C|Path]).
