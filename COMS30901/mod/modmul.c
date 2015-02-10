@@ -33,16 +33,24 @@ Perform stage 2:
 
 void stage2() {
 
-  mpz_t N, d, p, q, d_p, d_q, i_p, i_q, c, m;
-  mpz_inits(N,d,p,q,d_p,d_q,i_p,i_q,c,m,NULL);
+  mpz_t N, d, p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2;
+  mpz_inits(N,d,p,q,d_p,d_q,i_p,i_q,c,m,m_1,m_2,NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",N,d,p,q,d_p,d_q,i_p,i_q,c) != EOF) {
     //gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",N,d,p,q,d_p,d_q,i_p,i_q,c);
 
     // Decrypt: m = c ^ d mod N
-    mpz_powm_sec(m, c, d, N);
+    // Using the CRT:
+    // m1 = c ^ (d_p mod p)
+    // m2 = c ^ (d_q mod q)
+    // h = i_q * (m1 - m2) mod p
+    // m = m2 + h * q
+
+    //    mpz_powm_sec(m, c, d, N);
 
     gmp_printf("%ZX\n",m);
+
+    
   }
 }
 
