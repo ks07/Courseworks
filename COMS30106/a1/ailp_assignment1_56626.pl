@@ -41,7 +41,8 @@ q5_corner_move_corners(p(4, 1)).
 
 %% Base case for recursion.
 q5_corner_move_step(_, Path) :-
-	length(Path, 5).
+	length(Path, 4).
+
 %% Recursive step.
 q5_corner_move_step(Pos, Path) :-
 	%% Find a corner to visit
