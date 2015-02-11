@@ -76,11 +76,18 @@ q5_corner_move_step2(Pos, Path) :-
 
 %% Spiral around the board starting from a corner.
 q6_spiral(Path) :-
-	%% Presume we are in 1,1 already...
+	%% Select a start corner/rotation pair
 	q5_corner_move_corners(Pos),
 	q6_rot(Rot),
 	q6_start_direction(Rot, Pos, Dir),
+	%% Force a reset so that once done backtracking the new spiral is clear. (Optional!)
+	reset,
+	%% Visualise from start position.
+	ailp_start_position(S),
+	ailp_show_move(S,Pos),
+	%% Step into recursive algo
 	q6_spiral_step(Rot, Dir, Pos, [Pos], PathR),
+	%% Reverse the path into the right order.
 	reverse(PathR, Path).
 
 %% Define the two possible rotations (counter-)clockwise
@@ -132,5 +139,9 @@ q6_spiral_step(Rot, Facing, Pos, Path, R) :-
 	new_pos(Pos,NFacing,Dest),
 	%% Dest should not be in path
 	\+ memberchk(Dest, Path),
+	%% Visualise
+	ailp_show_move(Pos, Dest),
+	term_to_atom([Dest|Path],PathA),
+	do_command([mower,console,PathA],_),
 	%% Recurse to next move
 	q6_spiral_step(Rot, NFacing, Dest, [Dest|Path], R).
