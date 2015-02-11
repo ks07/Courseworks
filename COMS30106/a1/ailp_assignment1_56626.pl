@@ -41,7 +41,10 @@ q5_corner_move_corners(p(4, 1)).
 
 %% Base case for recursion.
 q5_corner_move_step(_, Path) :-
-	length(Path, 4).
+	%% End when we've got a path of 4... (corners!)
+	length(Path, 4),
+	%% Shout 'finished!'
+	ailp_show_complete.
 
 %% Recursive step.
 q5_corner_move_step(Pos, Path) :-
@@ -73,7 +76,10 @@ q5_corner_move_corners2(p(X, Y)) :-
 
 %% Base case for recursion.
 q5_corner_move_step2(_, Path) :-
-	length(Path, 4).
+	%% End after visiting 4 corners
+	length(Path, 4),
+	%% Shout 'finished!'
+	ailp_show_complete.
 %% Alternatively could check the path holds all 4 corners: findall(C, q5_corner_move_corners2(C), B), subset(B, path).
 
 %% Recursive call to move between corners.
@@ -145,9 +151,9 @@ q6_counter_clockwise(Facing, NFacing) :-
 
 %% Given a rotation, direction of travel, position and path travelled search for a destination.
 q6_spiral_step(_, _, _, R, R) :-
-	%% Stop when we have visited every square. TODO: Call complete instead.
-	L is 4*4,
-	length(R,L).
+	%% Stop when we have visited every square.
+	complete(R).
+
 q6_spiral_step(Rot, Facing, Pos, Path, R) :-
 	%% Select a direction based on our direction.
 	q6_facing_try_direction(Rot, Facing, NFacing),
