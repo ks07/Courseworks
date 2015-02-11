@@ -77,13 +77,37 @@ q5_corner_move_step2(Pos, Path) :-
 %% Spiral around the board starting from a corner.
 q6_spiral(Path) :-
 	%% Presume we are in 1,1 already...
-	Pos = p(1,1),
-	q6_spiral_step(e, Pos, [Pos], Path).
+	q5_corner_move_corners(Pos),
+	q6_rot(Rot),
+	q6_start_direction(Rot, Pos, Dir),
+	q6_spiral_step(Rot, Dir, Pos, [Pos], PathR),
+	reverse(PathR, Path).
+
+%% Define the two possible rotations (counter-)clockwise
+q6_rot(c).
+q6_rot(cc).
+
+%% Pick a starting direction based on our location.
+
+%% We are on the north edge (x,1) going clockwise
+q6_start_direction(c, p(_, 1), e).
+%% On south edge going clockwise
+q6_start_direction(c, p(_, Y), w) :-
+	ailp_grid_size(Y).
+%% On north edge going counterclockwise
+q6_start_direction(cc, p(_, 1), w).
+%% On south edge going counterclockwise
+q6_start_direction(cc, p(_, Y), e) :-
+	ailp_grid_size(Y).
 
 %% Suggest a direction. Either continue or turn clockwise (in that order).
-q6_facing_try_direction(Facing, Try) :-
+q6_facing_try_direction(c, Facing, Try) :-
 	Try = Facing;
 	q6_clockwise(Facing, Try).
+
+q6_facing_try_direction(cc, Facing, Try) :-
+	Try = Facing;
+	q6_counter_clockwise(Facing, Try).
 
 %% Define clockwise turns.
 q6_clockwise(n, e).
@@ -91,17 +115,22 @@ q6_clockwise(e, s).
 q6_clockwise(s, w).
 q6_clockwise(w, n).
 
-%% Given a direction of travel, position and path travelled search for a destination.
-q6_spiral_step(_, _, R, R) :-
+%% Define counter-clockwise turns.
+q6_counter_clockwise(Facing, NFacing) :-
+	%% PROTIP: Counter-clockwise is the opposite!
+	q6_clockwise(NFacing, Facing).
+
+%% Given a rotation, direction of travel, position and path travelled search for a destination.
+q6_spiral_step(_, _, _, R, R) :-
 	%% Stop when we have visited every square. TODO: Call complete instead.
 	L is 4*4,
 	length(R,L).
-q6_spiral_step(Facing, Pos, Path, R) :-
+q6_spiral_step(Rot, Facing, Pos, Path, R) :-
 	%% Select a direction based on our direction.
-	q6_facing_try_direction(Facing, NFacing),
+	q6_facing_try_direction(Rot, Facing, NFacing),
 	%% Use new_pos to calculate the destination location given the direction (if poss).
 	new_pos(Pos,NFacing,Dest),
 	%% Dest should not be in path
 	\+ memberchk(Dest, Path),
 	%% Recurse to next move
-	q6_spiral_step(NFacing, Dest, [Dest|Path], R).
+	q6_spiral_step(Rot, NFacing, Dest, [Dest|Path], R).
