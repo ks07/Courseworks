@@ -50,3 +50,27 @@ q5_corner_move_step(Pos, Path) :-
 	term_to_atom([C|Path],PathA),
 	do_command([mower,console,PathA],_),
 	q5_corner_move_step(C, [C|Path]).
+
+q5_corner_move2 :-
+	ailp_start_position(S),
+	term_to_atom([S],PathA),
+	do_command([mower,console,PathA],_),
+	q5_corner_move_step2(S,[S]).
+
+q5_corner_move_corners2(p(X, Y)) :-
+	ailp_grid_size(S),
+	(Y = S; Y = 1),
+	(X = S; X = 1).
+
+q5_corner_move_step2(_, Path) :-
+	length(Path, 5).
+%% Alternatively:  findall(C, q5_corner_move_corners2(C), B), subset(B, path).
+
+q5_corner_move_step2(Pos, Path) :-
+	q5_corner_move_corners2(C),
+	\+ memberchk(C, Path),
+	ailp_show_move(Pos, C),
+	term_to_atom([C|Path],PathA),
+	do_command([mower,console,PathA],_),
+	q5_corner_move_step2(C, [C|Path]).
+	
