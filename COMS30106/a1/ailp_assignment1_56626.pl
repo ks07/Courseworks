@@ -130,12 +130,10 @@ q6_start_direction(cc, p(_, Y), e) :-
 	ailp_grid_size(Y).
 
 %% Suggest a direction. Either continue or turn clockwise (in that order).
+q6_facing_try_direction(_, Facing, Facing).
 q6_facing_try_direction(c, Facing, Try) :-
-	Try = Facing;
 	q6_clockwise(Facing, Try).
-
 q6_facing_try_direction(cc, Facing, Try) :-
-	Try = Facing;
 	q6_counter_clockwise(Facing, Try).
 
 %% Define clockwise turns.
