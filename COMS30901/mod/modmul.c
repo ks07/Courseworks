@@ -1,5 +1,66 @@
 #include "modmul.h"
 
+// x in G of order n, y less than n, window size k, t=x^y mod n
+void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned int k) {
+  size_t len = (size_t) pow(2.0, (double)(k - 1));
+  mpz_t T[len], x_sq, tmp;
+  long long i, l, y_size, lowest_hot;
+  unsigned int u; // TODO: Make hold 2^k
+
+  lowest_hot = 0 - 1;
+
+  mpz_init_set(T[0], x);
+  mpz_init(x_sq);
+  mpz_init(tmp);
+  mpz_mul(x_sq, x, x);
+  for (unsigned int ii = 1; ii < len; ii++) {
+    mpz_init(T[ii]);
+    mpz_mul(T[ii], T[ii-1], x_sq);
+  }
+
+  mpz_set_ui(t, 1); // t = 0G ?
+  y_size = mpz_sizeinbase(y, 2); // i = |y| - 1 
+  i = y_size - 1;
+
+  while (i >= 0) {
+    // if y[i] == 0; l = i, u = 0
+    if (mpz_tstbit(y, i) == 0) {
+      l = i;
+      u = 0;
+    } else {
+      l = fmax(i - k + 1, 0);
+      u = 0;
+      // TODO: mpz_scan1
+      for (long ii = i; ii >= (long)l; ii--) {
+	// Build u and check l;
+	u = u << 1;
+	u = u | mpz_tstbit(y, ii); // TODO: Don't do this
+	if (mpz_tstbit(y, ii)) {
+	  lowest_hot = ii;
+	  // u = u | 1 ?
+	}
+      }
+
+      l = lowest_hot;
+      if ( l == 0 - 1 ) {
+	abort();
+      }
+    }
+
+    // replaceme
+    mpz_powm_ui(tmp, t, pow(2, i-l+1), n);
+
+    if (u != 0) {
+      mpz_add(t, tmp, T[(u-1) >> 1]);
+    }
+
+    i = l - 1;
+  }
+
+  mpz_mod(tmp, t, n);
+  mpz_swap(t, tmp);
+}
+
 /*
 Perform stage 1:
 
@@ -45,7 +106,8 @@ void stage2() {
     // m2 = c ^ d_q mod q
     // h = i_q * (m1 - m2) mod p
     // m = m2 + h * q
-    mpz_powm_sec(m_1, c, d_p, p);
+    TWOk_ary_slide_ONEexp(m_1, c, d_p, p, 4);
+    //mpz_powm_sec(m_1, c, d_p, p);
     mpz_powm_sec(m_2, c, d_q, q);
     mpz_sub(msub, m_1, m_2);
     mpz_mul(tmp, i_q, msub);
@@ -162,6 +224,8 @@ int main( int argc, char* argv[] ) {
   if( argc != 2 ) {
     abort();
   }
+
+
 
   if     ( !strcmp( argv[ 1 ], "stage1" ) ) {
     stage1();

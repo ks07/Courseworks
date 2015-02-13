@@ -6,5 +6,6 @@
 
 #include <string.h>
 #include    <gmp.h>
+#include <tgmath.h>
 
 #endif

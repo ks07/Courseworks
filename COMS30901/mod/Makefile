@@ -1,7 +1,7 @@
  CC        = /usr/bin/gcc
- CC_FLAGS  = -Wall -std=gnu99 -m64 -O3 
+ CC_FLAGS  = -Wall -std=gnu99 -m64 -g
  CC_PATHS  = 
- CC_LIBS   =
+ CC_LIBS   = -lm
 
 # uncomment to use the older, default GMP installation
 #CC_PATHS +=
