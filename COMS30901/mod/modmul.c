@@ -1,5 +1,8 @@
 #include "modmul.h"
 
+// Toggle between pseudorandom Y and fixed Y for example comparison.
+#define FIXEDY
+
 void zp(mpz_t x) {
   gmp_printf("%Zd\n", x);
 }
@@ -38,10 +41,9 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned int k) {
       for (long ii = i; ii >= (long)l; ii--) {
 	// Build u and check l;
 	u = u << 1;
-	u = u | mpz_tstbit(y, ii); // TODO: Don't do this
 	if (mpz_tstbit(y, ii)) {
 	  lowest_hot = ii;
-	  // u = u | 1 ?
+	  u = u | 1;
 	}
       }
 
@@ -198,7 +200,11 @@ void stage3() {
     //    mpz_set_ui(y, 1);
 
     // Set a random y for real implementation.
+#ifdef FIXEDY
+    mpz_set_ui(y, 1);
+#else
     mpz_urandomm(y, randstate, q);
+#endif
 
     mpz_powm_sec(c_1, g, y, p);
     mpz_powm_sec(tmp, h, y, p);
