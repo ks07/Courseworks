@@ -76,6 +76,11 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned int k) {
 
   mpz_mod(tmp, t, n);
   mpz_swap(t, tmp);
+
+#ifndef NDEBUG
+  mpz_powm(tmp, x, y, n);
+  assert(mpz_cmp(t, tmp) == 0);
+#endif
 }
 
 /*

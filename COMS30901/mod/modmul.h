@@ -8,4 +8,7 @@
 #include    <gmp.h>
 #include <tgmath.h>
 
+//#define NDEBUG
+#include <assert.h>
+
 #endif
