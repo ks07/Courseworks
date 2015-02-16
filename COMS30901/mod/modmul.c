@@ -8,11 +8,14 @@ void zp(mpz_t x) {
 }
 
 // x in G of order n, y less than n, window size k, t=x^y mod n
-void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned int k) {
+void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) {
   size_t len = (size_t) pow(2.0, (double)(k - 1));
   mpz_t T[len], x_sq, tmp;
   long long i, l, y_size, lowest_hot;
-  unsigned int u; // TODO: Make hold 2^k
+  unsigned int u; // Must hold 2^k (width of >= k)
+
+  // Ensure we've picked sensible types for k and u.
+  assert(pow(2.0, 8.0*sizeof(k)) <= pow(2.0, 8.0*sizeof(u)));
 
   lowest_hot = 0 - 1;
 
