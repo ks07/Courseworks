@@ -1,5 +1,9 @@
 #include "modmul.h"
 
+void zp(mpz_t x) {
+  gmp_printf("%Zd\n", x);
+}
+
 // x in G of order n, y less than n, window size k, t=x^y mod n
 void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned int k) {
   size_t len = (size_t) pow(2.0, (double)(k - 1));
@@ -42,16 +46,29 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned int k) {
       }
 
       l = lowest_hot;
-      if ( l == 0 - 1 ) {
+
+      // Need to unshift to work with the lowest hot... better if reversed?
+      // UNLESS... l == 0!
+      const unsigned int to_shift = k - i + l - 1;
+      if (l != 0) {
+	u = u >> to_shift;
+      }
+
+      if ( l == 0 - 1 || mpz_tstbit(y,l) != 1) {
 	abort();
       }
     }
 
     // replaceme
-    mpz_powm_ui(tmp, t, pow(2, i-l+1), n);
+    double tp = pow(2.0, (double)i-l+1);
+    mpz_powm_ui(tmp, t, tp, n);
 
     if (u != 0) {
-      mpz_add(t, tmp, T[(u-1) >> 1]);
+      // Only bad people write multiplication with a +
+      mpz_mul(t, tmp, T[(u-1) >> 1]);
+    } else {
+      // TODO: nooo
+      mpz_swap(t, tmp);
     }
 
     i = l - 1;
@@ -78,7 +95,8 @@ void stage1() {
     //gmp_printf("%ZX\n%ZX\n%ZX\n",N,e,m);
 
     // Encrypt: y = m ^ e mod N
-    mpz_powm_sec(c, m, e, N);
+    //mpz_powm_sec(c, m, e, N);
+    TWOk_ary_slide_ONEexp(c, m, e, N, 4);
 
     gmp_printf("%ZX\n",c);
   }
@@ -225,6 +243,14 @@ int main( int argc, char* argv[] ) {
     abort();
   }
 
+  /* mpz_t x, y, n, r; */
+  /* mpz_inits(x,y,n,r,NULL); */
+  /* mpz_set_ui(n, 99999999999); */
+  /* gmp_scanf("%Zd %Zd",x,y); */
+  /* gmp_printf("Calc: %Zd ^ %Zd\n", x, y); */
+  /* TWOk_ary_slide_ONEexp(r, x, y, n, 4); */
+  /* gmp_printf("R: %Zd\n", r); */
+  /* return 0; */
 
 
   if     ( !strcmp( argv[ 1 ], "stage1" ) ) {
