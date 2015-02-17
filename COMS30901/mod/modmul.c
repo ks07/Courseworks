@@ -7,10 +7,7 @@ void zp(mpz_t x) {
   gmp_printf("%Zd\n", x);
 }
 
-void findRhoSq(mpz_t rho_sq, mpz_t b, mpz_t N) {
-  mpz_t k, tmp;
-  mpz_inits(k, tmp, NULL);
-
+void findRhoSq(mpz_t rho_sq, mpz_t N) {
   mpz_set_ui(rho_sq, 1);
   //  mpz_mod(rho_sq, rho_sq, N); // This is probably pointless... it's 1...
 
@@ -18,18 +15,62 @@ void findRhoSq(mpz_t rho_sq, mpz_t b, mpz_t N) {
 
   for (size_t i = 1; i <= lim; i++) {
     mpz_add(rho_sq, rho_sq, rho_sq); // Hmm...
-    mpz_mod(rho_sq, rho_sq, N); // Hmm...
+    if (mpz_cmp(rho_sq, N) >= 0) {
+      mpz_sub(rho_sq, rho_sq, N);
+    }
   }
 }
 
-void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N) {
-  mpz_set_ui(r, 0);
+void findOmega(mpz_t omega, mpz_t N) {
+  const size_t w = GMP_LIMB_BITS; // b = 2^w
+  mpz_t b;
+  mpz_init_set_ui(b, GMP_NUMB_MAX);
+  mpz_add_ui(b, b, 1);
+
+  assert(GMP_NUMB_MAX == pow(2.0, GMP_LIMB_BITS) - 1);
+
+  mpz_set_ui(omega, 1);
+  for (size_t i = 1; i < w; i++) {
+    mpz_mul(omega, omega, omega);
+    mpz_mul(omega, omega, N);
+    mpz_mod(omega, omega, b);
+  }
+  mpz_neg(omega, omega);
+  mpz_mod(omega, omega, b);
+}
+
+// Calculates x * y mod N (?)
+void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
+  mpz_t u, b, tmp;
+  mpz_inits(u, tmp, NULL);
+  mpz_init_set_ui(b, GMP_NUMB_MAX);
+  mpz_add_ui(b, b, 1);
 
   // lN = limb count?
   const size_t lN = mpz_size(N);
 
-  for (size_t i = 0; i <= lN - 1; i++) {
-    
+  mpz_set_ui(r, 0);
+
+  for (size_t i = 0; i < lN; i++) {
+    // TODO: Why is this in an mpz?
+    // u = (r0 + yi * x0) * omega (mod b)
+    mpz_set_ui(u, mpz_getlimbn(x, 0)); // u = x0
+    mpz_mul_ui(u, u, mpz_getlimbn(y, i)); // u = x0 * yi
+    mpz_add_ui(u, u, mpz_getlimbn(r, 0)); // u = r0 + yi * x0
+    mpz_mul(u, u, omega); // u = (r0 + yi * x0) * omega
+    mpz_mod(u, u, b); // mod b TODO: LOL
+
+    // r = (r + yi * x + u * N) / b
+    // r = (_r + (yi*x) + (u*N)) / b
+    mpz_mul_ui(tmp, x, mpz_getlimbn(y, i)); // tmp = (yi*x);
+    mpz_add(r, r, tmp); // r = _r + (yi*x)
+    mpz_mul(tmp, u, N); // tmp = (u*N)
+    mpz_add(r, r, tmp); // r = _r + (yi*x) + (u*N)
+    mpz_tdiv_q_2exp(r, r, GMP_LIMB_BITS); // TODO: niceify?
+  }
+
+  if (mpz_cmp(r, N) >= 0) {
+    mpz_sub(r, r, N);
   }
 }
 
@@ -280,7 +321,7 @@ the correct function for the requested stage.
 
 int main( int argc, char* argv[] ) {
   if( argc != 2 ) {
-    abort();
+    //abort();
   }
 
   /* mpz_t x, y, n, r; */
@@ -292,6 +333,34 @@ int main( int argc, char* argv[] ) {
   /* gmp_printf("R: %Zd\n", r); */
   /* return 0; */
 
+  /* mpz_t rho_sq, omega, N; */
+  /* mpz_inits(rho_sq, omega, N, NULL); */
+  /* mpz_set_ui(N, 667); */
+  /* findRhoSq(rho_sq, N); */
+  /* findOmega(omega, N); */
+  /* gmp_printf("%Zd\n%Zd\n%Zd\n", N, rho_sq, omega); */
+  /* return 0; */
+
+  mpz_t r, x, y, N, x_, y_, r_, one, omega, rho_sq;
+  mpz_inits(omega, rho_sq, x_, y_, r, r_, NULL);
+
+  mpz_init_set_ui(one, 1);
+  mpz_init_set_ui(x, 100);
+  mpz_init_set_ui(y, 20);
+  mpz_init_set_ui(N, 109);
+
+  findOmega(omega, N);
+  findRhoSq(rho_sq, N);
+
+  MontMul(x_, x, rho_sq, N, omega, rho_sq);
+  MontMul(y_, y, rho_sq, N, omega, rho_sq);
+  
+  MontMul(r_, x_, y_, N, omega, rho_sq);
+
+  MontMul(r, r_, one, N, omega, rho_sq);
+
+  gmp_printf("%Zd\n", x_);
+  return 0;
 
   if     ( !strcmp( argv[ 1 ], "stage1" ) ) {
     stage1();
