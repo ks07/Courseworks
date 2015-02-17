@@ -7,6 +7,32 @@ void zp(mpz_t x) {
   gmp_printf("%Zd\n", x);
 }
 
+void findRhoSq(mpz_t rho_sq, mpz_t b, mpz_t N) {
+  mpz_t k, tmp;
+  mpz_inits(k, tmp, NULL);
+
+  mpz_set_ui(rho_sq, 1);
+  //  mpz_mod(rho_sq, rho_sq, N); // This is probably pointless... it's 1...
+
+  const size_t lim = 2 * mpz_size(N) * GMP_LIMB_BITS; // GMP_NUMB_BITS == GMP_LIMB_BITS... or at least in our version of GMP
+
+  for (size_t i = 1; i <= lim; i++) {
+    mpz_add(rho_sq, rho_sq, rho_sq); // Hmm...
+    mpz_mod(rho_sq, rho_sq, N); // Hmm...
+  }
+}
+
+void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N) {
+  mpz_set_ui(r, 0);
+
+  // lN = limb count?
+  const size_t lN = mpz_size(N);
+
+  for (size_t i = 0; i <= lN - 1; i++) {
+    
+  }
+}
+
 // x in G of order n, y less than n, window size k, t=x^y mod n
 void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) {
   size_t len = (size_t) pow(2.0, (double)(k - 1));
