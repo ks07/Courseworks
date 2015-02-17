@@ -1,5 +1,5 @@
 #include "modmul.h"
-#include "limits.h"
+
 // Toggle between pseudorandom Y and fixed Y for example comparison.
 #define FIXEDY
 
@@ -74,12 +74,10 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   }
 }
 
-/* void pow2exp( */
-
 // x in G of order n, y less than n, window size k, t=x^y mod n
 void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) {
   size_t len = (size_t) pow(2.0, (double)(k - 1));
-  mpz_t T[len], x_sq, tmp, rho_sq, omega, x_, y_, one, t_;
+  mpz_t T[len], x_sq, tmp;
   long long i, l, y_size, lowest_hot;
   unsigned int u; // Must hold 2^k (width of >= k)
 
@@ -88,20 +86,9 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) 
 
   lowest_hot = 0 - 1;
 
-  mpz_init_set_ui(one, 1);
   mpz_init_set(T[0], x);
   mpz_init(x_sq);
   mpz_init(tmp);
-  mpz_inits(rho_sq, omega, x_, y_, t_, NULL);
-  findOmega(omega, n);
-  findRhoSq(rho_sq, n);
-
-  MontMul(x_, x, rho_sq, n, omega, rho_sq);
-  MontMul(y_, y, rho_sq, n, omega, rho_sq);
-
-  mpz_swap(x_, x);
-  mpz_swap(y_, y);
-
   mpz_mul(x_sq, x, x);
   for (unsigned int ii = 1; ii < len; ii++) {
     mpz_init(T[ii]);
@@ -109,10 +96,6 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) 
   }
 
   mpz_set_ui(t, 1); // t = 0G ?
-
-  MontMul(t_, t, rho_sq, n, omega, rho_sq);
-  mpz_swap(t_, t);
-
   y_size = mpz_sizeinbase(y, 2); // i = |y| - 1 
   i = y_size - 1;
 
@@ -150,12 +133,11 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) 
 
     // replaceme
     double tp = pow(2.0, (double)i-l+1);
-    //    mpz_powm_ui(tmp, t, tp, n);
+    mpz_powm_ui(tmp, t, tp, n);
 
     if (u != 0) {
       // Only bad people write multiplication with a +
-      MontMul(t, tmp, T[(u-1) >> 1], n, omega, rho_sq);
-      //mpz_mul(t, tmp, T[(u-1) >> 1]);
+      mpz_mul(t, tmp, T[(u-1) >> 1]);
     } else {
       // TODO: nooo
       mpz_swap(t, tmp);
@@ -164,18 +146,11 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) 
     i = l - 1;
   }
 
-  mpz_t t_;
-  mpz_init(t_);
-  MontMul(t_, t, one, n, omega, rho_sq);
-  mpz_swap(t_, t);
-
-  assert(mpz_cmp(t, n) < 0);
-
   mpz_mod(tmp, t, n);
   mpz_swap(t, tmp);
 
 #ifndef NDEBUG
-  mpz_powm(tmp, x_, y_, n);
+  mpz_powm(tmp, x, y, n);
   assert(mpz_cmp(t, tmp) == 0);
 #endif
 }
@@ -366,29 +341,26 @@ int main( int argc, char* argv[] ) {
   /* gmp_printf("%Zd\n%Zd\n%Zd\n", N, rho_sq, omega); */
   /* return 0; */
 
-  /* mpz_t r, x, y, N, x_, y_, r_, one, omega, rho_sq; */
-  /* mpz_inits(omega, rho_sq, x_, y_, r, r_, NULL); */
+  mpz_t r, x, y, N, x_, y_, r_, one, omega, rho_sq;
+  mpz_inits(omega, rho_sq, x_, y_, r, r_, NULL);
 
-  /* mpz_init_set_ui(one, 1); */
-  /* mpz_init_set_ui(x, ULONG_MAX); */
-  /* mpz_init_set_ui(y, ULONG_MAX); */
-  /* mpz_init_set_ui(N, 6977); */
+  mpz_init_set_ui(one, 1);
+  mpz_init_set_ui(x, 100);
+  mpz_init_set_ui(y, 20);
+  mpz_init_set_ui(N, 109);
 
-  /* mpz_add_ui(x, x, ULONG_MAX); */
-  /* mpz_add_ui(y, y, ULONG_MAX / 17); */
+  findOmega(omega, N);
+  findRhoSq(rho_sq, N);
 
-  /* findOmega(omega, N); */
-  /* findRhoSq(rho_sq, N); */
-
-  /* MontMul(x_, x, rho_sq, N, omega, rho_sq); */
-  /* MontMul(y_, y, rho_sq, N, omega, rho_sq); */
+  MontMul(x_, x, rho_sq, N, omega, rho_sq);
+  MontMul(y_, y, rho_sq, N, omega, rho_sq);
   
-  /* MontMul(r_, x_, y_, N, omega, rho_sq); */
+  MontMul(r_, x_, y_, N, omega, rho_sq);
 
-  /* MontMul(r, r_, one, N, omega, rho_sq); */
+  MontMul(r, r_, one, N, omega, rho_sq);
 
-  /* gmp_printf("%Zd\n%Zd\n%Zd\n", x, y, r); */
-  /* return 0; */
+  gmp_printf("%Zd\n", x_);
+  return 0;
 
   if     ( !strcmp( argv[ 1 ], "stage1" ) ) {
     stage1();
