@@ -1,5 +1,7 @@
 #include "modmul.h"
 
+#include "time.h"
+
 // Toggle between pseudorandom Y and fixed Y for example comparison.
 #define FIXEDY
 
@@ -314,6 +316,55 @@ void stage4() {
   }
 }
 
+void MontMul_test() {
+  gmp_randstate_t randstate;
+  mpz_t omega, rho_sq, N, one, x, y, r, x_m, y_m, r_m, r2;
+
+  mpz_inits(omega, rho_sq, N, one, x, y, r, x_m, y_m, r_m, r2, NULL);
+  mpz_set_ui(one, 1);
+
+  gmp_randinit_mt(randstate);
+  gmp_randseed_ui(randstate, time(NULL));
+
+  for (int i = 0; i < 10; i++) {
+    // Pick a modulus N of up to 1024 bits
+    mpz_urandomb(N, randstate, 1024); // 1024 bit
+    // Ensure N is at least 5
+    mpz_add_ui(N, N, 5);
+    // Find a prime larger than this number.
+    mpz_nextprime(N, N);
+
+    // Find the corresponding omega and rho_sq
+    findOmega(omega, N);
+    findRhoSq(rho_sq, N);
+
+    for (int j = 0; j < 10; j++) {
+      // Select some random x and y
+      mpz_urandomm(x, randstate, N);
+      mpz_urandomm(y, randstate, N);
+
+      // Calculate the Montgomery representation.
+      MontMul(x_m, x, rho_sq, N, omega, rho_sq);
+      MontMul(y_m, y, rho_sq, N, omega, rho_sq);
+
+      // Do the multiplication x * y mod N
+      mpz_mul(r, x, y);
+      mpz_mod(r, r, N);
+      MontMul(r_m, x_m, y_m, N, omega, rho_sq);
+
+      // Return r_m back to normal representation.
+      MontMul(r2, r_m, one, N, omega, rho_sq);
+
+      // Check results
+      if (mpz_cmp(r, r2) != 0) {
+	gmp_printf("[ERROR] Failed MontMul test on\n%Zx\n\t*\n%Zx\n\tGot\n%Zx\n", x, y, r2);
+	abort();
+      }
+    }
+  }
+  gmp_printf("[OK] Passed MontMul tests.\n");
+}
+
 /*
 The main function acts as a driver for the assignment by simply invoking
 the correct function for the requested stage.
@@ -321,7 +372,8 @@ the correct function for the requested stage.
 
 int main( int argc, char* argv[] ) {
   if( argc != 2 ) {
-    //abort();
+    MontMul_test();
+    return 0;
   }
 
   /* mpz_t x, y, n, r; */
@@ -340,27 +392,6 @@ int main( int argc, char* argv[] ) {
   /* findOmega(omega, N); */
   /* gmp_printf("%Zd\n%Zd\n%Zd\n", N, rho_sq, omega); */
   /* return 0; */
-
-  mpz_t r, x, y, N, x_, y_, r_, one, omega, rho_sq;
-  mpz_inits(omega, rho_sq, x_, y_, r, r_, NULL);
-
-  mpz_init_set_ui(one, 1);
-  mpz_init_set_ui(x, 100);
-  mpz_init_set_ui(y, 20);
-  mpz_init_set_ui(N, 109);
-
-  findOmega(omega, N);
-  findRhoSq(rho_sq, N);
-
-  MontMul(x_, x, rho_sq, N, omega, rho_sq);
-  MontMul(y_, y, rho_sq, N, omega, rho_sq);
-  
-  MontMul(r_, x_, y_, N, omega, rho_sq);
-
-  MontMul(r, r_, one, N, omega, rho_sq);
-
-  gmp_printf("%Zd\n", x_);
-  return 0;
 
   if     ( !strcmp( argv[ 1 ], "stage1" ) ) {
     stage1();
