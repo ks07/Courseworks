@@ -159,7 +159,7 @@ void TWOk_ary_slide_ONEexp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k
   mpz_init(tmp);
 
   // Make sure the square is also in Mont rep
-  MontMul(x_m_sq, x_, x_, N, omega, rho_sq);
+  MontMul(x_m_sq, x_m, x_m, N, omega, rho_sq);
 
   // Fill T using Mont rep values
   for (unsigned int ii = 1; ii < len; ii++) {
