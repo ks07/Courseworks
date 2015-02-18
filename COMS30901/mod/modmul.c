@@ -193,18 +193,14 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
 	}
       }
 
+      // Need to unshift to work with the lowest hot... better if reversed?
+      // shift right so we get u = y[i..l]
+      // we have shifted left (i - l + 1) times, shift right (sl - i + lh - 1)
+      const unsigned int to_shift = (i - l + 1) - i + lowest_hot - 1;
+      u = u >> to_shift;
       l = lowest_hot;
 
-      // Need to unshift to work with the lowest hot... better if reversed?
-      // UNLESS... l == 0!
-      const unsigned int to_shift = k - i + l - 1;
-      if (l != 0) {
-	u = u >> to_shift;
-      }
-
-      if ( l == 0 - 1 || mpz_tstbit(y,l) != 1) {
-	abort();
-      }
+      assert(l != 0 - 1 && mpz_tstbit(y,l) == 1);
     }
 
     // Calculate t ^ 2 ^ (i-l+1)
@@ -454,7 +450,7 @@ void SlidingMontExp_test() {
 
   for (int i = 0; i < 10; i++) {
     // Pick a modulus N of up to 1024 bits
-    mpz_urandomb(N, randstate, 3); // 1024 bit
+    mpz_urandomb(N, randstate, 1024); // 1024 bit
     // Ensure N is at least 5
     mpz_add_ui(N, N, 5);
     // Find a prime larger than this number.
