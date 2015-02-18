@@ -76,6 +76,7 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   }
 }
 
+// TODO: make me externally available
 static inline void GetMontRep(mpz_t x_m, mpz_t x, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   MontMul(x_m, x, rho_sq, N, omega, rho_sq);
 }
@@ -370,10 +371,9 @@ void stage4() {
 
 void MontMul_test() {
   gmp_randstate_t randstate;
-  mpz_t omega, rho_sq, N, one, x, y, r, x_m, y_m, r_m, r2;
+  mpz_t omega, rho_sq, N, x, y, r, x_m, y_m, r_m, r2;
 
-  mpz_inits(omega, rho_sq, N, one, x, y, r, x_m, y_m, r_m, r2, NULL);
-  mpz_set_ui(one, 1);
+  mpz_inits(omega, rho_sq, N, x, y, r, x_m, y_m, r_m, r2, NULL);
 
   gmp_randinit_mt(randstate);
   gmp_randseed_ui(randstate, time(NULL));
@@ -396,8 +396,8 @@ void MontMul_test() {
       mpz_urandomm(y, randstate, N);
 
       // Calculate the Montgomery representation.
-      MontMul(x_m, x, rho_sq, N, omega, rho_sq);
-      MontMul(y_m, y, rho_sq, N, omega, rho_sq);
+      GetMontRep(x_m, x, N, omega, rho_sq);
+      GetMontRep(y_m, y, N, omega, rho_sq);
 
       // Do the multiplication x * y mod N
       mpz_mul(r, x, y);
@@ -405,7 +405,7 @@ void MontMul_test() {
       MontMul(r_m, x_m, y_m, N, omega, rho_sq);
 
       // Return r_m back to normal representation.
-      MontMul(r2, r_m, one, N, omega, rho_sq);
+      UndoMontRep(r2, r_m, N, omega, rho_sq);
 
       // Check results
       if (mpz_cmp(r, r2) != 0) {
