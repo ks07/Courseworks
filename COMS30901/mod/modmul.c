@@ -51,6 +51,9 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   // lN = limb count?
   const size_t lN = mpz_size(N);
 
+  // Ensure r doesn't alias x or y!
+  assert(r->_mp_d != x->_mp_d && r->_mp_d != y->_mp_d);
+
   mpz_set_ui(r, 0);
 
   for (size_t i = 0; i < lN; i++) {
@@ -130,27 +133,46 @@ void MontRep_test() {
 }
 
 // x in G of order n, y less than n, window size k, t=x^y mod n
-void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) {
+void TWOk_ary_slide_ONEexp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
   size_t len = (size_t) pow(2.0, (double)(k - 1));
-  mpz_t T[len], x_sq, tmp;
+  mpz_t T_m[len], x_m_sq, tmp, x_m, t_m, rho_sq, omega;
   long long i, l, y_size, lowest_hot;
   unsigned int u; // Must hold 2^k (width of >= k)
 
   // Ensure we've picked sensible types for k and u.
   assert(pow(2.0, 8.0*sizeof(k)) <= pow(2.0, 8.0*sizeof(u)));
 
+  // Set lowest_hot out of bounds to flag up bugs. TODO: We know this isn't necessary.
   lowest_hot = 0 - 1;
 
-  mpz_init_set(T[0], x);
-  mpz_init(x_sq);
+
+  // Convert relevant values to Montgomery representation
+  mpz_inits(rho_sq, omega, x_m, t_m, NULL);
+  // Find the relevant rho_sq and omega values.
+  findRhoSq(rho_sq, N);
+  findOmega(omega, N);
+  GetMontRep(x_m, x_, N, omega, rho_sq);
+
+  // Use montgomery rep to seed T_m
+  mpz_init_set(T_m[0], x_m);
+  mpz_init(x_m_sq);
   mpz_init(tmp);
-  mpz_mul(x_sq, x, x);
+
+  // Make sure the square is also in Mont rep
+  MontMul(x_m_sq, x_, x_, N, omega, rho_sq);
+
+  // Fill T using Mont rep values
   for (unsigned int ii = 1; ii < len; ii++) {
-    mpz_init(T[ii]);
-    mpz_mul(T[ii], T[ii-1], x_sq);
+    mpz_init(T_m[ii]);
+    MontMul(T_m[ii], T_m[ii-1], x_m_sq, N, omega, rho_sq);
   }
 
-  mpz_set_ui(t, 1); // t = 0G ?
+  // t = 0G
+  mpz_set_ui(t_, 1); // TODO: We should (ab)use one here?
+
+  // Convert t to Mont rep
+  GetMontRep(t_m, t_, N, omega, rho_sq);
+
   y_size = mpz_sizeinbase(y, 2); // i = |y| - 1 
   i = y_size - 1;
 
@@ -186,27 +208,26 @@ void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) 
       }
     }
 
-    // replaceme
-    double tp = pow(2.0, (double)i-l+1);
-    mpz_powm_ui(tmp, t, tp, n);
+    // Calculate t ^ 2 ^ (i-l+1)
+    for (unsigned int ii = 0; ii < i-l+1; ii++) {
+      MontMul(tmp, t_m, t_m, N, omega, rho_sq);
+      mpz_swap(t_m, tmp); // Cannot alias tmp and t for MontMul, so swap after.
+    }
 
     if (u != 0) {
       // Only bad people write multiplication with a +
-      mpz_mul(t, tmp, T[(u-1) >> 1]);
-    } else {
-      // TODO: nooo
-      mpz_swap(t, tmp);
+      MontMul(tmp, t_m, T_m[(u-1) >> 1], N, omega, rho_sq);
+      mpz_swap(t_m, tmp); // Shove result back in t_m
     }
 
     i = l - 1;
   }
 
-  mpz_mod(tmp, t, n);
-  mpz_swap(t, tmp);
+  UndoMontRep(t_, t_m, N, omega, rho_sq);
 
 #ifndef NDEBUG
-  mpz_powm(tmp, x, y, n);
-  assert(mpz_cmp(t, tmp) == 0);
+  mpz_powm(tmp, x_, y, N);
+  assert(mpz_cmp(t_, tmp) == 0);
 #endif
 }
 
