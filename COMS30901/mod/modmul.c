@@ -133,7 +133,7 @@ void MontRep_test() {
 }
 
 // x in G of order n, y less than n, window size k, t=x^y mod n
-void TWOk_ary_slide_ONEexp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
+void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
   size_t len = (size_t) pow(2.0, (double)(k - 1));
   mpz_t T_m[len], x_m_sq, tmp, x_m, t_m, rho_sq, omega;
   long long i, l, y_size, lowest_hot;
@@ -144,7 +144,6 @@ void TWOk_ary_slide_ONEexp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k
 
   // Set lowest_hot out of bounds to flag up bugs. TODO: We know this isn't necessary.
   lowest_hot = 0 - 1;
-
 
   // Convert relevant values to Montgomery representation
   mpz_inits(rho_sq, omega, x_m, t_m, NULL);
@@ -225,10 +224,10 @@ void TWOk_ary_slide_ONEexp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k
 
   UndoMontRep(t_, t_m, N, omega, rho_sq);
 
-#ifndef NDEBUG
-  mpz_powm(tmp, x_, y, N);
-  assert(mpz_cmp(t_, tmp) == 0);
-#endif
+/* #ifndef NDEBUG */
+/*   mpz_powm(tmp, x_, y, N); */
+/*   assert(mpz_cmp(t_, tmp) == 0); */
+/* #endif */
 }
 
 /*
@@ -249,7 +248,7 @@ void stage1() {
 
     // Encrypt: y = m ^ e mod N
     //mpz_powm_sec(c, m, e, N);
-    TWOk_ary_slide_ONEexp(c, m, e, N, 4);
+    SlidingMontExp(c, m, e, N, 4);
 
     gmp_printf("%ZX\n",c);
   }
@@ -277,7 +276,7 @@ void stage2() {
     // m2 = c ^ d_q mod q
     // h = i_q * (m1 - m2) mod p
     // m = m2 + h * q
-    TWOk_ary_slide_ONEexp(m_1, c, d_p, p, 4);
+    SlidingMontExp(m_1, c, d_p, p, 4);
     //mpz_powm_sec(m_1, c, d_p, p);
     mpz_powm_sec(m_2, c, d_q, q);
     mpz_sub(msub, m_1, m_2);
@@ -299,14 +298,15 @@ Perform stage 3:
 */
 
 void stage3() {
+  mpz_t p, q, g, h, m, y, c_1, c_2, tmp, tmp2;
+  mpz_inits(p,q,g,h,m,y,c_1,c_2,tmp,tmp2,NULL);
 
+#ifndef FIXEDY
   FILE *dev_random;
   unsigned char in_char;
   unsigned long int seed = 0;
 
   gmp_randstate_t randstate;
-  mpz_t p, q, g, h, m, y, c_1, c_2, tmp, tmp2;
-  mpz_inits(p,q,g,h,m,y,c_1,c_2,tmp,tmp2,NULL);
   gmp_randinit_mt(randstate); // Use the Mersenne Twister for random number generation.
 
   dev_random = fopen("/dev/random", "r");
@@ -335,6 +335,7 @@ void stage3() {
   //printf("RNG Seed: %lX\n", seed);
 
   gmp_randseed_ui(randstate, seed);
+#endif
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX ",p,q,g,h,m) != EOF) {
     //    gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",p,q,g,h,m);
@@ -381,7 +382,8 @@ void stage4() {
 
     // TODO: Should we mod x?
     mpz_invert(tmp, c_1, p);
-    mpz_powm_sec(i_c_1, tmp, x, p);
+    SlidingMontExp(i_c_1, tmp, x, p, 4);
+    //mpz_powm_sec(i_c_1, tmp, x, p);
 
     mpz_mul(tmp, i_c_1, c_2);
     mpz_powm_ui(m, tmp, 1, p);
@@ -430,12 +432,51 @@ void MontMul_test() {
 
       // Check results
       if (mpz_cmp(r, r2) != 0) {
-	gmp_printf("[ERROR] Failed MontMul test on\n%Zx\n\t*\n%Zx\n\tGot\n%Zx\n", x, y, r2);
+	gmp_printf("[ERROR] Failed MontMul test on\n%Zx\n\t*\n%Zx\n\tmod\n%Zx\n\tGot\n%Zx\n", x, y, N, r2);
 	abort();
       }
     }
   }
   gmp_printf("[OK] Passed MontMul tests.\n");
+}
+
+
+void SlidingMontExp_test() {
+  gmp_randstate_t randstate;
+  mpz_t N, x, y, r, r2;
+
+  const unsigned int win_size = 4;
+
+  mpz_inits(N, x, y, r, r2, NULL);
+
+  gmp_randinit_mt(randstate);
+  gmp_randseed_ui(randstate, time(NULL));
+
+  for (int i = 0; i < 10; i++) {
+    // Pick a modulus N of up to 1024 bits
+    mpz_urandomb(N, randstate, 3); // 1024 bit
+    // Ensure N is at least 5
+    mpz_add_ui(N, N, 5);
+    // Find a prime larger than this number.
+    mpz_nextprime(N, N);
+
+    for (int j = 0; j < 10; j++) {
+      // Select some random x and y
+      mpz_urandomm(x, randstate, N);
+      mpz_urandomm(y, randstate, N);
+
+      // Do the exponentiation x ^ y mod N.
+      SlidingMontExp(r, x, y, N, win_size);
+      mpz_powm(r2, x, y, N);
+
+      // Check results
+      if (mpz_cmp(r, r2) != 0) {
+	gmp_printf("[ERROR] Failed SlidingMontExp test on\n%Zx\n\t^\n%Zx\n\tmod\n%Zx\n\tGot\n%Zx\n", x, y, N, r);
+	abort();
+      }
+    }
+  }
+  gmp_printf("[OK] Passed SlidingMontExp tests.\n");
 }
 
 /*
@@ -447,6 +488,7 @@ int main( int argc, char* argv[] ) {
   if( argc != 2 ) {
     MontRep_test();
     MontMul_test(); // TODO: Comment and abort()
+    SlidingMontExp_test();
     return 0;
   }
 
@@ -455,7 +497,7 @@ int main( int argc, char* argv[] ) {
   /* mpz_set_ui(n, 99999999999); */
   /* gmp_scanf("%Zd %Zd",x,y); */
   /* gmp_printf("Calc: %Zd ^ %Zd\n", x, y); */
-  /* TWOk_ary_slide_ONEexp(r, x, y, n, 4); */
+  /* SlidingMontExp(r, x, y, n, 4); */
   /* gmp_printf("R: %Zd\n", r); */
   /* return 0; */
 
