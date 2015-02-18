@@ -76,6 +76,58 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   }
 }
 
+static inline void GetMontRep(mpz_t x_m, mpz_t x, mpz_t N, mpz_t omega, mpz_t rho_sq) {
+  MontMul(x_m, x, rho_sq, N, omega, rho_sq);
+}
+
+static inline void UndoMontRep(mpz_t r, mpz_t r_m, mpz_t N, mpz_t omega, mpz_t rho_sq) {
+  mpz_t one;
+  mpz_init_set_ui(one, 1);
+  MontMul(r, r_m, one, N, omega, rho_sq);
+  mpz_clear(one);
+}
+
+void MontRep_test() {
+  gmp_randstate_t randstate;
+  mpz_t omega, rho_sq, N, r, r_m, r_;
+
+  mpz_inits(omega, rho_sq, N, r, r_m, r_, NULL);
+
+  gmp_randinit_mt(randstate);
+  gmp_randseed_ui(randstate, time(NULL));
+
+  for (int i = 0; i < 10; i++) {
+    // Pick a modulus N of up to 1024 bits
+    mpz_urandomb(N, randstate, 1024); // 1024 bit
+    // Ensure N is at least 5
+    mpz_add_ui(N, N, 5);
+    // Find a prime larger than this number.
+    mpz_nextprime(N, N);
+
+    // Find the corresponding omega and rho_sq
+    findOmega(omega, N);
+    findRhoSq(rho_sq, N);
+
+    for (int j = 0; j < 10; j++) {
+      // Select some random r
+      mpz_urandomm(r, randstate, N);
+
+      // Calculate the Montgomery representation.
+      GetMontRep(r_m, r, N, omega, rho_sq);
+
+      // Return r_m back to normal representation.
+      UndoMontRep(r_, r_m, N, omega, rho_sq);
+
+      // Check results
+      if (mpz_cmp(r, r_) != 0) {
+	gmp_printf("[ERROR] Failed MontRep test on\n%Zx\n\t=>\n%Zx\n\t=>\n%Zx\n", r, r_m, r_);
+	abort();
+      }
+    }
+  }
+  gmp_printf("[OK] Passed MontRep tests.\n");
+}
+
 // x in G of order n, y less than n, window size k, t=x^y mod n
 void TWOk_ary_slide_ONEexp(mpz_t t, mpz_t x, mpz_t y, mpz_t n, unsigned char k) {
   size_t len = (size_t) pow(2.0, (double)(k - 1));
@@ -372,7 +424,8 @@ the correct function for the requested stage.
 
 int main( int argc, char* argv[] ) {
   if( argc != 2 ) {
-    MontMul_test();
+    MontRep_test();
+    MontMul_test(); // TODO: Comment and abort()
     return 0;
   }
 
