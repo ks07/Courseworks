@@ -1,6 +1,6 @@
 #include "modmul.h"
 
-#define DEBUG
+#define MAX(A, B) ((A) > (B) ? (A) : (B))
 
 #ifdef DEBUG
 
@@ -38,7 +38,9 @@ void findOmega(mpz_t omega, mpz_t N) {
   mpz_init_set_ui(b, GMP_NUMB_MAX);
   mpz_add_ui(b, b, 1);
 
-  assert(GMP_NUMB_MAX == pow(2.0, GMP_LIMB_BITS) - 1); // We would shift here, if we could be sure of sizes!
+  // Slightly dodgy check to make sure that NUMB_MAX actually does
+  // match our expectation of LIMB_BITS
+  assert(GMP_NUMB_MAX == ((mp_limb_t) 0) - 1); // We would shift here, if we could be sure of
 
   mpz_set_ui(omega, 1);
   for (size_t i = 1; i < w; i++) {
@@ -149,7 +151,7 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
       l = i;
       u = 0;
     } else {
-      l = fmax(i - k + 1, 0);
+      l = MAX(i - k + 1, 0);
       u = 0;
       // TODO: mpz_scan1
       for (long ii = i; ii >= (long)l; ii--) {
