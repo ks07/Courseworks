@@ -48,6 +48,8 @@ void findOmega(mpz_t omega, mpz_t N) {
   }
   mpz_neg(omega, omega);
   mpz_mod(omega, omega, b);
+
+  mpz_clear(b);
 }
 
 // Calculates x * y mod N. x and y must be in montgomery representation.
@@ -86,6 +88,8 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   if (mpz_cmp(r, N) >= 0) {
     mpz_sub(r, r, N);
   }
+
+  mpz_clears(u, tmp, b, NULL);
 }
 
 // TODO: make me externally available
@@ -196,6 +200,12 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
   mpz_powm(tmp, x_, y, N);
   assert(mpz_cmp(t_, tmp) == 0);
 #endif
+
+  // Free temporary GMP vars
+  for (size_t ii = 0; ii < len; ii++) {
+    mpz_clear(T_m[ii]);
+  }
+  mpz_clears(tmp, rho_sq, omega, x_m, t_m, NULL);
 }
 
 /*
@@ -208,8 +218,8 @@ Perform stage 1:
 
 void stage1() {
 
-  mpz_t N, e, m, c;
-  mpz_inits(N,e,m,c,NULL);
+  mpz_t     N, e, m, c;
+  mpz_inits(N, e, m, c, NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX ",N,e,m) != EOF) {
     //gmp_printf("%ZX\n%ZX\n%ZX\n",N,e,m);
@@ -219,6 +229,8 @@ void stage1() {
 
     gmp_printf("%ZX\n",c);
   }
+
+  mpz_clears(N, e, m, c, NULL);
 }
 
 /*
@@ -231,15 +243,13 @@ Perform stage 2:
 
 void stage2() {
 
-  mpz_t N, d, p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp;
-  mpz_inits(N,d,p,q,d_p,d_q,i_p,i_q,c,m,m_1,m_2,h,msub,tmp,NULL);
+  mpz_t     N, d, p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq;
+  mpz_inits(N, d, p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",N,d,p,q,d_p,d_q,i_p,i_q,c) != EOF) {
     //gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",N,d,p,q,d_p,d_q,i_p,i_q,c);
 
     // CRT decryption:
-    mpz_t c_mp, c_mq;
-    mpz_inits(c_mp, c_mq, NULL);
     mpz_mod(c_mp, c, q);
     mpz_mod(c_mp, c, p);
     mpz_mod(c_mq, c, p);
@@ -255,6 +265,8 @@ void stage2() {
 
     gmp_printf("%ZX\n",m);
   }
+
+  mpz_clears(N, d, p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, NULL);
 }
 
 /*
@@ -266,8 +278,8 @@ Perform stage 3:
 */
 
 void stage3() {
-  mpz_t p, q, g, h, m, y, c_1, c_2, tmp, tmp2;
-  mpz_inits(p,q,g,h,m,y,c_1,c_2,tmp,tmp2,NULL);
+  mpz_t     p, q, g, h, m, y, c_1, c_2, tmp, tmp2;
+  mpz_inits(p, q, g, h, m, y, c_1, c_2, tmp, tmp2, NULL);
 
 #ifndef FIXEDY
   FILE *dev_random;
@@ -285,22 +297,17 @@ void stage3() {
     const size_t char_count = ((sizeof seed) / (sizeof in_char));
     for (size_t i = 0; i < char_count; i++) {
       in_char = fgetc(dev_random);
-      //printf("Read char: %X\n", in_char);
       if (feof(dev_random)) {
 	printf("Error: Out of random bits! (read: %zu)\n", i);
 	break;
       }
 
       seed = seed << (8 * sizeof in_char);
-      //printf("Shifted Seed: %lX\n", seed);
       seed = seed | in_char;
-      //printf("And Seed: %lX\n", seed);
     }
 
     fclose(dev_random);
   }
-
-  //printf("RNG Seed: %lX\n", seed);
 
   gmp_randseed_ui(randstate, seed);
 #endif
@@ -325,6 +332,12 @@ void stage3() {
 
     gmp_printf("%ZX\n%ZX\n",c_1,c_2);
   }
+
+#ifndef FIXEDY
+  gmp_randclear(randstate);
+#endif
+
+  mpz_clears(p, q, g, h, m, y, c_1, c_2, tmp, tmp2, NULL);
 }
 
 /*
@@ -337,8 +350,8 @@ Perform stage 4:
 
 void stage4() {
 
-  mpz_t p, q, g, x, c_1, c_2, i_c_1, tmp, m;
-  mpz_inits(p,q,g,x,c_1,c_2,i_c_1,tmp,m,NULL);
+  mpz_t     p, q, g, x, c_1, c_2, i_c_1, tmp, m;
+  mpz_inits(p, q, g, x, c_1, c_2, i_c_1, tmp, m, NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX ",p,q,g,x,c_1,c_2) != EOF) {
 
@@ -354,6 +367,8 @@ void stage4() {
 
     gmp_printf("%ZX\n",m);
   }
+
+  mpz_clears(p, q, g, x, c_1, c_2, i_c_1, tmp, m, NULL);
 }
 
 ////////////////////////////////////////////////////////////
@@ -394,6 +409,9 @@ void MontRep_test(gmp_randstate_t randstate) {
       }
     }
   }
+
+  mpz_clears(omega, rho_sq, N, r, r_m, r_, NULL);
+
   gmp_printf("[OK] Passed MontRep tests.\n");
 }
 
@@ -437,6 +455,9 @@ void MontMul_test(gmp_randstate_t randstate) {
       }
     }
   }
+
+  mpz_clears(omega, rho_sq, N, x, y, r, x_m, y_m, r_m, r2, NULL);
+
   gmp_printf("[OK] Passed MontMul tests.\n");
 }
 
@@ -470,6 +491,9 @@ void SlidingMontExp_test(gmp_randstate_t randstate) {
       }
     }
   }
+
+  mpz_clears(N, x, y, r, r2, NULL);
+
   gmp_printf("[OK] Passed SlidingMontExp tests.\n");
 }
 
