@@ -4,9 +4,13 @@
 #define DEBUG
 //#define FIXEDY
 
-// Just in case...
+// In case both NDEBUG and DEBUG are set, revert to NDEBUG only
+#ifdef NDEBUG
+
 #ifdef DEBUG
-#undef NDEBUG
+#undef DEBUG
+#endif
+
 #endif
 
 #include  <stdio.h>

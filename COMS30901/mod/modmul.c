@@ -190,7 +190,7 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
 
   UndoMontRep(t_, t_m, N, omega, rho_sq);
 
-#ifndef NDEBUG
+#ifdef DEBUG
   mpz_powm(tmp, x_, y, N);
   assert(mpz_cmp(t_, tmp) == 0);
 #endif
