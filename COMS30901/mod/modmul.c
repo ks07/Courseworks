@@ -54,33 +54,34 @@ void findOmega(mpz_t omega, mpz_t N) {
 
 // Calculates x * y mod N. x and y must be in montgomery representation.
 void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
-  mpz_t     u, tmp, b;
-  mpz_inits(u, tmp, NULL);
+  mp_limb_t u; // We can just use a limb type instead of another mpz var... (unless Nails are enabled!)
+  mpz_t    tmp, b;
+  mpz_init(tmp);
   mpz_init_set_ui(b, GMP_NUMB_MAX);
   mpz_add_ui(b, b, 1);
 
-  // lN = limb count?
+  // lN = limb count
   const size_t lN = mpz_size(N);
 
   // Ensure r doesn't alias x or y!
   assert(r->_mp_d != x->_mp_d && r->_mp_d != y->_mp_d);
 
+  // From the definition of omega it should only be a single lim... Ensure this is the case, else u is wrong.
+  assert(mpz_size(omega) == 1);
+
   mpz_set_ui(r, 0);
 
   for (size_t i = 0; i < lN; i++) {
-    // TODO: Why is this in an mpz?
     // u = (r0 + yi * x0) * omega (mod b)
-    mpz_set_ui(u, mpz_getlimbn(x, 0)); // u = x0
-    mpz_mul_ui(u, u, mpz_getlimbn(y, i)); // u = x0 * yi
-    mpz_add_ui(u, u, mpz_getlimbn(r, 0)); // u = r0 + yi * x0
-    mpz_mul(u, u, omega); // u = (r0 + yi * x0) * omega
-    mpz_mod(u, u, b); // mod b TODO: LOL
+    u = mpz_getlimbn(x, 0) * mpz_getlimbn(y, i); // u = x0 * yi
+    u += mpz_getlimbn(r, 0); // u = r0 + yi * x0
+    u *= mpz_getlimbn(omega, 0); // u = (r0 + yi * x0) * omega
 
     // r = (r + yi * x + u * N) / b
     // r = (_r + (yi*x) + (u*N)) / b
     mpz_mul_ui(tmp, x, mpz_getlimbn(y, i)); // tmp = (yi*x);
     mpz_add(r, r, tmp); // r = _r + (yi*x)
-    mpz_mul(tmp, u, N); // tmp = (u*N)
+    mpz_mul_ui(tmp, N, u); // tmp = (u*N)
     mpz_add(r, r, tmp); // r = _r + (yi*x) + (u*N)
     mpz_tdiv_q_2exp(r, r, GMP_LIMB_BITS); // TODO: niceify?
   }
@@ -89,7 +90,7 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
     mpz_sub(r, r, N);
   }
 
-  mpz_clears(u, tmp, b, NULL);
+  mpz_clears(tmp, b, NULL);
 }
 
 // TODO: make me externally available
@@ -461,7 +462,6 @@ void MontMul_test(gmp_randstate_t randstate) {
   gmp_printf("[OK] Passed MontMul tests.\n");
 }
 
-
 void SlidingMontExp_test(gmp_randstate_t randstate) {
   const unsigned int win_size = 4;
   mpz_t     N, x, y, r, r2;
@@ -469,7 +469,7 @@ void SlidingMontExp_test(gmp_randstate_t randstate) {
 
   for (int i = 0; i < 10; i++) {
     // Pick a modulus N of up to 1024 bits
-    mpz_urandomb(N, randstate, 1024); // 1024 bit
+    mpz_urandomb(N, randstate, 2048); // 1024 bit
     // Ensure N is at least 5
     mpz_add_ui(N, N, 5);
     // Find a prime larger than this number.
