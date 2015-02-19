@@ -1,5 +1,5 @@
  CC        = /usr/bin/gcc
- CC_FLAGS  = -Wall -std=gnu99 -m64 -g
+ CC_FLAGS  = -Wall -std=gnu99 -m64 -g -O3
  CC_PATHS  = 
  CC_LIBS   = -lm
 

@@ -135,24 +135,27 @@ void MontRep_test() {
 // x in G of order n, y less than n, window size k, t=x^y mod n
 void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
   const size_t len = 1 << (k - 1);
-  mpz_t T_m[len], x_m_sq, tmp, x_m, t_m, rho_sq, omega;
-  long long i, l, y_size, lowest_hot;
-  unsigned int u; // Must hold 2^k (width of >= k)
+  mpz_t T_m[len], tmp, rho_sq, omega, x_m, x_m_sq, t_m;
+  long long i, l, lowest_hot;
+  unsigned int u;
 
-  // Ensure we've picked sensible types for k and u.
-  assert(pow(2.0, 8.0*sizeof(k)) <= pow(2.0, 8.0*sizeof(u)));
+  // Ensure u is wide enough for k bits
+  assert( 8 * sizeof(u) >= k );
 
   // Ensure our input x is < N
   assert(mpz_cmp(x_, N) < 0);
 
-  // Set lowest_hot out of bounds to flag up bugs. TODO: We know this isn't necessary.
+  // Init mpz_t vars, except for T_m
+  mpz_inits(tmp, rho_sq, omega, x_m, x_m_sq, t_m, NULL);
+
+  // Set lowest_hot out of bounds to flag up bugs and hide compiler warning.
   lowest_hot = 0 - 1;
 
-  // Convert relevant values to Montgomery representation
-  mpz_inits(tmp, rho_sq, omega, x_m, x_m_sq, t_m, NULL);
   // Find the relevant rho_sq and omega values.
   findRhoSq(rho_sq, N);
   findOmega(omega, N);
+
+  // Convert relevant values to Montgomery representation
   GetMontRep(x_m, x_, N, omega, rho_sq);
 
   // Use montgomery rep to seed T_m
@@ -167,14 +170,16 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
     MontMul(T_m[ii], T_m[ii-1], x_m_sq, N, omega, rho_sq);
   }
 
+  // Free x_m_sq
+  mpz_clear(x_m_sq);
+
   // t = 0G
   mpz_set_ui(t_, 1); // TODO: We should (ab)use one here?
 
   // Convert t to Mont rep
   GetMontRep(t_m, t_, N, omega, rho_sq);
 
-  y_size = mpz_sizeinbase(y, 2); // i = |y| - 1 
-  i = y_size - 1;
+  i = mpz_sizeinbase(y, 2) - 1; // i = |y| - 1
 
   while (i >= 0) {
     // if y[i] == 0; l = i, u = 0
