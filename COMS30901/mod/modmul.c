@@ -136,7 +136,8 @@ void MontRep_test() {
 void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
   const size_t len = 1 << (k - 1);
   mpz_t T_m[len], tmp, rho_sq, omega, x_m, x_m_sq, t_m;
-  long long i, l, lowest_hot;
+  long long i, l;
+  mp_bitcnt_t lowest_hot = 0; // We don't really need to init this, but we want to lose compiler warnings.
   unsigned int u;
 
   // Ensure u is wide enough for k bits
@@ -147,9 +148,6 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
 
   // Init mpz_t vars, except for T_m
   mpz_inits(tmp, rho_sq, omega, x_m, x_m_sq, t_m, NULL);
-
-  // Set lowest_hot out of bounds to flag up bugs and hide compiler warning.
-  lowest_hot = 0 - 1;
 
   // Find the relevant rho_sq and omega values.
   findRhoSq(rho_sq, N);
@@ -206,7 +204,7 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
       u = u >> to_shift;
       l = lowest_hot;
 
-      assert(l != 0 - 1 && mpz_tstbit(y,l) == 1);
+      assert(l <= i && mpz_tstbit(y,l) == 1);
     }
 
     // Calculate t ^ 2 ^ (i-l+1)
