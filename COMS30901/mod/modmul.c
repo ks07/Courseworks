@@ -1,35 +1,44 @@
 #include "modmul.h"
 
+#define DEBUG
+
+#ifdef DEBUG
+
+// Use time.h for a simple seed for unit tests
 #include "time.h"
 
-// Toggle between pseudorandom Y and fixed Y for example comparison.
-#define FIXEDY
-
+// Convenience function for GDB use
 void zp(mpz_t x) {
   gmp_printf("%Zd\n", x);
 }
 
+// Enable fixed Y to compare against test vectors
+#define FIXEDY
+
+#endif
+
+// Finds the rho_sq value corresponding to N
 void findRhoSq(mpz_t rho_sq, mpz_t N) {
   mpz_set_ui(rho_sq, 1);
-  //  mpz_mod(rho_sq, rho_sq, N); // This is probably pointless... it's 1...
 
-  const size_t lim = 2 * mpz_size(N) * GMP_LIMB_BITS; // GMP_NUMB_BITS == GMP_LIMB_BITS... or at least in our version of GMP
+  const size_t lim = 2 * mpz_size(N) * GMP_LIMB_BITS;
 
   for (size_t i = 1; i <= lim; i++) {
-    mpz_add(rho_sq, rho_sq, rho_sq); // Hmm...
+    mpz_add(rho_sq, rho_sq, rho_sq);
     if (mpz_cmp(rho_sq, N) >= 0) {
-      mpz_sub(rho_sq, rho_sq, N);
+      mpz_sub(rho_sq, rho_sq, N); // mod N as we go
     }
   }
 }
 
+// Finds the omega value corresponding to N
 void findOmega(mpz_t omega, mpz_t N) {
   const size_t w = GMP_LIMB_BITS; // b = 2^w
   mpz_t b;
   mpz_init_set_ui(b, GMP_NUMB_MAX);
   mpz_add_ui(b, b, 1);
 
-  assert(GMP_NUMB_MAX == pow(2.0, GMP_LIMB_BITS) - 1);
+  assert(GMP_NUMB_MAX == pow(2.0, GMP_LIMB_BITS) - 1); // We would shift here, if we could be sure of sizes!
 
   mpz_set_ui(omega, 1);
   for (size_t i = 1; i < w; i++) {
@@ -41,9 +50,9 @@ void findOmega(mpz_t omega, mpz_t N) {
   mpz_mod(omega, omega, b);
 }
 
-// Calculates x * y mod N (?)
+// Calculates x * y mod N. x and y must be in montgomery representation.
 void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
-  mpz_t u, b, tmp;
+  mpz_t     u, tmp, b;
   mpz_inits(u, tmp, NULL);
   mpz_init_set_ui(b, GMP_NUMB_MAX);
   mpz_add_ui(b, b, 1);
@@ -89,47 +98,6 @@ static inline void UndoMontRep(mpz_t r, mpz_t r_m, mpz_t N, mpz_t omega, mpz_t r
   mpz_init_set_ui(one, 1);
   MontMul(r, r_m, one, N, omega, rho_sq);
   mpz_clear(one);
-}
-
-void MontRep_test() {
-  gmp_randstate_t randstate;
-  mpz_t omega, rho_sq, N, r, r_m, r_;
-
-  mpz_inits(omega, rho_sq, N, r, r_m, r_, NULL);
-
-  gmp_randinit_mt(randstate);
-  gmp_randseed_ui(randstate, time(NULL));
-
-  for (int i = 0; i < 10; i++) {
-    // Pick a modulus N of up to 1024 bits
-    mpz_urandomb(N, randstate, 1024); // 1024 bit
-    // Ensure N is at least 5
-    mpz_add_ui(N, N, 5);
-    // Find a prime larger than this number.
-    mpz_nextprime(N, N);
-
-    // Find the corresponding omega and rho_sq
-    findOmega(omega, N);
-    findRhoSq(rho_sq, N);
-
-    for (int j = 0; j < 10; j++) {
-      // Select some random r
-      mpz_urandomm(r, randstate, N);
-
-      // Calculate the Montgomery representation.
-      GetMontRep(r_m, r, N, omega, rho_sq);
-
-      // Return r_m back to normal representation.
-      UndoMontRep(r_, r_m, N, omega, rho_sq);
-
-      // Check results
-      if (mpz_cmp(r, r_) != 0) {
-	gmp_printf("[ERROR] Failed MontRep test on\n%Zx\n\t=>\n%Zx\n\t=>\n%Zx\n", r, r_m, r_);
-	abort();
-      }
-    }
-  }
-  gmp_printf("[OK] Passed MontRep tests.\n");
 }
 
 // x in G of order n, y less than n, window size k, t=x^y mod n
@@ -388,14 +356,50 @@ void stage4() {
   }
 }
 
-void MontMul_test() {
-  gmp_randstate_t randstate;
-  mpz_t omega, rho_sq, N, x, y, r, x_m, y_m, r_m, r2;
+////////////////////////////////////////////////////////////
+//////////////////////// UNIT TESTS ////////////////////////
+////////////////////////////////////////////////////////////
 
+#ifdef DEBUG
+void MontRep_test(gmp_randstate_t randstate) {
+  mpz_t     omega, rho_sq, N, r, r_m, r_;
+  mpz_inits(omega, rho_sq, N, r, r_m, r_, NULL);
+
+  for (int i = 0; i < 10; i++) {
+    // Pick a modulus N of up to 1024 bits
+    mpz_urandomb(N, randstate, 1024); // 1024 bit
+    // Ensure N is at least 5
+    mpz_add_ui(N, N, 5);
+    // Find a prime larger than this number.
+    mpz_nextprime(N, N);
+
+    // Find the corresponding omega and rho_sq
+    findOmega(omega, N);
+    findRhoSq(rho_sq, N);
+
+    for (int j = 0; j < 10; j++) {
+      // Select some random r
+      mpz_urandomm(r, randstate, N);
+
+      // Calculate the Montgomery representation.
+      GetMontRep(r_m, r, N, omega, rho_sq);
+
+      // Return r_m back to normal representation.
+      UndoMontRep(r_, r_m, N, omega, rho_sq);
+
+      // Check results
+      if (mpz_cmp(r, r_) != 0) {
+	gmp_printf("[ERROR] Failed MontRep test on\n%Zx\n\t=>\n%Zx\n\t=>\n%Zx\n", r, r_m, r_);
+	abort();
+      }
+    }
+  }
+  gmp_printf("[OK] Passed MontRep tests.\n");
+}
+
+void MontMul_test(gmp_randstate_t randstate) {
+  mpz_t     omega, rho_sq, N, x, y, r, x_m, y_m, r_m, r2;
   mpz_inits(omega, rho_sq, N, x, y, r, x_m, y_m, r_m, r2, NULL);
-
-  gmp_randinit_mt(randstate);
-  gmp_randseed_ui(randstate, time(NULL));
 
   for (int i = 0; i < 10; i++) {
     // Pick a modulus N of up to 1024 bits
@@ -437,16 +441,10 @@ void MontMul_test() {
 }
 
 
-void SlidingMontExp_test() {
-  gmp_randstate_t randstate;
-  mpz_t N, x, y, r, r2;
-
+void SlidingMontExp_test(gmp_randstate_t randstate) {
   const unsigned int win_size = 4;
-
+  mpz_t     N, x, y, r, r2;
   mpz_inits(N, x, y, r, r2, NULL);
-
-  gmp_randinit_mt(randstate);
-  gmp_randseed_ui(randstate, time(NULL));
 
   for (int i = 0; i < 10; i++) {
     // Pick a modulus N of up to 1024 bits
@@ -475,17 +473,38 @@ void SlidingMontExp_test() {
   gmp_printf("[OK] Passed SlidingMontExp tests.\n");
 }
 
+void runtests() {
+  // Define and init random state
+  gmp_randstate_t randstate;
+  gmp_randinit_mt(randstate);
+  gmp_randseed_ui(randstate, time(NULL));
+
+  // In some kind of strange catch-22, MontRep and MontMul rely on each other...
+  // ...so lets test them both!
+  MontRep_test(randstate);
+  MontMul_test(randstate);
+  SlidingMontExp_test(randstate);
+
+  gmp_randclear(randstate);
+}
+#endif
+
+////////////////////////////////////////////////////////////
+///////////////////// END OF UNIT TESTS ////////////////////
+////////////////////////////////////////////////////////////
+
 /*
 The main function acts as a driver for the assignment by simply invoking
 the correct function for the requested stage.
 */
-
 int main( int argc, char* argv[] ) {
   if( argc != 2 ) {
-    MontRep_test();
-    MontMul_test(); // TODO: Comment and abort()
-    SlidingMontExp_test();
+#ifdef DEBUG
+    runtests();
     return 0;
+#else
+    abort();
+#endif
   }
 
   if     ( !strcmp( argv[ 1 ], "stage1" ) ) {
