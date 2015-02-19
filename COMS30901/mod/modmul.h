@@ -21,4 +21,10 @@
 
 #include <assert.h>
 
+typedef struct MontParams {
+  mpz_t N;
+  mpz_t omega;
+  mpz_t rho_sq;
+} tMontParams;
+
 #endif
