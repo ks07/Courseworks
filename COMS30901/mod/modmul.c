@@ -313,11 +313,18 @@ void stage3() {
     mpz_urandomm(y, randstate, q);
 #endif
 
-    SlidingMontExp(c_1, g, y, p, 4);
-    SlidingMontExp(tmp, h, y, p, 4);
-    mpz_mul(tmp2, tmp, m);
-    mpz_mod(c_2, tmp2, p);
-
+    // TODO: Pass Mont params into various funcs!
+    mpz_t omega, rho_sq, m_m, tmp_m;
+    mpz_inits(omega, rho_sq, m_m, tmp_m, NULL);
+    findOmega(omega, p);
+    findRhoSq(rho_sq, p);
+    SlidingMontExp(c_1, g, y, p, 4); // c_1 = g ^ y mod p
+    SlidingMontExp(tmp, h, y, p, 4); // tmp = h ^ y mod p
+    GetMontRep(m_m, m, p, omega, rho_sq);
+    GetMontRep(tmp_m, tmp, p, omega, rho_sq);
+    MontMul(c_2, m_m, tmp_m, p, omega, rho_sq); // c_2 = m * (h ^ y) mod p;
+    UndoMontRep(tmp, c_2, p, omega, rho_sq);
+    mpz_swap(tmp, c_2);
     gmp_printf("%ZX\n%ZX\n",c_1,c_2);
   }
 
