@@ -134,7 +134,7 @@ void MontRep_test() {
 
 // x in G of order n, y less than n, window size k, t=x^y mod n
 void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
-  size_t len = (size_t) pow(2.0, (double)(k - 1));
+  const size_t len = 1 << (k - 1);
   mpz_t T_m[len], x_m_sq, tmp, x_m, t_m, rho_sq, omega;
   long long i, l, y_size, lowest_hot;
   unsigned int u; // Must hold 2^k (width of >= k)
