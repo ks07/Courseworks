@@ -216,8 +216,6 @@ void stage1() {
   mpz_inits(N, e, m, c, NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX ",N,e,m) != EOF) {
-    //gmp_printf("%ZX\n%ZX\n%ZX\n",N,e,m);
-
     // Encrypt: y = m ^ e mod N
     SlidingMontExp(c, m, e, N, 4);
 
@@ -241,8 +239,6 @@ void stage2() {
   mpz_inits(N, d, p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",N,d,p,q,d_p,d_q,i_p,i_q,c) != EOF) {
-    //gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",N,d,p,q,d_p,d_q,i_p,i_q,c);
-
     // CRT decryption:
     mpz_mod(c_mp, c, q);
     mpz_mod(c_mp, c, p);
@@ -292,7 +288,7 @@ void stage3() {
     for (size_t i = 0; i < char_count; i++) {
       in_char = fgetc(dev_random);
       if (feof(dev_random)) {
-	printf("Error: Out of random bits! (read: %zu)\n", i);
+	fprintf(stderr, "Error: Out of random bits! (read: %zu)\n", i);
 	break;
       }
 
@@ -307,8 +303,6 @@ void stage3() {
 #endif
 
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX ",p,q,g,h,m) != EOF) {
-    //    gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",p,q,g,h,m);
-
     // Encrypt: c_1 = g^(y mod q) mod p, random 0<y<q
     // c_2 = m * h^(y mod q) mod p
 
