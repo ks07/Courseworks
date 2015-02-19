@@ -142,6 +142,9 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
   // Ensure we've picked sensible types for k and u.
   assert(pow(2.0, 8.0*sizeof(k)) <= pow(2.0, 8.0*sizeof(u)));
 
+  // Ensure our input x is < N
+  assert(mpz_cmp(x_, N) < 0);
+
   // Set lowest_hot out of bounds to flag up bugs. TODO: We know this isn't necessary.
   lowest_hot = 0 - 1;
 
@@ -264,8 +267,14 @@ void stage2() {
     //gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",N,d,p,q,d_p,d_q,i_p,i_q,c);
 
     // CRT decryption:
-    SlidingMontExp(m_1, c, d_p, p, 4); // m1 = c ^ d_p mod p
-    SlidingMontExp(m_2, c, d_q, q, 4); // m2 = c ^ d_q mod q
+    mpz_t c_mp, c_mq;
+    mpz_inits(c_mp, c_mq, NULL);
+    mpz_mod(c_mp, c, q);
+    mpz_mod(c_mp, c, p);
+    mpz_mod(c_mq, c, p);
+    mpz_mod(c_mq, c, q);
+    SlidingMontExp(m_1, c_mp, d_p, p, 4); // m1 = c ^ d_p mod p
+    SlidingMontExp(m_2, c_mq, d_q, q, 4); // m2 = c ^ d_q mod q
 
     mpz_sub(msub, m_1, m_2); // msub = (m1 - m2)
     mpz_mul(tmp, i_q, msub); // tmp = i_q * (m1 - m2)
