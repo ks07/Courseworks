@@ -55,8 +55,6 @@ void findOmega(mpz_t omega, mpz_t N) {
 // Calculates x * y mod N. x and y must be in montgomery representation.
 void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   mp_limb_t u; // We can just use a limb type instead of another mpz var... (unless Nails are enabled!)
-  mpz_t    tmp;
-  mpz_init(tmp);
 
   // lN = limb count
   const size_t lN = mpz_size(N);
@@ -75,20 +73,15 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
     u += mpz_getlimbn(r, 0); // u = r0 + yi * x0
     u *= mpz_getlimbn(omega, 0); // u = (r0 + yi * x0) * omega
 
-    // r = (r + yi * x + u * N) / b
-    // r = (_r + (yi*x) + (u*N)) / b
-    mpz_mul_ui(tmp, x, mpz_getlimbn(y, i)); // tmp = (yi*x);
-    mpz_add(r, r, tmp); // r = _r + (yi*x)
-    mpz_mul_ui(tmp, N, u); // tmp = (u*N)
-    mpz_add(r, r, tmp); // r = _r + (yi*x) + (u*N)
-    mpz_tdiv_q_2exp(r, r, GMP_LIMB_BITS); // TODO: niceify?
+    // r = (r + x * yi + u * N) / b
+    mpz_addmul_ui(r, x, mpz_getlimbn(y, i)); // r = r_ + (x * yi)
+    mpz_addmul_ui(r, N, u); // r = (r_ + (x * yi)) + (N * u)
+    mpz_tdiv_q_2exp(r, r, GMP_LIMB_BITS); // r = (r + x * yi + u * N) / b
   }
 
   if (mpz_cmp(r, N) >= 0) {
     mpz_sub(r, r, N);
   }
-
-  mpz_clears(tmp, NULL);
 }
 
 // TODO: make me externally available
