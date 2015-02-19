@@ -55,10 +55,8 @@ void findOmega(mpz_t omega, mpz_t N) {
 // Calculates x * y mod N. x and y must be in montgomery representation.
 void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
   mp_limb_t u; // We can just use a limb type instead of another mpz var... (unless Nails are enabled!)
-  mpz_t    tmp, b;
+  mpz_t    tmp;
   mpz_init(tmp);
-  mpz_init_set_ui(b, GMP_NUMB_MAX);
-  mpz_add_ui(b, b, 1);
 
   // lN = limb count
   const size_t lN = mpz_size(N);
@@ -90,7 +88,7 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, mpz_t N, mpz_t omega, mpz_t rho_sq) {
     mpz_sub(r, r, N);
   }
 
-  mpz_clears(tmp, b, NULL);
+  mpz_clears(tmp, NULL);
 }
 
 // TODO: make me externally available
