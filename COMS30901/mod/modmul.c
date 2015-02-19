@@ -488,23 +488,6 @@ int main( int argc, char* argv[] ) {
     return 0;
   }
 
-  /* mpz_t x, y, n, r; */
-  /* mpz_inits(x,y,n,r,NULL); */
-  /* mpz_set_ui(n, 99999999999); */
-  /* gmp_scanf("%Zd %Zd",x,y); */
-  /* gmp_printf("Calc: %Zd ^ %Zd\n", x, y); */
-  /* SlidingMontExp(r, x, y, n, 4); */
-  /* gmp_printf("R: %Zd\n", r); */
-  /* return 0; */
-
-  /* mpz_t rho_sq, omega, N; */
-  /* mpz_inits(rho_sq, omega, N, NULL); */
-  /* mpz_set_ui(N, 667); */
-  /* findRhoSq(rho_sq, N); */
-  /* findOmega(omega, N); */
-  /* gmp_printf("%Zd\n%Zd\n%Zd\n", N, rho_sq, omega); */
-  /* return 0; */
-
   if     ( !strcmp( argv[ 1 ], "stage1" ) ) {
     stage1();
   }
