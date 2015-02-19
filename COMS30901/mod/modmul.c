@@ -146,7 +146,7 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
   lowest_hot = 0 - 1;
 
   // Convert relevant values to Montgomery representation
-  mpz_inits(rho_sq, omega, x_m, t_m, NULL);
+  mpz_inits(tmp, rho_sq, omega, x_m, x_m_sq, t_m, NULL);
   // Find the relevant rho_sq and omega values.
   findRhoSq(rho_sq, N);
   findOmega(omega, N);
@@ -154,8 +154,6 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
 
   // Use montgomery rep to seed T_m
   mpz_init_set(T_m[0], x_m);
-  mpz_init(x_m_sq);
-  mpz_init(tmp);
 
   // Make sure the square is also in Mont rep
   MontMul(x_m_sq, x_m, x_m, N, omega, rho_sq);
@@ -220,10 +218,10 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, mpz_t N, unsigned char k) {
 
   UndoMontRep(t_, t_m, N, omega, rho_sq);
 
-/* #ifndef NDEBUG */
-/*   mpz_powm(tmp, x_, y, N); */
-/*   assert(mpz_cmp(t_, tmp) == 0); */
-/* #endif */
+#ifndef NDEBUG
+  mpz_powm(tmp, x_, y, N);
+  assert(mpz_cmp(t_, tmp) == 0);
+#endif
 }
 
 /*
@@ -243,7 +241,6 @@ void stage1() {
     //gmp_printf("%ZX\n%ZX\n%ZX\n",N,e,m);
 
     // Encrypt: y = m ^ e mod N
-    //mpz_powm_sec(c, m, e, N);
     SlidingMontExp(c, m, e, N, 4);
 
     gmp_printf("%ZX\n",c);
@@ -266,20 +263,15 @@ void stage2() {
   while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",N,d,p,q,d_p,d_q,i_p,i_q,c) != EOF) {
     //gmp_printf("%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n%ZX\n",N,d,p,q,d_p,d_q,i_p,i_q,c);
 
-    // Decrypt: m = c ^ d mod N
-    // Using the CRT:
-    // m1 = c ^ d_p mod p
-    // m2 = c ^ d_q mod q
-    // h = i_q * (m1 - m2) mod p
-    // m = m2 + h * q
-    SlidingMontExp(m_1, c, d_p, p, 4);
-    //mpz_powm_sec(m_1, c, d_p, p);
-    mpz_powm_sec(m_2, c, d_q, q);
-    mpz_sub(msub, m_1, m_2);
-    mpz_mul(tmp, i_q, msub);
-    mpz_powm_ui(h, tmp, 1, p);
-    mpz_mul(tmp, h, q);
-    mpz_add(m, m_2, tmp);
+    // CRT decryption:
+    SlidingMontExp(m_1, c, d_p, p, 4); // m1 = c ^ d_p mod p
+    SlidingMontExp(m_2, c, d_q, q, 4); // m2 = c ^ d_q mod q
+
+    mpz_sub(msub, m_1, m_2); // msub = (m1 - m2)
+    mpz_mul(tmp, i_q, msub); // tmp = i_q * (m1 - m2)
+    mpz_mod(h, tmp, p); // h = i_q * (m1 - m2) mod p
+    mpz_mul(tmp, h, q); // tmp = h * q
+    mpz_add(m, m_2, tmp); // m = m2 + h * q
 
     gmp_printf("%ZX\n",m);
   }
@@ -338,9 +330,6 @@ void stage3() {
 
     // Encrypt: c_1 = g^(y mod q) mod p, random 0<y<q
     // c_2 = m * h^(y mod q) mod p
-    
-    // Set a fixed y = 1 for testing.
-    //    mpz_set_ui(y, 1);
 
     // Set a random y for real implementation.
 #ifdef FIXEDY
@@ -349,10 +338,10 @@ void stage3() {
     mpz_urandomm(y, randstate, q);
 #endif
 
-    mpz_powm_sec(c_1, g, y, p);
-    mpz_powm_sec(tmp, h, y, p);
+    SlidingMontExp(c_1, g, y, p, 4);
+    SlidingMontExp(tmp, h, y, p, 4);
     mpz_mul(tmp2, tmp, m);
-    mpz_powm_ui(c_2, tmp2, 1, p);
+    mpz_mod(c_2, tmp2, p);
 
     gmp_printf("%ZX\n%ZX\n",c_1,c_2);
   }
@@ -379,10 +368,9 @@ void stage4() {
     // TODO: Should we mod x?
     mpz_invert(tmp, c_1, p);
     SlidingMontExp(i_c_1, tmp, x, p, 4);
-    //mpz_powm_sec(i_c_1, tmp, x, p);
 
     mpz_mul(tmp, i_c_1, c_2);
-    mpz_powm_ui(m, tmp, 1, p);
+    mpz_mod(m, tmp, p);
 
     gmp_printf("%ZX\n",m);
   }
