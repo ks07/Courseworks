@@ -106,7 +106,6 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, tMontParams *mp) {
   }
 }
 
-// TODO: make me externally available
 static inline void GetMontRep(mpz_t x_m, mpz_t x, tMontParams *mp) {
   MontMul(x_m, x, mp->rho_sq, mp);
 }
@@ -164,7 +163,7 @@ void SlidingMontExp(mpz_t t_m, mpz_t x_m, mpz_t y, tMontParams *mp, const unsign
     } else {
       l = MAX(i - k + 1, 0);
       u = 0;
-      // TODO: mpz_scan1
+
       for (long ii = i; ii >= (long)l; ii--) {
 	// Build u and check l;
 	u = u << 1;
