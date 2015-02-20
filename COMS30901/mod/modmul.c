@@ -357,18 +357,24 @@ void stage3() {
     mpz_urandomm(y, randstate, q);
 #endif
 
-    // TODO: Pass mont rep vals into Slide
-    mpz_t omega, rho_sq, m_m, tmp_m;
-    mpz_inits(omega, rho_sq, m_m, tmp_m, NULL);
-    findOmega(omega, mp.N);
-    findRhoSq(rho_sq, mp.N);
+    // Convert to Mont rep
+    GetMontRep(tmp, g, &mp);
+    mpz_swap(g, tmp);
+    GetMontRep(tmp, h, &mp);
+    mpz_swap(h, tmp);
+    GetMontRep(tmp, m, &mp);
+    mpz_swap(m, tmp);
+
     SlidingMontExp(c_1, g, y, &mp, 4); // c_1 = g ^ y mod p
     SlidingMontExp(tmp, h, y, &mp, 4); // tmp = h ^ y mod p
-    GetMontRep(m_m, m, &mp);
-    GetMontRep(tmp_m, tmp, &mp);
-    MontMul(c_2, m_m, tmp_m, &mp); // c_2 = m * (h ^ y) mod p;
+    MontMul(c_2, m, tmp, &mp); // c_2 = m * (h ^ y) mod p;
+
+    // Get back out
+    UndoMontRep(tmp, c_1, &mp);
+    mpz_swap(c_1, tmp);
     UndoMontRep(tmp, c_2, &mp);
-    mpz_swap(tmp, c_2);
+    mpz_swap(c_2, tmp);
+
     gmp_printf("%ZX\n%ZX\n",c_1,c_2);
   }
 
@@ -377,6 +383,7 @@ void stage3() {
 #endif
 
   mpz_clears(q, g, h, m, y, c_1, c_2, tmp, NULL);
+  tMontParams_clear(&mp);
 }
 
 /*
@@ -399,16 +406,21 @@ void stage4() {
 
     // TODO: Should we mod x?
     mpz_invert(tmp, c_1, mp.N);
-    SlidingMontExp(i_c_1, tmp, x, &mp, 4);
 
-    // TODO: MontMul and Slide change and no tmp
-    mpz_mul(tmp, i_c_1, c_2);
-    mpz_mod(m, tmp, mp.N);
+    GetMontRep(c_1, tmp, &mp);
+    GetMontRep(tmp, c_2, &mp);
+    mpz_swap(c_2, tmp);
+
+    SlidingMontExp(i_c_1, c_1, x, &mp, 4);
+    MontMul(tmp, i_c_1, c_2, &mp);
+
+    UndoMontRep(m, tmp, &mp);
 
     gmp_printf("%ZX\n",m);
   }
 
   mpz_clears(q, g, x, c_1, c_2, i_c_1, tmp, m, NULL);
+  tMontParams_clear(&mp);
 }
 
 ////////////////////////////////////////////////////////////
