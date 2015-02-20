@@ -23,7 +23,7 @@
 
 typedef struct MontParams {
   mpz_t N;
-  mpz_t omega;
+  mp_limb_t omega;
   mpz_t rho_sq;
 } tMontParams;
 

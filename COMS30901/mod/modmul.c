@@ -32,46 +32,42 @@ void findRhoSq(mpz_t rho_sq, mpz_t N) {
 }
 
 // Finds the omega value corresponding to N TODO: no mpz_t?
-void findOmega(mpz_t omega, mpz_t N) {
-  const size_t w = GMP_LIMB_BITS; // b = 2^w
-  mpz_t b;
-  mpz_init_set_ui(b, GMP_NUMB_MAX);
-  mpz_add_ui(b, b, 1);
+mp_limb_t findOmega(mpz_t N) {
+  const size_t w = GMP_LIMB_BITS;
+  mp_limb_t omega = 1;
 
   // Slightly dodgy check to make sure that NUMB_MAX actually does
   // match our expectation of LIMB_BITS
   assert(GMP_NUMB_MAX == ((mp_limb_t) 0) - 1);
 
-  mpz_set_ui(omega, 1);
   for (size_t i = 1; i < w; i++) {
-    mpz_mul(omega, omega, omega);
-    mpz_mul(omega, omega, N);
-    mpz_mod(omega, omega, b);
+    omega *= omega;
+    omega *= mpz_getlimbn(N, 0); // Only need the bottom limb, due to the implicit mod.
   }
-  mpz_neg(omega, omega);
-  mpz_mod(omega, omega, b);
+  omega = GMP_NUMB_MAX - omega + 1;
 
-  mpz_clear(b);
+  return omega;
 }
 
 // Initialises the tMontParams from an N.
 void tMontParams_init(tMontParams *mp, mpz_t N) {
-  mpz_inits(mp->rho_sq, mp->omega, NULL);
+  mpz_init(mp->rho_sq);
   mpz_init_set(mp->N, N);
   findRhoSq(mp->rho_sq, mp->N);
-  findOmega(mp->omega, mp->N);
+  mp->omega = findOmega(mp->N);
 }
 
 // Initialises the tMontParams with a preset N.
 void tMontParams_init2(tMontParams *mp) {
-  mpz_inits(mp->rho_sq, mp->omega, NULL);
+  mpz_init(mp->rho_sq);
   findRhoSq(mp->rho_sq, mp->N);
-  findOmega(mp->omega, mp->N);
+  mp->omega = findOmega(mp->N);
 }
 
 // Clears all initialised values in the tMontParams
 void tMontParams_clear(tMontParams *mp) {
-  mpz_clears(mp->N, mp->rho_sq, mp->omega, NULL);
+  mpz_clears(mp->N, mp->rho_sq, NULL);
+  mp->omega = 0; // Not strictly necessary
 }
 
 // Calculates x * y mod N. x and y must be in montgomery representation.
@@ -84,16 +80,13 @@ void MontMul(mpz_t r, mpz_t x, mpz_t y, tMontParams *mp) {
   // Ensure r doesn't alias x or y!
   assert(r->_mp_d != x->_mp_d && r->_mp_d != y->_mp_d);
 
-  // From the definition of omega it should only be a single lim... Ensure this is the case, else u is wrong.
-  assert(mpz_size(mp->omega) == 1);
-
   mpz_set_ui(r, 0);
 
   for (size_t i = 0; i < lN; i++) {
     // u = (r0 + yi * x0) * omega (mod b)
     u = mpz_getlimbn(x, 0) * mpz_getlimbn(y, i); // u = x0 * yi
     u += mpz_getlimbn(r, 0); // u = r0 + yi * x0
-    u *= mpz_getlimbn(mp->omega, 0); // u = (r0 + yi * x0) * omega
+    u *= mp->omega; // u = (r0 + yi * x0) * omega
 
     // r = (r + x * yi + u * N) / b
     mpz_addmul_ui(r, x, mpz_getlimbn(y, i)); // r = r_ + (x * yi)
