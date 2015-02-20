@@ -31,7 +31,7 @@ void findRhoSq(mpz_t rho_sq, mpz_t N) {
   }
 }
 
-// Finds the omega value corresponding to N
+// Finds the omega value corresponding to N TODO: no mpz_t?
 void findOmega(mpz_t omega, mpz_t N) {
   const size_t w = GMP_LIMB_BITS; // b = 2^w
   mpz_t b;
@@ -40,7 +40,7 @@ void findOmega(mpz_t omega, mpz_t N) {
 
   // Slightly dodgy check to make sure that NUMB_MAX actually does
   // match our expectation of LIMB_BITS
-  assert(GMP_NUMB_MAX == ((mp_limb_t) 0) - 1); // We would shift here, if we could be sure of
+  assert(GMP_NUMB_MAX == ((mp_limb_t) 0) - 1);
 
   mpz_set_ui(omega, 1);
   for (size_t i = 1; i < w; i++) {
@@ -124,7 +124,7 @@ void SlidingMontExp(mpz_t t_m, mpz_t x_m, mpz_t y, tMontParams *mp, const unsign
   mp_bitcnt_t lowest_hot = 0; // We don't really need to init this, but we want to lose compiler warnings.
   unsigned int u;
 
-  mpz_t     tmp, x_m_sq, T_m[len]; // TODO: Nice init
+  mpz_t     tmp, x_m_sq, T_m[len];
   mpz_inits(tmp, x_m_sq, NULL);
 
   // Ensure u is wide enough for k bits
@@ -225,25 +225,26 @@ Perform stage 1:
 
 void stage1() {
   tMontParams mp;
-  mpz_t     e, m, m_m, c, c_m;
-  mpz_inits(e, m, m_m, c, c_m, mp.N, NULL);
+  mpz_t     e, m, c, tmp;
+  mpz_inits(e, m, c, tmp, mp.N, NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX ",mp.N,e,m) != EOF) {
     tMontParams_init2(&mp);
 
     // Change to mont rep.
-    GetMontRep(m_m, m, &mp); // TODO: We can get away with a single mont/temp var!
+    GetMontRep(tmp, m, &mp);
+    mpz_swap(m, tmp);
 
     // Encrypt: y = m ^ e mod N
-    SlidingMontExp(c_m, m_m, e, &mp, 4);
+    SlidingMontExp(tmp, m, e, &mp, 4);
 
     // Get back out.
-    UndoMontRep(c, c_m, &mp);
+    UndoMontRep(c, tmp, &mp);
 
     gmp_printf("%ZX\n",c);
   }
 
-  mpz_clears(e, m, m_m, c, c_m, NULL);
+  mpz_clears(e, m, c, tmp, NULL);
   tMontParams_clear(&mp);
 }
 
@@ -260,6 +261,7 @@ void stage2() {
   mpz_t     d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq;
   mpz_inits(d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, mp_p.N, mp_q.N, NULL);
 
+  // Skip reading N and d
   while (gmp_scanf("%*ZX %*ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",mp_p.N,mp_q.N,d_p,d_q,i_p,i_q,c) != EOF) {
     tMontParams_init2(&mp_p);
     tMontParams_init2(&mp_q);
@@ -395,30 +397,31 @@ Perform stage 4:
 
 void stage4() {
   tMontParams mp;
-  mpz_t     q, g, x, c_1, c_2, i_c_1, tmp, m;
-  mpz_inits(q, g, x, c_1, c_2, i_c_1, tmp, m, mp.N, NULL);
+  mpz_t     q, x, c_1, c_2, tmp, tmp2, m;
+  mpz_inits(q, x, c_1, c_2, tmp, tmp2, m, mp.N, NULL);
 
-  while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX %ZX ",mp.N,q,g,x,c_1,c_2) != EOF) {
+  // Skip reading g
+  while (gmp_scanf("%ZX %ZX %*ZX %ZX %ZX %ZX ",mp.N,q,x,c_1,c_2) != EOF) {
     tMontParams_init2(&mp);
     // Decrypt: m = c_2 * c_1^(-x mod q) mod p
     // ==> c_2 * c_1^(-1)^(x mod q) mod p
 
     // TODO: Should we mod x?
-    mpz_invert(tmp, c_1, mp.N);
+    mpz_invert(tmp, c_1, mp.N); // tmp = c_1 ^ -1 mod p
 
-    GetMontRep(c_1, tmp, &mp);
+    GetMontRep(c_1, tmp, &mp); // c_1 = Mont(tmp)
     GetMontRep(tmp, c_2, &mp);
     mpz_swap(c_2, tmp);
 
-    SlidingMontExp(i_c_1, c_1, x, &mp, 4);
-    MontMul(tmp, i_c_1, c_2, &mp);
+    SlidingMontExp(tmp, c_1, x, &mp, 4); // tmp = (c_1 ^ -1 mod p) ^ x mod p
+    MontMul(tmp2, tmp, c_2, &mp); // tmp2 = c_2 * tmp mod p
 
-    UndoMontRep(m, tmp, &mp);
+    UndoMontRep(m, tmp2, &mp);
 
     gmp_printf("%ZX\n",m);
   }
 
-  mpz_clears(q, g, x, c_1, c_2, i_c_1, tmp, m, NULL);
+  mpz_clears(q, x, c_1, c_2, tmp, tmp2, m, NULL);
   tMontParams_clear(&mp);
 }
 
