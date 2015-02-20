@@ -265,15 +265,27 @@ void stage2() {
     tMontParams_init2(&mp_p);
     tMontParams_init2(&mp_q);
 
-    // CRT decryption:
     mpz_mod(c_mp, c, mp_q.N);
     mpz_mod(c_mp, c, mp_p.N);
     mpz_mod(c_mq, c, mp_p.N);
     mpz_mod(c_mq, c, mp_q.N);
+
+    // Get Montgomery representation. Do some flipping so we don't need another mpz_t
+    GetMontRep(tmp, c_mp, &mp_p);
+    mpz_swap(c_mp, tmp);
+    GetMontRep(tmp, c_mq, &mp_q);
+    mpz_swap(c_mq, tmp);
+
     SlidingMontExp(m_1, c_mp, d_p, &mp_p, 4); // m1 = c ^ d_p mod p
     SlidingMontExp(m_2, c_mq, d_q, &mp_q, 4); // m2 = c ^ d_q mod q
 
-    // TODO: Do we need to undo here? And can we use MontMul?
+    // Unfortunately we need to come out of montgomery rep to do the subtraction.
+    // Might be more efficient to not use MontMul at all in CRT?
+    UndoMontRep(tmp, m_1, &mp_p);
+    mpz_swap(m_1, tmp);
+    UndoMontRep(tmp, m_2, &mp_q);
+    mpz_swap(m_2, tmp);
+
     mpz_sub(msub, m_1, m_2); // msub = (m1 - m2)
     mpz_mul(tmp, i_q, msub); // tmp = i_q * (m1 - m2)
     mpz_mod(h, tmp, mp_p.N); // h = i_q * (m1 - m2) mod p
