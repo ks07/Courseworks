@@ -209,6 +209,64 @@ void SlidingMontExp(mpz_t t_m, mpz_t x_m, mpz_t y, tMontParams *mp, const unsign
   mpz_clear(tmp);
 }
 
+// Encrypts the message m into RSA ciphertext c.
+// Parameters should be copied - only the result param is guaranteed to be correct after invocation.
+void encryptRSA(mpz_t c, mpz_t N, mpz_t e, mpz_t m, mpz_t tmp) {
+  tMontParams mp;
+  tMontParams_init(&mp, N);
+
+  // Change to mont rep.
+  GetMontRep(tmp, m, &mp);
+  mpz_swap(m, tmp);
+
+  // Encrypt: y = m ^ e mod N
+  SlidingMontExp(tmp, m, e, &mp, WINDOW_SIZE);
+
+  // Get back out.
+  UndoMontRep(c, tmp, &mp);
+
+  tMontParams_clear(&mp);
+}
+
+// Decrypts the RSA ciphertext c into message m using the CRT.
+// Parameters should be copied - only the result param is guaranteed to be correct after invocation.
+void decryptRSA(mpz_t m, mpz_t p, mpz_t q, mpz_t d_p, mpz_t d_q, mpz_t i_p, mpz_t i_q, mpz_t c,
+		mpz_t m_1, mpz_t m_2, mpz_t h, mpz_t msub, mpz_t tmp, mpz_t c_mp, mpz_t c_mq) {
+  tMontParams mp_p, mp_q;
+  tMontParams_init(&mp_p, p);
+  tMontParams_init(&mp_q, q);
+
+  mpz_mod(c_mp, c, mp_q.N);
+  mpz_mod(c_mp, c, mp_p.N);
+  mpz_mod(c_mq, c, mp_p.N);
+  mpz_mod(c_mq, c, mp_q.N);
+
+  // Get Montgomery representation. Do some flipping so we don't need another mpz_t
+  GetMontRep(tmp, c_mp, &mp_p);
+  mpz_swap(c_mp, tmp);
+  GetMontRep(tmp, c_mq, &mp_q);
+  mpz_swap(c_mq, tmp);
+
+  SlidingMontExp(m_1, c_mp, d_p, &mp_p, WINDOW_SIZE); // m1 = c ^ d_p mod p
+  SlidingMontExp(m_2, c_mq, d_q, &mp_q, WINDOW_SIZE); // m2 = c ^ d_q mod q
+
+  // Unfortunately we need to come out of montgomery rep to do the subtraction.
+  // Might be more efficient to not use MontMul at all in CRT?
+  UndoMontRep(tmp, m_1, &mp_p);
+  mpz_swap(m_1, tmp);
+  UndoMontRep(tmp, m_2, &mp_q);
+  mpz_swap(m_2, tmp);
+
+  mpz_sub(msub, m_1, m_2); // msub = (m1 - m2)
+  mpz_mul(tmp, i_q, msub); // tmp = i_q * (m1 - m2)
+  mpz_mod(h, tmp, mp_p.N); // h = i_q * (m1 - m2) mod p
+  mpz_mul(tmp, h, mp_q.N); // tmp = h * q
+  mpz_add(m, m_2, tmp); // m = m2 + h * q
+
+  tMontParams_clear(&mp_p);
+  tMontParams_clear(&mp_q);
+}
+
 /*
 Perform stage 1:
 
@@ -218,28 +276,15 @@ Perform stage 1:
 */
 
 void stage1() {
-  tMontParams mp;
-  mpz_t     e, m, c, tmp;
-  mpz_inits(e, m, c, tmp, mp.N, NULL);
+  mpz_t     N, e, m, c, tmp;
+  mpz_inits(N, e, m, c, tmp, NULL);
 
-  while (gmp_scanf("%ZX %ZX %ZX ",mp.N,e,m) != EOF) {
-    tMontParams_init2(&mp);
-
-    // Change to mont rep.
-    GetMontRep(tmp, m, &mp);
-    mpz_swap(m, tmp);
-
-    // Encrypt: y = m ^ e mod N
-    SlidingMontExp(tmp, m, e, &mp, WINDOW_SIZE);
-
-    // Get back out.
-    UndoMontRep(c, tmp, &mp);
-
+  while (gmp_scanf("%ZX %ZX %ZX ",N,e,m) != EOF) {
+    encryptRSA(c, N, e, m, tmp);
     gmp_printf("%ZX\n",c);
   }
 
-  mpz_clears(e, m, c, tmp, NULL);
-  tMontParams_clear(&mp);
+  mpz_clears(N, e, m, c, tmp, NULL);
 }
 
 /*
@@ -251,48 +296,78 @@ Perform stage 2:
 */
 
 void stage2() {
-  tMontParams mp_p, mp_q;
-  mpz_t     d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq;
-  mpz_inits(d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, mp_p.N, mp_q.N, NULL);
+  mpz_t     p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq;
+  mpz_inits(p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, NULL);
 
   // Skip reading N and d
-  while (gmp_scanf("%*ZX %*ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",mp_p.N,mp_q.N,d_p,d_q,i_p,i_q,c) != EOF) {
-    tMontParams_init2(&mp_p);
-    tMontParams_init2(&mp_q);
-
-    mpz_mod(c_mp, c, mp_q.N);
-    mpz_mod(c_mp, c, mp_p.N);
-    mpz_mod(c_mq, c, mp_p.N);
-    mpz_mod(c_mq, c, mp_q.N);
-
-    // Get Montgomery representation. Do some flipping so we don't need another mpz_t
-    GetMontRep(tmp, c_mp, &mp_p);
-    mpz_swap(c_mp, tmp);
-    GetMontRep(tmp, c_mq, &mp_q);
-    mpz_swap(c_mq, tmp);
-
-    SlidingMontExp(m_1, c_mp, d_p, &mp_p, WINDOW_SIZE); // m1 = c ^ d_p mod p
-    SlidingMontExp(m_2, c_mq, d_q, &mp_q, WINDOW_SIZE); // m2 = c ^ d_q mod q
-
-    // Unfortunately we need to come out of montgomery rep to do the subtraction.
-    // Might be more efficient to not use MontMul at all in CRT?
-    UndoMontRep(tmp, m_1, &mp_p);
-    mpz_swap(m_1, tmp);
-    UndoMontRep(tmp, m_2, &mp_q);
-    mpz_swap(m_2, tmp);
-
-    mpz_sub(msub, m_1, m_2); // msub = (m1 - m2)
-    mpz_mul(tmp, i_q, msub); // tmp = i_q * (m1 - m2)
-    mpz_mod(h, tmp, mp_p.N); // h = i_q * (m1 - m2) mod p
-    mpz_mul(tmp, h, mp_q.N); // tmp = h * q
-    mpz_add(m, m_2, tmp); // m = m2 + h * q
-
+  while (gmp_scanf("%*ZX %*ZX %ZX %ZX %ZX %ZX %ZX %ZX %ZX ",p,q,d_p,d_q,i_p,i_q,c) != EOF) {
+    decryptRSA(m, p, q, d_p, d_q, i_p, i_q, c, m_1, m_2, h, msub, tmp, c_mp, c_mq);
     gmp_printf("%ZX\n",m);
   }
 
-  mpz_clears(d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, NULL);
-  tMontParams_clear(&mp_p);
-  tMontParams_clear(&mp_q);
+  mpz_clears(p, q, d_p, d_q, i_p, i_q, c, m, m_1, m_2, h, msub, tmp, c_mp, c_mq, NULL);
+}
+
+// Encrypts the message m into ElGamal ciphertext (c_1,c_2).
+// Parameters should be copied - only the result params are guaranteed to be correct after invocation.
+void encryptElGamal(mpz_t c_1, mpz_t c_2, mpz_t N, mpz_t q, mpz_t g, mpz_t h, mpz_t m, mpz_t y, mpz_t tmp, gmp_randstate_t rndst) {
+  tMontParams mp;
+  tMontParams_init(&mp, N);
+
+  // Encrypt: c_1 = g^(y mod q) mod p, random 0<y<q
+  // c_2 = m * h^(y mod q) mod p
+
+  // Set ephemereal key.
+#ifdef FIXEDY
+  mpz_set_ui(y, 1);
+#else
+  mpz_urandomm(y, rndst, q);
+#endif
+
+  // Convert to Mont rep
+  GetMontRep(tmp, g, &mp);
+  mpz_swap(g, tmp);
+  GetMontRep(tmp, h, &mp);
+  mpz_swap(h, tmp);
+  GetMontRep(tmp, m, &mp);
+  mpz_swap(m, tmp);
+
+  SlidingMontExp(c_1, g, y, &mp, WINDOW_SIZE); // c_1 = g ^ y mod p
+  SlidingMontExp(tmp, h, y, &mp, WINDOW_SIZE); // tmp = h ^ y mod p
+  MontMul(c_2, m, tmp, &mp); // c_2 = m * (h ^ y) mod p;
+
+  // Get back out
+  UndoMontRep(tmp, c_1, &mp);
+  mpz_swap(c_1, tmp);
+  UndoMontRep(tmp, c_2, &mp);
+  mpz_swap(c_2, tmp);
+
+  tMontParams_clear(&mp);
+}
+
+
+// Decrypts the ElGamal ciphertext (c_1,c_2) into message m.
+// Parameters should be copied - only the result param is guaranteed to be correct after invocation.
+void decryptElGamal(mpz_t m, mpz_t N, mpz_t q, mpz_t x, mpz_t c_1, mpz_t c_2, mpz_t tmp, mpz_t tmp2) {
+  tMontParams mp;
+  tMontParams_init(&mp, N);
+
+  // Decrypt: m = c_2 * c_1^(-x mod q) mod p
+  // ==> c_2 * c_1^(-1)^(x mod q) mod p
+
+  // TODO: Should we mod x?
+  mpz_invert(tmp, c_1, mp.N); // tmp = c_1 ^ -1 mod p
+
+  GetMontRep(c_1, tmp, &mp); // c_1 = Mont(tmp)
+  GetMontRep(tmp, c_2, &mp);
+  mpz_swap(c_2, tmp);
+
+  SlidingMontExp(tmp, c_1, x, &mp, WINDOW_SIZE); // tmp = (c_1 ^ -1 mod p) ^ x mod p
+  MontMul(tmp2, tmp, c_2, &mp); // tmp2 = c_2 * tmp mod p
+
+  UndoMontRep(m, tmp2, &mp);
+
+  tMontParams_clear(&mp);
 }
 
 /*
@@ -304,16 +379,15 @@ Perform stage 3:
 */
 
 void stage3() {
-  tMontParams mp;
-  mpz_t     q, g, h, m, y, c_1, c_2, tmp;
-  mpz_inits(q, g, h, m, y, c_1, c_2, tmp, mp.N, NULL);
+  gmp_randstate_t randstate;
+  mpz_t     c_1, c_2, N, q, g, h, m, y, tmp;
+  mpz_inits(c_1, c_2, N, q, g, h, m, y, tmp, NULL);
 
 #ifndef FIXEDY
   FILE *dev_random;
   unsigned char in_char;
   unsigned long int seed = 0;
 
-  gmp_randstate_t randstate;
   gmp_randinit_mt(randstate); // Use the Mersenne Twister for random number generation.
 
   dev_random = fopen("/dev/random", "r");
@@ -339,37 +413,8 @@ void stage3() {
   gmp_randseed_ui(randstate, seed);
 #endif
 
-  while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX ",mp.N,q,g,h,m) != EOF) {
-    tMontParams_init2(&mp);
-
-    // Encrypt: c_1 = g^(y mod q) mod p, random 0<y<q
-    // c_2 = m * h^(y mod q) mod p
-
-    // Set a random y for real implementation.
-#ifdef FIXEDY
-    mpz_set_ui(y, 1);
-#else
-    mpz_urandomm(y, randstate, q);
-#endif
-
-    // Convert to Mont rep
-    GetMontRep(tmp, g, &mp);
-    mpz_swap(g, tmp);
-    GetMontRep(tmp, h, &mp);
-    mpz_swap(h, tmp);
-    GetMontRep(tmp, m, &mp);
-    mpz_swap(m, tmp);
-
-    SlidingMontExp(c_1, g, y, &mp, WINDOW_SIZE); // c_1 = g ^ y mod p
-    SlidingMontExp(tmp, h, y, &mp, WINDOW_SIZE); // tmp = h ^ y mod p
-    MontMul(c_2, m, tmp, &mp); // c_2 = m * (h ^ y) mod p;
-
-    // Get back out
-    UndoMontRep(tmp, c_1, &mp);
-    mpz_swap(c_1, tmp);
-    UndoMontRep(tmp, c_2, &mp);
-    mpz_swap(c_2, tmp);
-
+  while (gmp_scanf("%ZX %ZX %ZX %ZX %ZX ",N,q,g,h,m) != EOF) {
+    encryptElGamal(c_1, c_2, N, q, g, h, m, y, tmp, randstate);
     gmp_printf("%ZX\n%ZX\n",c_1,c_2);
   }
 
@@ -377,8 +422,7 @@ void stage3() {
   gmp_randclear(randstate);
 #endif
 
-  mpz_clears(q, g, h, m, y, c_1, c_2, tmp, NULL);
-  tMontParams_clear(&mp);
+  mpz_clears(c_1, c_2, N, q, g, h, m, y, tmp, NULL);
 }
 
 /*
@@ -390,33 +434,16 @@ Perform stage 4:
 */
 
 void stage4() {
-  tMontParams mp;
-  mpz_t     q, x, c_1, c_2, tmp, tmp2, m;
-  mpz_inits(q, x, c_1, c_2, tmp, tmp2, m, mp.N, NULL);
+  mpz_t     m, N, q, x, c_1, c_2, tmp, tmp2;
+  mpz_inits(m, N, q, x, c_1, c_2, tmp, tmp2, NULL);
 
   // Skip reading g
-  while (gmp_scanf("%ZX %ZX %*ZX %ZX %ZX %ZX ",mp.N,q,x,c_1,c_2) != EOF) {
-    tMontParams_init2(&mp);
-    // Decrypt: m = c_2 * c_1^(-x mod q) mod p
-    // ==> c_2 * c_1^(-1)^(x mod q) mod p
-
-    // TODO: Should we mod x?
-    mpz_invert(tmp, c_1, mp.N); // tmp = c_1 ^ -1 mod p
-
-    GetMontRep(c_1, tmp, &mp); // c_1 = Mont(tmp)
-    GetMontRep(tmp, c_2, &mp);
-    mpz_swap(c_2, tmp);
-
-    SlidingMontExp(tmp, c_1, x, &mp, WINDOW_SIZE); // tmp = (c_1 ^ -1 mod p) ^ x mod p
-    MontMul(tmp2, tmp, c_2, &mp); // tmp2 = c_2 * tmp mod p
-
-    UndoMontRep(m, tmp2, &mp);
-
+  while (gmp_scanf("%ZX %ZX %*ZX %ZX %ZX %ZX ",N,q,x,c_1,c_2) != EOF) {
+    decryptElGamal(m, N, q, x, c_1, c_2, tmp, tmp2);
     gmp_printf("%ZX\n",m);
   }
 
-  mpz_clears(q, x, c_1, c_2, tmp, tmp2, m, NULL);
-  tMontParams_clear(&mp);
+  mpz_clears(m, N, q, x, c_1, c_2, tmp, tmp2, NULL);
 }
 
 ////////////////////////////////////////////////////////////
