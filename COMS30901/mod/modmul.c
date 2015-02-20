@@ -587,6 +587,55 @@ void SlidingMontExp_test(gmp_randstate_t randstate) {
   gmp_printf("[OK] Passed SlidingMontExp tests.\n");
 }
 
+void edRSA_test(gmp_randstate_t randstate) {
+
+  //void encryptRSA(mpz_t c, mpz_t N, mpz_t e, mpz_t m, mpz_t tmp) {
+  //void decryptRSA(mpz_t m, mpz_t p, mpz_t q, mpz_t d_p, mpz_t d_q, mpz_t i_p, mpz_t i_q, mpz_t c,
+  //		mpz_t m_1, mpz_t m_2, mpz_t h, mpz_t msub, mpz_t tmp, mpz_t c_mp, mpz_t c_mq) {
+  mpz_t     p, q, N, m, d_p, d_q, e, i_p, i_q, c, m_1, m_2, h, msub, c_mp, c_mq, tmp;
+  mpz_inits(p, q, N, m, d_p, d_q, e, i_p, i_q, c, m_1, m_2, h, msub, c_mp, c_mq, tmp, NULL);
+
+  for (int i = 0; i < 10; i++) {
+    mpz_init(mp.N);
+    // Pick a modulus N of up to 1024 bits
+    mpz_urandomb(mp.N, randstate, 1024); // 1024 bit
+    // Ensure N is at least 5
+    mpz_add_ui(mp.N, mp.N, 5);
+    // Find a prime larger than this number.
+    mpz_nextprime(mp.N, mp.N);
+
+    tMontParams_init2(&mp);
+
+    for (int j = 0; j < 10; j++) {
+      // Select some random x and y
+      mpz_urandomm(x, randstate, mp.N);
+      mpz_urandomm(y, randstate, mp.N);
+
+      // Change rep
+      GetMontRep(x_m, x, &mp);
+
+      // Do the exponentiation x ^ y mod N.
+      SlidingMontExp(r_m, x_m, y, &mp, win_size);
+      mpz_powm(r2, x, y, mp.N);
+
+      // Get out of rep
+      UndoMontRep(r, r_m, &mp);
+
+      // Check results
+      if (mpz_cmp(r, r2) != 0) {
+	gmp_printf("[ERROR] Failed SlidingMontExp test on\n%Zx\n\t^\n%Zx\n\tmod\n%Zx\n\tGot\n%Zx\n", x, y, mp.N, r);
+	abort();
+      }
+    }
+
+    tMontParams_clear(&mp);
+  }
+
+  mpz_clears(x, x_m, y, r_m, r, r2, NULL);
+
+  gmp_printf("[OK] Passed SlidingMontExp tests.\n");
+}
+
 void runtests() {
   // Define and init random state
   gmp_randstate_t randstate;
@@ -598,6 +647,7 @@ void runtests() {
   MontRep_test(randstate);
   MontMul_test(randstate);
   SlidingMontExp_test(randstate);
+  edRSA_test(randstate);
 
   gmp_randclear(randstate);
 }
