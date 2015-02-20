@@ -119,29 +119,25 @@ static inline void UndoMontRep(mpz_t r, mpz_t r_m, tMontParams *mp) {
 }
 
 // x in G of order n, y less than n, window size k, t=x^y mod n
-void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, tMontParams *mp, const unsigned char k) { //TODO: Rename _
+void SlidingMontExp(mpz_t t_m, mpz_t x_m, mpz_t y, tMontParams *mp, const unsigned char k) {
   const size_t len = 1 << (k - 1);
-  mpz_t T_m[len], tmp, x_m, x_m_sq, t_m; // TODO: Nice init
   long long i, l;
   mp_bitcnt_t lowest_hot = 0; // We don't really need to init this, but we want to lose compiler warnings.
   unsigned int u;
+
+  mpz_t     tmp, x_m_sq, T_m[len]; // TODO: Nice init
+  mpz_inits(tmp, x_m_sq, NULL);
 
   // Ensure u is wide enough for k bits
   assert( 8 * sizeof(u) >= k );
 
   // Ensure our input x is < N
-  assert(mpz_cmp(x_, mp->N) < 0);
+  assert(mpz_cmp(x_m, mp->N) < 0);
 
-  // Init mpz_t vars, except for T_m
-  mpz_inits(tmp, x_m, x_m_sq, t_m, NULL);
-
-  // Convert relevant values to Montgomery representation
-  GetMontRep(x_m, x_, mp);
-
-  // Use montgomery rep to seed T_m
+  // Seed T_m
   mpz_init_set(T_m[0], x_m);
 
-  // Make sure the square is also in Mont rep
+  // Get x_m squared
   MontMul(x_m_sq, x_m, x_m, mp);
 
   // Fill T using Mont rep values
@@ -154,10 +150,9 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, tMontParams *mp, const unsigned
   mpz_clear(x_m_sq);
 
   // t = 0G
-  mpz_set_ui(t_, 1); // TODO: We should (ab)use one here?
-
-  // Convert t to Mont rep
-  GetMontRep(t_m, t_, mp);
+  mpz_set_ui(tmp, 1); // TODO: We should (ab)use one here?
+  // t_m must be in mont rep
+  GetMontRep(t_m, tmp, mp);
 
   i = mpz_sizeinbase(y, 2) - 1; // i = |y| - 1
 
@@ -204,18 +199,21 @@ void SlidingMontExp(mpz_t t_, mpz_t x_, mpz_t y, tMontParams *mp, const unsigned
     i = l - 1;
   }
 
-  UndoMontRep(t_, t_m, mp);
-
 #ifdef DEBUG
-  mpz_powm(tmp, x_, y, mp->N);
-  assert(mpz_cmp(t_, tmp) == 0);
+  mpz_t xr_dbg;
+  mpz_init(xr_dbg);
+  UndoMontRep(xr_dbg, x_m, mp);
+  mpz_powm(xr_dbg, xr_dbg, y, mp->N);
+  UndoMontRep(tmp, t_m, mp);
+  assert(mpz_cmp(xr_dbg, tmp) == 0);
+  mpz_clear(xr_dbg);
 #endif
 
   // Free temporary GMP vars
   for (size_t ii = 0; ii < len; ii++) {
     mpz_clear(T_m[ii]);
   }
-  mpz_clears(tmp, x_m, t_m, NULL);
+  mpz_clear(tmp);
 }
 
 /*
@@ -228,18 +226,25 @@ Perform stage 1:
 
 void stage1() {
   tMontParams mp;
-  mpz_t     e, m, c;
-  mpz_inits(e, m, c, mp.N, NULL);
+  mpz_t     e, m, m_m, c, c_m;
+  mpz_inits(e, m, m_m, c, c_m, mp.N, NULL);
 
   while (gmp_scanf("%ZX %ZX %ZX ",mp.N,e,m) != EOF) {
     tMontParams_init2(&mp);
+
+    // Change to mont rep.
+    GetMontRep(m_m, m, &mp); // TODO: We can get away with a single mont/temp var!
+
     // Encrypt: y = m ^ e mod N
-    SlidingMontExp(c, m, e, &mp, 4);
+    SlidingMontExp(c_m, m_m, e, &mp, 4);
+
+    // Get back out.
+    UndoMontRep(c, c_m, &mp);
 
     gmp_printf("%ZX\n",c);
   }
 
-  mpz_clears(e, m, c, NULL);
+  mpz_clears(e, m, m_m, c, c_m, NULL);
   tMontParams_clear(&mp);
 }
 
