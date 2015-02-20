@@ -1,7 +1,8 @@
 #ifndef __MODMUL_H
 #define __MODMUL_H
 
-#define DEBUG
+#define NDEBUG
+//#define DEBUG
 //#define FIXEDY
 
 // In case both NDEBUG and DEBUG are set, revert to NDEBUG only
