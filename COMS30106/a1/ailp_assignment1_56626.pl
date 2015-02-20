@@ -54,8 +54,8 @@ q5_corner_move_step(Pos, Path) :-
 	\+ memberchk(C, Path),
 	%% Visualise movement from current pos to new corner
 	ailp_show_move(Pos, C),
-	term_to_atom([C|Path],PathA),
-	do_command([mower,console,PathA],_),
+	%%term_to_atom([C|Path],PathA),
+	%%do_command([mower,console,PathA],_),
 	%% Recurse
 	q5_corner_move_step(C, [C|Path]).
 
@@ -90,8 +90,8 @@ q5_corner_move_step2(Pos, Path) :-
 	\+ memberchk(C, Path),
 	%% Visualise move from current pos to corner
 	ailp_show_move(Pos, C),
-	term_to_atom([C|Path],PathA),
-	do_command([mower,console,PathA],_),
+	%%term_to_atom([C|Path],PathA),
+	%%do_command([mower,console,PathA],_),
 	%% Recurse
 	q5_corner_move_step2(C, [C|Path]).
 
@@ -161,7 +161,7 @@ q6_spiral_step(Rot, Facing, Pos, Path, R) :-
 	\+ memberchk(Dest, Path),
 	%% Visualise
 	ailp_show_move(Pos, Dest),
-	term_to_atom([Dest|Path],PathA),
-	do_command([mower,console,PathA],_),
+	%%term_to_atom([Dest|Path],PathA),
+	%%do_command([mower,console,PathA],_),
 	%% Recurse to next move
 	q6_spiral_step(Rot, NFacing, Dest, [Dest|Path], R).
