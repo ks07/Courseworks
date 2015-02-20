@@ -1,5 +1,7 @@
 #include "modmul.h"
 
+#define WINDOW_SIZE 4
+
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
 #ifdef DEBUG
@@ -228,7 +230,7 @@ void stage1() {
     mpz_swap(m, tmp);
 
     // Encrypt: y = m ^ e mod N
-    SlidingMontExp(tmp, m, e, &mp, 4);
+    SlidingMontExp(tmp, m, e, &mp, WINDOW_SIZE);
 
     // Get back out.
     UndoMontRep(c, tmp, &mp);
@@ -269,8 +271,8 @@ void stage2() {
     GetMontRep(tmp, c_mq, &mp_q);
     mpz_swap(c_mq, tmp);
 
-    SlidingMontExp(m_1, c_mp, d_p, &mp_p, 4); // m1 = c ^ d_p mod p
-    SlidingMontExp(m_2, c_mq, d_q, &mp_q, 4); // m2 = c ^ d_q mod q
+    SlidingMontExp(m_1, c_mp, d_p, &mp_p, WINDOW_SIZE); // m1 = c ^ d_p mod p
+    SlidingMontExp(m_2, c_mq, d_q, &mp_q, WINDOW_SIZE); // m2 = c ^ d_q mod q
 
     // Unfortunately we need to come out of montgomery rep to do the subtraction.
     // Might be more efficient to not use MontMul at all in CRT?
@@ -358,8 +360,8 @@ void stage3() {
     GetMontRep(tmp, m, &mp);
     mpz_swap(m, tmp);
 
-    SlidingMontExp(c_1, g, y, &mp, 4); // c_1 = g ^ y mod p
-    SlidingMontExp(tmp, h, y, &mp, 4); // tmp = h ^ y mod p
+    SlidingMontExp(c_1, g, y, &mp, WINDOW_SIZE); // c_1 = g ^ y mod p
+    SlidingMontExp(tmp, h, y, &mp, WINDOW_SIZE); // tmp = h ^ y mod p
     MontMul(c_2, m, tmp, &mp); // c_2 = m * (h ^ y) mod p;
 
     // Get back out
@@ -405,7 +407,7 @@ void stage4() {
     GetMontRep(tmp, c_2, &mp);
     mpz_swap(c_2, tmp);
 
-    SlidingMontExp(tmp, c_1, x, &mp, 4); // tmp = (c_1 ^ -1 mod p) ^ x mod p
+    SlidingMontExp(tmp, c_1, x, &mp, WINDOW_SIZE); // tmp = (c_1 ^ -1 mod p) ^ x mod p
     MontMul(tmp2, tmp, c_2, &mp); // tmp2 = c_2 * tmp mod p
 
     UndoMontRep(m, tmp2, &mp);
@@ -512,7 +514,7 @@ void MontMul_test(gmp_randstate_t randstate) {
 }
 
 void SlidingMontExp_test(gmp_randstate_t randstate) {
-  const unsigned int win_size = 4;
+  const unsigned int win_size = WINDOW_SIZE;
   tMontParams mp;
   mpz_t     x, x_m, y, r_m, r, r2;
   mpz_inits(x, x_m, y, r_m, r, r2, NULL);
