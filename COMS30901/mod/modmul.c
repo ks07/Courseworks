@@ -31,7 +31,7 @@ void findRhoSq(mpz_t rho_sq, mpz_t N) {
   }
 }
 
-// Finds the omega value corresponding to N TODO: no mpz_t?
+// Finds the omega value corresponding to N
 mp_limb_t findOmega(mpz_t N) {
   const size_t w = GMP_LIMB_BITS;
   mp_limb_t omega = 1;
@@ -53,6 +53,7 @@ mp_limb_t findOmega(mpz_t N) {
 void tMontParams_init(tMontParams *mp, mpz_t N) {
   mpz_init(mp->rho_sq);
   mpz_init_set(mp->N, N);
+  mpz_init_set_ui(mp->one, 1);
   findRhoSq(mp->rho_sq, mp->N);
   mp->omega = findOmega(mp->N);
 }
@@ -60,13 +61,14 @@ void tMontParams_init(tMontParams *mp, mpz_t N) {
 // Initialises the tMontParams with a preset N.
 void tMontParams_init2(tMontParams *mp) {
   mpz_init(mp->rho_sq);
+  mpz_init_set_ui(mp->one, 1);
   findRhoSq(mp->rho_sq, mp->N);
   mp->omega = findOmega(mp->N);
 }
 
 // Clears all initialised values in the tMontParams
 void tMontParams_clear(tMontParams *mp) {
-  mpz_clears(mp->N, mp->rho_sq, NULL);
+  mpz_clears(mp->N, mp->rho_sq, mp->one, NULL);
   mp->omega = 0; // Not strictly necessary
 }
 
@@ -104,10 +106,8 @@ static inline void GetMontRep(mpz_t x_m, mpz_t x, tMontParams *mp) {
 }
 
 static inline void UndoMontRep(mpz_t r, mpz_t r_m, tMontParams *mp) {
-  mpz_t one;
-  mpz_init_set_ui(one, 1);
-  MontMul(r, r_m, one, mp);
-  mpz_clear(one);
+  assert(mpz_cmp_ui(mp->one, 1) == 0);
+  MontMul(r, r_m, mp->one, mp);
 }
 
 // x in G of order n, y less than n, window size k, t=x^y mod n
@@ -141,10 +141,9 @@ void SlidingMontExp(mpz_t t_m, mpz_t x_m, mpz_t y, tMontParams *mp, const unsign
   // Free x_m_sq
   mpz_clear(x_m_sq);
 
-  // t = 0G
-  mpz_set_ui(tmp, 1); // TODO: We should (ab)use one here?
-  // t_m must be in mont rep
-  GetMontRep(t_m, tmp, mp);
+  // t = 0G, abuse the one constant to get it in mont form.
+  assert(mpz_cmp_ui(mp->one, 1) == 0);
+  GetMontRep(t_m, mp->one, mp);
 
   i = mpz_sizeinbase(y, 2) - 1; // i = |y| - 1
 

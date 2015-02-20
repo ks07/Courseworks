@@ -25,6 +25,9 @@ typedef struct MontParams {
   mpz_t N;
   mp_limb_t omega;
   mpz_t rho_sq;
+  // Will always need to undo the mont transform eventually (at least in our implementation)
+  // so store a copy of the one constant to avoid recreating it
+  mpz_t one;
 } tMontParams;
 
 #endif
