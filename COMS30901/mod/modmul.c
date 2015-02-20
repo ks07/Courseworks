@@ -520,8 +520,8 @@ void MontMul_test(gmp_randstate_t randstate) {
 void SlidingMontExp_test(gmp_randstate_t randstate) {
   const unsigned int win_size = 4;
   tMontParams mp;
-  mpz_t     x, y, r, r2;
-  mpz_inits(x, y, r, r2, NULL);
+  mpz_t     x, x_m, y, r_m, r, r2;
+  mpz_inits(x, x_m, y, r_m, r, r2, NULL);
 
   for (int i = 0; i < 10; i++) {
     mpz_init(mp.N);
@@ -539,9 +539,15 @@ void SlidingMontExp_test(gmp_randstate_t randstate) {
       mpz_urandomm(x, randstate, mp.N);
       mpz_urandomm(y, randstate, mp.N);
 
+      // Change rep
+      GetMontRep(x_m, x, &mp);
+
       // Do the exponentiation x ^ y mod N.
-      SlidingMontExp(r, x, y, &mp, win_size);
+      SlidingMontExp(r_m, x_m, y, &mp, win_size);
       mpz_powm(r2, x, y, mp.N);
+
+      // Get out of rep
+      UndoMontRep(r, r_m, &mp);
 
       // Check results
       if (mpz_cmp(r, r2) != 0) {
@@ -553,7 +559,7 @@ void SlidingMontExp_test(gmp_randstate_t randstate) {
     tMontParams_clear(&mp);
   }
 
-  mpz_clears(x, y, r, r2, NULL);
+  mpz_clears(x, x_m, y, r_m, r, r2, NULL);
 
   gmp_printf("[OK] Passed SlidingMontExp tests.\n");
 }
