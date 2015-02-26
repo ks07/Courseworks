@@ -56,6 +56,41 @@ def part2a():
     print('Min current I_e for action potential: ', i)
     return i
 
+
+
+def part2b(min_i_e):
+    print('Running Part 2b')
+    v_reset = -70 * (10**-3)
+    y_0 = v_reset
+    t_0 = 0.0
+    t_e = 1.0
+    h = 1 * (10 **-3)
+    v_th = -40 * (10**-3)
+    
+    
+    # TODO: deduplicate and take params... currying?
+    def below_integrate_and_fire_f(t, y):
+        e_l = -70 * (10**-3)
+        r_m = 10 * (10**6)
+        i = min_i_e - (0.1 * (10**-9))
+        v = y
+        tau_m = 10 * (10**-3)
+        return (e_l - v + r_m * i) / tau_m
+
+    plot_vals = euler_iafn(below_integrate_and_fire_f, y_0, t_0, t_e, h, v_th, v_reset)
+    
+    plt.plot(plot_vals[0], plot_vals[1], label='DT=1ms')
+    plt.title('Plot of single neuron with lower than minimum input current')
+    plt.ylabel('Voltage Function V(t) (V)')
+    plt.xlabel('Time t (s)')
+    plt.legend(loc=4)
+    plt.show()
+
+def part2():
+    print('Running Part 2')
+    min_i_e = part2a()
+    part2b(min_i_e)
+
 if __name__ == '__main__':
     part1()
-    part2a()
+    part2()
