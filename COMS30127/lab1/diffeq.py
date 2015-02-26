@@ -53,7 +53,7 @@ def part2():
     plt.title('Plot of df/dt = f^2 - 3f + exp(-t); f(0)=0')
     plt.ylabel('Function f(t)')
     plt.xlabel('Time t')
-    plt.legend(('DT=0.01','DT=0.1','DT=0.5','DT=1'))
+    plt.legend(map(lambda dt: 'DT=' + str(dt), h))
     plt.show()
 
 
