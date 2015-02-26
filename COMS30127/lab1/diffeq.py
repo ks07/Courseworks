@@ -27,7 +27,7 @@ def part1():
     t_0 = 0
     t_e = 3
     h = 0.01
-    plot_vals = euler(eq1_f, y_0, t_0, t_e, h_i)
+    plot_vals = euler(eq1_f, y_0, t_0, t_e, h)
     
     plt.plot(plot_vals[0], plot_vals[1], label='DT=0.01')
     plt.title('Plot of df/dt = f^2 - 3f + exp(-t); f(0)=0')
