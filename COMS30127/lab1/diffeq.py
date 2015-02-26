@@ -1,48 +1,50 @@
-#!/bin/env python2
+#!/usr/bin/env python2
 from __future__ import print_function
 from math import *
 import numpy as np
 import matplotlib as mp
+import matplotlib.pyplot as plt
 
-def euler(y, start, end, h):
-    t_0 = start
-    y_0 = y(t_0, 0) # This f param is funky
-    
+def euler(f, y_0, t_0, t_e, h):
     y_n = y_0
-    y_np1 = 0
-    
-    for n in np.arange(start, end, h):
-        print(y_n, n)
+
+    t_vals = np.arange(t_0, t_e + h, h)
+    y_vals = []
+
+    for n in t_vals:
         t_n = n
-        y_np1 = y_n + h * y(t_n, y_n)
-        y_n = y_np1
-        
-        
-    print(y_n);
+        print("t: ", t_n, "\ty: ", y_n)
+        y_vals.append(y_n)
+        y_n = y_n + h * f(t_n, y_n)
+    
+    return (t_vals, y_vals)
 
-def eq1(t, f):
-    if (t == 0):
-        return 0
-    else:
-        return f**2 - 3 * f + exp(-t)
-
-def eqt(t, f):
-    if (t == 0):
-        return 1
-    else:
-        return 2 - exp(-4 * t) - 2 * f
+def eq1_f(t, y):
+    return y**2 - 3 * y + exp(-t)
 
 def part1():
-    start = 0
-    end = 3
+    y_0 = 0
+    t_0 = 0
+    t_e = 3
     h = 0.01
-    euler(eq1, start, end, h)
+    plot_vals = euler(eq1_f, y_0, t_0, t_e, h)
+    
+    plt.plot(plot_vals[0], plot_vals[1], label='DT=0.01')
+    plt.title('Plot of df/dt = f^2 - 3f + exp(-t); f(0)=0')
+    plt.ylabel('Function f(t)')
+    plt.xlabel('Time t')
+    plt.legend()
+    plt.show()
+
+def eqt_f(t, y):
+    return 2 - exp(-4 * t) - 2 * y
 
 def t():
-    start = 0
-    end = 0.5
+    t_0 = 0
+    y_0 = 1
+    t_e = 0.5
     h = 0.1
-    euler(eqt, start, end, h)
+    return euler(eqt_f, y_0, t_0, t_e, h)
 
 if __name__ == '__main__':
-    t()
+    part1()
