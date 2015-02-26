@@ -27,7 +27,7 @@ def part1():
     t_0 = 0
     t_e = 3
     h = 0.01
-    plot_vals = euler(eq1_f, y_0, t_0, t_e, h)
+    plot_vals = euler(eq1_f, y_0, t_0, t_e, h_i)
     
     plt.plot(plot_vals[0], plot_vals[1], label='DT=0.01')
     plt.title('Plot of df/dt = f^2 - 3f + exp(-t); f(0)=0')
@@ -35,6 +35,27 @@ def part1():
     plt.xlabel('Time t')
     plt.legend()
     plt.show()
+
+def part2():
+    y_0 = 0
+    t_0 = 0
+    t_e = 3
+    h = [0.01, 0.1, 0.5, 1]
+    plot_vals = []
+
+    for h_i in h:
+        plot_vals.append(euler(eq1_f, y_0, t_0, t_e, h_i))
+    
+    plt.plot(plot_vals[0][0], plot_vals[0][1], 
+             plot_vals[1][0], plot_vals[1][1], 
+             plot_vals[2][0], plot_vals[2][1], 
+             plot_vals[3][0], plot_vals[3][1])
+    plt.title('Plot of df/dt = f^2 - 3f + exp(-t); f(0)=0')
+    plt.ylabel('Function f(t)')
+    plt.xlabel('Time t')
+    plt.legend(('DT=0.01','DT=0.1','DT=0.5','DT=1'))
+    plt.show()
+
 
 def eqt_f(t, y):
     return 2 - exp(-4 * t) - 2 * y
@@ -47,4 +68,4 @@ def t():
     return euler(eqt_f, y_0, t_0, t_e, h)
 
 if __name__ == '__main__':
-    part1()
+    part2()
