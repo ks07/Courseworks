@@ -94,9 +94,21 @@ def part3():
     h = 1 * (10 **-3)
     v_th = -40 * (10**-3)
 
-    for i_e__nA in np.arange(2, 5.1, 0.1):
+    i_vals__nA = np.arange(2, 5.1, 0.1)
+    srate_vals__Hz = []
+
+    for i_e__nA in i_vals__nA:
         spike_cnt = euler_iafn(integrate_and_fire_f(i__nA = i_e__nA), y_0, t_0, t_e, h, v_th, v_reset)[2]
-        print('i_e__nA:', i_e__nA, '\tSpike count:', spike_cnt)
+        srate_vals__Hz.append(spike_cnt / (t_e - t_0))
+        print('i_e__nA:', i_e__nA, '\tSpike count:', spike_cnt, '\tSpike rate:', srate_vals__Hz[-1])
+
+    # TODO: Better plot
+    plt.plot(i_vals__nA, srate_vals__Hz, label='Spike Rate')
+    plt.title('Plot of firing rate as function of input current')
+    plt.ylabel('Spike Rate (Hz)')
+    plt.xlabel('Input Current I_e (nA)')
+    plt.legend(loc=4)
+    plt.show()
 
 if __name__ == '__main__':
     part1()
