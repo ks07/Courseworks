@@ -8,6 +8,7 @@ def euler_iafn(f, y_0, t_0, t_e, h, y_th, y_reset):
 
     t_vals = np.arange(t_0, t_e + h, h)
     y_vals = []
+    spike_cnt = 0
 
     for n in t_vals:
         t_n = n
@@ -17,8 +18,9 @@ def euler_iafn(f, y_0, t_0, t_e, h, y_th, y_reset):
         if y_n >= y_th:
             #print('t: ', t_n, 's => Spike!')
             y_n = y_reset
+            spike_cnt += 1
     
-    return (t_vals, y_vals)
+    return (t_vals, y_vals, spike_cnt)
 
 #dv/dt
 def integrate_and_fire_f(e_l__mV = -70, r_m__MOhm = 10, i__nA = 3.1, tau_m__ms = 10):
@@ -58,8 +60,6 @@ def part2a():
     print('Min current I_e for action potential (A): ', i)
     return i
 
-
-
 def part2b(min_i_e__A):
     print('Running Part 2b')
     v_reset = -70 * (10**-3)
@@ -85,6 +85,20 @@ def part2():
     min_i_e = part2a()
     part2b(min_i_e)
 
+def part3():
+    print('Running Part 3')
+    v_reset = -70 * (10**-3)
+    y_0 = v_reset
+    t_0 = 0.0
+    t_e = 1.0
+    h = 1 * (10 **-3)
+    v_th = -40 * (10**-3)
+
+    for i_e__nA in np.arange(2, 5.1, 0.1):
+        spike_cnt = euler_iafn(integrate_and_fire_f(i__nA = i_e__nA), y_0, t_0, t_e, h, v_th, v_reset)[2]
+        print('i_e__nA:', i_e__nA, '\tSpike count:', spike_cnt)
+
 if __name__ == '__main__':
     part1()
     part2()
+    part3()
