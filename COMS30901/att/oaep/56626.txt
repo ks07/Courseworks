@@ -1,0 +1,11 @@
+Q.1 Consider an example where N = 551, e = 5, d = 101 and c = 243.  Using
+    your own words, briefly explain and illustrate the working principle of
+    this attack (i.e., how and why it works).
+Q.2 To prevent the attack, the vendor suggests altering the software: the
+    idea is that no matter what error occurs, the same error code will be
+    produced.  Explain whether (and why, or why not) this change alone is
+    sufficient.
+Q.4 This attack is based on the fact that decrypting a ciphertext of the
+    form c = (f^e)*c' mod N produces a plaintext of the form f*m' mod N.
+    Show why this fact is true.
+Q.5 Explain how the concept of plaintext awareness relates to this attack.
