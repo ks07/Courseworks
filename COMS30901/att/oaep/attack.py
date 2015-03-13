@@ -125,6 +125,14 @@ def attack() :
     (r, gte_B) = interact(to_query, k)
   print("f3\t%d\nB\t%d" % (f3, B))
   print("m\t%d" % m_min)
+  return m_min
+
+def verify_m(m):
+  c = pow(m, e(), N())
+  if (ct == c):
+    print("Plaintext is correct\n")
+  else:
+    print("Encrypted plaintext differs from source ciphertext!\n")
 
 if ( __name__ == "__main__" ) :
   if (len(sys.argv) != 3) :
@@ -147,6 +155,9 @@ if ( __name__ == "__main__" ) :
   queries = 0
 
   # Execute a function representing the attacker.
-  attack()
+  m = attack()
 
-  print(queries)
+  # Check our guess
+  verify_m(m)
+
+  print("Target queries:", queries)
