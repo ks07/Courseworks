@@ -18,3 +18,4 @@ manifest.mf
 *.exe
 *.stackdump
 *.asv
+*.pyc
