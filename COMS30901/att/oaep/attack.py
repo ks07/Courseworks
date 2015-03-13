@@ -20,12 +20,12 @@ def e():
 def ct():
   return params[2]
 
-def interact(c) :
+def interact(c, pad_bytes) :
   global queries
   queries = queries + 1
 
-  # Send ciphertext c to attack target as hex. TODO: more mystery surrounding octet strings, yet apparently this is fine
-  target_in.write( "%x\n" % ( c ) )
+  # Send ciphertext c to attack target as hex octet string
+  target_in.write( "{0:0{1}x}\n".format(c, pad_bytes * 2) )
   target_in.flush()
 
   # Receive result code r from attack target.
@@ -44,7 +44,7 @@ def ceildiv(a, b):
   return -(-a // b)
 
 def attack() :
-  k = int(math.log(N(), 256))
+  k = int(math.ceil(math.log(N(), 256)))
   B = 2 ** (8*(k-1))
 
   # Implement attack from https://www.iacr.org/archive/crypto2001/21390229.pdf
@@ -54,7 +54,7 @@ def attack() :
   # 1.2
   to_query = pow(f1, e(), N())
   to_query = (to_query * ct()) % N()
-  (r, gte_B) = interact(to_query)
+  (r, gte_B) = interact(to_query, k)
 
   # 1.3a
   while (not gte_B):
@@ -63,7 +63,7 @@ def attack() :
     # 1.2
     to_query = pow(f1, e(), N())
     to_query = (to_query * ct()) % N()
-    (r, gte_B) = interact(to_query)
+    (r, gte_B) = interact(to_query, k)
 
   #1.3b
   # Move to step 2
@@ -75,7 +75,7 @@ def attack() :
   #2.2
   to_query = pow(f2, e(), N())
   to_query = (to_query * ct()) % N()
-  (r, gte_B) = interact(to_query)
+  (r, gte_B) = interact(to_query, k)
   
   #2.3a
   while (gte_B):
@@ -84,7 +84,7 @@ def attack() :
     #2.2
     to_query = pow(f2, e(), N())
     to_query = (to_query * ct()) % N()
-    (r, gte_B) = interact(to_query)
+    (r, gte_B) = interact(to_query, k)
 
   #2.3b
   # Move to step 3
@@ -103,7 +103,7 @@ def attack() :
   f3 = ceildiv( (i * N()), m_min)
   to_query = pow(f3, e(), N())
   to_query = (to_query * ct()) % N()
-  (r, gte_B) = interact(to_query)
+  (r, gte_B) = interact(to_query, k)
   
   #3.5
   while (m_max - m_min > 1):
@@ -122,7 +122,7 @@ def attack() :
     f3 = ceildiv( (i * N()), m_min)
     to_query = pow(f3, e(), N())
     to_query = (to_query * ct()) % N()
-    (r, gte_B) = interact(to_query)
+    (r, gte_B) = interact(to_query, k)
   print("f3\t%d\nB\t%d" % (f3, B))
   print("m\t%d" % m_min)
 
