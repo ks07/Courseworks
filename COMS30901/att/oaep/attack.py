@@ -5,20 +5,23 @@ import sys, subprocess, math
 def get_params(paramfile) :
   infile = open(paramfile, 'r')
 
-  N = int(infile.readline().strip(), 16)
-  e = int(infile.readline().strip(), 16)
-  ct = int(infile.readline().strip(), 16) # This smells fishy
+  N_raw = infile.readline().strip()
+  N = int(N_raw, 16)
+  e_raw = infile.readline().strip()
+  e = int(e_raw, 16)
+  ct_raw = infile.readline().strip()
+  ct = int(ct_raw, 16) # This smells fishy
 
-  return (N, e, ct)
+  return (N, e, ct, N_raw, e_raw, ct_raw)
 
-def N():
-  return params[0]
+def N(raw=False):
+  return params[0 if not raw else 3]
 
-def e():
-  return params[1]
+def e(raw=False):
+  return params[1 if not raw else 4]
 
-def ct():
-  return params[2]
+def ct(raw=False):
+  return params[2 if not raw else 5]
 
 def interact(c, pad_bytes) :
   global queries
@@ -34,7 +37,7 @@ def interact(c, pad_bytes) :
   # Interpret result code as B comparison
   interp = (r == 1)
 
-  if (r != 1 and r != 0):
+  if (r not in [0,1,2]):
     print("Error code %d!\n" % r)
 
   return (r, interp)
@@ -46,6 +49,12 @@ def ceildiv(a, b):
 def attack() :
   k = int(math.ceil(math.log(N(), 256)))
   B = 2 ** (8*(k-1))
+
+  # k should be the number of bytes needed to represent N... which should match the string length
+  assert k == len(N(True)) // 2
+
+  # Assume 2B < N
+  assert 2 * B < N()
 
   # Implement attack from https://www.iacr.org/archive/crypto2001/21390229.pdf
   # 1.1
