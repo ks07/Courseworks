@@ -75,11 +75,14 @@ def attack() :
     (r, gte_B) = interact(to_query, k)
 
   #1.3b
+  print("f1\t", f1);
   # Move to step 2
   
   #2.1
   f2 = ( (N() + B) // B ) * f1 // 2
-  print(f2)
+  print("f2\t", f2)
+
+#  assert(f2 * (B - 1) < N() + B)
 
   #2.2
   to_query = pow(f2, e(), N())
@@ -101,21 +104,19 @@ def attack() :
   #3.1
   m_min = ceildiv(N(), f2)
   m_max = (N() + B) // f2
-
-  #3.2
-  f_tmp = (2 * B) // (m_max - m_min)
-
-  #3.3
-  i = (f_tmp * m_min) // N()
-
-  #3.4
-  f3 = ceildiv( (i * N()), m_min)
-  to_query = pow(f3, e(), N())
-  to_query = (to_query * ct()) % N()
-  (r, gte_B) = interact(to_query, k)
   
-  #3.5
-  while (m_max - m_min > 1):
+  #3.5 TODO: Can we fiddle this condition for one less comparison?
+  while (m_max != m_min):
+    #3.2
+    f_tmp = (2 * B) // (m_max - m_min)
+    #3.3
+    i = (f_tmp * m_min) // N()
+    #3.4
+    f3 = ceildiv( (i * N()), m_min)
+    to_query = pow(f3, e(), N())
+    to_query = (to_query * ct()) % N()
+    (r, gte_B) = interact(to_query, k)
+
     #3.5a
     if (gte_B):
       m_min = ceildiv( (i * N()) + B, f3 )
@@ -123,22 +124,13 @@ def attack() :
     else:
       m_max = ( (i * N()) + B ) // f3
 
-    #3.2
-    f_tmp = (2 * B) // (m_max - m_min)
-    #3.3
-    i = (f_tmp * m_min) // N()
-     #3.4
-    f3 = ceildiv( (i * N()), m_min)
-    to_query = pow(f3, e(), N())
-    to_query = (to_query * ct()) % N()
-    (r, gte_B) = interact(to_query, k)
   print("f3\t%d\nB\t%d" % (f3, B))
   print("m\t%d" % m_min)
   return m_min
 
 def verify_m(m):
   c = pow(m, e(), N())
-  if (ct == c):
+  if (ct() == c):
     print("Plaintext is correct\n")
   else:
     print("Encrypted plaintext differs from source ciphertext!\n")
