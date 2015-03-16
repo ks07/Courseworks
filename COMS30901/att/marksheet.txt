@@ -41,13 +41,18 @@ For example, other elements outside this list *often* warrant an increase
 or decrease in marks; examples include hard to quantify features such as
 the style or efficiency of a solution.
 
-[?] Stage 1 : an attack based on error messages
+[X] Stage 1 : an attack based on error messages
 
               - correct target material                              ( 40%)
               - solution quality wrt. efficiency, robustness etc.    ( 40%)
               - analysis questions                                   ( 20%)
 
-              target material : [...]
+              target material : [
+	        Recovered plaintext m (hexadecimal):
+	        9ed07f8e8e230664f1d343a64e83df0d39a72869b62e6626f30cf453ac29c3bd8fe62d9ec3a15ff8b9327d03a4e96e24296e36ea44a170f229bee934e1fdd481a975e841f9ea42521b8cdddb977b879d46552574e8d5670cacb3ecd33a94448168215a304b10640a21ceaf79ef3f57c0b4a34bea615052b5a2e991a43e8ab
+                Recovered secret s (hexadecimal):
+                ed7a9119adcc4c3970ed44deadb27e050c1f7411
+              ]
 
 [?] Stage 2 : an attack based on execution time
 
