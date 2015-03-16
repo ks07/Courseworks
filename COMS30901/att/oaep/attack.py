@@ -64,7 +64,7 @@ def mgf1(Hash, hLen, mgf_seed, mask_len):
   
   T = ""
 
-  for counter in range(0, ceildiv(mask_len, hLen) - 1): #TODO: boundary fiddling?
+  for counter in range(0, ceildiv(mask_len, hLen)):
     C = I2OSP(counter, 4)
     # TODO: Use a fixed hash stem of seed
     T = T + Hash(mgf_seed + C).digest()
@@ -72,67 +72,49 @@ def mgf1(Hash, hLen, mgf_seed, mask_len):
   return T[0:mask_len]
 
 def string_xor(x, y):
+  assert(len(x) == len(y))
   return ''.join(map( lambda t: chr(ord(t[0]) ^ ord(t[1])) , zip(x, y) ))
 
 def s_hex(s):
   print(''.join(x.encode('hex') for x in s))
 
 # As per RFC3447 section 7.1.2
-def oaep_decrypt(em, k):
+def eme_oaep_decode(em):
   Hash = sha1
   L = ""
   lHash = Hash(L).digest()
-  hLen = ceildiv(len(lHash), 2)
+  hLen = len(lHash)
+  k = len(em)
+
+  # SHA-1 digests should be 160 bits
+  assert(hLen == 160 // 8)
 
   # Number of octets in mdb
   mdb_len = k - hLen - 1
 
-  # TODO: We probably gain nothing here as we eventually get strings anyway... :(
-
   # Split the encoded message into Y || maskedSeed || maskedDB
-#  y_mask = 255L # Most significant byte
-#  ms_mask = 0L  # Middle hLen bytes
-#  mdb_mask = 0L # Least significant mdb_len bytes (the remaining bytes)
-
-#  for i in range(0, hLen):
-#    y_mask = y_mask << 8
-#    ms_mask = ms_mask << 8
-#    ms_mask = ms_mask | 255
-
-#  for i in range(0, mdb_len):
-#    y_mask = y_mask << 8
-#    ms_mask = ms_mask << 8
-#    mdb_mask = mdb_mask << 8
-#    mdb_mask = mdb_mask | 255
-  
-#  assert( (y_mask & em) ^ (ms_mask & em) ^ (mdb_mask & em) == em )
-
   y     = em[0      : 1     ]
   mseed = em[1      : hLen+1]
-  mdb   = em[hLen+1 : -1    ]
+  mdb   = em[hLen+1 :       ]
 
-  print(s_hex(y), s_hex(mseed), s_hex(mdb))
+  assert (y == '\x00')
+  assert(len(mdb) == mdb_len)
 
   seedmask = mgf1(Hash, hLen, mdb, hLen)
   seed = string_xor(mseed, seedmask)
   dbmask = mgf1(Hash, hLen, seed, mdb_len)
   db = string_xor(mdb, dbmask)
 
-  print(s_hex(db))
-
   lHash_ = db[0:hLen]
   assert (lHash == lHash_)
 
-  db_ = db[hLen:-1].lstrip('\x00')
-
-  assert (len(db_) == len(db))
-
+  db_ = db[hLen:].lstrip('\x00')
   assert (db_[0] == '\x01')
 
-  assert (Y == '\x00')
+  m = db_[1:]
 
-  m = db_[1:-1]
-  print(s_hex(m), m)
+  print("Decoded secret:")
+  s_hex(m)
 
 def attack() :
   k = int(math.ceil(math.log(N(), 256)))
@@ -163,12 +145,12 @@ def attack() :
     (r, gte_B) = interact(to_query, k)
 
   #1.3b
-  print("f1\t", f1);
+  #print("f1\t", f1);
   # Move to step 2
   
   #2.1
   f2 = ( (N() + B) // B ) * f1 // 2
-  print("f2\t", f2)
+  #print("f2\t", f2)
 
   #2.2
   to_query = pow(f2, e(), N())
@@ -210,19 +192,14 @@ def attack() :
     else:
       m_max = ( (i * N()) + B ) // f3
 
+  #print("f3\t%d\n" % (f3))
+  print("Plaintext m:\n%x" % m_min)
 
-  oaep_decrypt(I2OSP(m_min, k), k)
-
-  print("f3\t%d\nB\t%d" % (f3, B))
-  print("m\t%d" % m_min)
   return m_min
 
 def verify_m(m):
   c = pow(m, e(), N())
-  if (ct() == c):
-    print("Plaintext is correct\n")
-  else:
-    print("Encrypted plaintext differs from source ciphertext!\n")
+  return (ct() == c)
 
 if ( __name__ == "__main__" ) :
   if (len(sys.argv) != 3) :
@@ -248,6 +225,9 @@ if ( __name__ == "__main__" ) :
   m = attack()
 
   # Check our guess
-  verify_m(m)
+  assert(verify_m(m))
+
+  # Decode the found m to get the secret
+  eme_oaep_decode(I2OSP(m, int(math.ceil(math.log(N(), 256)))))
 
   print("Target queries:", queries)
