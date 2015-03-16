@@ -58,14 +58,13 @@ def I2OSP(x, xlen):
   return to_bytes(x, xlen, endianness='big')
 
 # As per RFC3447 appendix B.2.1
-def mgf1(Hash, hLen, mgf_seed, mask_len):
+def mgf1(Hash, mgf_seed, mask_len):
   assert(mask_len <= ( 2 ** 32 ) * hLen)
   
   T = ""
 
-  for counter in range(0, ceildiv(mask_len, hLen)):
+  for counter in range(0, ceildiv(mask_len, Hash().digest_size)):
     C = I2OSP(counter, 4)
-    # TODO: Use a fixed hash stem of seed
     T = T + Hash(mgf_seed + C).digest()
 
   return T[0:mask_len]
@@ -81,12 +80,10 @@ def s_hex(s):
 def eme_oaep_decode(em):
   Hash = sha1
   L = ""
-  lHash = Hash(L).digest()
-  hLen = len(lHash)
+  lH = Hash(L)
+  lHash = lH.digest()
+  hLen = lH.digest_size
   k = len(em)
-
-  # SHA-1 digests should be 160 bits
-  assert(hLen == 160 // 8)
 
   # Number of octets in mdb
   mdb_len = k - hLen - 1
@@ -99,9 +96,9 @@ def eme_oaep_decode(em):
   assert (y == '\x00')
   assert(len(mdb) == mdb_len)
 
-  seedmask = mgf1(Hash, hLen, mdb, hLen)
+  seedmask = mgf1(Hash, mdb, hLen)
   seed = string_xor(mseed, seedmask)
-  dbmask = mgf1(Hash, hLen, seed, mdb_len)
+  dbmask = mgf1(Hash, seed, mdb_len)
   db = string_xor(mdb, dbmask)
 
   lHash_ = db[0:hLen]
@@ -173,7 +170,7 @@ def attack() :
   m_min = ceildiv(N(), f2)
   m_max = (N() + B) // f2
   
-  #3.5 TODO: Can we fiddle this condition for one less comparison?
+  #3.5
   while (m_max != m_min):
     #3.2
     f_tmp = (2 * B) // (m_max - m_min)
@@ -235,3 +232,6 @@ if ( __name__ == "__main__" ) :
   s_hex(s)
 
   print("Total target interactions:", queries)
+
+  # Terminate the target process
+  target.terminate()
