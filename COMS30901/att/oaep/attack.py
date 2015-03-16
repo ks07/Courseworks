@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
+from hashlib import sha1
 import sys, subprocess, math
 
 def get_params(paramfile) :
@@ -46,6 +47,93 @@ def ceildiv(a, b):
   # Upside down floor division!
   return -(-a // b)
 
+# Credit to https://stackoverflow.com/questions/16022556/
+# Dreams of Python 3.2 on the lab machines abound
+def to_bytes(n, length, endianness='big'):
+    h = '%x' % n
+    s = ('0'*(len(h) % 2) + h).zfill(length*2).decode('hex')
+    return s if endianness == 'big' else s[::-1]
+
+def I2OSP(x, xlen):
+  assert(x < 256 ** xlen)
+  return to_bytes(x, xlen, endianness='big')
+
+# As per RFC3447 appendix B.2.1
+def mgf1(Hash, hLen, mgf_seed, mask_len):
+  assert(mask_len <= ( 2 ** 32 ) * hLen)
+  
+  T = ""
+
+  for counter in range(0, ceildiv(mask_len, hLen) - 1): #TODO: boundary fiddling?
+    C = I2OSP(counter, 4)
+    # TODO: Use a fixed hash stem of seed
+    T = T + Hash(mgf_seed + C).digest()
+
+  return T[0:mask_len]
+
+def string_xor(x, y):
+  return ''.join(map( lambda t: chr(ord(t[0]) ^ ord(t[1])) , zip(x, y) ))
+
+def s_hex(s):
+  print(''.join(x.encode('hex') for x in s))
+
+# As per RFC3447 section 7.1.2
+def oaep_decrypt(em, k):
+  Hash = sha1
+  L = ""
+  lHash = Hash(L).digest()
+  hLen = ceildiv(len(lHash), 2)
+
+  # Number of octets in mdb
+  mdb_len = k - hLen - 1
+
+  # TODO: We probably gain nothing here as we eventually get strings anyway... :(
+
+  # Split the encoded message into Y || maskedSeed || maskedDB
+#  y_mask = 255L # Most significant byte
+#  ms_mask = 0L  # Middle hLen bytes
+#  mdb_mask = 0L # Least significant mdb_len bytes (the remaining bytes)
+
+#  for i in range(0, hLen):
+#    y_mask = y_mask << 8
+#    ms_mask = ms_mask << 8
+#    ms_mask = ms_mask | 255
+
+#  for i in range(0, mdb_len):
+#    y_mask = y_mask << 8
+#    ms_mask = ms_mask << 8
+#    mdb_mask = mdb_mask << 8
+#    mdb_mask = mdb_mask | 255
+  
+#  assert( (y_mask & em) ^ (ms_mask & em) ^ (mdb_mask & em) == em )
+
+  y     = em[0      : 1     ]
+  mseed = em[1      : hLen+1]
+  mdb   = em[hLen+1 : -1    ]
+
+  print(s_hex(y), s_hex(mseed), s_hex(mdb))
+
+  seedmask = mgf1(Hash, hLen, mdb, hLen)
+  seed = string_xor(mseed, seedmask)
+  dbmask = mgf1(Hash, hLen, seed, mdb_len)
+  db = string_xor(mdb, dbmask)
+
+  print(s_hex(db))
+
+  lHash_ = db[0:hLen]
+  assert (lHash == lHash_)
+
+  db_ = db[hLen:-1].lstrip('\x00')
+
+  assert (len(db_) == len(db))
+
+  assert (db_[0] == '\x01')
+
+  assert (Y == '\x00')
+
+  m = db_[1:-1]
+  print(s_hex(m), m)
+
 def attack() :
   k = int(math.ceil(math.log(N(), 256)))
   B = 2 ** (8*(k-1))
@@ -81,8 +169,6 @@ def attack() :
   #2.1
   f2 = ( (N() + B) // B ) * f1 // 2
   print("f2\t", f2)
-
-#  assert(f2 * (B - 1) < N() + B)
 
   #2.2
   to_query = pow(f2, e(), N())
@@ -123,6 +209,9 @@ def attack() :
     #3.5b
     else:
       m_max = ( (i * N()) + B ) // f3
+
+
+  oaep_decrypt(I2OSP(m_min, k), k)
 
   print("f3\t%d\nB\t%d" % (f3, B))
   print("m\t%d" % m_min)
