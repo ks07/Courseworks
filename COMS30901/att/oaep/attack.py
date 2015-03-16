@@ -38,8 +38,7 @@ def interact(c, pad_bytes) :
   # Interpret result code as B comparison
   interp = (r == 1)
 
-  if (r not in [0,1,2]):
-    print("Error code %d!\n" % r)
+  assert (r in [0,1,2]), "Received unexpected response code from target"
 
   return (r, interp)
 
@@ -113,8 +112,9 @@ def eme_oaep_decode(em):
 
   m = db_[1:]
 
-  print("Decoded secret:")
-  s_hex(m)
+  #print("Decoded secret:")
+  #s_hex(m)
+  return m
 
 def attack() :
   k = int(math.ceil(math.log(N(), 256)))
@@ -193,7 +193,7 @@ def attack() :
       m_max = ( (i * N()) + B ) // f3
 
   #print("f3\t%d\n" % (f3))
-  print("Plaintext m:\n%x" % m_min)
+  #print("Plaintext m:\n%x" % m_min)
 
   return m_min
 
@@ -228,6 +228,10 @@ if ( __name__ == "__main__" ) :
   assert(verify_m(m))
 
   # Decode the found m to get the secret
-  eme_oaep_decode(I2OSP(m, int(math.ceil(math.log(N(), 256)))))
+  s = eme_oaep_decode(I2OSP(m, int(math.ceil(math.log(N(), 256)))))
 
-  print("Target queries:", queries)
+  print("Recovered plaintext m:\n{0:x}".format(m))
+  print("Recovered secret s:")
+  s_hex(s)
+
+  print("Total target interactions:", queries)
