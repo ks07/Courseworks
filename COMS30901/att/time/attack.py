@@ -67,7 +67,7 @@ def oracles(mp, b, m_temp, m):
   if (red) :
     O2 = 1
 
-  return (O1, O2)
+  return (O1, O2, m_temp)
 
 def oracle_map(trials, b, mp):
   #      O1, !O1, O2, !O2
@@ -76,7 +76,8 @@ def oracle_map(trials, b, mp):
     m = t[1]
 
     # TODO: No
-    m_temp = pow(m, b * 2, N())
+    m_temp = undo_mont_rep(m, mp)
+    m_temp = pow(m_temp, b * 2, N())
     m_temp = get_mont_rep(m_temp, mp)
 
     o = oracles(mp, b, m_temp, m)
@@ -99,7 +100,7 @@ def mean(l):
 
 def attack() :
   N_bits = int(math.log(N(), 2)) # Usually we'd expect d to be up to N bits long
-  d = 1 # We know the MSB is 1
+  #d = 1 # We know the MSB is 1
   H = 1
 
   # We are given that the max d is b-1 (thus must be at most 64 bits)
@@ -117,7 +118,7 @@ def attack() :
   
   # assert undo == some_trials
 
-  for i in xrange(1, 2):
+  for i in xrange(1, max_d_i):
 #    M1 = [] # O1 = 1
 #    M2 = [] # O1 = 0
 #    M3 = [] # O2 = 1
@@ -135,17 +136,26 @@ def attack() :
     mu3 = mean(F3)
     mu4 = mean(F4)
 
-    print(mu1, mu2, mu3, mu4)
+#    print(mu1, mu2, mu3, mu4)
 
     # Move to next bit
-    d = d << 1
+    #d = d << 1
     H = H << 1
 
-    # Guess H_i = 1
-    H = H | 1
-    
+    # Compare the differences between mu1/2 and mu3/4
+    diff12 = abs(mu1-mu2)
+    diff34 = abs(mu3-mu4)
 
-  return d
+    print(diff12, diff34)
+
+    if (diff12 > diff34):
+      # Guess H_i = 1
+      H = H | 1
+    else:
+      H = H | 0
+    print(bin(H))
+
+  return H
 
 def verify_d(d):
   # TODO: pick some real numbers
