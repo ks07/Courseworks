@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
-from hashlib import sha1
-import sys, subprocess, math
+import sys, subprocess, math, random
 
 def get_params(paramfile) :
   infile = open(paramfile, 'r')
@@ -23,6 +22,8 @@ def interact(c) :
   global queries
   queries = queries + 1
 
+  assert(c < N())
+
   # Send ciphertext c to attack target as hex string
   target_in.write( "{0:x}\n".format(c) )
   target_in.flush()
@@ -34,8 +35,97 @@ def interact(c) :
 
   return (delta, m, m_raw)
 
+def time_random_c():
+  time_table = []
+
+  for i in xrange(1, 1000):
+    c = random.randrange(N())
+    (delta, m, m_raw) = interact(c)
+    #print(delta, c, m)
+    time_table.append((c, m, delta))
+  
+  return time_table
+
+def oracles(b, m):
+  O1 = 0
+  O2 = 0
+
+  # TODO: We probably need to mod this?
+  m_temp = (m ** b) ** 2
+  r = (m_temp * m) ** 2
+
+  if (r >= N()) :
+    O1 = 1
+
+  r = m_temp ** 2
+
+  if (r >= N()) :
+    O2 = 1
+
+  return (O1, O2)
+
+def oracle_map(trials, b):
+  #      O1, !O1, O2, !O2
+  ret = ([],  [], [],  [])
+  for t in trials:
+    m = t[1]
+    o = oracles(b, m)
+
+    if o[0] == 1:
+      ret[0].append(t)
+    else:
+      ret[1].append(t)
+
+    if o[1] == 1:
+      ret[2].append(t)
+    else:
+      ret[3].append(t)
+
+  return ret
+
+def mean(l):
+  assert(len(l) > 0)
+  float(sum(l)) / float(len(l))
+
 def attack() :
-  return 12
+  N_bits = int(math.log(N(), 2)) # Usually we'd expect d to be up to N bits long
+  d = 1 # We know the MSB is 1
+  H = 1
+
+  # We are given that the max d is b-1 (thus must be at most 64 bits)
+  max_d_i = 64
+
+  some_trials = time_random_c()
+
+  for i in xrange(1, 2):
+#    M1 = [] # O1 = 1
+#    M2 = [] # O1 = 0
+#    M3 = [] # O2 = 1
+#    M4 = [] # O2 = 0
+
+    (M1, M2, M3, M4) = oracle_map(some_trials, H)
+
+    F1 = map(lambda x: x[2], M1)
+    F2 = map(lambda x: x[2], M2)
+    F3 = map(lambda x: x[2], M3)
+    F4 = map(lambda x: x[2], M4)
+
+    mu1 = mean(F1)
+    mu2 = mean(F2)
+    mu3 = mean(F3)
+    mu4 = mean(F4)
+
+    print(mu1, mu2, mu3, mu4)
+
+    # Move to next bit
+    d = d << 1
+    H = H << 1
+
+    # Guess H_i = 1
+    H = H | 1
+    
+
+  return d
 
 def verify_d(d):
   # TODO: pick some real numbers
