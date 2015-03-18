@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
+from montmul import *
 import sys, subprocess, math, random
 
 def get_params(paramfile) :
@@ -46,31 +47,39 @@ def time_random_c():
   
   return time_table
 
-def oracles(b, m):
+def oracles(mp, b, m_temp, m):
   O1 = 0
   O2 = 0
 
   # TODO: We probably need to mod this?
   #m_temp = (m ** b) ** 2
-  m_temp = pow(m, b * 2, N())
-  r = (m_temp * m) ** 2
+#  m_temp = pow(m, b * 2, N())
+#  r = (m_temp * m) ** 2
 
-  if (r >= N()) :
+  res, _ = mont_mul(m_temp, m, mp)
+  _, red = mont_mul(res, res, mp)
+
+  if (red) :
     O1 = 1
 
-  r = m_temp ** 2
+  _, red = mont_mul(m_temp, m_temp, mp)
 
-  if (r >= N()) :
+  if (red) :
     O2 = 1
 
   return (O1, O2)
 
-def oracle_map(trials, b):
+def oracle_map(trials, b, mp):
   #      O1, !O1, O2, !O2
   ret = ([],  [], [],  [])
   for t in trials:
     m = t[1]
-    o = oracles(b, m)
+
+    # TODO: No
+    m_temp = pow(m, b * 2, N())
+    m_temp = get_mont_rep(m_temp, mp)
+
+    o = oracles(mp, b, m_temp, m)
 
     if o[0] == 1:
       ret[0].append(t)
@@ -86,7 +95,7 @@ def oracle_map(trials, b):
 
 def mean(l):
   assert(len(l) > 0)
-  float(sum(l)) / float(len(l))
+  return float(sum(l)) / float(len(l))
 
 def attack() :
   N_bits = int(math.log(N(), 2)) # Usually we'd expect d to be up to N bits long
@@ -98,19 +107,29 @@ def attack() :
 
   some_trials = time_random_c()
 
+  mp = get_mp(N())
+
+  # Convert all the m into montgomery rep
+  # TODO: This is uglier than Satan himself
+  mont_trials = map(lambda t: (t[0], get_mont_rep(t[1], mp), t[2]), some_trials) 
+
+  # undo = map(lambda t: (t[0], undo_mont_rep(t[1], mp), t[2]), mont_trials)
+  
+  # assert undo == some_trials
+
   for i in xrange(1, 2):
 #    M1 = [] # O1 = 1
 #    M2 = [] # O1 = 0
 #    M3 = [] # O2 = 1
 #    M4 = [] # O2 = 0
 
-    (M1, M2, M3, M4) = oracle_map(some_trials, H)
+    (M1, M2, M3, M4) = oracle_map(some_trials, H, mp)
 
     F1 = map(lambda x: x[2], M1)
     F2 = map(lambda x: x[2], M2)
     F3 = map(lambda x: x[2], M3)
     F4 = map(lambda x: x[2], M4)
-    print(F1)
+
     mu1 = mean(F1)
     mu2 = mean(F2)
     mu3 = mean(F3)
