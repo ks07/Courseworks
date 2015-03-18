@@ -38,7 +38,7 @@ def interact(c) :
 def time_random_c():
   time_table = []
 
-  for i in xrange(1, 1000):
+  for i in xrange(1, 10000):
     c = random.randrange(N())
     (delta, m, m_raw) = interact(c)
     #print(delta, c, m)
@@ -51,7 +51,8 @@ def oracles(b, m):
   O2 = 0
 
   # TODO: We probably need to mod this?
-  m_temp = (m ** b) ** 2
+  #m_temp = (m ** b) ** 2
+  m_temp = pow(m, b * 2, N())
   r = (m_temp * m) ** 2
 
   if (r >= N()) :
@@ -109,7 +110,7 @@ def attack() :
     F2 = map(lambda x: x[2], M2)
     F3 = map(lambda x: x[2], M3)
     F4 = map(lambda x: x[2], M4)
-
+    print(F1)
     mu1 = mean(F1)
     mu2 = mean(F2)
     mu3 = mean(F3)
