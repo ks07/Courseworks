@@ -42,42 +42,32 @@ def initialise_attack():
   time_table = []
   mp = get_mp(N())
 
-  for i in xrange(1, 10000):
-    c = random.randrange(N())
+  for c in range(1, N(), N() / 10000):
+    #c = random.randrange(N())
     idict = interact(c)
     # Get the montgomery rep of each m
     idict['mm'] = get_mont_rep(idict['m'], mp)
     idict['tm_0'] = get_mont_rep(1, mp)
     idict['tm_1'] = idict['tm_0'] #TODO: Can we rid ourselves of this?
     time_table.append(idict)
-  
+
   return (mp, time_table)
 
 def oracles(mp, trial):
-  O1 = 0
-  O2 = 0
-
   # TODO: Store these results so we don't recompute the square
 
   # O1 checks if the next iteration will have to reduce on the square if our key bit is 1
-  _, red = mont_mul(trial['tm_1'], trial['tm_1'], mp)
-
-  if (red) :
-    O1 = 1
+  _, trial['O1'] = mont_mul(trial['tm_1'], trial['tm_1'], mp)
 
   # O2 does the same but with the assumption of bit 0
-  _, red = mont_mul(trial['tm_0'], trial['tm_0'], mp)
+  _, trial['O2'] = mont_mul(trial['tm_0'], trial['tm_0'], mp)
 
-  if (red) :
-    O2 = 1
-
-  trial['O1'] = O1
-  trial['O2'] = O2
-
+  print(trial['O1'], trial['O2'])
   return trial
 
 def mean(l):
   assert(len(l) > 0)
+  print(float(sum(l)))
   return float(sum(l)) / float(len(l))
 
 def attack() :
@@ -93,10 +83,11 @@ def attack() :
 
   # We know the first bit is 1, so do the first step
   for t in some_trials:
+    assert mp['N'] == N()
     t['tm_1'], _ = mont_mul(t['tm_1'], t['tm_1'], mp) # TODO: Required?
     t['tm_1'], _ = mont_mul(t['tm_1'], t['mm'], mp)
     # TODO: Remove me
-    t['tm_0'] = "I am not an integer and if you attempt to use me then you will be sorely disappointed and will crash, or possibly not as you are python and you do what you like"
+    #t['tm_0'] = "I am not an integer and if you attempt to use me then you will be sorely disappointed and will crash, or possibly not as you are python and you do what you like"
 
   # Step through square and multiply algo
   for i in xrange(1, max_d_i):
@@ -106,10 +97,10 @@ def attack() :
       print("GOOD STUFF", H)
       break
 
-    M1 = [] # O1 = 1
-    M2 = [] # O1 = 0
-    M3 = [] # O2 = 1
-    M4 = [] # O2 = 0
+    F1 = [] # O1 = 1
+    F2 = [] # O1 = 0
+    F3 = [] # O2 = 1
+    F4 = [] # O2 = 0
 
     # do both outcomes for step i based on the key bit previously decided in round i-1
     prev_key_bit = H >> (i-1)
@@ -117,6 +108,7 @@ def attack() :
     assert (i > 1 or prev_key_bit == 1)
 
     for t in some_trials:
+      assert mp['N'] == N()
       chosen_t = t['tm_0']
       if prev_key_bit == 1:
         chosen_t = t['tm_1']
@@ -134,12 +126,12 @@ def attack() :
 
       # TODO: We can cut away the map operation with F and M
       # Sort into the correct bins
-      if t['O1'] == 1:
+      if t['O1']:
         F1.append(t['time'])
       else:
         F2.append(t['time'])
 
-      if t['O2'] == 1:
+      if t['O2']:
         F3.append(t['time'])
       else:
         F4.append(t['time'])
@@ -149,6 +141,7 @@ def attack() :
     mu3 = mean(F3)
     mu4 = mean(F4)
 
+    print(len(F1), len(F2), len(F3), len(F4))
     print(mu1, mu2, mu3, mu4)
 
     # Move to next bit

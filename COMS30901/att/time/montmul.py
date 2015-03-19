@@ -63,6 +63,7 @@ def mont_mul(x, y, mp):
 
     for i in range(0, lN):
         u = mpz_getlimbn(x, 0) * mpz_getlimbn(y, i)
+        u = mpz_getlimbn(u, 0)
         u = u + mpz_getlimbn(r, 0)
         u = mpz_getlimbn(u, 0)
         u = u * mp['omega']
@@ -102,5 +103,14 @@ if __name__ == "__main__":
     x = random.randrange(N)
     x_m = get_mont_rep(x, mp)
     assert(undo_mont_rep(x_m, mp) == x)
+
+    for i in range(0, 100):
+        x = random.randrange(N)
+        y = random.randrange(N)
+        x_m = get_mont_rep(x, mp)
+        y_m = get_mont_rep(y, mp)
+        r_m, red = mont_mul(x_m, y_m, mp)
+        r = (x * y) % N
+        assert(r == undo_mont_rep(r_m, mp))
 
     print("OK!")
