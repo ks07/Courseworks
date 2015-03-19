@@ -34,65 +34,45 @@ def interact(c) :
   m_raw = target_out.readline().strip()
   m = int(m_raw, 16)
 
-  return (delta, m, m_raw)
+  return {'time':delta, 'm':m, 'm_raw':m_raw}
 
-def time_random_c():
+def initialise_attack():
   time_table = []
+  mp = get_mp(N())
 
   for i in xrange(1, 10000):
     c = random.randrange(N())
-    (delta, m, m_raw) = interact(c)
-    #print(delta, c, m)
-    time_table.append((c, m, delta))
+    idict = interact(c)
+    # Get the montgomery rep of each m
+    idict['mm'] = get_mont_rep(idict['m'], mp)
+    idict['tm_0'] = get_mont_rep(1, mp)
+    idict['tm_1'] = idict['tm_0'] #TODO: Can we rid ourselves of this?
+    time_table.append(idict)
   
-  return time_table
+  return (mp, time_table)
 
-def oracles(mp, b, m_temp, m):
+def oracles(mp, trial):
   O1 = 0
   O2 = 0
 
-  # TODO: We probably need to mod this?
-  #m_temp = (m ** b) ** 2
-#  m_temp = pow(m, b * 2, N())
-#  r = (m_temp * m) ** 2
+  # TODO: Store these results so we don't recompute the square
 
-  res, _ = mont_mul(m_temp, m, mp)
-  _, red = mont_mul(res, res, mp)
+  # O1 checks if the next iteration will have to reduce on the square if our key bit is 1
+  _, red = mont_mul(trial['tm_1'], trial['tm_1'], mp)
 
   if (red) :
     O1 = 1
 
-  _, red = mont_mul(m_temp, m_temp, mp)
+  # O2 does the same but with the assumption of bit 0
+  _, red = mont_mul(trial['tm_0'], trial['tm_0'], mp)
 
   if (red) :
     O2 = 1
 
-  return (O1, O2, m_temp)
+  trial['O1'] = O1
+  trial['O2'] = O2
 
-def oracle_map(trials, b, mp):
-  #      O1, !O1, O2, !O2
-  ret = ([],  [], [],  [])
-  for t in trials:
-    m = t[1]
-
-    # TODO: No
-    m_temp = undo_mont_rep(m, mp)
-    m_temp = pow(m_temp, b * 2, N())
-    m_temp = get_mont_rep(m_temp, mp)
-
-    o = oracles(mp, b, m_temp, m)
-
-    if o[0] == 1:
-      ret[0].append(t)
-    else:
-      ret[1].append(t)
-
-    if o[1] == 1:
-      ret[2].append(t)
-    else:
-      ret[3].append(t)
-
-  return ret
+  return trial
 
 def mean(l):
   assert(len(l) > 0)
@@ -100,36 +80,66 @@ def mean(l):
 
 def attack() :
   N_bits = int(math.log(N(), 2)) # Usually we'd expect d to be up to N bits long
-  #d = 1 # We know the MSB is 1
   H = 1
 
   # We are given that the max d is b-1 (thus must be at most 64 bits)
   max_d_i = 64
 
-  some_trials = time_random_c()
+  # Get a random (large) set of timing data with accompanying ciphertexts, messages and montgomery info
+  (mp, some_trials) = initialise_attack()
 
-  mp = get_mp(N())
+  # We know the first bit is 1, so do the first step
+  for t in some_trials:
+    t['tm_1'], _ = mont_mul(t['tm_1'], t['tm_1'], mp) # TODO: Required?
+    t['tm_1'], _ = mont_mul(t['tm_1'], t['mm'], mp)
+    # TODO: Remove me
+    t['tm_0'] = "I am not an integer and if you attempt to use me then you will be sorely disappointed and will crash, or possibly not as you are python and you do what you like"
 
-  # Convert all the m into montgomery rep
-  # TODO: This is uglier than Satan himself
-  mont_trials = map(lambda t: (t[0], get_mont_rep(t[1], mp), t[2]), some_trials) 
-
-  # undo = map(lambda t: (t[0], undo_mont_rep(t[1], mp), t[2]), mont_trials)
-  
-  # assert undo == some_trials
-
+  # Step through square and multiply algo
   for i in xrange(1, max_d_i):
-#    M1 = [] # O1 = 1
-#    M2 = [] # O1 = 0
-#    M3 = [] # O2 = 1
-#    M4 = [] # O2 = 0
+    M1 = [] # O1 = 1
+    M2 = [] # O1 = 0
+    M3 = [] # O2 = 1
+    M4 = [] # O2 = 0
 
-    (M1, M2, M3, M4) = oracle_map(some_trials, H, mp)
+    # do both outcomes for step i based on the key bit previously decided in round i-1
+    prev_key_bit = H >> (i-1)
+    assert prev_key_bit < 2
 
-    F1 = map(lambda x: x[2], M1)
-    F2 = map(lambda x: x[2], M2)
-    F3 = map(lambda x: x[2], M3)
-    F4 = map(lambda x: x[2], M4)
+    for t in some_trials:
+      chosen_t = t['tm_0']
+      if prev_key_bit == 1:
+        chosen_t = t['tm_1']
+
+        # check that nothing weird has happened to our t value
+        assert chosen_t < N()
+
+      t['tm_0'], _ = mont_mul(chosen_t, chosen_t, mp)
+      t['tm_1'], _ = mont_mul(t['tm_0'], t['mm'], mp)
+
+      # TODO: Sum here
+      t_ = oracles(mp, t)
+      # Hopefully, oracles is modifying t in place (but it doesn't really matter... that much)
+      assert t_ == t
+
+      # TODO: We can cut away the map operation with F and M
+      # Sort into the correct bins
+      if t['O1'] == 1:
+        M1.append(t)
+      else:
+        M2.append(t)
+
+      if t['O2'] == 1:
+        M3.append(t)
+      else:
+        M4.append(t)
+
+#    (M1, M2, M3, M4) = oracle_map(some_trials, H, mp)
+
+    F1 = map(lambda x: x['time'], M1)
+    F2 = map(lambda x: x['time'], M2)
+    F3 = map(lambda x: x['time'], M3)
+    F4 = map(lambda x: x['time'], M4)
 
     mu1 = mean(F1)
     mu2 = mean(F2)
