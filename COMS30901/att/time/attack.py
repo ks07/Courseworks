@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
-from montmul import *
+from montmul import mont_mul, get_mp, get_mont_rep, undo_mont_rep
 import sys, subprocess, math, random
 
 def get_params(paramfile) :
@@ -13,21 +13,21 @@ def get_params(paramfile) :
 
   return (N, e, N_raw, e_raw)
 
-def N(raw=False):
+def get_N(raw=False):
   return params[0 if not raw else 2]
 
-def e(raw=False):
+def get_e(raw=False):
   return params[1 if not raw else 3]
 
 def interact(c) :
   global queries
   queries = queries + 1
 
-  assert(c < N())
+  assert(c < get_N())
 
   # Send ciphertext c to attack target as hex string
   target_in.write( "{0:x}\n".format(c) )
-#  target_in.write( "{0:x}\n".format(N()) )
+#  target_in.write( "{0:x}\n".format(get_N()) )
 #  target_in.write( "{0:x}\n".format(D) )
   target_in.flush()
 
@@ -40,10 +40,10 @@ def interact(c) :
 
 def initialise_attack():
   time_table = []
-  mp = get_mp(N())
+  mp = get_mp(get_N())
 
-  for c in range(1, N(), N() / 10000):
-    #c = random.randrange(N())
+  for c in range(1, get_N(), get_N() / 10000):
+    #c = random.randrange(get_N())
     idict = interact(c)
     # Get the montgomery rep of each m
     idict['mm'] = get_mont_rep(idict['m'], mp)
@@ -71,7 +71,7 @@ def mean(l):
   return float(sum(l)) / float(len(l))
 
 def attack() :
-  N_bits = int(math.log(N(), 2)) # Usually we'd expect d to be up to N bits long
+  N_bits = int(math.log(get_N(), 2)) # Usually we'd expect d to be up to N bits long
   H = 1
 
   # We are given that the max d is b-1 (thus must be at most 64 bits)
@@ -83,7 +83,7 @@ def attack() :
 
   # We know the first bit is 1, so do the first step
   for t in some_trials:
-    assert mp['N'] == N()
+    assert mp['N'] == get_N()
     t['tm_1'], _ = mont_mul(t['tm_1'], t['tm_1'], mp) # TODO: Required?
     t['tm_1'], _ = mont_mul(t['tm_1'], t['mm'], mp)
     # TODO: Remove me
@@ -108,13 +108,13 @@ def attack() :
     assert (i > 1 or prev_key_bit == 1)
 
     for t in some_trials:
-      assert mp['N'] == N()
+      assert mp['N'] == get_N()
       chosen_t = t['tm_0']
       if prev_key_bit == 1:
         chosen_t = t['tm_1']
 
       # check that nothing weird has happened to our t value
-      assert chosen_t < N()
+      assert chosen_t < get_N()
 
       t['tm_0'], _ = mont_mul(chosen_t, chosen_t, mp)
       t['tm_1'], _ = mont_mul(t['tm_0'], t['mm'], mp)
@@ -166,10 +166,10 @@ def attack() :
 def verify_d(d):
   # TODO: pick some real numbers
   #m = 245674544525437553L
-  m = random.randrange(N())
-  assert(m < N())
-  c = pow(m, e(), N())
-  m_ = pow(c, d, N())
+  m = random.randrange(get_N())
+  assert(m < get_N())
+  c = pow(m, get_e(), get_N())
+  m_ = pow(c, d, get_N())
   return (m == m_)
 
 if ( __name__ == "__main__" ) :
