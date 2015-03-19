@@ -27,6 +27,8 @@ def interact(c) :
 
   # Send ciphertext c to attack target as hex string
   target_in.write( "{0:x}\n".format(c) )
+  target_in.write( "{0:x}\n".format(N()) )
+  target_in.write( "{0:x}\n".format(D) )
   target_in.flush()
 
   # Receive time from attack target.
@@ -84,6 +86,7 @@ def attack() :
 
   # We are given that the max d is b-1 (thus must be at most 64 bits)
   max_d_i = 64
+  max_d_i = len(bin(D))-2
 
   # Get a random (large) set of timing data with accompanying ciphertexts, messages and montgomery info
   (mp, some_trials) = initialise_attack()
@@ -169,7 +172,8 @@ def attack() :
 
 def verify_d(d):
   # TODO: pick some real numbers
-  m = 245674544525437553L
+  #m = 245674544525437553L
+  m = random.randrange(N())
   assert(m < N())
   c = pow(m, e(), N())
   m_ = pow(c, d, N())
@@ -181,7 +185,14 @@ if ( __name__ == "__main__" ) :
     sys.exit(1)
 
   # Read param file
-  params = get_params(sys.argv[2])
+  params = list(get_params(sys.argv[2]))
+
+  params[0] = 11371820908545711283
+  params[1] = 8383132602661586723
+  params[2] = hex(params[0])[2:]
+  params[3] = hex(params[1])[2:]
+
+  D =         2377205257342368779
 
   # Produce a sub-process representing the attack target.
   target = subprocess.Popen( args   = sys.argv[ 1 ],
