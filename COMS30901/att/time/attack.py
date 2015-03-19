@@ -135,19 +135,14 @@ def attack() :
       # TODO: We can cut away the map operation with F and M
       # Sort into the correct bins
       if t['O1'] == 1:
-        M1.append(t)
+        F1.append(t['time'])
       else:
-        M2.append(t)
+        F2.append(t['time'])
 
       if t['O2'] == 1:
-        M3.append(t)
+        F3.append(t['time'])
       else:
-        M4.append(t)
-
-    F1 = map(lambda x: x['time'], M1)
-    F2 = map(lambda x: x['time'], M2)
-    F3 = map(lambda x: x['time'], M3)
-    F4 = map(lambda x: x['time'], M4)
+        F4.append(t['time'])
 
     mu1 = mean(F1)
     mu2 = mean(F2)
