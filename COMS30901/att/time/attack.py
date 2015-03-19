@@ -27,8 +27,8 @@ def interact(c) :
 
   # Send ciphertext c to attack target as hex string
   target_in.write( "{0:x}\n".format(c) )
-  target_in.write( "{0:x}\n".format(N()) )
-  target_in.write( "{0:x}\n".format(D) )
+#  target_in.write( "{0:x}\n".format(N()) )
+#  target_in.write( "{0:x}\n".format(D) )
   target_in.flush()
 
   # Receive time from attack target.
@@ -86,7 +86,7 @@ def attack() :
 
   # We are given that the max d is b-1 (thus must be at most 64 bits)
   max_d_i = 64
-  max_d_i = len(bin(D))-2
+#  max_d_i = len(bin(D))-2
 
   # Get a random (large) set of timing data with accompanying ciphertexts, messages and montgomery info
   (mp, some_trials) = initialise_attack()
@@ -100,6 +100,12 @@ def attack() :
 
   # Step through square and multiply algo
   for i in xrange(1, max_d_i):
+    # Check d as we go, just in case
+    # TODO: Hmm...
+    if verify_d(H):
+      print("GOOD STUFF", H)
+      break
+
     M1 = [] # O1 = 1
     M2 = [] # O1 = 0
     M3 = [] # O2 = 1
@@ -108,14 +114,15 @@ def attack() :
     # do both outcomes for step i based on the key bit previously decided in round i-1
     prev_key_bit = H >> (i-1)
     assert prev_key_bit < 2
+    assert (i > 1 or prev_key_bit == 1)
 
     for t in some_trials:
       chosen_t = t['tm_0']
       if prev_key_bit == 1:
         chosen_t = t['tm_1']
 
-        # check that nothing weird has happened to our t value
-        assert chosen_t < N()
+      # check that nothing weird has happened to our t value
+      assert chosen_t < N()
 
       t['tm_0'], _ = mont_mul(chosen_t, chosen_t, mp)
       t['tm_1'], _ = mont_mul(t['tm_0'], t['mm'], mp)
@@ -137,8 +144,6 @@ def attack() :
       else:
         M4.append(t)
 
-#    (M1, M2, M3, M4) = oracle_map(some_trials, H, mp)
-
     F1 = map(lambda x: x['time'], M1)
     F2 = map(lambda x: x['time'], M2)
     F3 = map(lambda x: x['time'], M3)
@@ -149,7 +154,7 @@ def attack() :
     mu3 = mean(F3)
     mu4 = mean(F4)
 
-#    print(mu1, mu2, mu3, mu4)
+    print(mu1, mu2, mu3, mu4)
 
     # Move to next bit
     #d = d << 1
@@ -187,12 +192,12 @@ if ( __name__ == "__main__" ) :
   # Read param file
   params = list(get_params(sys.argv[2]))
 
-  params[0] = 11371820908545711283
-  params[1] = 8383132602661586723
-  params[2] = hex(params[0])[2:]
-  params[3] = hex(params[1])[2:]
+#  params[0] = 11371820908545711283
+#  params[1] = 8383132602661586723
+#  params[2] = hex(params[0])[2:]
+#  params[3] = hex(params[1])[2:]
 
-  D =         2377205257342368779
+#  D =         2377205257342368779
 
   # Produce a sub-process representing the attack target.
   target = subprocess.Popen( args   = sys.argv[ 1 ],
