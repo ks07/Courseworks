@@ -13,7 +13,7 @@ def find_omega(N):
     # TODO: Bad
     N_lsl = mpz_getlimbn(N, 0)
 
-    for i in range(1, w):
+    for _ in range(1, w):
         # TODO: Bad
         omega = mpz_getlimbn(omega * omega, 0)
         omega = mpz_getlimbn(omega * N_lsl, 0)
@@ -25,7 +25,7 @@ def find_rhosq(N):
     rho_sq = 1
     lim = 2 * mpz_size(N) * 64
     
-    for i in xrange(0, lim):
+    for _ in xrange(0, lim):
         rho_sq = rho_sq * 2
         if rho_sq >= N:
             rho_sq = rho_sq - N
@@ -88,29 +88,29 @@ def get_mont_rep(x, mp):
 def undo_mont_rep(r_m, mp):
     return mont_mul(r_m, 1, mp)[0]
 
-# if __name__ == "__main__":
-#     # Run some simple tests with some fixed values taken from our C implementation
-#     N = 67904591690960625685176102005990337496786740709623937212838922679922983036690323147526875231447485364833208798244563167265927305187713466112908513868402652001032936944256370570913518925501241679737467579383754432622376609693387551255713799338068557786526125073913330768378515485771456109044135994550676411187L
+if __name__ == "__main__":
+    # Run some simple tests with some fixed values taken from our C implementation
+    myN = 67904591690960625685176102005990337496786740709623937212838922679922983036690323147526875231447485364833208798244563167265927305187713466112908513868402652001032936944256370570913518925501241679737467579383754432622376609693387551255713799338068557786526125073913330768378515485771456109044135994550676411187L
 
-#     assert mpz_size(N) == 16
-#     assert mpz_getlimbn(N, 2) == 13853186540086312366
+    assert mpz_size(myN) == 16
+    assert mpz_getlimbn(myN, 2) == 13853186540086312366
 
-#     assert find_omega(N) == 12132467263235727365
-#     assert find_rhosq(N) == 24733578175677155822271607372585377657694123229601842059113029975719763419416548152342124685480818235906131633966260259692677567940685556540213815522472406678846708899779654571603309102177008106044883884903579150907160820914715207554124279680009896558548886800517477463703900084974729045866390906269371193572L
+    assert find_omega(myN) == 12132467263235727365
+    assert find_rhosq(myN) == 24733578175677155822271607372585377657694123229601842059113029975719763419416548152342124685480818235906131633966260259692677567940685556540213815522472406678846708899779654571603309102177008106044883884903579150907160820914715207554124279680009896558548886800517477463703900084974729045866390906269371193572L
 
-#     mp = get_mp(N)
+    mp = get_mp(myN)
 
-#     x = random.randrange(N)
-#     x_m = get_mont_rep(x, mp)
-#     assert(undo_mont_rep(x_m, mp) == x)
+    x = random.randrange(myN)
+    x_m = get_mont_rep(x, mp)
+    assert(undo_mont_rep(x_m, mp) == x)
 
-#     for i in range(0, 100):
-#         x = random.randrange(N)
-#         y = random.randrange(N)
-#         x_m = get_mont_rep(x, mp)
-#         y_m = get_mont_rep(y, mp)
-#         r_m, red = mont_mul(x_m, y_m, mp)
-#         r = (x * y) % N
-#         assert(r == undo_mont_rep(r_m, mp))
+    for i in range(0, 100):
+        x = random.randrange(myN)
+        y = random.randrange(myN)
+        x_m = get_mont_rep(x, mp)
+        y_m = get_mont_rep(y, mp)
+        r_m, red = mont_mul(x_m, y_m, mp)
+        r = (x * y) % myN
+        assert(r == undo_mont_rep(r_m, mp))
 
-#     print("OK!")
+    print("OK!")

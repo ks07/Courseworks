@@ -84,8 +84,8 @@ def attack() :
   # We know the first bit is 1, so do the first step
   for t in some_trials:
     assert mp['N'] == get_N()
-    t['tm_1'], _ = mont_mul(t['tm_1'], t['tm_1'], mp) # TODO: Required?
-    t['tm_1'], _ = mont_mul(t['tm_1'], t['mm'], mp)
+    t['tm_0'], _ = mont_mul(t['tm_1'], t['tm_1'], mp) # TODO: Required?
+    t['tm_1'], _ = mont_mul(t['tm_0'], t['mm'], mp)
     # TODO: Remove me
     #t['tm_0'] = "I am not an integer and if you attempt to use me then you will be sorely disappointed and will crash, or possibly not as you are python and you do what you like"
 
@@ -109,9 +109,9 @@ def attack() :
 
     for t in some_trials:
       assert mp['N'] == get_N()
-      chosen_t = t['tm_0']
-      if prev_key_bit == 1:
-        chosen_t = t['tm_1']
+#      chosen_t = t['tm_0']
+#      if prev_key_bit == 1:
+      chosen_t = t['tm_1']
 
       # check that nothing weird has happened to our t value
       assert chosen_t < get_N()
@@ -124,7 +124,6 @@ def attack() :
       # Hopefully, oracles is modifying t in place (but it doesn't really matter... that much)
       assert t_ == t
 
-      # TODO: We can cut away the map operation with F and M
       # Sort into the correct bins
       if t['O1']:
         F1.append(t['time'])
@@ -200,10 +199,10 @@ if ( __name__ == "__main__" ) :
   queries = 0
 
   # Execute a function representing the attacker.
-  d = attack()
+  guess_d = attack()
 
   # Check our guess
-  assert(verify_d(d))
+  assert(verify_d(guess_d))
 
   print("Recovered private key d:\n{0:x}".format(d))
 
