@@ -110,9 +110,9 @@ def attack():
     found_d = found_d << 1
 
     if diff_f1_f2 < final_cutoff and diff_f3_f4 < final_cutoff:
-      print("Guessing target key size of {0} bits".format(key_index))
+      print("Guessing target key size of {0} bits".format(key_index + 1))
       # Return our current value, we must test both values of bit i
-      return found_d
+      return (found_d | 1)
     elif diff_f1_f2 > diff_f3_f4:
       # Guess k is hot
       found_d = found_d | 1

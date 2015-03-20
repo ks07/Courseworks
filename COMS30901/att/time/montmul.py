@@ -43,9 +43,8 @@ def mpz_size(N):
     return int(math.ceil(math.log(N, 2**64)))
 
 def mpz_getlimbn(x, n):
-    limb_bits = 64 # TODO: Constant-ify
-    limb_mask = (2 ** limb_bits) - 1
-    limb_offset = n * limb_bits
+    limb_mask = 0xFFFFFFFFFFFFFFFF
+    limb_offset = n * 64
     limb = (x >> limb_offset) & limb_mask
     return limb
 
@@ -63,14 +62,11 @@ def mont_mul(x, y, mp):
 
     for i in range(0, lN):
         u = mpz_getlimbn(x, 0) * mpz_getlimbn(y, i)
-        u = mpz_getlimbn(u, 0)
         u = u + mpz_getlimbn(r, 0)
-        u = mpz_getlimbn(u, 0)
         u = u * mp['omega']
         u = mpz_getlimbn(u, 0)
 
         assert u < 2**64
-        assert u == ((mpz_getlimbn(r, 0) + mpz_getlimbn(x, 0) * mpz_getlimbn(y, i)) * mp['omega']) % (2**64)
         
         r = r + x * mpz_getlimbn(y, i) + mp['N'] * u
         r = mpz_tdiv_q_2exp(r, 64) #TODO: constant
