@@ -13,22 +13,12 @@ def get_params(paramfile) :
 
   return (N, e, N_raw, e_raw)
 
-def get_N(raw=False):
-  return params[0 if not raw else 2]
-
-def get_e(raw=False):
-  return params[1 if not raw else 3]
-
 def interact(c) :
   global queries
   queries = queries + 1
 
-  assert(c < get_N())
-
   # Send ciphertext c to attack target as hex string
   target_in.write( "{0:x}\n".format(c) )
-#  target_in.write( "{0:x}\n".format(get_N()) )
-#  target_in.write( "{0:x}\n".format(D) )
   target_in.flush()
 
   # Receive time from attack target.
@@ -38,138 +28,93 @@ def interact(c) :
 
   return {'time':delta, 'm':m, 'm_raw':m_raw}
 
-def initialise_attack():
-  time_table = []
-  mp = get_mp(get_N())
+def attack():
+  N = params[0]
+  some_c = [random.randrange(N) for _ in range(10000)]
+  found_d = 1
 
-  for c in range(1, get_N(), get_N() / 10000):
-    #c = random.randrange(get_N())
-    idict = interact(c)
-    # Get the montgomery rep of each m
-    idict['mm'] = get_mont_rep(idict['m'], mp)
-    idict['tm_0'] = get_mont_rep(1, mp)
-    idict['tm_1'] = idict['tm_0'] #TODO: Can we rid ourselves of this?
-    time_table.append(idict)
+  # Get some mont params
+  mont_params = get_mp(N)
 
-  return (mp, time_table)
+  # time and decrypt
+  orig_m_list = []
+  mont_m_list = []
+  times       = []
+  mont_tmps   = []
 
-def oracles(mp, trial):
-  # TODO: Store these results so we don't recompute the square
+  for c in some_c:
+    from_target = interact(c)
+    orig_m_list.append(from_target['m'])
+    times.append(from_target['time'])
+    mont_m_list.append(get_mont_rep(from_target['m'], mont_params))
+    mont_tmps.append(get_mont_rep(1, mont_params))
 
-  # O1 checks if the next iteration will have to reduce on the square if our key bit is 1
-  _, trial['O1'] = mont_mul(trial['tm_1'], trial['tm_1'], mp)
+  # All the lists. We've given up harder than Lindsay Lohan
+  mont_tmps_k0 = []
+  mont_tmps_k1 = []
 
-  # O2 does the same but with the assumption of bit 0
-  _, trial['O2'] = mont_mul(trial['tm_0'], trial['tm_0'], mp)
+  # Do first round where we know the bit is 1
+  for challenge_index, tmp in enumerate(mont_tmps):
+    tmp_k0, _ = mont_mul(tmp, tmp, mont_params)
+    tmp_k1, _ = mont_mul(tmp_k0, mont_m_list[challenge_index], mont_params)
+    mont_tmps_k0.append(tmp_k0)
+    mont_tmps_k1.append(tmp_k1)
 
-  print(trial['O1'], trial['O2'])
-  return trial
+  # We know we want k1. Need to square out here cause we already do it
+  mont_tmps = map(lambda tmp_k1: mont_mul(tmp_k1, tmp_k1, mont_params)[0], mont_tmps_k1)
 
-def mean(l):
-  assert(len(l) > 0)
-  print(float(sum(l)))
-  return float(sum(l)) / float(len(l))
+  # God knows when this bloody loop ends
+  for key_index in range(1, 64):
+    f_sum = ["lol",0.0,0.0,0.0,0.0]
+    f_cnt = ["lol",0,0,0,0]
 
-def attack() :
-  N_bits = int(math.log(get_N(), 2)) # Usually we'd expect d to be up to N bits long
-  H = 1
+    for challenge_index, tmp in enumerate(mont_tmps):      
+      # Presume k = 1
+      tmp_k1, _ = mont_mul(tmp, mont_m_list[challenge_index], mont_params)
+      tmp_k1, red1 = mont_mul(tmp_k1, tmp_k1, mont_params)
+      mont_tmps_k1[challenge_index] = tmp_k1
 
-  # We are given that the max d is b-1 (thus must be at most 64 bits)
-  max_d_i = 64
-#  max_d_i = len(bin(D))-2
+      # Presume k = 0
+      tmp_k0, red2 = mont_mul(tmp, tmp, mont_params)
+      mont_tmps_k0[challenge_index] = tmp_k0
 
-  # Get a random (large) set of timing data with accompanying ciphertexts, messages and montgomery info
-  (mp, some_trials) = initialise_attack()
-
-  # We know the first bit is 1, so do the first step
-  for t in some_trials:
-    assert mp['N'] == get_N()
-    t['tm_0'], _ = mont_mul(t['tm_1'], t['tm_1'], mp) # TODO: Required?
-    t['tm_1'], _ = mont_mul(t['tm_0'], t['mm'], mp)
-    # TODO: Remove me
-    #t['tm_0'] = "I am not an integer and if you attempt to use me then you will be sorely disappointed and will crash, or possibly not as you are python and you do what you like"
-
-  # Step through square and multiply algo
-  for i in xrange(1, max_d_i):
-    # Check d as we go, just in case
-    # TODO: Hmm...
-    if verify_d(H):
-      print("GOOD STUFF", H)
-      break
-
-    F1 = [] # O1 = 1
-    F2 = [] # O1 = 0
-    F3 = [] # O2 = 1
-    F4 = [] # O2 = 0
-
-    # do both outcomes for step i based on the key bit previously decided in round i-1
-    prev_key_bit = H >> (i-1)
-    assert prev_key_bit < 2
-    assert (i > 1 or prev_key_bit == 1)
-
-    for t in some_trials:
-      assert mp['N'] == get_N()
-#      chosen_t = t['tm_0']
-#      if prev_key_bit == 1:
-      chosen_t = t['tm_1']
-
-      # check that nothing weird has happened to our t value
-      assert chosen_t < get_N()
-
-      t['tm_0'], _ = mont_mul(chosen_t, chosen_t, mp)
-      t['tm_1'], _ = mont_mul(t['tm_0'], t['mm'], mp)
-
-      # TODO: Sum here
-      t_ = oracles(mp, t)
-      # Hopefully, oracles is modifying t in place (but it doesn't really matter... that much)
-      assert t_ == t
-
-      # Sort into the correct bins
-      if t['O1']:
-        F1.append(t['time'])
+      # Add to F1 if red1, else F2
+      if red1:
+        f_sum[1] = f_sum[1] + times[challenge_index]
+        f_cnt[1] = f_cnt[1] + 1
       else:
-        F2.append(t['time'])
+        f_sum[2] = f_sum[2] + times[challenge_index]
+        f_cnt[2] = f_cnt[2] + 1
 
-      if t['O2']:
-        F3.append(t['time'])
+      # Add to F3 or F4
+      if red2:
+        f_sum[3] = f_sum[3] + times[challenge_index]
+        f_cnt[3] = f_cnt[3] + 1
       else:
-        F4.append(t['time'])
+        f_sum[4] = f_sum[4] + times[challenge_index]
+        f_cnt[4] = f_cnt[4] + 1
 
-    mu1 = mean(F1)
-    mu2 = mean(F2)
-    mu3 = mean(F3)
-    mu4 = mean(F4)
+    f_avg = ["wut",0.0,0.0,0.0,0.0]
+    for i in range(1,5):
+      f_avg[i] = f_sum[i] / f_cnt[i]
 
-    print(len(F1), len(F2), len(F3), len(F4))
-    print(mu1, mu2, mu3, mu4)
+    print(f_avg)
 
-    # Move to next bit
-    #d = d << 1
-    H = H << 1
+    diff_f1_f2 = f_avg[1] - f_avg[2]
+    diff_f3_f4 = f_avg[3] - f_avg[4]
 
-    # Compare the differences between mu1/2 and mu3/4
-    diff12 = abs(mu1-mu2)
-    diff34 = abs(mu3-mu4)
+    found_d = found_d << 1
 
-    print(diff12, diff34)
-
-    if (diff12 > diff34):
-      # Guess H_i = 1
-      H = H | 1
+    if diff_f1_f2 > diff_f3_f4:
+      # Guess k is hot
+      found_d = found_d | 1
+      # Keep k1 list
+      mont_tmps = list(mont_tmps_k1)
     else:
-      H = H | 0
-    print(bin(H))
-
-  return H
-
-def verify_d(d):
-  # TODO: pick some real numbers
-  #m = 245674544525437553L
-  m = random.randrange(get_N())
-  assert(m < get_N())
-  c = pow(m, get_e(), get_N())
-  m_ = pow(c, d, get_N())
-  return (m == m_)
+      # Guess k low
+      mont_tmps = list(mont_tmps_k0)
+      
+    print(bin(found_d))
 
 if ( __name__ == "__main__" ) :
   if (len(sys.argv) != 3) :
@@ -177,14 +122,7 @@ if ( __name__ == "__main__" ) :
     sys.exit(1)
 
   # Read param file
-  params = list(get_params(sys.argv[2]))
-
-#  params[0] = 11371820908545711283
-#  params[1] = 8383132602661586723
-#  params[2] = hex(params[0])[2:]
-#  params[3] = hex(params[1])[2:]
-
-#  D =         2377205257342368779
+  params = get_params(sys.argv[2])
 
   # Produce a sub-process representing the attack target.
   target = subprocess.Popen( args   = sys.argv[ 1 ],
@@ -204,7 +142,7 @@ if ( __name__ == "__main__" ) :
   # Check our guess
   assert(verify_d(guess_d))
 
-  print("Recovered private key d:\n{0:x}".format(d))
+  print("Recovered private key d:\n{0:x}".format(guess_d))
 
   print("Total target interactions:", queries)
 
