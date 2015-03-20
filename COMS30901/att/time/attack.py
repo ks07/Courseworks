@@ -3,7 +3,7 @@ from __future__ import print_function
 from montmul import mont_mul, get_mp, get_mont_rep
 import sys, subprocess, math, random
 
-def get_params(paramfile) :
+def get_params(paramfile):
   infile = open(paramfile, 'r')
 
   N_raw = infile.readline().strip()
@@ -13,7 +13,7 @@ def get_params(paramfile) :
 
   return (N, e, N_raw, e_raw)
 
-def interact(c) :
+def interact(c):
   global queries
   queries = queries + 1
 
@@ -43,17 +43,21 @@ def attack():
   mont_tmps_k0 = []
   mont_tmps_k1 = []
 
+  mont_tmp_start = get_mont_rep(1, mont_params)
+
   for c in some_c:
     from_target = interact(c)
     times.append(from_target['time'])
     mont_m = get_mont_rep(c, mont_params)
     mont_m_list.append(mont_m)
-    mont_tmp = get_mont_rep(1, mont_params)
+    mont_tmp = mont_tmp_start
+
     # Do first round where we know the bit is 1
     tmp_k0, _ = mont_mul(mont_tmp, mont_tmp, mont_params)
     tmp_k1, _ = mont_mul(tmp_k0, mont_m, mont_params)
     mont_tmps_k0.append(tmp_k0)
     mont_tmps_k1.append(tmp_k1)
+
     # We know we want k1. Need to square out here cause we already do it
     mont_tmps.append(mont_mul(tmp_k1, tmp_k1, mont_params)[0])
 
@@ -116,7 +120,7 @@ def attack():
       # Guess k low
       mont_tmps = mont_tmps_k0
 
-    print(key_index, bin(found_d))
+    print("Found bit", key_index, bin(found_d))
 
   return found_d
 
