@@ -44,9 +44,9 @@ def attack():
 
   for c in some_c:
     from_target = interact(c)
-    orig_m_list.append(from_target['m'])
+    orig_m_list.append(c)
     times.append(from_target['time'])
-    mont_m_list.append(get_mont_rep(from_target['m'], mont_params))
+    mont_m_list.append(get_mont_rep(c, mont_params))
     mont_tmps.append(get_mont_rep(1, mont_params))
 
   # All the lists. We've given up harder than Lindsay Lohan
@@ -115,6 +115,7 @@ def attack():
       mont_tmps = list(mont_tmps_k0)
       
     print(bin(found_d))
+  return found_d
 
 if ( __name__ == "__main__" ) :
   if (len(sys.argv) != 3) :
