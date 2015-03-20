@@ -63,8 +63,14 @@ def attack():
   # We know we want k1. Need to square out here cause we already do it
   mont_tmps = map(lambda tmp_k1: mont_mul(tmp_k1, tmp_k1, mont_params)[0], mont_tmps_k1)
 
-  # God knows when this bloody loop ends
-  for key_index in range(1, 64):
+  # The max key size is going to be the bit length of N, but will almost certainly be much smaller
+  # We can determine when we have reached the final bit by the significance of the difference values.
+  # From our target, sensible avg difference values range from ~16 to ~8 cycles
+  # Thus lets presume that when we hit a difference of < 4 we should presume we have got to the last bit
+  N_bits = int(math.ceil(math.log(N, 2)))
+  final_cutoff = 4.0
+
+  for key_index in xrange(1, N_bits):
     f_sum = ["lol",0.0,0.0,0.0,0.0]
     f_cnt = ["lol",0,0,0,0]
 
@@ -98,14 +104,16 @@ def attack():
     for i in range(1,5):
       f_avg[i] = f_sum[i] / f_cnt[i]
 
-    print(f_avg)
-
     diff_f1_f2 = f_avg[1] - f_avg[2]
     diff_f3_f4 = f_avg[3] - f_avg[4]
 
     found_d = found_d << 1
 
-    if diff_f1_f2 > diff_f3_f4:
+    if diff_f1_f2 < final_cutoff and diff_f3_f4 < final_cutoff:
+      print("Guessing target key size of {0} bits".format(key_index))
+      # Return our current value, we must test both values of bit i
+      return found_d
+    elif diff_f1_f2 > diff_f3_f4:
       # Guess k is hot
       found_d = found_d | 1
       # Keep k1 list
@@ -113,12 +121,9 @@ def attack():
     else:
       # Guess k low
       mont_tmps = list(mont_tmps_k0)
-      
-    if verify_d(found_d):
-      print("Bake em away, toys", bin(found_d))
-      break
 
-    print(bin(found_d))
+    print(key_index, bin(found_d))
+
   return found_d
 
 def verify_d(d_guess):
@@ -151,7 +156,9 @@ if ( __name__ == "__main__" ) :
   guess_d = attack()
 
   # Check our guess
-  assert(verify_d(guess_d))
+  if not verify_d(guess_d):
+    guess_d = guess_d ^ 1
+    assert(verify_d)
 
   print("Recovered private key d:\n{0:x}".format(guess_d))
 
