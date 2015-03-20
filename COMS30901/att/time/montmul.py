@@ -44,22 +44,13 @@ def mpz_size(N):
     return int(math.ceil(math.log(N, 2**64)))
 
 def mpz_getlimbn(x, n):
-    limb_mask = 0xFFFFFFFFFFFFFFFF
     limb_offset = n * 64
-    limb = (x >> limb_offset) & limb_mask
-    return limb
-
-def mpz_tdiv_q_2exp(r, b):
-    return r >> b
+    return ((x >> limb_offset) & 0xFFFFFFFFFFFFFFFF)
 
 def mont_mul(x, y, mp):
     red = False
     lN = mp['N_size']
     r = 0L
-
-    assert lN > 0
-    assert mp['omega'] < (2**64)
-    assert mp['rho_sq'] < mp['N']
 
     for i in range(0, lN):
         u = mpz_getlimbn(x, 0) * mpz_getlimbn(y, i)
@@ -70,7 +61,7 @@ def mont_mul(x, y, mp):
         assert u < 2**64
         
         r = r + x * mpz_getlimbn(y, i) + mp['N'] * u
-        r = mpz_tdiv_q_2exp(r, 64) #TODO: constant
+        r = r >> 64 #TODO: constant
         
     if r >= mp['N']:
         red = True
