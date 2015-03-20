@@ -37,6 +37,7 @@ def get_mp(N):
     mp['N'] = N
     mp['omega'] = find_omega(N)
     mp['rho_sq'] = find_rhosq(N)
+    mp['N_size'] = mpz_size(N)
     return mp
 
 def mpz_size(N):
@@ -53,7 +54,7 @@ def mpz_tdiv_q_2exp(r, b):
 
 def mont_mul(x, y, mp):
     red = False
-    lN = mpz_size(mp['N'])
+    lN = mp['N_size']
     r = 0L
 
     assert lN > 0
