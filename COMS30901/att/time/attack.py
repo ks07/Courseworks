@@ -114,8 +114,18 @@ def attack():
       # Guess k low
       mont_tmps = list(mont_tmps_k0)
       
+    if verify_d(found_d):
+      print("Bake em away, toys", bin(found_d))
+      break
+
     print(bin(found_d))
   return found_d
+
+def verify_d(d_guess):
+  m = random.randrange(params[0])
+  c = pow(m, params[1], params[0])
+  m_ = pow(c, d_guess, params[0])
+  return m == m_
 
 if ( __name__ == "__main__" ) :
   if (len(sys.argv) != 3) :
