@@ -65,8 +65,8 @@ def attack():
   final_cutoff = 4.0
 
   for key_index in xrange(1, N_bits):
-    f_sum = ["lol",0.0,0.0,0.0,0.0]
-    f_cnt = ["lol",0,0,0,0]
+    f_sum = [0.0, 0.0, 0.0, 0.0]
+    f_cnt = [ 0,   0,   0,   0 ]
 
     for challenge_index, tmp in enumerate(mont_tmps):      
       # Presume k = 1
@@ -78,28 +78,28 @@ def attack():
       tmp_k0, red2 = mont_mul(tmp, tmp, mont_params)
       mont_tmps_k0[challenge_index] = tmp_k0
 
-      # Add to F1 if red1, else F2
+      # Add to F1 (0) if red1, else F2 (1)
       if red1:
+        f_sum[0] = f_sum[0] + times[challenge_index]
+        f_cnt[0] = f_cnt[0] + 1
+      else:
         f_sum[1] = f_sum[1] + times[challenge_index]
         f_cnt[1] = f_cnt[1] + 1
-      else:
-        f_sum[2] = f_sum[2] + times[challenge_index]
-        f_cnt[2] = f_cnt[2] + 1
 
       # Add to F3 or F4
       if red2:
+        f_sum[2] = f_sum[2] + times[challenge_index]
+        f_cnt[2] = f_cnt[2] + 1
+      else:
         f_sum[3] = f_sum[3] + times[challenge_index]
         f_cnt[3] = f_cnt[3] + 1
-      else:
-        f_sum[4] = f_sum[4] + times[challenge_index]
-        f_cnt[4] = f_cnt[4] + 1
 
-    f_avg = ["wut",0.0,0.0,0.0,0.0]
-    for i in range(1,5):
+    f_avg = [0.0, 0.0, 0.0, 0.0]
+    for i in range(0, 4):
       f_avg[i] = f_sum[i] / f_cnt[i]
 
-    diff_f1_f2 = f_avg[1] - f_avg[2]
-    diff_f3_f4 = f_avg[3] - f_avg[4]
+    diff_f1_f2 = f_avg[0] - f_avg[1]
+    diff_f3_f4 = f_avg[2] - f_avg[3]
 
     found_d = found_d << 1
 
@@ -111,10 +111,10 @@ def attack():
       # Guess k is hot
       found_d = found_d | 1
       # Keep k1 list
-      mont_tmps = list(mont_tmps_k1)
+      mont_tmps = mont_tmps_k1
     else:
       # Guess k low
-      mont_tmps = list(mont_tmps_k0)
+      mont_tmps = mont_tmps_k0
 
     print(key_index, bin(found_d))
 
