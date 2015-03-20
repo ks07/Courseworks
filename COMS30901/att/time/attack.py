@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
-from montmul import mont_mul, get_mp, get_mont_rep, undo_mont_rep
+from montmul import mont_mul, get_mp, get_mont_rep
 import sys, subprocess, math, random
 
 def get_params(paramfile) :
@@ -37,37 +37,31 @@ def attack():
   mont_params = get_mp(N)
 
   # time and decrypt
-  orig_m_list = []
-  mont_m_list = []
-  times       = []
-  mont_tmps   = []
-
-  for c in some_c:
-    from_target = interact(c)
-    orig_m_list.append(c)
-    times.append(from_target['time'])
-    mont_m_list.append(get_mont_rep(c, mont_params))
-    mont_tmps.append(get_mont_rep(1, mont_params))
-
-  # All the lists. We've given up harder than Lindsay Lohan
+  mont_m_list  = []
+  times        = []
+  mont_tmps    = []
   mont_tmps_k0 = []
   mont_tmps_k1 = []
 
-  # Do first round where we know the bit is 1
-  for challenge_index, tmp in enumerate(mont_tmps):
-    tmp_k0, _ = mont_mul(tmp, tmp, mont_params)
-    tmp_k1, _ = mont_mul(tmp_k0, mont_m_list[challenge_index], mont_params)
+  for c in some_c:
+    from_target = interact(c)
+    times.append(from_target['time'])
+    mont_m = get_mont_rep(c, mont_params)
+    mont_m_list.append(mont_m)
+    mont_tmp = get_mont_rep(1, mont_params)
+    # Do first round where we know the bit is 1
+    tmp_k0, _ = mont_mul(mont_tmp, mont_tmp, mont_params)
+    tmp_k1, _ = mont_mul(tmp_k0, mont_m, mont_params)
     mont_tmps_k0.append(tmp_k0)
     mont_tmps_k1.append(tmp_k1)
-
-  # We know we want k1. Need to square out here cause we already do it
-  mont_tmps = map(lambda tmp_k1: mont_mul(tmp_k1, tmp_k1, mont_params)[0], mont_tmps_k1)
+    # We know we want k1. Need to square out here cause we already do it
+    mont_tmps.append(mont_mul(tmp_k1, tmp_k1, mont_params)[0])
 
   # The max key size is going to be the bit length of N, but will almost certainly be much smaller
   # We can determine when we have reached the final bit by the significance of the difference values.
   # From our target, sensible avg difference values range from ~16 to ~8 cycles
   # Thus lets presume that when we hit a difference of < 4 we should presume we have got to the last bit
-  N_bits = int(math.ceil(math.log(N, 2)))
+  N_bits = mont_params['N_size'] * 64
   final_cutoff = 4.0
 
   for key_index in xrange(1, N_bits):
