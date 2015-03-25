@@ -1,11 +1,79 @@
 Q.1 Consider an example where N = 551, e = 5, d = 101 and c = 243.  Using
     your own words, briefly explain and illustrate the working principle of
     this attack (i.e., how and why it works).
+    
+    In the RSAES-OAEP scheme, some amount of padding is added to the secret,
+    restricting the length of this message to B, where B is one byte shorter
+    than N. For this attack, we assume that 2B < N. This is satisfied as our
+    value for B is 2 ^ 8 ( (|N| = 2) - 1 ) = 256. This tells us that our secret
+    lies somewhere in the range [0, 256).
+    
+    We make use of an oracle in this attack, that reveals if the decrypted
+    message is less than or equal to B (else in the range (B,N)) - i.e. if the
+    top byte is 0x00. The target we have been given produces an error code of 1
+    if this is not the case - which is enough information leakage to allow this
+    attack.
+    
+    The first step uses a temporary value f1, a power of 2. We repeatedly double
+    f1, encrypt it, and then pass it to the oracle until the oracle returns 1.
+    This allows us to halve the range of possible values of f1/2 * m, down to [B/2,B).
+    The value of f1 found in this example is: 128
+    
+    The second stage introduces f2, set s.t. the multiple of f2 and the maximum
+    possible m is just less than N + B. We then increase f2 by multiples of 
+    f1/2, testing these with the oracle until it indicates the message is < B.
+    The value of f2 found in this example is: 192
+
+    The final step uses the found value of f2 to define a range for the possible
+    values of m, [m_min, m_max), where m_min = ceil(N/f2) and 
+    m_max = floor((N+B)/2). We set a value f3 based upon these two boundaries, 
+    continually adjusting them in response to the oracle until we reduce the
+    range of possible values down to a single value. This reveals our m.
+    Final value of f3 found in this example is: 368
+    Revealing the message, m, of 3.
+    
 Q.2 To prevent the attack, the vendor suggests altering the software: the
     idea is that no matter what error occurs, the same error code will be
     produced.  Explain whether (and why, or why not) this change alone is
     sufficient.
+
+    This change may not be sufficient, if the implementation is fail-fast. That
+    is, if the software returns the generic error response at different points
+    during execution, determined by the underlying cause of the error, some
+    information is leaked. This can make the implementation vulnerable to a
+    timing attack. Thus the vendor should, on top of generalising all error
+    responses, ensure that the software returns the error code at exactly the
+    same point in time. This may require the implementation to continue as
+    usual, decoding malformed plaintexts simply to throw away the result.
+
 Q.4 This attack is based on the fact that decrypting a ciphertext of the
     form c = (f^e)*c' mod N produces a plaintext of the form f*m' mod N.
     Show why this fact is true.
+
+    From the proof of correctness of RSA, we know that for any integer m in Z(N)
+    (m^e)^d is congruent to m (mod N), as d is the multiplicative inverse of e
+    mod N. Thus we can expand the above equation as follows:
+    
+    c   = (f^e)* c'          (mod N)
+    m'' = (f^e * c') ^ d     (mod N)
+    m'' = (f^(e*d)) * (c'^d) (mod N)
+    m'' = f         * (c'^d) (mod N)
+    
+    We know the encryption step, thus we know (for some original m'):
+    c'  = m' ^ e                 (mod N)
+
+    So:
+    m'' = f         * ((m'^e)^d) (mod N)
+    m'' = f         * (m')       (mod N)
+
 Q.5 Explain how the concept of plaintext awareness relates to this attack.
+
+    Plaintext awareness is a property of asymmetric encryption schemes, that
+    means it is hard to generate a valid ciphertext without knowledge of the
+    underlying plaintext. RSAES-OAEP is plaintext aware, which would result in
+    it being secure against chosen-ciphertext attack, but implementation details
+    mean that we can perform a side channel attack. The implementation we are
+    attacking leaks information on the decrypted plaintext, informing us where,
+    if they exist, errors in the plaintext are. Our attack requires this
+    property to function, as it lets us know details of the padded secret that
+    corresponds to the ciphertexts generated and passed to the oracle.
