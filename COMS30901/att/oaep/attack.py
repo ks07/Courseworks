@@ -59,7 +59,7 @@ def I2OSP(x, xlen):
 
 # As per RFC3447 appendix B.2.1
 def mgf1(Hash, mgf_seed, mask_len):
-  assert(mask_len <= ( 2 ** 32 ) * hLen)
+  assert(mask_len <= ( 2 ** 32 ) * Hash('').digest_size)
   
   T = ""
 
