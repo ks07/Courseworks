@@ -54,13 +54,16 @@ the style or efficiency of a solution.
                 ed7a9119adcc4c3970ed44deadb27e050c1f7411
               ]
 
-[?] Stage 2 : an attack based on execution time
+[X] Stage 2 : an attack based on execution time
 
               - correct target material                              ( 40%)
               - solution quality wrt. efficiency, robustness etc.    ( 40%)
               - analysis questions                                   ( 20%)
 
-              target material : [...]
+              target material : [
+	        Recovered private key d (hexadecimal):
+		ef1be81543f99433
+	      ]
 
 [?] Stage 3 : an attack based on an injected fault
 
@@ -88,6 +91,11 @@ Any other documentation, notes or comments that you think are important or
 might be easy to overlook (e.g., a subtle issue or technique in associated
 source code) should go here:
 
-[...]
+[
+ I have implemented my attacks in python, both in files named attack.py.
+ Provided these files are marked as executable, they can be invoked simply using
+ ./attack.py <Command to invoke D> <Path to params file>. For example:
+ ./attack.py ./56626.D 56626.param
+]
 
 -------------------------------------------------------------------------------
