@@ -2,9 +2,70 @@ Q.1 The vendor of the attack target is concerned that news of this attack
     could scare off potential customers; they will make any alteration
     necessary (in software or hardware) to prevent the attack.  Explain the
     options they have, and which one you would recommend.
+
+    Perhaps the simplest countermeasure the vendor could implement is the
+    addition of random delays to the algorithm, with the intention of hiding
+    variation in timing due to the private exponent. While at first glance this
+    might seem to be both sufficient and easily implemented, it must be
+    considered that this is equivalent to increasing the amount of noise in the
+    gathered sample times. Thus, this added noise can be filtered out, in return
+    for a linear increase in the number of samples required. (Put simply: random
+    noise can be averaged away if we take more samples.) This countermeasure is
+    therefore entirely ineffective, and will merely slow down an attacker a
+    small amount.
+
+    The vender could modify their software at a higher level, above that of the
+    cryptographic functions. For example, the server interface to the decryption
+    function could enforce a fixed time for responses to decryption requests.
+    If the decryption algorithm returned before this time limit, the server
+    could store the result until the time limit had been surpassed. This time
+    should be enough to cover the maximum possible time for a decryption. The
+    benefit of this countermeasure is that it should be relatively simple to
+    implement. The downside of this approach is that an attacker might be able
+    to gain timing information if the server accepts multiple requests at once.
+    For example, if the server can perform 8 decryptions at any one time, one
+    request waiting to send it's result might trigger the beginning of another
+    calculation, so an attacker could flood the server with requests and monitor
+    start times to find decryption times. I would therefore not recommend this
+    approach; it has potential to be ineffective, and there are alternatives
+    that actually improve the decryption algorithm itself, removing the reliance
+    on the server software for security.
+
+    A related countermeasure is to modify the Montgomery multiplication
+    algorithm such that the operation is constant time regardless of the need
+    for a reduction operation or not. Essentially, this boils down to always
+    performing the reduction, and refactoring the branch to return either the
+    reduced or the original result as necessary. Care must be taken here to
+    avoid a small difference in timing due to the implicit copy or discard of
+    the reduced result. Of special importance is that an optimising compiler may
+    attempt to remove the 'unnecessary' reduction step - so the developer should
+    check the produced system for existence of the timing difference they
+    attempted to mask. Due to this difficulty, as well as the timing difference
+    from the copy operation that may be hard to remove, I would not recommend
+    this approach.
+
+    An alternative countermeasure is message blinding, which makes use of the
+    homomorphic property of RSA. Prior to decryption, a random integer r is
+    chosen from [1, N). The multiplicative inverse of r is calculated modulo N,
+    as r^-1. The ciphertext c is then multiplied by r^e (mod N), before being
+    passed into the decryption function to find m'. After decryption, we unblind
+    the message by calculating m' * r^-1 (mod N), returning m, the original
+    message. This modification means that the attacker is no longer aware of the
+    number being fed into the exponentiation algorithm, thus they cannot
+    simulate it as is required by the timing attack. Some care must be taken to
+    ensure that the blinding algorithm itself isn't vulnerable to side channel
+    attacks.
+
+    I would recommend implementing message blinding, as it should remove any
+    opportunity of a timing attack, as the attacker can no longer know the input
+    to the decryption algorithm.
+
 Q.2 Let n denote the number of simulated clock cycles required to execute a
     Montgomery multiplication on the attack target.  Estimate the value of
     n (as accurately as you can) and explain how you did so.
+
+    
+
 Q.7 Numerous factors might produce noise within measurements of execution
     time: based on the given attack target and context, outline at least
     two examples.
