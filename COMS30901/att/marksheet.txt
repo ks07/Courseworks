@@ -16,7 +16,7 @@
 So that we can calibrate and improve the assignment in the future, give us
 a rough idea how long (in hours) you spent on it *in total*:
 
-effort : [...] hours
+effort : [68] hours
 
 -------------------------------------------------------------------------------
 
@@ -96,6 +96,19 @@ source code) should go here:
  Provided these files are marked as executable, they can be invoked simply using
  ./attack.py <Command to invoke D> <Path to params file>. For example:
  ./attack.py ./56626.D 56626.param
+ 
+ Of special note in Stage 2 is I have an alternative, earlier version of my
+ attack in the file 'attack_orig.py'. The standard attack.py in my stage 2
+ attempts to implement some error correction, and also attempts to grow the list
+ of samples used as needed whilst attacking the target. The random selection of
+ ciphertexts means that my standard stage 2 attack can sometimes take a long time
+ to find the target key, and may have some unexpected failures. My original attack
+ is more robust and predictable in terms of execution time, due to the fixed, and
+ rather generous, usage of 10000 samples. I have included both versions as a point
+ of interest - the original version is a lot more reliable, but does need to be tuned
+ to the attack target (i.e. longer keys will need larger sample sizes). The updated
+ version in attack.py should be able to adapt to longer values of d, at the expense
+ of execution time and some reliability.
 ]
 
 -------------------------------------------------------------------------------
