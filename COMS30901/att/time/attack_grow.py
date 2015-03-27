@@ -60,15 +60,34 @@ def check_cpow(c, d, c_, mp):
   #   print("NOPE...")
   return cm == c_
 
+def update_averages(time, red1, red2, f_sum, f_cnt):
+  # Add to F1 (0) if red1, else F2 (1)
+  t = 0 if red1 else 1
+  f_sum[t] += time
+  f_cnt[t] += 1
+  
+  # Add to F3 or F4
+  t = 2 if red2 else 3
+  f_sum[t] += time
+  f_cnt[t] += 1
+
+def calculate_options(tmp, mont_m, mont_params):
+  # Presume k = 1
+  tmp_k1, _ = mont_mul(tmp, mont_m, mont_params)
+  tmp_k1, red1 = mont_mul(tmp_k1, tmp_k1, mont_params)
+
+  # Presume k = 0
+  tmp_k0, red2 = mont_mul(tmp, tmp, mont_params)
+
+  return (tmp_k0, tmp_k1)
+  
 def attack():
   N = params[0]
-  some_c = [random.randrange(N) for _ in range(1000)]
+  some_c = [random.randrange(N) for _ in range(2000)]
   found_d = 1
 
   # Get some mont params
   mont_params = get_mp(N)
-
-  m_last = 0
 
   # time and decrypt
   mont_m_list  = []
@@ -100,63 +119,42 @@ def attack():
   # From our target, sensible avg difference values range from ~16 to ~8 cycles
   # Thus lets presume that when we hit a difference of < 4 we should presume we have got to the last bit
   N_bits = mont_params['N_size'] * 64
-  final_cutoff = 4.0
+  final_cutoff = 2.0
 
   for key_index in xrange(1, N_bits):
     f_sum = [0.0, 0.0, 0.0, 0.0]
     f_cnt = [ 0,   0,   0,   0 ]
 
-    for challenge_index, tmp in enumerate(mont_tmps):
-      # Presume k = 1
-      tmp_k1, _ = mont_mul(tmp, mont_m_list[challenge_index], mont_params)
-      tmp_k1, red1 = mont_mul(tmp_k1, tmp_k1, mont_params)
-      mont_tmps_k1[challenge_index] = tmp_k1
+    # Control of growth loops
+    undecided = True
 
-      # Presume k = 0
-      tmp_k0, red2 = mont_mul(tmp, tmp, mont_params)
-      mont_tmps_k0[challenge_index] = tmp_k0
+    # Keep track of the number of growths we have done
+    attempts = 0
 
-      # Add to F1 (0) if red1, else F2 (1)
-      if red1:
-        f_sum[0] = f_sum[0] + times[challenge_index]
-        f_cnt[0] = f_cnt[0] + 1
-      else:
-        f_sum[1] = f_sum[1] + times[challenge_index]
-        f_cnt[1] = f_cnt[1] + 1
-
-      # Add to F3 or F4
-      if red2:
-        f_sum[2] = f_sum[2] + times[challenge_index]
-        f_cnt[2] = f_cnt[2] + 1
-      else:
-        f_sum[3] = f_sum[3] + times[challenge_index]
-        f_cnt[3] = f_cnt[3] + 1
-
-    f_avg = [0.0, 0.0, 0.0, 0.0]
-    for i in range(0, 4):
-      f_avg[i] = f_sum[i] / f_cnt[i]
-
-    diff_f1_f2 = f_avg[0] - f_avg[1]
-    diff_f3_f4 = f_avg[2] - f_avg[3]
-
+    # Make the key 1 bit longer
     found_d = found_d << 1
 
-    if diff_f1_f2 < final_cutoff and diff_f3_f4 < final_cutoff:
-      # If we don't have the desired difference in means, it may be due to not enough samples.
-      # Increase the sample size, check again, and quit if it did not help.
-      
-      # On iteration i we have actually done i and a half steps (i.e. we have squared already)
-      # Thus we use the shifted key
-      # check_cpow(some_c[0], found_d, mont_tmps[0], mont_params) <=== Is true!
+    # Loop the averaging and comparison operations until we can decide on a bit or give up
+    while undecided:
+      start_point = 0
 
-      start_point = len(some_c)
+      # Don't grow the list on the first attempt
+      if attempts != 0:
+        # If we don't have the desired difference in means, it may be due to not enough samples.
+        # Increase the sample size, check again, and quit if it did not help.
 
-      # Double the current number of samples to increase certainty.
-      add_challenges(len(some_c), some_c, times, mont_m_list, mont_tmps, found_d, mont_params)
+        # On iteration i we have actually done i and a half steps (i.e. we have squared already)
+        # Thus we use the shifted key
+        # check_cpow(some_c[0], found_d, mont_tmps[0], mont_params) <=== Is true!
 
-      # Need to expand the temp lists... God this is messy
-      mont_tmps_k0.extend([None]*(len(some_c)-len(mont_tmps_k0)))
-      mont_tmps_k1.extend([None]*(len(some_c)-len(mont_tmps_k1)))
+        start_point = len(some_c)
+
+        # Double the current number of samples to increase certainty.
+        add_challenges(int(len(some_c) * 2), some_c, times, mont_m_list, mont_tmps, found_d, mont_params)
+
+        # Need to expand the temp lists... God this is messy
+        mont_tmps_k0.extend([None]*(len(some_c)-len(mont_tmps_k0)))
+        mont_tmps_k1.extend([None]*(len(some_c)-len(mont_tmps_k1)))
 
       for challenge_index, tmp in enumerate(mont_tmps):
         # Skip the indices we have already calculated
@@ -171,43 +169,31 @@ def attack():
         # Presume k = 0
         tmp_k0, red2 = mont_mul(tmp, tmp, mont_params)
         mont_tmps_k0[challenge_index] = tmp_k0
-        
-        # Add to F1 (0) if red1, else F2 (1)
-        if red1:
-          f_sum[0] = f_sum[0] + times[challenge_index]
-          f_cnt[0] = f_cnt[0] + 1
-        else:
-          f_sum[1] = f_sum[1] + times[challenge_index]
-          f_cnt[1] = f_cnt[1] + 1
 
-        # Add to F3 or F4
-        if red2:
-          f_sum[2] = f_sum[2] + times[challenge_index]
-          f_cnt[2] = f_cnt[2] + 1
-        else:
-          f_sum[3] = f_sum[3] + times[challenge_index]
-          f_cnt[3] = f_cnt[3] + 1
+        update_averages(times[challenge_index], red1, red2, f_sum, f_cnt)
 
-      # Recalculate averages
+      f_avg = [0.0, 0.0, 0.0, 0.0]
       for i in range(0, 4):
         f_avg[i] = f_sum[i] / f_cnt[i]
-            
+
       diff_f1_f2 = f_avg[0] - f_avg[1]
       diff_f3_f4 = f_avg[2] - f_avg[3]
 
-      if diff_f1_f2 < final_cutoff and diff_f3_f4 < final_cutoff:
-        print("Guessing target key size of {0} bits".format(key_index + 1))
-        # Return our current value, we must test both values of bit i
-        return (found_d | 1)
-      elif diff_f1_f2 > diff_f3_f4:
-        # Guess k is hot
-        found_d = found_d | 1
-        mont_tmps = list(mont_tmps_k1)
-      else:
-        # Guess k low
-        mont_tmps = list(mont_tmps_k0)
-        pass
+      # Try again with more samples if both averages are not significantly different and we have not already
+      # tried this before.
+      max_attempts = 3
+      attempts += 1
+      print(attempts)
+      print(diff_f1_f2, diff_f3_f4)
+      undecided = ((diff_f1_f2 < final_cutoff) and (diff_f3_f4 < final_cutoff)) and attempts < max_attempts
 
+
+
+
+    if diff_f1_f2 < final_cutoff and diff_f3_f4 < final_cutoff:
+      print("Guessing target key size of {0} bits".format(key_index + 1))
+      # Return our current value, we should test both values of bit i, default to 1
+      return (found_d | 1)
     elif diff_f1_f2 > diff_f3_f4:
       # Guess k is hot
       found_d = found_d | 1
