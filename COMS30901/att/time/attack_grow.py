@@ -83,7 +83,7 @@ def calculate_options(tmp, mont_m, mont_params):
   
 def attack():
   N = params[0]
-  some_c = [random.randrange(N) for _ in range(2000)]
+  some_c = [random.randrange(N) for _ in range(4000)]
   found_d = 1
 
   # Get some mont params
@@ -121,88 +121,54 @@ def attack():
   N_bits = mont_params['N_size'] * 64
   final_cutoff = 4.0
 
-  error_depth = 0
+  # Keep note of our failure stage
+  fail_stage_cnt = 0
 
-  for key_index in xrange(1, N_bits):
+  # Print the first bit, for completeness' sake
+  print("Found bit 1", bin(found_d))
+
+  key_index = 1
+  while key_index < N_bits:
+    assert key_index >= 1
+
     f_sum = [0.0, 0.0, 0.0, 0.0]
     f_cnt = [ 0,   0,   0,   0 ]
 
     # Make the key 1 bit longer
     found_d = found_d << 1
 
-    # Need to set true to force the first iteration
-    have_error = True
+    assert len(bin(found_d)) - 2 == key_index + 1
 
-    # Loop if we have an error
-    while have_error:
-      have_error = False
+    for challenge_index, tmp in enumerate(mont_tmps):
+      # Presume k = 1
+      tmp_k1, _ = mont_mul(tmp, mont_m_list[challenge_index], mont_params)
+      tmp_k1, red1 = mont_mul(tmp_k1, tmp_k1, mont_params)
+      mont_tmps_k1[challenge_index] = tmp_k1
 
-      # Control of growth loops
-      undecided = True
+      # Presume k = 0
+      tmp_k0, red2 = mont_mul(tmp, tmp, mont_params)
+      mont_tmps_k0[challenge_index] = tmp_k0
 
-      # Keep track of the number of growths we have done
-      attempts = 0
+      update_averages(times[challenge_index], red1, red2, f_sum, f_cnt)
 
-      # Loop the averaging and comparison operations until we can decide on a bit or give up
-      while undecided:
-        start_point = 0
-  
-        # Don't grow the list on the first attempt
-        if attempts != 0:
-          # If we don't have the desired difference in means, it may be due to not enough samples.
-          # Increase the sample size, check again, and quit if it did not help.
-  
-          # On iteration i we have actually done i and a half steps (i.e. we have squared already)
-          # Thus we use the shifted key
-          # check_cpow(some_c[0], found_d, mont_tmps[0], mont_params) <=== Is true!
-  
-          start_point = len(some_c)
-  
-          # Increase the current number of samples to increase certainty.
-          add_challenges(2000, some_c, times, mont_m_list, mont_tmps, found_d, mont_params)
-          print('New size:', len(some_c))
- 
-          # Need to expand the temp lists... God this is messy
-          mont_tmps_k0.extend([None]*(len(some_c)-len(mont_tmps_k0)))
-          mont_tmps_k1.extend([None]*(len(some_c)-len(mont_tmps_k1)))
-  
-        for challenge_index, tmp in enumerate(mont_tmps):
-          # Skip the indices we have already calculated
-          if challenge_index < start_point:
-            continue
-  
-          # Presume k = 1
-          tmp_k1, _ = mont_mul(tmp, mont_m_list[challenge_index], mont_params)
-          tmp_k1, red1 = mont_mul(tmp_k1, tmp_k1, mont_params)
-          mont_tmps_k1[challenge_index] = tmp_k1
-  
-          # Presume k = 0
-          tmp_k0, red2 = mont_mul(tmp, tmp, mont_params)
-          mont_tmps_k0[challenge_index] = tmp_k0
-  
-          update_averages(times[challenge_index], red1, red2, f_sum, f_cnt)
-  
-        f_avg = [0.0, 0.0, 0.0, 0.0]
-        for i in range(0, 4):
-          f_avg[i] = f_sum[i] / f_cnt[i]
-  
-        diff_f1_f2 = f_avg[0] - f_avg[1]
-        diff_f3_f4 = f_avg[2] - f_avg[3]
-  
-        # Try again with more samples if both averages are not significantly different and we have not already
-        # tried this before.
-        max_attempts = 3
-        attempts += 1
-        print(attempts)
-        print(diff_f1_f2, diff_f3_f4)
-        undecided = ((diff_f1_f2 < final_cutoff) and (diff_f3_f4 < final_cutoff)) and attempts < max_attempts
+    f_avg = [0.0, 0.0, 0.0, 0.0]
+    for i in range(0, 4):
+      f_avg[i] = f_sum[i] / f_cnt[i]
 
+    diff_f1_f2 = f_avg[0] - f_avg[1]
+    diff_f3_f4 = f_avg[2] - f_avg[3]
 
-      if attempts >= max_attempts:
-        # Guess the final key bit and test it. If it is still wrong, we have most likely errored and need to roll back.
-        have_error = False
+    #print(diff_f1_f2, diff_f3_f4)
   
-        # Check our guess
+    if diff_f1_f2 < final_cutoff and diff_f3_f4 < final_cutoff:
+      # We haven't seen a significant difference. Check the fail_stage_cnt:
+      # 0 = First difficulty, check if we are done, add samples if not
+      # 1 = Stuck, go back and flip bit
+
+      # if we are at the first bit, we cannot backtrack so just grow regardless.
+      if fail_stage_cnt == 0 or key_index == 1:
+        print("Guessing target key size of {0} bits".format(key_index + 1))
+
         if verify_d(found_d):
           return found_d
         else:
@@ -210,36 +176,46 @@ def attack():
           if verify_d(found_d):
             return found_d
           else:
-            print('Error in bit')
-            # We have an error in a previous bit, jump back, blanking our new bit, flipping the previous.
+            print('Not done... Adding more samples.')
+            # Blank the lowest bit so challenges added are correct
             found_d = found_d >> 1
-            found_d = found_d ^ 1
             found_d = found_d << 1
-
-            # We need to update the mont_tmps for this new value.
-            for ind, c in enumerate(some_c):
-              c_pow_d = pow(c, found_d, mont_params['N'])
-              mont_tmps[ind] = get_mont_rep(c_pow_d, mont_params)
-
-            have_error = True
-
-    print('E?', have_error)
-    error_depth = 0
-  
-    if diff_f1_f2 < final_cutoff and diff_f3_f4 < final_cutoff:
-      print("Guessing target key size of {0} bits".format(key_index + 1))
-      # Return our current value, we should test both values of bit i, default to 1
-      return (found_d | 1)
+            add_challenges(2000, some_c, times, mont_m_list, mont_tmps, found_d, mont_params)
+            print('New size:', len(some_c))
+            # Need to expand the temp lists...
+            mont_tmps_k0.extend([None]*(len(some_c)-len(mont_tmps_k0)))
+            mont_tmps_k1.extend([None]*(len(some_c)-len(mont_tmps_k1)))
+            # Retry this bit, i.e. don't increment key_index, shift back
+            key_index = key_index
+            found_d = found_d >> 1
+            fail_stage_cnt = 1
+      elif fail_stage_cnt == 1:
+        print('Not done... Backtracking to bit:', key_index - 1, 'Erroneous d:', bin(found_d))
+        # Just go back a bit. Our larger sample size should be enough to determine now (hopefully).
+        key_index -= 1
+        found_d = found_d >> 2
+        # We need to update the mont_tmps for this new value.
+        for ind, c in enumerate(some_c):
+          c_pow_d = pow(c, found_d << 1, mont_params['N'])
+          mont_tmps[ind] = get_mont_rep(c_pow_d, mont_params)
     elif diff_f1_f2 > diff_f3_f4:
       # Guess k is hot
       found_d = found_d | 1
+      print("Found bit", key_index + 1, bin(found_d))
       # Keep k1 list
       mont_tmps = list(mont_tmps_k1)
+      # Reset fail state
+      fail_stage_cnt = 0
+      key_index += 1
     else:
       # Guess k low
+      print("Found bit", key_index + 1, bin(found_d))
       mont_tmps = list(mont_tmps_k0)
+      # Reset fail state
+      fail_stage_cnt = 0
+      key_index += 1
 
-    print("Found bit", key_index, bin(found_d))
+  ## end while
 
   return found_d
 
