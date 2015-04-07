@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
+import math, random
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -110,7 +111,72 @@ def part3():
     plt.legend(loc=4)
     plt.show()
 
+def part4x(e_s, s_type):
+    # Neuron params
+    tau_m = 20 * (10**-3)
+    e_l = -70 * (10**-3)
+    v_reset = -80 * (10**-3)
+    v_th = -54 * (10**-3)
+    r_m_i_e = 18 * (10**-3)
+    # Synapse params
+    r_m_g_s = 0.15
+    p_max = 0.5
+    tau_s = 10 * (10**-3)
+    dt = 1 * (10**-3)
+
+    v_0 = [random.uniform(v_reset, v_th) for _ in range(2)]
+    
+    t_0 = 0
+    t_e = 1
+    t_vals = np.arange(t_0, t_e + dt, dt)
+
+    def p_s(t, t_f):
+        """" Get the opening probability of a synapse at time t with last pre-synaptic spike at time t_f. """
+        return p_max * math.exp(t_f - t / tau_s)
+    
+    def neuron_model(t, v, t_f):
+        """ Gets dV/dt of the neuron with a synaptic input. """
+        return (e_l - v - r_m_g_s * p_s(t, t_f) * (v - e_s) + r_m_i_e) / tau_m
+
+    v_vals = [ [] , [] ]
+    #          \_____/
+
+    # Need to link two neurons/functions, so can't re-use old method
+    # TODO: Maybe we can - function like objects and overloads, or cheat with some globals
+    v_n = list(v_0)
+    t_f = [ 0.0 , 0.0 ]
+    for t_n in t_vals:
+        for n in range(0, 2): # Two neurons
+            v_vals[n].append(v_n[n])
+            v_n[n] = v_n[n] + dt * neuron_model(t_n, v_n[n], t_f[n ^ 1])
+            if v_n[n] >= v_th:
+                v_n[n] = v_reset
+                t_f[n] = t_n
+            
+
+    plt.plot(t_vals, v_vals[0], label='Neuron A')
+    plt.plot(t_vals, v_vals[1], label='Neuron B')
+    plt.title('Plot of two neurons with' + s_type + 'synaptic connections; leaky integrate and fire model')
+    plt.ylabel('Voltage Function V(t) (V)')
+    plt.xlabel('Time t (s)')
+    plt.legend(loc=4)
+    plt.show()
+
+def part4():
+    print('Running Part 4')
+
+    # Excitatory (a)
+    e_s_a = 0 * (10**-3)
+    # Inhibitory (b)
+    e_s_b = -80 * (10**-3)
+
+    print('Running Part 4a')
+    part4x(e_s_a, 'excitatory')
+    print('Running Part 4b')
+    part4x(e_s_b, 'inhibitory')
+
 if __name__ == '__main__':
     part1()
     part2()
     part3()
+    part4()
