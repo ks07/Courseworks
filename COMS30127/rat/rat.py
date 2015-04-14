@@ -48,33 +48,27 @@ def binsearch_time_pos(times, x, y, target_time):
         return (interp_x, interp_y)
 
 def neuron_pos_plot(times, x, y, neuron):
-    fig, ax = plt.subplots(1, 4)
+    fig, ax = plt.subplots(2, 4)
 
     neuron_pos = [[binsearch_time_pos(times, x, y, t) for t in n] for n in neuron]
     
     fig.suptitle('Neuron Firing Positions')
 
-    colors = ('b', 'g', 'r', 'k')
+    colors = ('b', 'g', 'r', 'y')
     for n, pos_list in enumerate(neuron_pos):
-        ax[n].scatter([pos[0] for pos in pos_list], [pos[1] for pos in pos_list], c=colors[n])
-        ax[n].set_ylim([0,250])
-        ax[n].set_xlim([0,300])
-        ax[n].set_title('Neuron {0}'.format(n + 1))
-        ax[n].set_xlabel('X')
-        ax[n].set_ylabel('Y')
-    #plt.show()
-    fig.show()
+        # Scatter
+        ax[0][n].scatter([pos[0] for pos in pos_list], [pos[1] for pos in pos_list], c=colors[n])
+        ax[0][n].set_ylim([0,250])
+        ax[0][n].set_xlim([0,300])
+        ax[0][n].set_title('Neuron {0}'.format(n + 1))
+        ax[0][n].set_xlabel('X')
+        ax[0][n].set_ylabel('Y')
+        
+        # Heatmap/hexplot
+        im = ax[1][n].hexbin([pos[0] for pos in pos_list], [pos[1] for pos in pos_list], bins='log', gridsize=30)
+        cb = fig.colorbar(im, ax=ax[1][n])
+        cb.set_label('log10(N)')
 
-    fig, ax = plt.subplots(1, 1)
-    
-    # Generate bins
-    x_hg = np.linspace(0, 250, 100)
-    y_hg = np.linspace(0, 300, 120) # 1.2 * x
-    X_hg, Y_hg = np.meshgrid(x_hg, y_hg)
-    x_hg = X_hg.ravel()
-    y_hg = Y_hg.ravel()
-    pos_0 = neuron_pos[3]
-    plt.hexbin([pos[0] for pos in pos_0], [pos[1] for pos in pos_0], bins='log', gridsize=30)
     plt.show()
 
 if __name__ == '__main__':
