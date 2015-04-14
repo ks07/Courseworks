@@ -17,7 +17,7 @@ def run():
     pos = zip(x, y)
     data = {time: (x, y) for (time, x, y) in zip(times, x, y)}
     print(len(data), data[times[-1]])
-    neuron_pos_plot(times, x, y, data, neuron)
+    neuron_pos_plot(times, x, y, neuron)
 
 # Need to find the nearest time point
 def binsearch_time_pos(times, target_time):
@@ -27,20 +27,26 @@ def binsearch_time_pos(times, target_time):
     else:
         return (i-1, i)
 
-def neuron_pos_plot(times, x, y, data, neuron):
+def neuron_pos_plot(times, x, y, neuron):
     fig, ax = plt.subplots(1, 4)
 
     # For now lets just take the left answer.
     neuron_nearest_times = [[binsearch_time_pos(times, t)[0] for t in n] for n in neuron]
     #print(len(neuron_nearest_times), len(neuron_nearest_times[0]), times[neuron_nearest_times[0][0][0]], times[neuron_nearest_times[0][0][1]])
 
-    # Just do neuron 0
     x_n = [[x[i] for i in neuron_nearest_times[n]] for n in range(len(neuron))]
     y_n = [[y[i] for i in neuron_nearest_times[n]] for n in range(len(neuron))]
     
+    fig.suptitle('Neuron Firing Positions')
+
     colors = ('b', 'g', 'r', 'k')
     for n in range(len(neuron)):
-        ax[n].scatter(x_n[n], y_n[n], c=colors[n]);
+        ax[n].scatter(x_n[n], y_n[n], c=colors[n])
+        ax[n].set_ylim([0,250])
+        ax[n].set_xlim([0,300])
+        ax[n].set_title('Neuron {0}'.format(n + 1))
+        ax[n].set_xlabel('X')
+        ax[n].set_ylabel('Y')
 #    fig.show()
     plt.show()
 
