@@ -1,0 +1,15 @@
+================
+Neuron Pos Plot
+================
+
+1. Majority of firings concentrated around C1, not at C2. Why?
+
+2. Majority of firings in the central corridor after having made the turn that informs future choice. Perhaps neuron 2 is related
+   to making the decision based on recalling the previous turn?
+
+3. ???
+
+4. A lot more spread, but concentrated at the left turn from F1 to the central arm. There is very little activity on the mirrored
+   turn coming from F2, so it seems likely this neuron is related to the left turning motion. There is not a significant
+   concentration near other left turns (e.g. at the end of the central arm, headed towards to C1). This shows that perhaps neuron
+   4 is related to remembering the forced left turn needed to make the later choice, instead of left turns in general.
