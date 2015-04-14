@@ -183,31 +183,58 @@ def part5():
     t_e = 1.0
     h = 1 * (10 **-3)
     v_th = -40 * (10**-3)
-    r_m__MOhm = 10
-    r_m = r_m__MOhm * (10**6)
 
-    # Hodgkin & Huxley model
-    # TODO: If this can take the last spike time, we might be able to mess with part 4?
-    def v_k_func(t, v):
-        """ Gives the additional p.d. in the neuron from potassium current. """
-        e_k = -80 * (10**-3)
-        d_g = 0.01 * (10**-6)
-        tau_slow = 200 * (10**-3)
+    # r_m__MOhm = 10
+    # r_m = r_m__MOhm * (10**6)
 
-        # TODO: Powers of 10?
-        def a_n(v):
-            ffmv = 55 * (10**-3)
-            return 0.01 * (v + ffmv)/(1 - math.exp(-(v + ffmv)/10))
+    # # Hodgkin & Huxley model
+    # # TODO: If this can take the last spike time, we might be able to mess with part 4?
+    # def v_k_func(t, v):
+    #     """ Gives the additional p.d. in the neuron from potassium current. """
+    #     g_0 = 0
+    #     e_k = -80 * (10**-3)
+    #     delta_g = 0.01 * (10**-6)
+    #     tau_slow = 200 * (10**-3)
 
-        def b_n(v):
-            return 0.125 * math.exp(-(v + 65 * (10**-3))/80)
+    #     # TODO: Powers of 10?
+    #     def a_n(v):
+    #         ffmv = 55 * (10**-3)
+    #         return 0.01 * (v + ffmv)/(1 - math.exp(-(v + ffmv)/10))
 
-        g_k = 
+    #     def b_n(v):
+    #         return 0.125 * math.exp(-(v + 65 * (10**-3))/80)
 
-        i_k = g_k * (e_k - v)
-        return -(r_m * i_k)
+    #     g_k = 
 
-    plot_vals = euler_iafn(integrate_and_fire_f(r_m__MOhm = r_m__MOhm, extra_v_func = v_k_func), y_0, t_0, t_e, h, v_th, v_reset)
+    #     i_k = g_k * (e_k - v)
+    #     return -(r_m * i_k)
+
+    # plot_vals = euler_iafn(integrate_and_fire_f(r_m__MOhm = r_m__MOhm, extra_v_func = v_k_func), y_0, t_0, t_e, h, v_th, v_reset)
+
+    e_l = -70 * (10**-3)
+    r_m = 10 * (10**6)
+    i = 3.1 * (10**-9)
+    tau_m = 10 * (10**-3)
+    
+    def neuron_model(t, v, t_f):
+        """ Gets dV/dt of the neuron with a slow potassium current. """
+        G = 
+        return (e_l - v + r_m * i + ) / tau_m
+
+    v_vals = [ [] , [] ]
+    #          \_____/
+
+    # Need to link two neurons/functions, so can't re-use old method
+    # TODO: Maybe we can - function like objects and overloads, or cheat with some globals
+    v_n = list(v_0)
+    t_f = [ 0.0 , 0.0 ]
+    for t_n in t_vals:
+        for n in range(0, 2): # Two neurons
+            v_vals[n].append(v_n[n])
+            v_n[n] = v_n[n] + dt * neuron_model(t_n, v_n[n], t_f[n ^ 1])
+            if v_n[n] >= v_th:
+                v_n[n] = v_reset
+                t_f[n] = t_n
     
     plt.plot(plot_vals[0], plot_vals[1], label='DT=1ms')
     plt.title('Plot of single neuron leaky integrate and fire model')
