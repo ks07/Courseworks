@@ -62,8 +62,20 @@ def neuron_pos_plot(times, x, y, neuron):
         ax[n].set_title('Neuron {0}'.format(n + 1))
         ax[n].set_xlabel('X')
         ax[n].set_ylabel('Y')
-    plt.show()
+    #plt.show()
+    fig.show()
 
+    fig, ax = plt.subplots(1, 1)
+    
+    # Generate bins
+    x_hg = np.linspace(0, 250, 100)
+    y_hg = np.linspace(0, 300, 120) # 1.2 * x
+    X_hg, Y_hg = np.meshgrid(x_hg, y_hg)
+    x_hg = X_hg.ravel()
+    y_hg = Y_hg.ravel()
+    pos_0 = neuron_pos[3]
+    plt.hexbin([pos[0] for pos in pos_0], [pos[1] for pos in pos_0], bins='log', gridsize=30)
+    plt.show()
 
 if __name__ == '__main__':
     run()
