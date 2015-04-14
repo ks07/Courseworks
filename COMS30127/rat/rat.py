@@ -36,8 +36,8 @@ def binsearch_time_pos(times, x, y, target_time):
 
         t_frac = float(t_split) / float(t_diff)
         
-        border_x = sorted([x[i], x[i+1]])
-        border_y = sorted([y[i], y[i+1]])
+        border_x = [x[i], x[i+1]]
+        border_y = [y[i], y[i+1]]
 
         x_diff = border_x[1] - border_x[0]
         y_diff = border_y[1] - border_y[0]
