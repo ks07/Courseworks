@@ -20,28 +20,48 @@ def run():
     neuron_pos_plot(times, x, y, neuron)
 
 # Need to find the nearest time point
-def binsearch_time_pos(times, target_time):
+def binsearch_time_pos(times, x, y, target_time):
     i = bisect_left(times, target_time)
     if times[i] == target_time:
-        return (i, i)
+        return (x[i], y[i])
     else:
-        return (i-1, i)
+        # Interpolate between the points... let's simply take a biased average
+        lo_t = times[i]
+        hi_t = times[i+1]
+        t_diff = hi_t - lo_t
+
+        t_split = target_time - lo_t
+
+        assert t_split < t_diff
+
+        t_frac = float(t_split) / float(t_diff)
+        
+        border_x = sorted([x[i], x[i+1]])
+        border_y = sorted([y[i], y[i+1]])
+
+        x_diff = border_x[1] - border_x[0]
+        y_diff = border_y[1] - border_y[0]
+
+        interp_x = border_x[0] + (t_frac * x_diff)
+        interp_y = border_y[0] + (t_frac * y_diff)
+
+        return (interp_x, interp_y)
 
 def neuron_pos_plot(times, x, y, neuron):
     fig, ax = plt.subplots(1, 4)
 
     # For now lets just take the left answer.
-    neuron_nearest_times = [[binsearch_time_pos(times, t)[0] for t in n] for n in neuron]
+    neuron_pos = [[binsearch_time_pos(times, x, y, t) for t in n] for n in neuron]
     #print(len(neuron_nearest_times), len(neuron_nearest_times[0]), times[neuron_nearest_times[0][0][0]], times[neuron_nearest_times[0][0][1]])
 
-    x_n = [[x[i] for i in neuron_nearest_times[n]] for n in range(len(neuron))]
-    y_n = [[y[i] for i in neuron_nearest_times[n]] for n in range(len(neuron))]
+    #x_n = [[pos[0] for i in neuron_nearest_times[n]] for n in range(len(neuron))]
+    #y_n = [[y[i] for i in neuron_nearest_times[n]] for n in range(len(neuron))]
     
     fig.suptitle('Neuron Firing Positions')
 
     colors = ('b', 'g', 'r', 'k')
     for n in range(len(neuron)):
-        ax[n].scatter(x_n[n], y_n[n], c=colors[n])
+        ax[n].scatter([pos[0] for pos in neuron_pos[n]], [pos[1] for pos in neuron_pos[n]], c=colors[n])
         ax[n].set_ylim([0,250])
         ax[n].set_xlim([0,300])
         ax[n].set_title('Neuron {0}'.format(n + 1))
