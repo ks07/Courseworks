@@ -11,5 +11,9 @@ def run():
     neuron = [[int(z.strip()) for z in open('neuron{0}.csv'.format(n)).readlines()] for n in range(1,5)]
     print(len(times), len(x), len(y), [len(n) for n in neuron])
 
+    pos = zip(x, y)
+    data = {time: (x, y) for (time, x, y) in zip(times, x, y)}
+    print(len(data), data[times[-1]])
+
 if __name__ == '__main__':
     run()
