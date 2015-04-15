@@ -78,7 +78,15 @@ def neuron_autocorrelograms_plot(neurons):
     fig, ax = plt.subplots(1, 4)
 
     for i, neuron in enumerate(neurons):
-        ax[i].acorr(neuron, maxlags=None)
+        # pyplot.acorr is apparently useless... do it ourselves
+        mintime = min(neuron)
+        maxtime = max(neuron)
+        binedges = np.linspace(mintime,maxtime,500)
+        #binedges = np.arange(mintime,maxtime,10)
+        hist_binned, bins = np.histogram(neuron, bins=binedges)
+        width = 0.7 * (bins[1]-bins[0])
+        center = (bins[:-1] + bins[1:]) / 2
+        ax[i].bar(center, hist_binned, align='center', width=width)
 
     plt.show()
 
