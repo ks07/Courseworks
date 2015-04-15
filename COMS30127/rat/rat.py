@@ -17,7 +17,7 @@ def run():
     pos = zip(x, y)
     data = {time: (x, y) for (time, x, y) in zip(times, x, y)}
     print(len(data), data[times[-1]])
-    #neuron_pos_plot(times, x, y, neuron)
+    neuron_pos_plot(times, x, y, neuron)
     neuron_autocorrelograms_plot(neuron)
 
 # Need to find the nearest time point
@@ -77,29 +77,17 @@ def neuron_pos_plot(times, x, y, neuron):
 def neuron_autocorrelograms_plot(neurons):
     fig, ax = plt.subplots(1, 4)
 
-    for i, neuron in enumerate(neurons):
-        # pyplot.acorr is apparently useless... do it ourselves
-        # mintime = min(neuron)
-        # maxtime = max(neuron)
-        # binedges = np.linspace(mintime,maxtime,500)
-        # #binedges = np.arange(mintime,maxtime,10)
-        # hist_binned, bins = np.histogram(neuron, bins=binedges)
-        # width = 0.7 * (bins[1]-bins[0])
-        # center = (bins[:-1] + bins[1:]) / 2
-        # #ax[i].bar(center, hist_binned, align='center', width=width)
-        # #ax[i].acorr(hist_binned)
-        # dat= np.correlate(hist_binned, hist_binned, mode='same', old_behavior=True)
-        # print(len(center), len(dat))
-        # ax[i].bar(center, dat, align='center', width=width)
+    fig.suptitle('Neuron Firing Auto-Correlograms')
 
+    for i, neuron in enumerate(neurons):
         # Try doing it manually by calculating the difference.
         diffs = [ta - tb for ta in neuron for tb in neuron]
         # Bin the differences
-        bins = np.arange(0, 500, 10)
-        diff_binned, bins = np.histogram(diffs, bins=bins)
-        width = 0.7 * (bins[1]-bins[0])
-        center = (bins[:-1] + bins[1:]) / 2
-        ax[i].bar(center, diff_binned, align='center', width=width)
+        bins = np.arange(0, 1000, 10)
+        n, bins, _ = ax[i].hist(diffs, bins=bins)
+        ax[i].set_title('Neuron {0}'.format(i + 1))
+        ax[i].set_xlabel('delta t (e-4 s)')
+        ax[i].set_ylabel('Spike Count')
 
     plt.show()
 
