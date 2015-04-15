@@ -1,9 +1,15 @@
 #!/usr/bin/env python2
 from __future__ import print_function
 from bisect import bisect_left
-import math, random
+from itertools import tee, izip
 import numpy as np
 import matplotlib.pyplot as plt
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return izip(a, b)
 
 def run():
     times = [int(z.strip()) for z in open('time.csv').readlines()]
@@ -79,18 +85,25 @@ def neuron_autocorrelograms_plot(neurons):
 
     for i, neuron in enumerate(neurons):
         # pyplot.acorr is apparently useless... do it ourselves
-        mintime = min(neuron)
-        maxtime = max(neuron)
-        binedges = np.linspace(mintime,maxtime,500)
-        #binedges = np.arange(mintime,maxtime,10)
-        hist_binned, bins = np.histogram(neuron, bins=binedges)
-        width = 0.7 * (bins[1]-bins[0])
-        center = (bins[:-1] + bins[1:]) / 2
-        #ax[i].bar(center, hist_binned, align='center', width=width)
-        #ax[i].acorr(hist_binned)
-        dat= np.correlate(hist_binned, hist_binned, mode='same', old_behavior=True)
-        print(len(center), len(dat))
-        ax[i].bar(center, dat, align='center', width=width)
+        # mintime = min(neuron)
+        # maxtime = max(neuron)
+        # binedges = np.linspace(mintime,maxtime,500)
+        # #binedges = np.arange(mintime,maxtime,10)
+        # hist_binned, bins = np.histogram(neuron, bins=binedges)
+        # width = 0.7 * (bins[1]-bins[0])
+        # center = (bins[:-1] + bins[1:]) / 2
+        # #ax[i].bar(center, hist_binned, align='center', width=width)
+        # #ax[i].acorr(hist_binned)
+        # dat= np.correlate(hist_binned, hist_binned, mode='same', old_behavior=True)
+        # print(len(center), len(dat))
+        # ax[i].bar(center, dat, align='center', width=width)
+
+        # Try doing it manually by calculating the difference.
+        diffs = [ta - tb for ta, tb in pairwise(neuron)]
+        # Bin the differences
+        bins = np.arange(
+        diff_binned, diff_bins = np.histogram(diffs, bins=
+
     plt.show()
 
 if __name__ == '__main__':
