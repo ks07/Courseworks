@@ -86,8 +86,11 @@ def neuron_autocorrelograms_plot(neurons):
         hist_binned, bins = np.histogram(neuron, bins=binedges)
         width = 0.7 * (bins[1]-bins[0])
         center = (bins[:-1] + bins[1:]) / 2
-        ax[i].bar(center, hist_binned, align='center', width=width)
-
+        #ax[i].bar(center, hist_binned, align='center', width=width)
+        #ax[i].acorr(hist_binned)
+        dat= np.correlate(hist_binned, hist_binned, mode='same', old_behavior=True)
+        print(len(center), len(dat))
+        ax[i].bar(center, dat, align='center', width=width)
     plt.show()
 
 if __name__ == '__main__':
