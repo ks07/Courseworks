@@ -5,18 +5,16 @@ import itertools as itt
 import numpy as np
 import matplotlib.pyplot as plt
 
-def run():
+def gather_input():
     times = [int(z.strip()) for z in open('time.csv').readlines()]
     x = [float(z.strip()) for z in open('x.csv').readlines()]
     y = [float(z.strip()) for z in open('y.csv').readlines()]
     neuron = [[int(z.strip()) for z in open('neuron{0}.csv'.format(n)).readlines()] for n in range(1,5)]
-    print(len(times), len(x), len(y), [len(n) for n in neuron])
+    return (times, x, y, neuron)
 
-    # tpos should be sorted already, but we should make sure.
-    tpos = zip(times, x, y)
-    pos = zip(x, y)
-    data = {time: (x, y) for (time, x, y) in zip(times, x, y)}
-    print(len(data), data[times[-1]])
+def run():
+    times, x, y, neuron = gather_input()
+
     neuron_pos_plot(times, x, y, neuron)
     neuron_autocorrelograms_plot(neuron)
     neuron_correlograms_plot(neuron)
