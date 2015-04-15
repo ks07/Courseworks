@@ -13,3 +13,10 @@ Neuron Pos Plot
    turn coming from F2, so it seems likely this neuron is related to the left turning motion. There is not a significant
    concentration near other left turns (e.g. at the end of the central arm, headed towards to C1). This shows that perhaps neuron
    4 is related to remembering the forced left turn needed to make the later choice, instead of left turns in general.
+
+======================
+Neuron Auto Corr Plot
+======================
+
+Might show underlying frequencies in spike train. E.g. most neurons appear to spike in ~5ms intervals; neuron 4 appears to spike
+at roughly ~40ms intervals?
