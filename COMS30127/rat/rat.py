@@ -17,7 +17,8 @@ def run():
     pos = zip(x, y)
     data = {time: (x, y) for (time, x, y) in zip(times, x, y)}
     print(len(data), data[times[-1]])
-    neuron_pos_plot(times, x, y, neuron)
+    #neuron_pos_plot(times, x, y, neuron)
+    neuron_autocorrelograms_plot(neuron)
 
 # Need to find the nearest time point
 def binsearch_time_pos(times, x, y, target_time):
@@ -48,7 +49,7 @@ def binsearch_time_pos(times, x, y, target_time):
         return (interp_x, interp_y)
 
 def neuron_pos_plot(times, x, y, neuron):
-    fig, ax = plt.subplots(3, 4, gridspec_kw={'height_ratios':[10,10,1]}) # Requires matplotlib 1.4
+    fig, ax = plt.subplots(3, 4, gridspec_kw={'height_ratios':[10,10,1]}) # Requires matplotlib 1.4 => use pip
 
     neuron_pos = [[binsearch_time_pos(times, x, y, t) for t in n] for n in neuron]
     
@@ -70,6 +71,14 @@ def neuron_pos_plot(times, x, y, neuron):
         ax[1][n].set_ylabel('Y Position')
         cb = fig.colorbar(im, cax=ax[2][n], orientation='horizontal')
         cb.set_label('log10(N)')
+
+    plt.show()
+
+def neuron_autocorrelograms_plot(neurons):
+    fig, ax = plt.subplots(1, 4)
+
+    for i, neuron in enumerate(neurons):
+        ax[i].acorr(neuron, maxlags=None)
 
     plt.show()
 
