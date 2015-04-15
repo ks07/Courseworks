@@ -18,5 +18,11 @@ Neuron Pos Plot
 Neuron Auto Corr Plot
 ======================
 
-Might show underlying frequencies in spike train. E.g. most neurons appear to spike in ~5ms intervals; neuron 4 appears to spike
-at roughly ~40ms intervals?
+Might show underlying frequencies in spike train. E.g. most neurons appear to spike in 0.1s intervals
+
+=======================
+Neuron Cross Corr Plot
+=======================
+
+Diagonal shows the auto corr. As expected, much higher auto correlation than cross. Not sure these graphs are even correct, let
+alone what they show.
