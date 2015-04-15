@@ -61,11 +61,13 @@ def neuron_pos_plot(times, x, y, neuron):
         ax[0][n].set_ylim([0,250])
         ax[0][n].set_xlim([0,300])
         ax[0][n].set_title('Neuron {0}'.format(n + 1))
-        ax[0][n].set_xlabel('X')
-        ax[0][n].set_ylabel('Y')
+        ax[0][n].set_xlabel('X Position')
+        ax[0][n].set_ylabel('Y Position')
         
         # Heatmap/hexplot
         im = ax[1][n].hexbin([pos[0] for pos in pos_list], [pos[1] for pos in pos_list], bins='log', gridsize=30)
+        ax[1][n].set_xlabel('X Position')
+        ax[1][n].set_ylabel('Y Position')
         cb = fig.colorbar(im, cax=ax[2][n], orientation='horizontal')
         cb.set_label('log10(N)')
 
