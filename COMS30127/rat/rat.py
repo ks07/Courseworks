@@ -19,6 +19,7 @@ def run():
     print(len(data), data[times[-1]])
     neuron_pos_plot(times, x, y, neuron)
     neuron_autocorrelograms_plot(neuron)
+    neuron_correlograms_plot(neuron)
 
 # Need to find the nearest time point
 def binsearch_time_pos(times, x, y, target_time):
@@ -82,13 +83,49 @@ def neuron_autocorrelograms_plot(neurons):
     for i, neuron in enumerate(neurons):
         # Try doing it manually by calculating the difference.
         diffs = [ta - tb for ta in neuron for tb in neuron]
-        # Bin the differences, skip 0 as it's not particularly interesting
-        bins = np.arange(10, 1000, 10)
+        # Bin the differences, skip 0 as it's not particularly interesting, use 100 step => 10ms buckets
+        # => 10ms buckets from 10ms to 1000ms
+        bins = np.arange(100, 10000, 100)
         n, bins, _ = ax[i].hist(diffs, bins=bins)
         ax[i].set_title('Neuron {0}'.format(i + 1))
         ax[i].set_xlabel('delta t (e-4 s)')
         ax[i].set_ylabel('Spike Count')
+        ax[i].ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 
+    plt.show()
+
+def neuron_correlograms_plot(neurons):
+    fig, axs = plt.subplots(4, 4, sharex=True)
+
+    fig.suptitle('Neuron Firing Cross-Correlograms')
+
+    for ax, (neuronA, neuronB) in itt.izip(axs.flat, itt.product(neurons, repeat=2)):
+        # Try doing it manually by calculating the difference.
+        diffs = [ta - tb for ta in neuronA for tb in neuronB]
+        # Bin the differences, skip 0 as it's not particularly interesting
+        bins = np.arange(100, 10000, 100)
+        n, bins, _ = ax.hist(diffs, bins=bins)
+        #ax[i].set_title('Neuron {0}'.format(i + 1))
+        #ax.set_xlabel('delta t (e-4 s)')
+        #ax.set_ylabel('Spike Count')
+        ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+
+    # Label the columns with the neuron number
+    for i, ax in enumerate(axs[0]):
+        ax.set_title('Neuron {0}'.format(i + 1))
+
+    # Label only the bottom row with the x axis label
+    for ax in axs[-1]:
+        ax.set_xlabel('delta t (e-4 s)')
+
+    # Label the rows with the neuron number, by abusing the y axis label
+    for i, ax in enumerate(zip(*axs)[0]):
+        ax.set_ylabel('Neuron {0}\nSpike Count'.format(i + 1))
+
+    plt.get_current_fig_manager().window.showMaximized()
+    # Any adjustments to the layout fall flat as soon as the window is resized, even like this.
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.95)
     plt.show()
 
 if __name__ == '__main__':
