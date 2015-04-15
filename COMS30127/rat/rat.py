@@ -18,6 +18,7 @@ def run():
     neuron_pos_plot(times, x, y, neuron)
     neuron_autocorrelograms_plot(neuron)
     neuron_correlograms_plot(neuron)
+    neuron_firerate_plot(min(times), max(times), neuron)
 
 # Need to find the nearest time point
 def binsearch_time_pos(times, x, y, target_time):
@@ -124,6 +125,22 @@ def neuron_correlograms_plot(neurons):
     # Any adjustments to the layout fall flat as soon as the window is resized, even like this.
     plt.tight_layout()
     plt.subplots_adjust(top=0.95)
+    plt.show()
+
+def neuron_firerate_plot(mintime, maxtime, neurons):
+    fig, ax = plt.subplots(1, 4)
+
+    fig.suptitle('Neuron Firing Rate Histogram')
+
+    # Bin in 1 second intervals
+    all_bins = np.arange(mintime, maxtime, 10000)
+
+    for i, neuron in enumerate(neurons):
+        ax[i].hist(neuron, bins=all_bins)
+        ax[i].set_xlabel('Time (e-4 s)')
+        ax[i].set_ylabel('Spike Count')
+        ax[i].set_title('Neuron {0}'.format(i + 1))
+
     plt.show()
 
 if __name__ == '__main__':
