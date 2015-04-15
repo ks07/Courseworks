@@ -82,8 +82,8 @@ def neuron_autocorrelograms_plot(neurons):
     for i, neuron in enumerate(neurons):
         # Try doing it manually by calculating the difference.
         diffs = [ta - tb for ta in neuron for tb in neuron]
-        # Bin the differences
-        bins = np.arange(0, 1000, 10)
+        # Bin the differences, skip 0 as it's not particularly interesting
+        bins = np.arange(10, 1000, 10)
         n, bins, _ = ax[i].hist(diffs, bins=bins)
         ax[i].set_title('Neuron {0}'.format(i + 1))
         ax[i].set_xlabel('delta t (e-4 s)')
