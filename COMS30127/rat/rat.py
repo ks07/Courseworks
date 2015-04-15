@@ -48,7 +48,7 @@ def binsearch_time_pos(times, x, y, target_time):
         return (interp_x, interp_y)
 
 def neuron_pos_plot(times, x, y, neuron):
-    fig, ax = plt.subplots(2, 4)
+    fig, ax = plt.subplots(3, 4, gridspec_kw={'height_ratios':[10,10,1]}) # Requires matplotlib 1.4
 
     neuron_pos = [[binsearch_time_pos(times, x, y, t) for t in n] for n in neuron]
     
@@ -66,7 +66,7 @@ def neuron_pos_plot(times, x, y, neuron):
         
         # Heatmap/hexplot
         im = ax[1][n].hexbin([pos[0] for pos in pos_list], [pos[1] for pos in pos_list], bins='log', gridsize=30)
-        cb = fig.colorbar(im, ax=ax[1][n])
+        cb = fig.colorbar(im, cax=ax[2][n], orientation='horizontal')
         cb.set_label('log10(N)')
 
     plt.show()
