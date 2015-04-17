@@ -1,4 +1,5 @@
 \documentclass[paper=a4, fontsize=12pt]{article}
+\usepackage[utf8]{inputenc}
 
 \begin{document}
 
@@ -34,24 +35,24 @@ return s
 \end{verbatim}
 
 \subsubsection{4.i.a Runtime Analysis}
-From the lecture slides, week 13, we have that the FirstFitDecreasing algorithm is O(n^2), from the sorting operation that needs to be performed before assigning items to bins. As the annotated pseudocode describes, we perform an O(n) preprocessing step whereby the gems are split into two subsets. This is a simple loop over all elements in N; this loop is executed n times, performing O(1) operations in the body of the loop. The algorithm then runs the FirstFitDecreasing algorithm twice, giving a worst case runtime of O(2n^2 + n), which is equivalent to O(n^2). By definition, this is polynomial time.
+From the lecture slides, week 13, we have that the FirstFitDecreasing algorithm is \(O(n^2)\), from the sorting operation that needs to be performed before assigning items to bins. As the annotated pseudocode describes, we perform an \(O(n)\) preprocessing step whereby the gems are split into two subsets. This is a simple loop over all elements in N; this loop is executed n times, performing \(O(1)\) operations in the body of the loop. The algorithm then runs the FirstFitDecreasing algorithm twice, giving a worst case runtime of \(O(2n^2 + n)\), which is equivalent to \(O(n^2)\). By definition, this is polynomial time.
 
 \subsubsection{4.i.b Correctness}
-From the lecture slides, week 13, the FirstFitDecreasing algorithm produces valid solutions; the algorithm operates by finding the first bin that satisfies the equation t + w <= c, where t is the total weight of items already in the bin, w is the weight of the item currently being considered, and c is the capacity of each bin (c = 1.0, in this case).
+From the lecture slides, week 13, the FirstFitDecreasing algorithm produces valid solutions; the algorithm operates by finding the first bin that satisfies the equation \(t + w <= c\), where t is the total weight of items already in the bin, w is the weight of the item currently being considered, and c is the capacity of each bin (c = 1.0, in this case).
 
 The algorithm must therefore produce valid solutions for both subsets of N (AB and C), at least in terms of sack capacity. However, the problem also specifies a restriction on the mixing of gem types; no sack may contain a gem of type A, a gem of type B, and a gem of type C. This algorithm avoids violating this condition by partitioning the gems such that the FirstFitDecreasing algorithm is never supplied with gems of all three types at once, so it cannot produce an invalid packing. The algorithm combines the two packings (of AB and of C), by simply concatenating the two; or in this case, by summing the outputs of FirstFitDecreasing. In other words, the number of sacks needed for all gems of type A and B is found, then the number for type C is found, and the final solution keeps type C completely separated from the others.
 
 \subsubsection{4.i.c Approximation Factor}
-From the lecture slides, week 13, we are shown that the FirstFitDecreasing algorithm produces a 3/2 approximation. (Opt <= s <= (3/2) * Opt). Consider each subset individually; denoting the optimal solution for the AB subset as ABOpt, and similarly COpt for the C subset. Running FFD on these subsets will produce an s_x (x = AB | C) that satisfies: ABOpt <= s_ab <= (3/2) * ABOpt and COpt <= s_c <= (3/2) * COpt.
+From the lecture slides, week 13, we are shown that the FirstFitDecreasing algorithm produces a \(3/2\) approximation. \((Opt <= s <= (3/2) * Opt)\). Consider each subset individually; denoting the optimal solution for the AB subset as ABOpt, and similarly COpt for the C subset. Running FFD on these subsets will produce an \(s_x (x = AB | C)\) that satisfies: \(ABOpt <= s_ab <= (3/2) * ABOpt\) and \(COpt <= s_c <= (3/2) * COpt\).
 
-The value of COpt must be <= Opt, where Opt is the global optimum. This can be explained by considering that C is a subset of N, thus by definition C must have at most n elements. Therefore, in the most extreme case the entirety of N will in fact be gems of type C - thus the local optimum packing for C will be equal to the global optimum for N, Opt. The only other possibility is that the subset C has fewer elements than N. Clearly in this case, COpt must be <= Opt, as removing items from the input without modifying the weights of other items cannot possibly increase the required number of bins. It is important to note that all gems have positive weights.
+It must be that \(COpt <= Opt\), where Opt is the global optimum. This can be explained by considering that C is a subset of N, thus by definition C must have at most n elements. Therefore, in the most extreme case the entirety of N will in fact be gems of type C - thus the local optimum packing for C will be equal to the global optimum for N, Opt. The only other possibility is that the subset C has fewer elements than N. Clearly in this case, \(COpt <= Opt\), as removing items from the input without modifying the weights of other items cannot possibly increase the required number of bins. It is important to note that all gems have positive weights.
 
-The same argument can be made for the subset AB, as there are no restrictions on sacks containing only two types of gem other than the standard capacity limit. Thus it follows that ABOpt <= Opt.
+The same argument can be made for the subset AB, as there are no restrictions on sacks containing only two types of gem other than the standard capacity limit. Thus it follows that \(ABOpt <= Opt\).
 
-To summarise, it can be shown that we now have two values, s_ab and s_c, that both satisfy the inequality Opt <= s_x <= (3/2) * Opt. The algorithm described here produces an output s, where s = s_ab + s_c. Combining this value of s with the approximation factors shown earlier gives us inequalities as such:
-ABOpt + COpt <= s_ab + s_c <= (3/2) * ABOpt + (3/2) * COpt
+To summarise, it can be shown that we now have two values, \(s_AB\) and \(s_C\), that both satisfy the inequality \(Opt <= s_x <= (3/2) * Opt\). The algorithm described here produces an output s, where \(s = s_ab + s_c\). Combining this value of s with the approximation factors shown earlier gives us inequalities as such:
+\[ABOpt + COpt <= s_ab + s_c <= (3/2) * ABOpt + (3/2) * COpt
 Opt + Opt <= s <= (3/2) * Opt + (3/2) * Opt
 2Opt <= s <= 2 * ((3/2) * Opt)
-2Opt <= s <= 3 * Opt
+2Opt <= s <= 3 * Opt\]
 
 \end{document}
