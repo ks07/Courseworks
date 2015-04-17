@@ -86,7 +86,7 @@ time.
 \subsubsection{Correctness}
 From the lecture slides, week 13, the FirstFitDecreasing algorithm produces
 valid solutions; the algorithm operates by finding the first bin that satisfies
-the equation \(t + w <= c\), where t is the total weight of items already in
+the equation \(t + w \leq c\), where t is the total weight of items already in
 the bin, w is the weight of the item currently being considered, and c is the
 capacity of each bin (c = 1.0, in this case).
 
@@ -104,35 +104,36 @@ solution keeps type C completely separated from the others.
 
 \subsubsection{Approximation Factor}
 From the lecture slides, week 13, we are shown that the FirstFitDecreasing
-algorithm produces a \(3/2\) approximation. \((Opt <= s <= (3/2) *
-Opt)\). Consider each subset individually; denoting the optimal solution for
-the AB subset as \(Opt_{AB}\), and similarly \(Opt_C\) for the C subset. Running
-FFD on these subsets will produce an \(s_x (x = AB | C)\) that satisfies:
-\(Opt_{AB} <= s_{AB} <= (3/2) * Opt_{AB}\) and \(Opt_C <= s_C <= (3/2) *
-Opt_C\). Combining the two approximations gives an inequality for the overall
-approximation:
+algorithm produces a \(\frac{3}{2}\) approximation. \((Opt \leq s \leq
+\frac{3}{2} Opt)\). Consider each subset individually; denoting the optimal
+solution for the AB subset as \(Opt_{AB}\), and similarly \(Opt_C\) for the C
+subset. Running FFD on these subsets will produce packings that satisfy:
 
 \begin{alignat*}{2}
-Opt_{AB} + Opt_C &\leq s_{AB} &+ s_C   &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C \\
-Opt_{AB} + Opt_C &\leq        &s \quad &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C
+Opt_{AB}         &\leq        &s_{AB} \quad &\leq \quad \frac{3}{2} Opt_{AB}
+\intertext{and}
+Opt_C            &\leq        &s_C \quad    &\leq \frac{3}{2} Opt_C
+\intertext{that when combined give an inequality for the overall approximation}
+Opt_{AB} + Opt_C &\leq s_{AB} &+ s_C        &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C \\
+Opt_{AB} + Opt_C &\leq        &s \quad      &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C
 \end{alignat*}
 
 In order to demonstrate the bounds of the approximation in terms of the global
 optimum, \(Opt\), i.e. the optimum when considering all three types
 simultaneously, it is necessary to show the relationship between the two local
 optimums, \(Opt_{AB}\) and \(Opt_C\), and \(Opt\). It must be the case that
-\(Opt_C <= Opt\). This can be explained by considering that C is a subset of N,
+\(Opt_C \leq Opt\). This can be explained by considering that C is a subset of N,
 thus by definition C must have at most n elements. Therefore, in the most
 extreme case the entirety of N will in fact be gems of type C - thus the local
 optimum packing for C will be equal to the global optimum for N, \(Opt\). The
 only other possibility is that the subset C has fewer elements than N. Clearly
-in this case, \(Opt_C <= Opt\), as removing items from the input cannot
+in this case, \(Opt_C \leq Opt\), as removing items from the input cannot
 possibly increase the required number of bins, as all gems have positive
 weights.
 
 The same argument can be made for the subset AB, as there are no restrictions
 on sacks containing only two types of gem other than the standard capacity
-limit. Thus it follows that \(Opt_{AB} <= Opt\). This can be used to express
+limit. Thus it follows that \(Opt_{AB} \leq Opt\). This can be used to express
 the upper bounds of the above approximation inequality in terms of the global
 optimum, like so:
 
