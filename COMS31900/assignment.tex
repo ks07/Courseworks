@@ -1,5 +1,6 @@
 \documentclass[paper=a4, fontsize=12pt]{article}
 \usepackage[utf8]{inputenc}
+\usepackage{amsmath}
 
 \begin{document}
 
@@ -77,32 +78,35 @@ solution keeps type C completely separated from the others.
 From the lecture slides, week 13, we are shown that the FirstFitDecreasing
 algorithm produces a \(3/2\) approximation. \((Opt <= s <= (3/2) *
 Opt)\). Consider each subset individually; denoting the optimal solution for
-the AB subset as ABOpt, and similarly COpt for the C subset. Running FFD on
-these subsets will produce an \(s_x (x = AB | C)\) that satisfies: \(ABOpt <=
-s_ab <= (3/2) * ABOpt\) and \(COpt <= s_c <= (3/2) * COpt\).
+the AB subset as \(Opt_{AB}\), and similarly \(Opt_C\) for the C subset. Running FFD on
+these subsets will produce an \(s_x (x = AB | C)\) that satisfies: \(Opt_{AB} <=
+s_{AB} <= (3/2) * Opt_{AB}\) and \(Opt_C <= s_C <= (3/2) * Opt_C\).
 
-It must be that \(COpt <= Opt\), where Opt is the global optimum. This can be
+It must be that \(Opt_C <= Opt\), where Opt is the global optimum. This can be
 explained by considering that C is a subset of N, thus by definition C must
 have at most n elements. Therefore, in the most extreme case the entirety of N
 will in fact be gems of type C - thus the local optimum packing for C will be
 equal to the global optimum for N, Opt. The only other possibility is that the
-subset C has fewer elements than N. Clearly in this case, \(COpt <= Opt\), as
+subset C has fewer elements than N. Clearly in this case, \(Opt_C <= Opt\), as
 removing items from the input without modifying the weights of other items
 cannot possibly increase the required number of bins. It is important to note
 that all gems have positive weights.
 
 The same argument can be made for the subset AB, as there are no restrictions
 on sacks containing only two types of gem other than the standard capacity
-limit. Thus it follows that \(ABOpt <= Opt\).
+limit. Thus it follows that \(Opt_{AB} <= Opt\).
 
 To summarise, it can be shown that we now have two values, \(s_AB\) and
 \(s_C\), that both satisfy the inequality \(Opt <= s_x <= (3/2) * Opt\). The
-algorithm described here produces an output s, where \(s = s_ab +
-s_c\). Combining this value of s with the approximation factors shown earlier
+algorithm described here produces an output s, where \(s = s_{AB} +
+s_C\). Combining this value of s with the approximation factors shown earlier
 gives us inequalities as such:
-\[ABOpt + COpt <= s_ab + s_c <= (3/2) * ABOpt + (3/2) * COpt
-Opt + Opt <= s <= (3/2) * Opt + (3/2) * Opt
-2Opt <= s <= 2 * ((3/2) * Opt)
-2Opt <= s <= 3 * Opt\]
+
+\begin{alignat*}{2}
+Opt_{AB} + Opt_C &\leq s_{AB} &+ s_C &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C\\
+Opt + Opt &\leq &s \quad &\leq \frac{3}{2} Opt + \frac{3}{2} Opt\\
+2 Opt &\leq &s \quad &\leq 2 (\frac{3}{2} Opt)\\
+2 Opt &\leq &s \quad &\leq{} 3 Opt
+\end{alignat*}
 
 \end{document}
