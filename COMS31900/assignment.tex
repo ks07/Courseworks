@@ -2,11 +2,17 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 
+% Redefine (sub-)subsection numbering to match the assignment
+\renewcommand{\thesubsection}{\thesection.\roman{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\alph{subsubsection}}
+
 \begin{document}
 
+% Force to question 4
+\setcounter{section}{3}
 \section{Question 4}
 
-\subsection{4.i. 6 Approximation}
+\subsection{6 Approximation}
 
 A 3 approximation for this bin packing problem can be found by making use of
 the FirstFitDecreasing algorithm, with the set of all gems partitioned into two
@@ -44,7 +50,7 @@ s = s + FirstFitDecreasing(C)
 return s
 \end{verbatim}
 
-\subsubsection{4.i.a Runtime Analysis}
+\subsubsection{Runtime Analysis}
 From the lecture slides, week 13, we have that the FirstFitDecreasing algorithm
 is \(O(n^2)\), from the sorting operation that needs to be performed before
 assigning items to bins. As the annotated pseudocode describes, we perform an
@@ -55,7 +61,7 @@ the FirstFitDecreasing algorithm twice, giving a worst case runtime of \(O(2n^2
 + n)\), which is equivalent to \(O(n^2)\). By definition, this is polynomial
 time.
 
-\subsubsection{4.i.b Correctness}
+\subsubsection{Correctness}
 From the lecture slides, week 13, the FirstFitDecreasing algorithm produces
 valid solutions; the algorithm operates by finding the first bin that satisfies
 the equation \(t + w <= c\), where t is the total weight of items already in
@@ -74,7 +80,7 @@ FirstFitDecreasing. In other words, the number of sacks needed for all gems of
 type A and B is found, then the number for type C is found, and the final
 solution keeps type C completely separated from the others.
 
-\subsubsection{4.i.c Approximation Factor}
+\subsubsection{Approximation Factor}
 From the lecture slides, week 13, we are shown that the FirstFitDecreasing
 algorithm produces a \(3/2\) approximation. \((Opt <= s <= (3/2) *
 Opt)\). Consider each subset individually; denoting the optimal solution for
