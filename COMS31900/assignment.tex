@@ -160,4 +160,130 @@ Opt              &\leq \quad &s \quad &\leq 3 Opt
 Opt              &\leq \quad &s \quad &\leq 6 Opt
 \end{alignat*}
 
+\subsection{Tighter Approximation}
+
+A 2 approximation for the gem packing problem can be achieved by modifying the
+NextFit algorithm - albeit with a constant factor on the worst case
+performance, giving the inequality:
+
+\begin{displaymath}
+Opt \leq s \leq 2 Opt + 1
+\end{displaymath}
+
+This is achieved by sorting the input list, N, into type order, such that all
+gems of type A are followed by those of type B, and then by type C. This sorted
+input list is then fed through a modified version of the NextFit algorithm,
+whereby an extra check is added to ensure that a bin holding both A and B gems
+will not be considered suitable for a gem of type C. (In this case, the current
+bin will move to the next, as if the capacity limit for the current bin had
+been exceeded by this differently typed gem.) In the following subsections it
+will be shown that this condition can only be triggered under a very specific
+set of conditions, and will only result in one extra bin being added to the
+output. The pseudocode below details this approach.
+
+\begin{lstlisting}
+# Receive as input a list N of n gems, i.e. n = |N|
+
+A = []
+B = []
+C = []
+
+# Partition the gems, O(n)
+for gem in N:
+  if gem.type == A:
+    A.append(gem)
+  elif gem.type == B:
+    B.append(gem)
+  elif gem.type == C:
+    C.append(gem)
+
+# Current sack number
+s = 0
+# Current sack weight total
+total = 0.0
+# Does current sack contain an A type gem?
+hasA = False
+
+# Concatenate lists A, B, and C (O(1))
+L = A + B + C
+
+# Loop through all gems in L, adding to the current bin until it is no longer
+# possible, then moving to the next bin. (O(n))
+for gem in L:
+  hasA = hasA or (gem.type == A)
+  total = total + gem.weight
+  if (total > 1.0) or (hasA and gem.type == C):
+    # The current bin is unsuitable for this gem, move to the next
+    s = s + 1
+    total = gem.weight
+    hasA = (gem.type == A)
+
+# Need to check if the current bin has been used.
+if total > 0.0:
+  s = s + 1
+
+# s should now hold the count of bins required
+return s
+\end{lstlisting}
+
+Note that this implementation will work with any chosen permutation of list
+concatenation in L - e.g. \(L = C + B + A\).
+
+\subsubsection{Runtime Analysis}
+From the lecture slides, week 13, we have that the NextFit algorithm is
+\(O(n)\). As the annotated pseudocode describes, we perform an \(O(n)\)
+preprocessing step whereby the gems are sorted into three subsets based upon
+their type. This is a simple loop over all elements in N; this loop is executed
+n times, performing \(O(1)\) operations in the body of the loop. The algorithm
+then runs the modified NextFit algorithm. As demonstrated in the pseduocode,
+this modified NextFit loop continues to be \(O(n)\) - the only modifications
+being the addition of some constant time operations to the loop body, that runs
+n times. Overall this gives a worst case runtime of \(O(2n)\), which is
+equivalent to \(O(n)\). By definition, this is polynomial time.
+
+\subsubsection{Correctness}
+The core bin packing loop of the algorithm shown here is very similar to the
+standard NextFit algorithm described in the lecture slides, week 13. The
+standard NextFit algorithm produces valid solutions; the algorithm checks that
+adding an element to the current bin will not exceed it's capacity (1.0 for the
+given problem). This check is still present in the modified algorithm, such
+that the restriction on total bin weight will never be exceeded.
+
+The second restriction, whereby the mixing of all three gem types may not share
+a single sack, is guaranteed by a combination of the preprocessing sort by
+type, and the check against adding a C type gem to a bin that holds an A type
+gem. The input list, L, is iterated over in order of type. Thus once we begin
+considering C type gems, there will be no more A or B type gems to be
+processed. Therefore, it is sufficient to check that when adding a C type gem
+that the current bin does not contain an A type gem. In this case, the same
+action is taken as is used to handle an over-capacity bin - i.e. the current
+bin is moved to a new bin, and the current gem is inserted into this new
+bin. This ensures that all three types are never placed into the same sack.
+
+\subsubsection{Approximation Factor}
+In most cases this modified algorithm will follow the performance of the
+original NextFit algorithm. From the lecture slides, week 13, we have that
+NextFit finds approximations for s in the range \(Opt \leq s \leq 2 Opt\). The
+only time that the algorithm presented here performs packing differently from
+the original is when a C type gem is encountered and the current bin contains
+at least one A type gem. Due to the sort operation performed as a preprocessing
+step, there is only one situation where an A type gem may exist in the current
+bucket whilst considering a C type gem. This will be the case if, and only if:
+
+\begin{displaymath}
+\exists a \in A, \exists c \in C \text{ \quad such that \quad } a.weight + \sum\nolimits_{b \in B} b.weight + c.weight \leq 1.0
+\end{displaymath}
+
+In this special case, the current bin is finished early, and a new bin is
+considered. This shifting operation wastes less than one sack's worth of
+capacity, thus adding a single sack onto the found packing in the worst
+case. Therefore we find the approximation to be described by the following
+inequality:
+
+\begin{displaymath}
+Opt \leq s \leq 2 Opt + 1
+\end{displaymath}
+
+The lower bound here can be achieved in the case where there is only a single input gem, among others. As per the definition of \(Opt\), clearly the algorithm cannot find a packing better than this limit.
+
 \end{document}
