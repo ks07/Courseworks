@@ -1,0 +1,59 @@
+\documentclass[paper=a4, fontsize=12pt]{article}
+
+\begin{document}
+
+\section{Question 4}
+
+\subsection{4.i. 6 Approximation}
+
+A 3 approximation for this bin packing problem can be found by making use of the FirstFitDecreasing algorithm, with the set of all gems partitioned into two subsets. One such subset should hold only a single type of gem, whilst the other subset should hold the remaining two types of gem. The following proofs do not consider the effect of choosing different gem types to partition around; in my algorithm I will simply partition the n input gems into a subset AB, containing all gems of type A and B, and a subset C, containing all gems of type C.
+
+\begin{verbatim}
+AB = []
+C  = []
+
+# Partition the gems, O(N)
+for gem in N:
+  if gem.type == C:
+    C.append(gem)
+  else:
+    AB.append(gem)
+
+s = 0
+bin_total = 0.0
+
+# As only two types of gem are here, we cannot mix more than two types in a sack
+# Worst case all gems are A or B types, so O(N)
+for gem in AB:
+  bin_total = bin_total + gem.weight
+  if bin_total > 1.0:
+    s = s + 1
+    bin_total = gem.weight
+
+# If the current bin has anything in it, count it. O(1)
+if bin_total > 0.0:
+  s = s + 1
+
+# We add an extra bin so we don't risk mixing A, B, and C types. O(1)
+s = s + 1
+bin_total = 0.0
+
+# Repeat for type C, again O(N)
+for gem in C:
+  bin_total = bin_total + gem.weight
+  if bin_total > 1.0:
+    s = s + 1
+    bin_total = gem.weight
+
+# If the current bin has anything in it, count it. O(1)
+if bin_total > 0.0:
+  s = s + 1
+
+# s should now hold the count of bins required
+return s
+\end{verbatim}
+
+\subsubsection{4.i.a Runtime Analysis}
+wrong wrong wrong
+
+\end{document}
