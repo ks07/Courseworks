@@ -78,35 +78,57 @@ solution keeps type C completely separated from the others.
 From the lecture slides, week 13, we are shown that the FirstFitDecreasing
 algorithm produces a \(3/2\) approximation. \((Opt <= s <= (3/2) *
 Opt)\). Consider each subset individually; denoting the optimal solution for
-the AB subset as \(Opt_{AB}\), and similarly \(Opt_C\) for the C subset. Running FFD on
-these subsets will produce an \(s_x (x = AB | C)\) that satisfies: \(Opt_{AB} <=
-s_{AB} <= (3/2) * Opt_{AB}\) and \(Opt_C <= s_C <= (3/2) * Opt_C\).
+the AB subset as \(Opt_{AB}\), and similarly \(Opt_C\) for the C subset. Running
+FFD on these subsets will produce an \(s_x (x = AB | C)\) that satisfies:
+\(Opt_{AB} <= s_{AB} <= (3/2) * Opt_{AB}\) and \(Opt_C <= s_C <= (3/2) *
+Opt_C\). Combining the two approximations gives an inequality for the overall
+approximation:
 
-It must be that \(Opt_C <= Opt\), where Opt is the global optimum. This can be
-explained by considering that C is a subset of N, thus by definition C must
-have at most n elements. Therefore, in the most extreme case the entirety of N
-will in fact be gems of type C - thus the local optimum packing for C will be
-equal to the global optimum for N, Opt. The only other possibility is that the
-subset C has fewer elements than N. Clearly in this case, \(Opt_C <= Opt\), as
-removing items from the input without modifying the weights of other items
-cannot possibly increase the required number of bins. It is important to note
-that all gems have positive weights.
+\begin{alignat*}{2}
+Opt_{AB} + Opt_C &\leq s_{AB} &+ s_C   &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C \\
+Opt_{AB} + Opt_C &\leq        &s \quad &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C
+\end{alignat*}
+
+In order to demonstrate the bounds of the approximation in terms of the global
+optimum, \(Opt\), i.e. the optimum when considering all three types
+simultaneously, it is necessary to show the relationship between the two local
+optimums, \(Opt_{AB}\) and \(Opt_C\), and \(Opt\). It must be the case that
+\(Opt_C <= Opt\). This can be explained by considering that C is a subset of N,
+thus by definition C must have at most n elements. Therefore, in the most
+extreme case the entirety of N will in fact be gems of type C - thus the local
+optimum packing for C will be equal to the global optimum for N, \(Opt\). The
+only other possibility is that the subset C has fewer elements than N. Clearly
+in this case, \(Opt_C <= Opt\), as removing items from the input cannot
+possibly increase the required number of bins, as all gems have positive
+weights.
 
 The same argument can be made for the subset AB, as there are no restrictions
 on sacks containing only two types of gem other than the standard capacity
-limit. Thus it follows that \(Opt_{AB} <= Opt\).
-
-To summarise, it can be shown that we now have two values, \(s_AB\) and
-\(s_C\), that both satisfy the inequality \(Opt <= s_x <= (3/2) * Opt\). The
-algorithm described here produces an output s, where \(s = s_{AB} +
-s_C\). Combining this value of s with the approximation factors shown earlier
-gives us inequalities as such:
+limit. Thus it follows that \(Opt_{AB} <= Opt\). This can be used to express
+the upper bounds of the above approximation inequality in terms of the global
+optimum, like so:
 
 \begin{alignat*}{2}
-Opt_{AB} + Opt_C &\leq s_{AB} &+ s_C &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C\\
-Opt + Opt &\leq &s \quad &\leq \frac{3}{2} Opt + \frac{3}{2} Opt\\
-2 Opt &\leq &s \quad &\leq 2 (\frac{3}{2} Opt)\\
-2 Opt &\leq &s \quad &\leq{} 3 Opt
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C \\
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq \frac{3}{2} Opt + \frac{3}{2} Opt \\
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq 2 ( \frac{3}{2} Opt ) \\
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq 3 Opt
+\end{alignat*}
+
+In a similar manner, the lower bound can be simplified by observing that in the
+best case, all elements of N are grouped into only one of \(Opt_{AB}\) or
+\(Opt_C\). In this situation, either \(s_{AB} = 0\) or \(s_{C} = 0\) will be
+true, thus \(s = s_x\). Going back to the definition of FirstFitDecreasing,
+this means that the lower bound of the inequality must be \(Opt\). In any other
+situation, the lower bound must be greater than or equal to \(Opt\) - this is
+clear from the definition of Opt as the most efficient packing possible - it
+cannot be beaten. Thus, we can simplify the entire inequality as follows:
+
+\begin{alignat*}{2}
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq 3 Opt \\
+Opt              &\leq \quad &s \quad &\leq 3 Opt
+\intertext{\centering Which clearly satisfies:}
+Opt              &\leq \quad &s \quad &\leq 6 Opt
 \end{alignat*}
 
 \end{document}
