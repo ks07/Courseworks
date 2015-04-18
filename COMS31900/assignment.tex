@@ -246,8 +246,12 @@ This algorithm begins by searching for the highest node, \(Split\)\footnote{Clos
 y_1 \leq y_{Split} \leq y_2
 \intertext{The algorithm then searches to the left of \(Split\) to find the leftmost (or lowest) leaf, \(L\), where}
 y_1 \leq L
-\intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Current\) in the search path, it can be shown that there are two possibilities based upon the value of \(y_{Current}\)}
-\forall Current \in LeftPath, y_1 > y_{Current}, \forall L \in Current_{Left} : y_L < y_1,
+\intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Current\) in the search path, it can be shown that there are two possibilities based upon the value of \(y_{Current}\), i.e.}
+\forall Current \in LeftPath :
+\begin{cases}
+\forall L \in Current_{Left}  : y_L   <  y_1          & \text{if } y_{Current} < y_1 \\
+\forall R \in Current_{Right} : y_1 \leq y_R \leq y_2 & \text{if } y_{Current} \geq y_1
+\end{cases}
 \intertext{thus the left child of \(Current\) can be safely ignored as all contained points are out of range, and likewise for gthe point represented by \(Current\). This leaves only the right children of \(Current\) unconsidered for the count query - thus the algorithm loops back and performs the same steps upon the left child.}
 \intertext{The second possibility is then}
 \forall Current \in LeftPath, y_1 \leq y_{Current}, \forall R \in Current_{Right} : y_1 \leq y_R \leq y_2.
