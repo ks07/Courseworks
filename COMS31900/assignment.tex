@@ -25,15 +25,18 @@
   tabsize=3
 }
 
+% Add 'Question' prefix to section numbering
+\renewcommand{\thesection}{Question \arabic{section}}
 % Redefine (sub-)subsection numbering to match the assignment
-\renewcommand{\thesubsection}{\thesection.\roman{subsection}}
+\renewcommand{\thesubsection}{\arabic{section}.\roman{subsection}}
 \renewcommand{\thesubsubsection}{\thesubsection.\alph{subsubsection}}
 
 \begin{document}
 
 % Force to question 3
 \setcounter{section}{2}
-\section{Question 3}
+% Question 3
+\section{Range Counting}
 
 \subsection{1-Dimension}
 \label{subsec:1drangecount}
@@ -208,7 +211,8 @@ sorted array of all x coordinates in the subtree rooted at that node (as
 \(Node.sorted\)). The algorithm RangeCount1D is that which is described in
 subsection \ref{subsec:1drangecount}.
 
-\section{Question 4}
+% Question 4
+\section{Bin Packing Approximation Algorithms}
 
 \subsection{6 Approximation}
 
