@@ -1,6 +1,7 @@
 \documentclass[paper=a4, fontsize=12pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{listings}
 \usepackage{color}
 \definecolor{dkgreen}{rgb}{0,0.6,0}
@@ -30,8 +31,69 @@
 
 \begin{document}
 
-% Force to question 4
-\setcounter{section}{3}
+% Force to question 3
+\setcounter{section}{2}
+\section{Question 3}
+
+\subsection{1-Dimension}
+
+The approach to performing 1D range counting is very similar to the 1D range
+searching problem as detailed in the lecture slides, week 11. The algorithm
+requires sorting the input set \(S\) into an array, thus occupying \(O(n)\)
+space and taking \(O(n \log n)\) preprocessing time. This sort could be
+performed using HeapSort, which is \(O(n \log n)\) - no further preprocessing
+is required. Performing count queries on this structure is then a simple matter
+of performing binary search twice upon the array, once to find the
+successor\footnote{The successor of a value \(x\) in a set \(S\) is the
+  smallest \(x_s \in S\) such that \(x_s \geq x\). Similarly, the predecessor
+  of \(x\) in \(S\) is the smallest \(x_p \in S\) such that \(x_p \geq x\).} of
+\(x_1\), and again to find the predecessor\footnotemark[\value{footnote}] of
+\(x_2\). Binary search is in \(O(\log n)\), thus performing it twice gives us
+\(O(2 \log n)\), that is equivalent to \(O(\log n)\). The final step is a
+simple \(O(1)\) subtraction operation on the indices returned from binary
+search, giving the count of elements in the range \(x_1 \leq x \leq x_2\). The
+following pseudocode outlines this algorithm.
+
+\begin{lstlisting}
+# Receive as input a set S of n 1D points, and two bounds X1 and X2
+
+# Sort the input set using an O(n log n) algorithm
+Sorted = NlogNSort(S)
+
+# Use binary search to find the index of the successor of X1 (O(log n))
+SuccessorX1 = SuccBinarySearch(Sorted, X1)
+# Use binary search again to find index of the predecessor of X2 (O(log n))
+PredecessorX2 = PredBinarySearch(Sorted, X2)
+
+# Take the difference of the two returned indices (O(1))
+Count = PredecessorX2 - SuccessorX1
+
+# Count should now hold the 
+return Count
+\end{lstlisting}
+
+As previously mentioned, in the above pseudocode the sorting step could be
+implemented using HeapSort. The two functions SuccBinarySearch and
+PredBinarySearch find the index\footnote{Note that the definition of successor
+  and predecessor have been altered slightly here, to account for the corner
+  case where the value being searched for is greater than the largest element
+  of \(S\). In this case, the index returned should be \(\|S\|\), presuming a
+  0-based indexing system.} of the successor and predecessor of a given value
+in the supplied sorted array, respectively. In the Python programming language,
+the bisect module provides implementations of binary search that can be used to
+perform these operations.
+
+\subsubsection{Correctness}
+
+The correctness of this algorithm hinges on the sorted array that is searched
+within. By definition, SuccBinarySearch finds the value of \(i_s\), given some
+\(x_1\), such that \(\forall x_i \in Sorted, i < i_s : x_i < x_1\). Similarly,
+PredBinarySearch finds the value of \(i_p\), given some \(x_2\), such that
+\(\forall x_i \in Sorted, i \geq i_p : x_i > x_2\). Of course, as a sorted
+array, it holds that \(\forall x_i, x_{i+1} \in Sorted : x_i \leq
+x_{i+1}\). Combining these three properties, it holds that \(\forall i \in
+\mathbb{N}_0, i \geq i_s, i < i_p : x_1 \leq Sorted_i \leq x_2\).
+
 \section{Question 4}
 
 \subsection{6 Approximation}
