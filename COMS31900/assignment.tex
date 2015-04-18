@@ -66,33 +66,41 @@ SuccessorX1 = SuccBinarySearch(Sorted, X1)
 PredecessorX2 = PredBinarySearch(Sorted, X2)
 
 # Take the difference of the two returned indices (O(1))
-Count = PredecessorX2 - SuccessorX1
+k = PredecessorX2 - SuccessorX1
 
-# Count should now hold the 
-return Count
+# k should now hold the number of elements in the given range
+return k
 \end{lstlisting}
 
 As previously mentioned, in the above pseudocode the sorting step could be
 implemented using HeapSort. The two functions SuccBinarySearch and
 PredBinarySearch find the index\footnote{Note that the definition of successor
-  and predecessor have been altered slightly here, to account for the corner
-  case where the value being searched for is greater than the largest element
-  of \(S\). In this case, the index returned should be \(\|S\|\), presuming a
-  0-based indexing system.} of the successor and predecessor of a given value
+ and predecessor have been altered slightly here, to account for the corner
+ case where the value being searched for is greater than the largest element
+ of \(S\). In this case, the index returned should be \(|S|\), presuming a
+ 0-based indexing system.} of the successor and predecessor of a given value
 in the supplied sorted array, respectively. In the Python programming language,
 the bisect module provides implementations of binary search that can be used to
 perform these operations.
 
 \subsubsection{Correctness}
 
-The correctness of this algorithm hinges on the sorted array that is searched
-within. By definition, SuccBinarySearch finds the value of \(i_s\), given some
-\(x_1\), such that \(\forall x_i \in Sorted, i < i_s : x_i < x_1\). Similarly,
-PredBinarySearch finds the value of \(i_p\), given some \(x_2\), such that
-\(\forall x_i \in Sorted, i \geq i_p : x_i > x_2\). Of course, as a sorted
-array, it holds that \(\forall x_i, x_{i+1} \in Sorted : x_i \leq
-x_{i+1}\). Combining these three properties, it holds that \(\forall i \in
-\mathbb{N}_0, i \geq i_s, i < i_p : x_1 \leq Sorted_i \leq x_2\).
+As \(Sorted\) is a sorted array, it holds that
+\begin{align*}
+\forall x_i, x_{i+1} \in Sorted : x_i \leq x_{i+1}.
+\intertext{SuccBinarySearch finds the value of \(i_s\), given some \(x_1\), such that}
+\forall x_i \in Sorted, i \geq i_s : x_1 \leq x_i.
+\intertext{Similarly, PredBinarySearch finds \(i_p\), given some \(x_2\), such that}
+\forall x_i \in Sorted, i < i_p : x_i \leq x_2.
+\intertext{Combining these three properties, therefore}
+\forall i \in \mathbb{N}_0, i \geq i_s, i < i_p : x_1 \leq Sorted_i \leq x_2.
+\intertext{\(Sorted\) is contiguous, thus we can say that}
+i_p - i_s = k
+\intertext{where}
+k = |X|, X = \{\, x : x \in U, x_1 \leq x \leq x_2 \,\}.
+\end{align*}
+
+To summarise, as \(Sorted\) is a sorted array, we can find the smallest and largest elements in the desired range using binary search. We can then subtract the difference in indices of the smallest element, and the element following the largest. This will give us the number of elements, \(k\), in the desired query range.
 
 \section{Question 4}
 
