@@ -244,7 +244,7 @@ The definition of a binary search tree states that
 This algorithm begins by searching for the highest node, \(Split\)\footnote{Closely related to the Lowest Common Ancestor in terms of trees, albeit in this case we have no guarantee that the values we are considering are actually nodes in the tree.}, such that
 \begin{align*}
 y_1 \leq Split_y \leq y_2
-\intertext{The algorithm then searches to the left of \(Split\) to find the leaf, \(L\), where}
+\intertext{The algorithm then searches to the left of \(Split\) to find the leftmost (or lowest) leaf, \(L\), where}
 y_1 \leq L
 \intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Current\) in the search path, it can be shown that there are two possibilities based upon the value of \(Current_y\)}
 \forall Current \in Path_{Left}, y_1 > Current_y, \forall L \in Left(Current) : L_y < y_1,
