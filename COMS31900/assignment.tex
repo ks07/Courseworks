@@ -229,6 +229,34 @@ same but with mirrored comparisons and recursion directions. Thus this loop
 must also be \(O(\log^2 n)\), and the entire query algorithm must be in
 \(O(2\log^2 n)\), which is equivalent to \(O(\log^2 n)\).
 
+\subsubsection{Correctness}
+
+The definition of a binary search tree states that
+\begin{align*}
+\forall N \in TreeNodes : Left(N) \leq N < Right(N)
+\intertext{and (treating a node, n, as the set of nodes in the subtree rooted at n)}
+\forall N, L \in Left(N) : L \leq N \\
+\forall N, R \in Right(N) : N < R
+\intertext{The algorithm presented here adjusts this definition slightly, using (keyed) tuples as nodes, and ordering nodes based upon the \(y\) coordinate stored in each - e.g.}
+\forall N \in TreeNodes : Left(N)_y \leq N_y < Right(N)_y.
+\end{align*}
+
+This algorithm begins by searching for the highest node, \(Split\)\footnote{Closely related to the Lowest Common Ancestor in terms of trees, albeit in this case we have no guarantee that the values we are considering are actually nodes in the tree.}, such that
+\begin{align*}
+y_1 \leq Split_y \leq y_2
+\intertext{The algorithm then searches to the left of \(Split\) to find the leaf, \(L\), where}
+y_1 \leq L
+\intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Current\) in the search path, it can be shown that there are two possibilities based upon the value of \(Current_y\)}
+\forall Current \in Path_{Left}, y_1 > Current_y, \forall L \in Left(Current) : L_y < y_1,
+\intertext{thus the left child of \(Current\) can be safely ignored as all contained points are out of range, and likewise for the point represented by \(Current\). This leaves only the right children of \(Current\) unconsidered for the count query - thus the algorithm loops back and performs the same steps upon the left child.}
+\intertext{The second possibility is then}
+\forall Current \in Path_{Left}, y_1 \leq Current_y, \forall R \in Right(Current) : y_1 \leq R_y \leq y_2.
+\end{align*}
+
+Thus the result of 1DRangeCount on the sorted array stored in \(R\) can be added to the running total, as all the x values considered by the 1-dimensional algorithm will be paired with valid y coordinates. The algorithm increments the running total by 1 if \(x_1 \leq x_{Current} \leq x_2\). This leaves only the left children of \(Current\) unconsidered for the count query - thus the algorithm loops back and performs the same steps upon the left child.
+
+Once the algorithm has reached the end of the left search path, the same arguments can be applied to the right search path, which is nothing more than the mirror image of the left case. Therefore, we have shown that both the left and right search paths have accounted for all within range points either side of the Split. This leaves only the point stored at \(Split\) neglected, which is covered at the beginning of the algorithm with an explicit check of it's \(x\) coordinate. With the consideration that the 1DRangeCount algorithm has proven correctness, this algorithm must return the count of elements in the desired range.
+
 % Question 4
 \section{Bin Packing Approximations}
 
