@@ -235,8 +235,8 @@ The definition of a binary search tree states that
 \begin{align*}
 \forall N \in TreeNodes : Left(N) \leq N < Right(N)
 \intertext{and (treating a node, n, as the set of nodes in the subtree rooted at n)}
-\forall N, L \in Left(N) : L \leq N \\
-\forall N, R \in Right(N) : N < R
+\forall N \in TreeNodes, \forall L \in Left(N) : L \leq N \\
+\forall N \in TreeNodes, \forall R \in Right(N) : N < R
 \intertext{The algorithm presented here adjusts this definition slightly, using (keyed) tuples as nodes, and ordering nodes based upon the \(y\) coordinate stored in each - e.g.}
 \forall N \in TreeNodes : Left(N)_y \leq N_y < Right(N)_y.
 \end{align*}
