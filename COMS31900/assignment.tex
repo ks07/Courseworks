@@ -163,11 +163,11 @@ k = 0
 if X1 <= Split.x <= X2:
   k = k + 1
 
-# Search down the tree for the successor of Y1. (O(log n))
+# Search down the tree for the successor of Y1. (O(log n) iterations)
 Current = Split.left
 while Current is not None:
   if Y1 <= Current.y:
-    # Count this node if the X coordinate is within range.
+    # Count this node if the X coordinate is within range. (O(1))
     if X1 <= Current.x <= X2:
       k = k + 1
 
@@ -175,17 +175,17 @@ while Current is not None:
     k_right = RangeCount1D(Current.right.sorted, X1, X2)
     k = k + k_right
 
-    # Recurse to the left subtree.
+    # Recurse to the left subtree. (O(1))
     Current = Current.left
   else:
-    # This node is outside the range, recurse to the right subtree.
+    # This node is outside the range, recurse to the right subtree. (O(1))
     Current = Current.right
 
-# Search down the tree for the predecessor of Y2. (O(log n))
+# Search down the tree for the predecessor of Y2. (O(log n) iterations)
 Current = Split.right
 while Current is not None:
   if Current.y <= Y2:
-    # Count this node if the X coordinate is within range.
+    # Count this node if the X coordinate is within range. (O(1))
     if X1 <= Current.x <= X2:
       k = k + 1
 
@@ -193,10 +193,10 @@ while Current is not None:
     k_left = RangeCount1D(Current.left.sorted, X1, X2)
     k = k + k_left
 
-    # Recurse to the right subtree.
+    # Recurse to the right subtree. (O(1))
     Current = Current.right
   else:
-    # This node is outside the range, recurse to the left subtree.
+    # This node is outside the range, recurse to the left subtree. (O(1))
     Current = Current.left
 
 # k should now hold the number of elements in the given range
@@ -210,6 +210,24 @@ and \(Node.y\)), the left and right child nodes (as \(Node.left\) and
 sorted array of all x coordinates in the subtree rooted at that node (as
 \(Node.sorted\)). The algorithm RangeCount1D is that which is described in
 subsection \ref{subsec:1drangecount}.
+
+\subsubsection{Query Runtime Analysis}
+
+As is discussed in the lecture slides, week 11, and reasserted in the above
+pseudocode, findig the successor of \(y_1\) takes \(O(\log n)\) time. This is
+due to the search visiting only a single node at each level of the
+tree\footnote{More strictly, two nodes are visited at each level, including the
+  target of each \(1DRangeCount\) invocation.}. As the tree is a balanced
+binary search tree, it has \(O(\log n)\) depth. At each level of the tree,
+there is a possible invocation of \(1DRangeCount\). As shown in subsection
+\ref{subsec:1drangecount}, this query is \(O(\log n)\), due to the binary
+searches performed on the sorted array. The other operations performed at each
+iteration of the search are all \(O(1)\). Therefore, the entire search
+operation for the predecessor of \(y_1\) is \(O(\log^2 n)\). Comparing this to
+the search for the predecessor of \(y_2\) reveals that the algorithm is the
+same but with mirrored comparisons and recursion directions. Thus this loop
+must also be \(O(\log^2 n)\), and the entire query algorithm must be in
+\(O(2\log^2 n)\), which is equivalent to \(O(\log^2 n)\).
 
 % Question 4
 \section{Bin Packing Approximation Algorithms}
