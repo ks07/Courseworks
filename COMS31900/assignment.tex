@@ -36,6 +36,7 @@
 \section{Question 3}
 
 \subsection{1-Dimension}
+\label{subsec:1drangecount}
 
 The approach to performing 1D range counting is very similar to the 1D range
 searching problem as detailed in the lecture slides, week 11. The algorithm
@@ -45,8 +46,8 @@ performed using HeapSort, which is \(O(n \log n)\) - no further preprocessing
 is required. Performing count queries on this structure is then a simple matter
 of performing binary search twice upon the array, once to find the
 successor\footnote{The successor of a value \(x\) in a set \(S\) is the
-  smallest \(x_s \in S\) such that \(x_s \geq x\). Similarly, the predecessor
-  of \(x\) in \(S\) is the smallest \(x_p \in S\) such that \(x_p \geq x\).} of
+ smallest \(x_s \in S\) such that \(x_s \geq x\). Similarly, the predecessor
+ of \(x\) in \(S\) is the smallest \(x_p \in S\) such that \(x_p \geq x\).} of
 \(x_1\), and again to find the predecessor\footnotemark[\value{footnote}] of
 \(x_2\). Binary search is in \(O(\log n)\), thus performing it twice gives us
 \(O(2 \log n)\), that is equivalent to \(O(\log n)\). The final step is a
@@ -105,6 +106,107 @@ largest elements in the desired range using binary search. We can then subtract
 the difference in indices of the smallest element, and the element following
 the largest. This will give us the number of elements, \(k\), in the desired
 query range.
+
+\subsection{2-Dimensional}
+
+Expanding the range counting problem into 2 dimensions requires building a
+balanced binary tree\footnote{For example, an AVL tree.}, using one dimension
+as the key. To ease explanation with regards to the 1-Dimensional case, the
+\(y\) coordinate will be used to build this tree. Each node in the tree will
+represent a single point in \(U\), and so will store an additional field that
+is the \(x\) coordinate. Additionally, in order to meet the desired worst-case
+time guarantees, each node will hold a sorted array, in the same manner as
+subsection \ref{subsec:1drangecount}. The elements of this array will be the
+\(y\) coordinates of all points in the subtree rooted at this node (thus also
+including this node's \(y\) value).
+
+This data structure requires \(O(n \log n)\) space. This is explained by the
+lecture slides, week 11, where each level of the tree holds nodes containing
+arrays that are disjoint subsets of \(U\). Each node also holds an extra
+element for the associated \(x\) coordinate, taking up an additional \(O(n)\)
+space. Thus, the data structure is \(O(n \log n + n)\), which is equivalent to
+\(O(n \log n)\).
+
+The preprocessing time for this data structure is also similar to the lecture
+slides. The only thing not explicitly stated in the slides that is present here
+is that each node also holds \(y\). These can simply be inserted whilst
+creating the tree, thus not increasing the worst case preprocessing time.
+
+Performing a range counting query on this structure requires searching the tree
+for the split node. Then, the successor of \(y_1\) must be found in the tree,
+by recursing down the tree from the split. At each node along the search path,
+if that node's \(x\) coordinate is within the desired range, the node's \(y\)
+coordinate should be checked, and the count should be incremented by \(1\). The
+algorithm then checks the right child of the current node, and performs the 1D
+range counting algorithm (subsection \ref{subsec:1drangecount}), adding the
+returned count to the running total. This algorithm is detailed in the
+following pseudocode:
+
+\begin{lstlisting}
+# Receive as input four bounds (X1,Y1) and (X2,Y2) and the preprocessed tree data structure rooted at Root
+
+# Search the tree from root, returning the node where the searches for Y1 and Y2 would diverge - i.e. the highest node in the tree with Y1 <= Y <= Y2 (O(log n))
+Split = FindSplit(Root, Y1, Y2)
+
+# Check that the region between Y1 and Y2 actually intersects with U (O(1))
+if Split is None:
+  # Y1 > max(U.y) or Y2 < min(U.y)
+  return 0
+
+# Initialise the count, k, to 0 (O(1))
+k = 0
+
+# Check the x coordinate held in Split, and add this to the count if suitable (O(1))
+if X1 <= Split.x <= X2:
+  k = k + 1
+
+# Search down the tree for the successor of Y1. (O(log n))
+Current = Split.left
+while Current is not None:
+  if Y1 <= Current.y:
+    # Count this node if the X coordinate is within range.
+    if X1 <= Current.x <= X2:
+      k = k + 1
+
+    # The entire right subtree must be within the Y range. (O(log n))
+    k_right = RangeCount1D(Current.right.sorted, X1, X2)
+    k = k + k_right
+
+    # Recurse to the left subtree.
+    Current = Current.left
+  else:
+    # This node is outside the range, recurse to the right subtree.
+    Current = Current.right
+
+# Search down the tree for the predecessor of Y2. (O(log n))
+Current = Split.right
+while Current is not None:
+  if Current.y <= Y2:
+    # Count this node if the X coordinate is within range.
+    if X1 <= Current.x <= X2:
+      k = k + 1
+
+    # The entire left subtree must be within the Y range. (O(log n))
+    k_left = RangeCount1D(Current.left.sorted, X1, X2)
+    k = k + k_left
+
+    # Recurse to the right subtree.
+    Current = Current.right
+  else:
+    # This node is outside the range, recurse to the left subtree.
+    Current = Current.left
+
+# k should now hold the number of elements in the given range
+return k
+\end{lstlisting}
+
+In the above pseudocode, \(Root\), \(Split\), and \(Current\) are nodes,
+holding properties that describe the corresponding coordinates (as \(Node.x\)
+and \(Node.y\)), the left and right child nodes (as \(Node.left\) and
+\(Node.right\), that are None if no child exists in that direction), and the
+sorted array of all x coordinates in the subtree rooted at that node (as
+\(Node.sorted\)). The algorithm RangeCount1D is that which is described in
+subsection \ref{subsec:1drangecount}.
 
 \section{Question 4}
 
