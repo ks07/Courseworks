@@ -246,20 +246,22 @@ This algorithm begins by searching for the highest node, \(Split\)\footnote{Clos
 y_1 \leq y_{Split} \leq y_2
 \intertext{The algorithm then searches to the left of \(Split\) to find the leftmost (or lowest) leaf, \(L\), where}
 y_1 \leq L
-\intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Current\) in the search path, it can be shown that there are two possibilities based upon the value of \(y_{Current}\), i.e.}
-\forall Current \in LeftPath :
+\intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Curr\) in the search path, it can be shown that there are two possibilities based upon the value of \(y_{Curr}\) for each child's subtree, i.e.}
+\forall Curr \in LeftPath, \forall R \in Curr_{Right} :
 \begin{cases}
-\forall L \in Current_{Left}  : y_L   <  y_1          & \text{if } y_{Current} < y_1 \\
-\forall R \in Current_{Right} : y_1 \leq y_R \leq y_2 & \text{if } y_{Current} \geq y_1
-\end{cases}
-\intertext{thus the left child of \(Current\) can be safely ignored as all contained points are out of range, and likewise for gthe point represented by \(Current\). This leaves only the right children of \(Current\) unconsidered for the count query - thus the algorithm loops back and performs the same steps upon the left child.}
-\intertext{The second possibility is then}
-\forall Current \in LeftPath, y_1 \leq y_{Current}, \forall R \in Current_{Right} : y_1 \leq y_R \leq y_2.
+y_1      \leq y_R \leq y_2 & \text{if } y_{Curr} \geq y_1 \\
+y_{Curr} \leq y_R \leq y_2 & \text{if } y_{Curr}   <  y_1
+\end{cases}&
+\intertext{and}
+\forall Curr \in LeftPath, \forall L \in Curr_{Left} :
+\begin{cases}
+y_L \leq y_{Curr} & \text{if } y_{Curr} \geq y_1 \\
+y_L   <  y_1      & \text{if } y_{Curr}   <  y_1
+\end{cases}&.
 \end{align*}
+Thus, at any point in in the search path, there is a single subtree that is either completely excluded from the query range (and is not considered when modifying the total) or completely included in the query range in terms of the key dimension, \(y\) (and is thus considered in terms of the \(x\) coordinates using 1DRangeCount. The opposite subtree may or may not contain points within the query range, and thus must be considered in terms of it's children - i.e. that child becomes \(Curr\), and the algorithm recurses another level down the tree. Clearly, this results in the running total being incremented for every single valid point in \(LeftPath\), apart from the point represented by \(Curr\) itself. However, the algorithm explicitly increments the running total by 1 if \(x_1 \leq x_{Curr} \leq x_2\) and \(y_1 \leq y_{Curr} \leq y_2\) for every \(Curr\).
 
-Thus the result of 1DRangeCount on the sorted array stored in \(R\) can be added to the running total, as all the x values considered by the 1-dimensional algorithm will be paired with valid y coordinates. The algorithm increments the running total by 1 if \(x_1 \leq x_{Current} \leq x_2\). This leaves only the left children of \(Current\) unconsidered for the count query - thus the algorithm loops back and performs the same steps upon the left child.
-
-Once the algorithm has reached the end of the left search path, the same arguments can be applied to the right search path, which is nothing more than the mirror image of the left case. Therefore, we have shown that both the left and right search paths have accounted for all within range points either side of the Split. This leaves only the point stored at \(Split\) neglected, which is covered at the beginning of the algorithm with an explicit check of \(x_{Split}\). With the assumption that the 1DRangeCount algorithm has proven correctness, this algorithm must return the count of elements in the desired range.
+Once the algorithm has reached the end of the left search path (i.e. the point where the uncertain subtree is in fact empty), the same arguments can be applied to the right search path, which is nothing more than the mirror image of the left case. Therefore, we have shown that both the left and right search paths have accounted for all within range points either side of the Split. This leaves only the point stored at \(Split\) neglected, which is covered at the beginning of the algorithm with an explicit check of \(x_{Split}\). With the assumption that the 1DRangeCount algorithm has proven correctness (shown in subsection \ref{subsec:1drangecount}), this algorithm must return the count of elements in the desired range.
 
 % Question 4
 \section{Bin Packing Approximations}
