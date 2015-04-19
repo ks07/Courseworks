@@ -111,6 +111,7 @@ the largest. This will give us the number of elements, \(k\), in the desired
 query range.
 
 \subsection{2-Dimensional}
+\label{subsec:2drangecount}
 
 Expanding the range counting problem into 2 dimensions requires building a
 balanced binary tree\footnote{For example, an AVL tree.}, using one dimension
@@ -262,6 +263,14 @@ y_L   <  y_1      & \text{if } y_{Curr}   <  y_1
 Thus, at any point in in the search path, there is a single subtree that is either completely excluded from the query range (and is not considered when modifying the total) or completely included in the query range in terms of the key dimension, \(y\) (and is thus considered in terms of the \(x\) coordinates using 1DRangeCount. The opposite subtree may or may not contain points within the query range, and thus must be considered in terms of it's children - i.e. that child becomes \(Curr\), and the algorithm recurses another level down the tree. Clearly, this results in the running total being incremented for every single valid point in \(LeftPath\), apart from the point represented by \(Curr\) itself. However, the algorithm explicitly increments the running total by 1 if \(x_1 \leq x_{Curr} \leq x_2\) and \(y_1 \leq y_{Curr} \leq y_2\) for every \(Curr\).
 
 Once the algorithm has reached the end of the left search path (i.e. the point where the uncertain subtree is in fact empty), the same arguments can be applied to the right search path, which is nothing more than the mirror image of the left case. Therefore, we have shown that both the left and right search paths have accounted for all within range points either side of the Split. This leaves only the point stored at \(Split\) neglected, which is covered at the beginning of the algorithm with an explicit check of \(x_{Split}\). With the assumption that the 1DRangeCount algorithm has proven correctness (shown in subsection \ref{subsec:1drangecount}), this algorithm must return the count of elements in the desired range.
+
+\subsection{d-Dimensions}
+
+Generalising the 2-dimensional range counting problem into d-dimensions is straightforward, as it involves expanding the tree structure used to \(d-1\) nested trees, where the innermost trees hold the sorted arrays of the final dimension. In other words, to create a data structure for querying in 3 dimensions (\(d = 3\), with dimensions \(\{\,x,y,z\,\}\)), a balanced tree keyed by the third dimension (\(z\)) should be built. Each node in this tree should contain a 2D data structure (as described in subsection \ref{subsec:2drangecount}) for all points in the subtree rooted at that node. In terms of space, the 2D range counting structure is \(O(n \log n)\). As the outer tree is balanced, it has \(\log n\) levels, and each level contains up to \(n\) points, partitioned between the nodes on that level. Thus, the overall space is \(O(n \log^2 n)\). Expanding this to an extra dimension simply nests another tree over the existing trees, thus increasing the power on the log, giving a space requirement of \(O(n \log^{d-1} n)\).
+
+The preprocessing time needed to create this data structure is also \(O(n \log^{d-1} n)\). This follows from the 2D situation in a similar manner to the space requirement, where each dimension requires a balanced tree, except for the first, which is comprised of sorted arrays.
+
+Performing a range counting query on this data structure is very similar to the 2-dimensional case. The query can be performed in \(O(\log^d n)\) time, by searching down the outer-most tree from the split point, as in the 2D case. Each node considered along the search path will contain a nested structure for \(d - 1\) dimensions, invoking the algorithm on this subset of the input dimensions. Eventually the algorithm will reach the base case of \(d = 2\), performing the algorithm described in subsection \ref{subsec:2drangecount}.
 
 % Question 4
 \section{Bin Packing Approximations}
