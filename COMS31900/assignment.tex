@@ -266,11 +266,75 @@ Once the algorithm has reached the end of the left search path (i.e. the point w
 
 \subsection{d-Dimensions}
 
-Generalising the 2-dimensional range counting problem into d-dimensions is straightforward, as it involves expanding the tree structure used to \(d-1\) nested trees, where the innermost trees hold the sorted arrays of the final dimension. In other words, to create a data structure for querying in 3 dimensions (\(d = 3\), with dimensions \(\{\,x,y,z\,\}\)), a balanced tree keyed by the third dimension (\(z\)) should be built. Each node in this tree should contain a 2D data structure (as described in subsection \ref{subsec:2drangecount}) for all points in the subtree rooted at that node. In terms of space, the 2D range counting structure is \(O(n \log n)\). As the outer tree is balanced, it has \(\log n\) levels, and each level contains up to \(n\) points, partitioned between the nodes on that level. Thus, the overall space is \(O(n \log^2 n)\). Expanding this to an extra dimension simply nests another tree over the existing trees, thus increasing the power on the log, giving a space requirement of \(O(n \log^{d-1} n)\).
+Generalising the 2-dimensional range counting problem into d-dimensions (\(d > 1\)) is straightforward, as it involves expanding the tree structure used to \(d-1\) nested trees, where the innermost trees hold the sorted arrays of the final dimension. In other words, to create a data structure for querying in 3 dimensions (\(d = 3\), with dimensions \(\{\,x,y,z\,\}\)), a balanced tree keyed by the third dimension (\(z\)) should be built. Each node in this tree should contain a 2D data structure (as described in subsection \ref{subsec:2drangecount}) for all points in the subtree rooted at that node. In terms of space, the 2D range counting structure is \(O(n \log n)\). As the outer tree is balanced, it has \(\log n\) levels, and each level contains up to \(n\) points, partitioned between the nodes on that level. Thus, the overall space is \(O(n \log^2 n)\). Expanding this to an extra dimension simply nests another tree over the existing trees, thus increasing the power on the log, giving a space requirement of \(O(n \log^{d-1} n)\).
 
 The preprocessing time needed to create this data structure is also \(O(n \log^{d-1} n)\). This follows from the 2D situation in a similar manner to the space requirement, where each dimension requires a balanced tree, except for the first, which is comprised of sorted arrays.
 
 Performing a range counting query on this data structure is very similar to the 2-dimensional case. The query can be performed in \(O(\log^d n)\) time, by searching down the outer-most tree from the split point, as in the 2D case. Each node considered along the search path will contain a nested structure for \(d - 1\) dimensions, invoking the algorithm on this subset of the input dimensions. Eventually the algorithm will reach the base case of \(d = 2\), performing the algorithm described in subsection \ref{subsec:2drangecount}.
+
+
+\begin{lstlisting}
+# Receive as input the number of dimensions d, a list of bounds B = [l1, h1, l2, h2 ... ld, hd] and the preprocessed d-dimensional tree data structure rooted at Root.
+
+# If we are supplied an input of 2 dimensions, use the 2D algorithm as a base case. (O(n log^((d=2)-1) n))
+if d == 2:
+  return RangeCount2D(Root, (l1, l2), (l2, h2))
+else:
+  # Search the tree from root, returning the node where the searches for ld and hd would diverge - i.e. the highest node in the tree with ld <= v <= hd (O(log n))
+  Split = FindSplit(Root, ld, hd)
+
+  # Check that the region between ld and hd actually intersects with U (O(1))
+  if Split is None:
+    # ld > max(U.d) or hd < min(U.d)
+    return 0
+
+  # Initialise the count, k, to 0 (O(1))
+  k = 0
+
+  # Check point held in Split, and add this to the count if suitable (O(1))
+  if AllDimsInBounds(Split, B):
+    # ln <= Split.dims[n] <= hn, for all n
+    k = k + 1
+
+  # Search down the tree for the successor of ld. (O(log n) iterations)
+  Current = Split.left
+  while Current is not None:
+    if ld <= Current.dim[d]:
+      # Count this node if it's point is within range. (O(d))
+      if AllDimsInBounds(Current, B):
+        k = k + 1
+
+      # The entire right subtree must be within the ld - hd range, check lower dimensions. (O(log^(d-1) n))
+      k_right = RangeCountDD(Root=Current.right, d=d-1, B=[l1, h1 ... l(d-1), h(d-1)])
+      k = k + k_right
+
+      # Recurse to the left subtree. (O(1))
+      Current = Current.left
+    else:
+      # This node is outside the range, recurse to the right subtree. (O(1))
+      Current = Current.right
+
+  # Search down the tree for the predecessor of hd. (O(log n) iterations)
+  Current = Split.right
+  while Current is not None:
+    if Current.dim[d] <= hd:
+      # Count this node if it's point is within range. (O(1))
+      if AllDimsInBounds(Current, B):
+        k = k + 1
+
+      # The entire left subtree must be within the ld - hd range, check lower dimensions. (O(log^(d-1) n))
+      k_left = RangeCountDD(Root=Current.left, d=d-1, B+[l1, h1 ... l(d-1), h(d-1)])
+      k = k + k_left
+
+      # Recurse to the right subtree. (O(1))
+      Current = Current.right
+    else:
+      # This node is outside the range, recurse to the left subtree. (O(1))
+      Current = Current.left
+
+  # k should now hold the number of elements in the given range
+  return k
+\end{lstlisting}
 
 % Question 4
 \section{Bin Packing Approximations}
