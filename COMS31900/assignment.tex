@@ -246,7 +246,7 @@ This algorithm begins by searching for the highest node, \(Split\)\footnote{Clos
 \begin{align*}
 y_1 \leq y_{Split} \leq y_2
 \intertext{The algorithm then searches to the left of \(Split\) to find the leftmost (or lowest) leaf, \(L\), where}
-y_1 \leq L
+y_1 \leq y_L
 \intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Curr\) in the search path, it can be shown that there are two possibilities based upon the value of \(y_{Curr}\) for each child's subtree, i.e.}
 \forall Curr \in LeftPath, \forall R \in Curr_{Right} :
 \begin{cases}
@@ -260,7 +260,7 @@ y_L \leq y_{Curr} & \text{if } y_{Curr} \geq y_1 \\
 y_L   <  y_1      & \text{if } y_{Curr}   <  y_1
 \end{cases}&.
 \end{align*}
-Thus, at any point in in the search path, there is a single subtree that is either completely excluded from the query range (and is not considered when modifying the total) or completely included in the query range in terms of the key dimension, \(y\) (and is thus considered in terms of the \(x\) coordinates using 1DRangeCount. The opposite subtree may or may not contain points within the query range, and thus must be considered in terms of it's children - i.e. that child becomes \(Curr\), and the algorithm recurses another level down the tree. Clearly, this results in the running total being incremented for every single valid point in \(LeftPath\), apart from the point represented by \(Curr\) itself. However, the algorithm explicitly increments the running total by 1 if \(x_1 \leq x_{Curr} \leq x_2\) and \(y_1 \leq y_{Curr} \leq y_2\) for every \(Curr\).
+Thus, at any point in the search path, there is a single subtree that is either completely excluded from the query range (and is not considered when modifying the total) or completely included in the query range in terms of the key dimension, \(y\) (and is thus considered in terms of the \(x\) coordinates using 1DRangeCount. The opposite subtree may or may not contain points within the query range, and thus must be considered in terms of it's children - i.e. that child becomes \(Curr\), and the algorithm recurses another level down the tree. Clearly, this results in the running total being incremented for every single valid point in \(LeftPath\), apart from the point represented by \(Curr\) itself. However, the algorithm explicitly increments the running total by 1 if \(x_1 \leq x_{Curr} \leq x_2\) and \(y_1 \leq y_{Curr} \leq y_2\) for every \(Curr\).
 
 Once the algorithm has reached the end of the left search path (i.e. the point where the uncertain subtree is in fact empty), the same arguments can be applied to the right search path, which is nothing more than the mirror image of the left case. Therefore, we have shown that both the left and right search paths have accounted for all within range points either side of the Split. This leaves only the point stored at \(Split\) neglected, which is covered at the beginning of the algorithm with an explicit check of \(x_{Split}\). With the assumption that the 1DRangeCount algorithm has proven correctness (shown in subsection \ref{subsec:1drangecount}), this algorithm must return the count of elements in the desired range.
 
@@ -340,6 +340,40 @@ In the above pseudocode, \(Root\), \(Split\), and \(Current\) are nodes, holding
 \subsubsection{Query Runtime Analysis}
 
 The runtime of a range counting query using this algorithm and data structure is \(O(\log^d n)\). This can be proven inductively with assumption that the base case, i.e. 2-dimensional, is \(O(\log^2 n)\), which was proven previously in subsection \ref{subsec:2drangecount}. The \(d\)-dimensional query shown here simply builds upon that of the (\(d-1\))-dimensional query algorithm, by calling said algorithm upon any child node, N, connected to the successor and predecessor search paths, where \(ld \leq N.dim[d] \leq hd\). There are at most two child nodes per level of the tree that fit this criteria, and there are \(\log n\) levels in the balanced tree. A single dimension of the query thus takes \(O(\log n \times 2 \times Time_{d-1})\), where \(Time_{d-1}\) is the time complexity of the (\(d-1\))-dimensional query algorithm. Going back to the base case of \(d=2\), it follows that the overall time complexity of this algorithm is thus \(O(\log^d n)\).\footnote{For example, for \(d=3\), we get a complexity of \(O(\log n \times 2 \times Time_{d-1})\), where \(Time_{d-1}\) is the time of a 2D query, \(O(\log^2 n)\). This gives an overall time complexity of \(O(\log^3 n)\).}
+
+\subsubsection{Correctness}
+
+The correctness of this algorithm in d-dimensions can be proven inductively, by building upon the proof put forward for correctness of the RangeCount2D algorithm (subsetion \ref{subsec:2drangecount} that acts as the base case of this algorithm. Here the same steps as the 2D algorithm are now performed, except we now check all D-dimensions for every point along the search path, and when an entire child's subtree is considered, the \(d-1\)-dimensional algorithm is called. As before, correctness can be explained using the definition of a binary search tree, which states
+\begin{align*}
+\forall N \in TreeNodes : N_{Left} \leq N < N_{Right}
+\intertext{and (treating a node, n, as the set of nodes in the subtree rooted at n)}
+\forall N \in TreeNodes, \forall L \in N_{Left} : L \leq N \\
+\forall N \in TreeNodes, \forall R \in N_{Right} : N < R
+\intertext{The algorithm presented here adjusts this definition slightly, using (keyed) tuples as nodes, and ordering nodes based upon the \(d\) coordinate stored in each - e.g.}
+\forall N \in TreeNodes : d_{N_{Left}} \leq d_N < d_{N_{Right}}.
+\end{align*}
+
+This algorithm begins by searching for the highest node, \(Split\), such that
+\begin{align*}
+l_d \leq d_{Split} \leq h_d
+\intertext{The algorithm then searches to the left of \(Split\) to find the leftmost (or lowest) leaf, \(L\), where}
+l_d \leq d_L
+\intertext{From the binary tree definitions, all nodes to the left of split must have \(d\) values that do not exceed \(h_d\). Thus, at each node \(Curr\) in the search path, it can be shown that there are two possibilities based upon the value of \(d_{Curr}\) for each child's subtree, i.e.}
+\forall Curr \in LeftPath, \forall R \in Curr_{Right} :
+\begin{cases}
+l_d      \leq d_R \leq h_d & \text{if } d_{Curr} \geq l_d \\
+d_{Curr} \leq d_R \leq h_d & \text{if } d_{Curr}   <  l_d
+\end{cases}&
+\intertext{and}
+\forall Curr \in LeftPath, \forall L \in Curr_{Left} :
+\begin{cases}
+d_L \leq d_{Curr} & \text{if } d_{Curr} \geq l_d \\
+d_L   <  l_d      & \text{if } d_{Curr}   <  l_d
+\end{cases}&.
+\end{align*}
+Thus, at any point in the search path, there is a single subtree that is either completely excluded from the query range (and is not considered when modifying the total) or completely included in the query range in terms of the key dimension, \(d\) (and is thus considered in terms of all \(d-1\) coordinates (\(x ... d-1\))),  using RangeCountDD with \(d-1\). The opposite subtree may or may not contain points within the query range, and thus must be considered in terms of it's children - i.e. that child becomes \(Curr\), and the algorithm recurses another level down the tree. Clearly, this results in the running total being incremented for every single valid point in \(LeftPath\), apart from the point represented by \(Curr\) itself. However, the algorithm explicitly increments the running total by 1 if \(\forall p \in B : l_p \leq p_{Curr} \leq h_p\) for every \(Curr\).
+
+Once the algorithm has reached the end of the left search path (i.e. the point where the uncertain subtree is in fact empty), the same arguments can be applied to the right search path, which is nothing more than the mirror image of the left case. Therefore, we have shown that both the left and right search paths have accounted for all within range points either side of the Split. This leaves only the point stored at \(Split\) neglected, which is covered at the beginning of the algorithm with an explicit check of every dimension for that specific point. Thus this d-dimensional approach is proven correct, under the assumption that the (\(d-1\))-dimensional algorithm is correct. The base case of this algorithm, where \(d=2\), has previously been proven correct in subsection \ref{subsec:2drangecount}. Therefore, this algorithm must return the correct count of elements in the desired range, for the desired number of dimensions.
 
 % Question 4
 \section{Bin Packing Approximations}
