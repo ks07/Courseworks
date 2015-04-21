@@ -288,6 +288,7 @@ that the 1DRangeCount algorithm has proven correctness (shown in subsection
 the desired range.
 
 \subsection{d-Dimensions}
+\label{subsec:ddrangecount}
 
 Generalising the 2-dimensional range counting problem into d-dimensions (\(d >
 1\)) is straightforward, as it involves expanding the tree structure used to
@@ -394,7 +395,7 @@ RangeCount2D. As \(d\) is constant (the data structure must be built before
 querying, thus the dimensionality is fixed before computation), these calls
 could be unrolled, but are left generic here for clarity and brevity. This pseudocode also utilises a function AllDimsInBounds, which, given an input point P and the list of bounds B, is defined as follows:
 \begin{displaymath}
-AllDimsInBounds_B(P) :
+AllDimsInBounds_B(P) =
 \begin{cases}
 True  & \text{if } \forall q \in Dims : l_q \leq q_R \leq h_q \\
 False & \text{otherwise}
@@ -482,6 +483,27 @@ that the (\(d-1\))-dimensional algorithm is correct. The base case of this
 algorithm, where \(d=2\), has previously been proven correct in subsection
 \ref{subsec:2drangecount}. Therefore, this algorithm must return the correct
 count of elements in the desired range, for the desired number of dimensions.
+
+\subsection{2D Triangle Counting}
+
+The d-dimensional range counting data structure and algorithm can be used to solve the 2D orthogonal range triangle counting problem. A trivial implementation can be created by treating each of the 6 coordinates that define a triangle as separate dimensions, whereby the 3 x coordinates share the same bounds, as do the 3 y coordinates. However, a more optimal algorithm can be defined that reduces each input triangle to a bounding rectangle, with sides parallel to the x and y axis. This bounding rectangle can be represented by two opposite corners, which can the be interpreted similarly to the 'six dimension' solution suggested previously.
+
+\subsubsection{Preprocessing and Space}
+
+The original input set \(S\), of \(n\) triangles (\(x_1, y_1, x_2, y_2, x_3, y_3\)), must be preprocessed into a set \(T\), of \(n\) bounding rectangles. This can be described by the following function:
+\begin{displaymath}
+BoundingRectangle(T) = (x_{min}, y_{min}, x_{max}, y_{max})
+\end{displaymath}
+where
+\begin{align*}
+x_{min} = min(x_1, x_2, x_3), \quad x_{max} = max(x_1, x_2, x_3)& \\
+y_{min} = min(y_1, y_2, y_3), \quad y_{max} = max(y_1, y_2, y_3)&
+\end{align*}
+This preprocessing step is \(O(n)\). The set \(T\) can then be used to build a 4-dimensional data structure as described in subsection \ref{subsec:ddrangecount}, where each min/max coordinate is treated as a different dimension. Thus, the overall preprocessing is \(O(n \log^3 n)\), with space of \(O(n \log^3 n)\).
+
+\subsubsection{Query Algorithm}
+
+The query algorithm used here is identical to that of the d-dimensional point solution, where \(d=4\), and \(B = (x_1, x_2, y_1, y_2, x_1, x_2, y_1, y_2)\). For the avoidance of confusion, throughout this section the dimensions will be labelled \(s\), \(t\), \(u\), and \(v\), representing \(x_{min}\), \(y_{min}\), \(x_{max}\), and \(y_{max}\) respectively.
 
 % Question 4
 \section{Bin Packing Approximations}
