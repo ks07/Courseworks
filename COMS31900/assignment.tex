@@ -46,8 +46,35 @@ the length of the longest common prefix between a position in the text and a
 position in the pattern. The following pseudocode describes an algorithm to
 solve the k-spread problem.
 
-\lstinputlisting{question2.py}
+\begin{lstlisting}
+# Receive as input a text string T of length n, a pattern string P of length m, and a non-negative integer k denoting the maximum cost of errors.
 
+PreprocessLCP(T, P)
+
+D = [] * (n - m + 1)
+
+for i in range(0, n):
+  TC = 0.0
+  j = 0
+  L = LCP(i, j)
+
+  if L < m:
+    # There is at least 1 error. The first is always cost 1.
+    TC = 1.0
+    i = L
+    j = L
+    while TC <= k:
+      L = LCP(i, j)
+      i = i + L
+      j = j + L
+      if j > m or i > n:
+        # We have reached the end of either text or pattern, must stop.
+        break
+      else:
+        TC = TC + (m/L)
+
+  D[i] = TC
+\end{lstlisting}
 
 % Force to question 3
 \setcounter{section}{2}
