@@ -33,6 +33,22 @@
 
 \begin{document}
 
+% Force to question 2
+\setcounter{section}{1}
+% Question 2
+\section{k-Spread}
+
+\subsection{\(O(nk)\) Solution}
+
+This algorithm requires preprocessing the input text and pattern for LCP
+queries, as described in the lecture slides, week 10. The LCP algorithm returns
+the length of the longest common prefix between a position in the text and a
+position in the pattern. The following pseudocode describes an algorithm to
+solve the k-spread problem.
+
+\lstinputlisting{question2.py}
+
+
 % Force to question 3
 \setcounter{section}{2}
 % Question 3
