@@ -499,11 +499,69 @@ where
 x_{min} = min(x_1, x_2, x_3), \quad x_{max} = max(x_1, x_2, x_3)& \\
 y_{min} = min(y_1, y_2, y_3), \quad y_{max} = max(y_1, y_2, y_3)&
 \end{align*}
-This preprocessing step is \(O(n)\). The set \(T\) can then be used to build a 4-dimensional data structure as described in subsection \ref{subsec:ddrangecount}, where each min/max coordinate is treated as a different dimension. Thus, the overall preprocessing is \(O(n \log^3 n)\), with space of \(O(n \log^3 n)\).
+This preprocessing step is \(O(n)\). The set \(T\) can then be used to build a
+4-dimensional data structure as described in subsection
+\ref{subsec:ddrangecount}, where each min/max coordinate is treated as a
+different pseudo-dimension. Thus, the overall preprocessing is \(O(n \log^3 n)\), with
+space of \(O(n \log^3 n)\).
 
 \subsubsection{Query Algorithm}
 
-The query algorithm used here is identical to that of the d-dimensional point solution, where \(d=4\), and \(B = (x_1, x_2, y_1, y_2, x_1, x_2, y_1, y_2)\). For the avoidance of confusion, throughout this section the dimensions will be labelled \(s\), \(t\), \(u\), and \(v\), representing \(x_{min}\), \(y_{min}\), \(x_{max}\), and \(y_{max}\) respectively.
+The query algorithm used here is identical to that of the d-dimensional point
+solution, where \(d=4\), and \(B = (x_1, x_2, y_1, y_2, x_1, x_2, y_1,
+y_2)\). For the avoidance of confusion, throughout this section the dimensions
+will be labelled \(s\), \(t\), \(u\), and \(v\), representing \(x_{min}\),
+\(y_{min}\), \(x_{max}\), and \(y_{max}\) respectively. In order to perform the
+triangle counting algorithm, it is sufficient to use the d-dimensional query
+algorithm using the previously specified parameters. The bounds \(x_1\) and
+\(x_2\) are used as the bounds for \(s\) and \(u\), while \(y_1\) and \(y_2\)
+are used as the bounds for \(t\) and \(v\).
+
+\subsubsection{Runtime Analysis}
+
+As the query algorithm here is just a wrapper to the d-dimensional range
+counting algorithm, with \(d=4\), the time complexity is thus \(O(\log^4 n)\).
+
+\subsubsection{Correctness}
+
+Assuming that the d-dimensional range counting algorithm is correct (which is
+proved in subsection \ref{subsec:ddrangecount}), the correctness of this
+algorithm lies in the proof that a bounding rectangle is sufficient to show that
+the triangle is fully enclosed in the rectangular limits of the
+query. Relabelling the various coordinates of triangle corners is trivially
+correct when considering that the d-dimensional structure is merely counting the
+number of tuples of a fixed size (i.e. \(d\)), whose values all fall between two
+bounds. Thus, a triangle (or bounding rectangle) counted as within range by that
+algorithm is simply one where the defined points fall within the appropriate
+dimension's bounds; i.e. all the points are between the x and y upper and lower bounds.
+
+A bounding rectangle, \(R\), is defined in terms of the minimum and maximum
+\(x\) and \(y\) coordinates of a triangle, \(T\). Begin by considering the \(s\)
+and \(t\) dimensions (representing \(x_{min}\) and \(y_{min}\)). By definition,
+\begin{align*}
+\forall x \in T : x_{min} \leq x
+\intertext{and}
+\forall y \in T : y_{min} \leq y.
+\end{align*}
+The limits for these dimensions are taken from the query parameters, \(x_1\)
+through \(y_2\), thus if invoked with only these two dimensions, and \(d=2\),
+the d-dimensional algorithm will give us the count, \(k\), such that
+\begin{align*}
+k = |C|, C = \{\, (x_{min}, y_{min}) : (x_{min}, y_{min}) \in S, x_1 \leq x_{min} \leq x_2, y_1 \leq y_{min} \leq y_2 \,\}.
+\end{align*}
+As previously shown, no other point in a triangle can be below the minimum, thus
+this count must be correct when considering every point within the triangle,
+when considering the lower bound only. This leaves only the upper bounds needing
+consideration, which are simply covered by the symmetrical argument by the
+definition of the maximum:
+\begin{align*}
+\forall x \in T : x_{max} \geq x
+\intertext{and}
+\forall y \in T : y_{max} \geq y.
+\end{align*}
+Thus it is clear that the count returned here is correct for all 4
+pseudo-dimensions, identically to the argument made for the 2 minimum dimensions
+discussed previously.
 
 % Question 4
 \section{Bin Packing Approximations}
