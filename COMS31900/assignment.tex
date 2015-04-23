@@ -88,6 +88,28 @@ for i in range(0, n - m):
 return D
 \end{lstlisting}
 
+\subsubsection{Time Complexity}
+This algorithm runs in \(O(nk)\) time. This can be shown by considering that the
+algorithm is required to calculate a value for every \(d_s(i)\), where \(i \in
+\{\, 0 ... n-m+1 \,\}\). As \(0 < m \leq n\), the \(O(n-m)\) factor can be
+simplified to \(O(n)\). The input to the algorithm is preprocessed for LCP
+queries, as described in the lecture slides week 10, in \(O(n)\) time. For each
+calculation of \(d_s(i)\), the distance to the next mismatch is calculated using
+an LCP query, also described in the lecture slides, taking constant (\(O(1)\))
+time. This calculation is performed repeatedly, along with some other constant
+time operations, until the total cost, \(TC \text{a.k.a.} d_s(i)\), exceeds the
+limit \(k\), or the LCP query finds no mismatches up to the end of the
+pattern. If there are no more mismatches present in the current alignment of the
+pattern and text, the inner loop body will perform a single LCP query, and then
+break out of the loop, thus taking \(O(1)\) time. Therefore, the worst case time
+complexity must be exhibited when the number of mismatches is maximised. The
+cost of the first error found is \(1.0\), with further errors having a cost,
+\(C\), of \(m/L\), where \(L\) is the distance to the previous error. As \(L
+\leq m\), \(C \geq 1.0\). Therefore, the upper bound of \(TC\), \(k\) must be
+hit in at most \(k/1.0=k\) errors, thus giving a time complexity of the inner
+loop of \(O(k)\). Combined with the time factor from the outer loop, this gives
+the overall time complexity of \(O(nk)\).
+
 % Force to question 3
 \setcounter{section}{2}
 % Question 3
