@@ -39,6 +39,7 @@
 \section{k-Spread}
 
 \subsection{\(O(nk)\) Solution}
+\label{subsec:nkkspread}
 
 This algorithm requires preprocessing the input text and pattern for LCP
 queries, as described in the lecture slides, week 10. The LCP algorithm returns
@@ -139,6 +140,18 @@ These searches and cost calculations are repeated for every \(i \in \{\, 0
 ... n-m+1 \,\}\), and the cost is stored in \(D[i]\). This value is checked
 every iteration, and set to the desired \(X\) if \(TC > k\). Thus it must be the
 case that the output \(D\) is correct.
+
+\subsection{\(O(n \sqrt k)\) Solution With \(k=m\)}
+
+The algorithm shown in subsection \ref{subsec:nkkspread} satisfies the time complexity requirement of \(O(n \sqrt k)\) when \(k=m\), without alteration. This can be proved by reconsidering the bounds on the inner loop that was previously argued to be \(O(k)\) due to the minimum cost of a mismatch being \(1.0\). Whilst this is certainly the case, the cost of a mismatch can only be \(1.0\) in two specific circumstances; the first error always has a cost of \(1.0\), and the only other errors that can cost this little must have a distance \(l=m\). As this distance is equal to the length of the pattern, it is only possible for this error to be at position \(m-1\)\footnote{Considering that array and string indices are 0-based.}, with the previous error at position \(0\). Moving these errors closer together increases the cost, as does inserting mismatches between the two. Thus all errors can only have a cost of \(1.0\) per error if there are at most \(2\) mismatches present.
+
+It is thus required to show if, when \(k=m\), the loop will exit before encountering more than \(\sqrt m\) mismatches (as in the previous subsection it was shown the loop performs constant time operations for each iteration). If this is the case, it implies that if the loop hits the restriction of total cost, it must do so by encountering less than \(\sqrt m\) mismatches. To prove this by contradiction, suppose that there exists some text \(T\), that, at position \(i\) with some pattern \(P\), there are more than \(\sqrt m\) mismatches with \(TC \leq k\). Let \(e\) be the number of mismatches in this configuration.
+
+The total cost of a set of e mismatches is minimised when the mismatches are evenly spaced (as best as possible) throughout \(P\). This is because the calculation of per error cost (\(c\)) is (for all errors except the first) \(c=m/l\), where \(l\) is the distance between mismatches, thus \(c \propto 1/l\). Consider the function \(f(x)=1/x\) - this function shows exponential decay, so when considering a small \(x_1\), a large \(x_3\), and an \(x_2 = \ceil{x_1 + (x_3-x_1)/2}\) halfway between the two, it is the case that
+\begin{displaymath}
+Cost(x_1, x_3) < Cost(x_1, x_2) \leq Cost(x_2, x_3).
+\end{displaymath}
+
 
 % Force to question 3
 \setcounter{section}{2}
