@@ -145,13 +145,49 @@ case that the output \(D\) is correct.
 
 The algorithm shown in subsection \ref{subsec:nkkspread} satisfies the time complexity requirement of \(O(n \sqrt k)\) when \(k=m\), without alteration. This can be proved by reconsidering the bounds on the inner loop that was previously argued to be \(O(k)\) due to the minimum cost of a mismatch being \(1.0\). Whilst this is certainly the case, the cost of a mismatch can only be \(1.0\) in two specific circumstances; the first error always has a cost of \(1.0\), and the only other errors that can cost this little must have a distance \(l=m\). As this distance is equal to the length of the pattern, it is only possible for this error to be at position \(m-1\)\footnote{Considering that array and string indices are 0-based.}, with the previous error at position \(0\). Moving these errors closer together increases the cost, as does inserting mismatches between the two. Thus all errors can only have a cost of \(1.0\) per error if there are at most \(2\) mismatches present.
 
-It is thus required to show if, when \(k=m\), the loop will exit before encountering more than \(\sqrt m\) mismatches (as in the previous subsection it was shown the loop performs constant time operations for each iteration). If this is the case, it implies that if the loop hits the restriction of total cost, it must do so by encountering less than \(\sqrt m\) mismatches. To prove this by contradiction, suppose that there exists some text \(T\), that, at position \(i\) with some pattern \(P\), there are more than \(\sqrt m\) mismatches with \(TC \leq k\). Let \(e\) be the number of mismatches in this configuration.
+It is thus required to show if, when \(k=m\), the loop will exit before encountering more than \(\sqrt m\) mismatches (as in the previous subsection it was shown the loop performs constant time operations for each iteration). If this is the case, it implies that if the loop hits the restriction of total cost, it must do so by encountering less than \(\sqrt m\) mismatches. To prove this by contradiction, suppose that there exists some text \(T\), that, at position \(i\) with some pattern \(P\), there are more than \(\sqrt m\) mismatches with \(TC \leq k\). In order to maximise the number of mismatches without exceeding \(k\), the first error must be at position \(0\) (as any added space before the first error will not change it's cost from \(1.0\), whereas adding space after will reduce the cost of the next) and the last at position \(m-1\). Let \(e\) be the number of mismatches after the first in this configuration.
 
-The total cost of a set of e mismatches is minimised when the mismatches are evenly spaced (as best as possible) throughout \(P\). This is because the calculation of per error cost (\(c\)) is (for all errors except the first) \(c=m/l\), where \(l\) is the distance between mismatches, thus \(c \propto 1/l\). Consider the function \(f(x)=1/x\) - this function shows exponential decay, so when considering a small \(x_1\), a large \(x_3\), and an \(x_2 = \ceil{x_1 + (x_3-x_1)/2}\) halfway between the two, it is the case that
-\begin{displaymath}
-Cost(x_1, x_3) < Cost(x_1, x_2) \leq Cost(x_2, x_3).
-\end{displaymath}
+The total cost of a set of mismatches is minimised when the mismatches are evenly spaced (as best as possible) throughout \(P\). This is because the calculation of per error cost (\(c\)) is (for all errors except the first) \(c=\frac{m}{l}\), where \(l\) is the distance between mismatches, thus \(c \propto \frac{1}{l}\). Where
+\begin{align*}
+x_0 > 0, \\
+a > 0,
+\intertext{and}
+b = 2a
+\intertext{it is true that}
+\frac{1}{x_0} + \frac{1}{x_0 + b} > 2 \frac{1}{x_0 + a}.
+\end{align*}
 
+Returning to the aformentioned configuration, let \(e\) be the number of mismatches after the first one (at position 0). With the assumption that \(e\) divides the remaining space in the pattern, \(m-1\), the equation for the total cost is given by
+\begin{align*}
+TC = 1 + e(\frac{m}{\frac{m-1}{e}}) = 1 + \frac{e^2m}{m-1}
+\intertext{For the loop to iterate more than \(\sqrt (k=m)\) times, \(e > \sqrt (k=m)\) and \(TC < (k = m)\). Assuming this is true,}
+m > 1 + \frac{e^2m}{m-1} \\
+m^2 - m > m - 1 + e^2m \\
+m^2 > 2m - 1 + e^2m \\
+m^2 - e^2m > 2m - 1 \\
+m - e^2 > 2 - \frac{1}{m} \\
+m > 2 - \frac{1}{m} + e^2
+\intertext{As \(e > \sqrt m\),}
+m > 2 - \frac{1}{m} + (\sqrt m + a)^2
+m > 2 - \frac{1}{m} + m + 2a\sqrt m + a^2
+0 > 2 - \frac{1}{m} + 2a\sqrt m + a^2
+\intertext{Then, as \(a \geq 0\),}
+0 > 2 - \frac{1}{m}
+\frac{1}{m} > 2
+m < \frac{1}{2}
+\end{align*}
+This contradiction thus shows it is impossible to have more than \(1+ \sqrt k\) mismatches in a given position without the total cost exceeding \(k\), when \(k=m\).
+
+In order to maximise the number of mismatches without exceeding \(k\), they must be spaced evenly throughout the pattern, with the first error at position \(0\) and the last at position \(m-1\). With \(e = \sqrt k\) mismatches, the average distance between errors will be \(l_{avg} = \frac{m-1}{e-1}\) (\(1\) is subtracted from \(m\) and \(e\) to account for the first error in position 0). This means the average cost will equate to
+\begin{algin*}
+c_{avg} = \frac{m}{l_{avg}} \\ 
+c_{avg} = \frac{m}{\frac{m-1}{e-1}}
+c_{avg} = \frac{m(e-1)}{m-1}
+c_{avg} = \frac{m(\sqrt m - 1)}{m-1}
+TC = e * c_{avg}
+TC = \frac{(\sqrt m) * m(\sqrt m - 1)}{m-1}
+
+\end{align*}
 
 % Force to question 3
 \setcounter{section}{2}
