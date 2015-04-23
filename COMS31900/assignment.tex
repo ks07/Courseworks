@@ -47,15 +47,16 @@ position in the pattern. The following pseudocode describes an algorithm to
 solve the k-spread problem.
 
 \begin{lstlisting}
-# Receive as input a text string T of length n, a pattern string P of length m, and a non-negative integer k denoting the maximum cost of errors.
+# Receive as input a text string T of length n, a pattern string P of length m, and a non-negative integer k denoting the maximum cost of errors. The output, D, is an array of length n - m + 1.
 
+# Preprocess T and P in order to use LCP to find mismatches. (O(n))
 PreprocessLCP(T, P)
 
-D = [] * (n - m + 1)
-
-for i in range(0, n):
+# Loop through every position of P in T (O(n - m))
+for i in range(0, n - m):
   TC = 0.0
   j = 0
+  # Find the length until the first mismatch using an LCP query (O(1))
   L = LCP(i, j)
 
   if L < m:
@@ -63,17 +64,28 @@ for i in range(0, n):
     TC = 1.0
     i = L
     j = L
+    # Loop finding errors until total cost exceeds k. (O(k))
     while TC <= k:
+      # Look for the next mismatch. (O(1))
       L = LCP(i, j)
       i = i + L
       j = j + L
       if j > m or i > n:
-        # We have reached the end of either text or pattern, must stop.
+        # Reached the end of either text or pattern, must stop. (O(1))
         break
       else:
+        # The cost of each error is calculated based on the distance to the previous. (O(1))
         TC = TC + (m/L)
 
-  D[i] = TC
+  # Check the found cost (O(1))
+  if TC > k:
+    # Set output to some constant X if it exceeds the cost
+    D[i] = X
+  else:
+    D[i] = TC
+
+# D should now hold the cost values for every position of P in T (O(1))
+return D
 \end{lstlisting}
 
 % Force to question 3
