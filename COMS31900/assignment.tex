@@ -60,22 +60,23 @@ for i in range(0, n - m):
   L = LCP(i, j)
 
   if L < m:
-    # There is at least 1 error. The first is always cost 1.
+    # There is at least 1 error. The first is always cost 1. (O(1))
     TC = 1.0
-    i = L
-    j = L
+    # Jump to the index after the mismatch. (O(1))
+    i = i + L + 1
+    j = j + L + 1
     # Loop finding errors until total cost exceeds k. (O(k))
     while TC <= k:
-      # Look for the next mismatch. (O(1))
+      # Look for the next mismatch and jump over it. (O(1))
       L = LCP(i, j)
-      i = i + L
-      j = j + L
-      if j > m or i > n:
+      i = i + L + 1
+      j = j + L + 1
+      if j >= m or i >= n:
         # Reached the end of either text or pattern, must stop. (O(1))
         break
       else:
         # The cost of each error is calculated based on the distance to the previous. (O(1))
-        TC = TC + (m/L)
+        TC = TC + (m/(L+1))
 
   # Check the found cost (O(1))
   if TC > k:
@@ -89,6 +90,7 @@ return D
 \end{lstlisting}
 
 \subsubsection{Time Complexity}
+
 This algorithm runs in \(O(nk)\) time. This can be shown by considering that the
 algorithm is required to calculate a value for every \(d_s(i)\), where \(i \in
 \{\, 0 ... n-m+1 \,\}\). As \(0 < m \leq n\), the \(O(n-m)\) factor can be
@@ -97,7 +99,7 @@ queries, as described in the lecture slides week 10, in \(O(n)\) time. For each
 calculation of \(d_s(i)\), the distance to the next mismatch is calculated using
 an LCP query, also described in the lecture slides, taking constant (\(O(1)\))
 time. This calculation is performed repeatedly, along with some other constant
-time operations, until the total cost, \(TC \text{a.k.a.} d_s(i)\), exceeds the
+time operations, until the total cost, \(TC \text{ a.k.a. } d_s(i)\), exceeds the
 limit \(k\), or the LCP query finds no mismatches up to the end of the
 pattern. If there are no more mismatches present in the current alignment of the
 pattern and text, the inner loop body will perform a single LCP query, and then
@@ -107,8 +109,36 @@ cost of the first error found is \(1.0\), with further errors having a cost,
 \(C\), of \(m/L\), where \(L\) is the distance to the previous error. As \(L
 \leq m\), \(C \geq 1.0\). Therefore, the upper bound of \(TC\), \(k\) must be
 hit in at most \(k/1.0=k\) errors, thus giving a time complexity of the inner
-loop of \(O(k)\). Combined with the time factor from the outer loop, this gives
-the overall time complexity of \(O(nk)\).
+loop of \(O(k)\). Combined with the time factor from the outer loop, and the
+preprocessing time, this gives an overall time complexity of \(O(nk + n)\),
+which is equivalent to \(O(nk)\).
+
+\subsubsection{Correctness}
+
+From the lecture slides, week 10, \(LCP(i,j)\) returns the largest integer \(L\) such that:
+\begin{align*}
+T[i...i+L-1]=P[j...j+L-1],
+\intertext{or alternatively,}
+T[i+L] \neq P[j+L].
+\end{align*}
+Therefore, if \(j+L+1 \geq m\) (or indeed the equivalent argument for \(i\)),
+there must be no further mismatches between \(P\) and \(T\) from their
+respective positions \(j\) and \(i\) to the end of \(P\). Conversely, if \(j+L+1
+< m\), there must be an error present at position \(j+L\). Therefore, the
+strategy of the algorithm of 'jumping' to the position (\(i+L+1\), \(j+L+1\)),
+i.e. calculating \(LCP(i+L+1,j+L+1)\), must not skip over any errors in the
+current alignment, other than the one just identified. Thus it remains only to
+show that the cost of each error is calculated correctly. This is the case as
+the algorithm uses the value of \(L\) returned by \(LCP(i,j)\) in the cost
+calculation. As previously stated, a mismatch must be present at position
+\(j+L\). The value of \(j\) is set to the index after the previous error, thus
+their must be an error at \(j-1\). This gives the distance between the two
+errors of \((j+L) - (j-1) = L+1\).
+
+These searches and cost calculations are repeated for every \(i \in \{\, 0
+... n-m+1 \,\}\), and the cost is stored in \(D[i]\). This value is checked
+every iteration, and set to the desired \(X\) if \(TC > k\). Thus it must be the
+case that the output \(D\) is correct.
 
 % Force to question 3
 \setcounter{section}{2}
