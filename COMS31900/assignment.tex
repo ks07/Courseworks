@@ -159,35 +159,25 @@ b = 2a
 
 Returning to the aformentioned configuration, let \(e\) be the number of mismatches after the first one (at position 0). With the assumption that \(e\) divides the remaining space in the pattern, \(m-1\), the equation for the total cost is given by
 \begin{align*}
-TC = 1 + e(\frac{m}{\frac{m-1}{e}}) = 1 + \frac{e^2m}{m-1}
-\intertext{For the loop to iterate more than \(\sqrt (k=m)\) times, \(e > \sqrt (k=m)\) and \(TC < (k = m)\). Assuming this is true,}
+TC = 1 + e \frac{m}{\frac{m-1}{e}} = 1 + \frac{e^2m}{m-1}
+\intertext{For the loop to iterate more than \(\sqrt{(k=m)}\) times, \(e > \sqrt{(k=m)}\) and \(TC < (k = m)\). Assuming this is true,}
 m > 1 + \frac{e^2m}{m-1} \\
 m^2 - m > m - 1 + e^2m \\
 m^2 > 2m - 1 + e^2m \\
 m^2 - e^2m > 2m - 1 \\
 m - e^2 > 2 - \frac{1}{m} \\
 m > 2 - \frac{1}{m} + e^2
-\intertext{As \(e > \sqrt m\),}
-m > 2 - \frac{1}{m} + (\sqrt m + a)^2
-m > 2 - \frac{1}{m} + m + 2a\sqrt m + a^2
-0 > 2 - \frac{1}{m} + 2a\sqrt m + a^2
+\intertext{As \(e > \sqrt{m}\),}
+m > 2 - \frac{1}{m} + (\sqrt{m} + a)^2 \\
+m > 2 - \frac{1}{m} + m + 2a\sqrt{m} + a^2 \\
+0 > 2 - \frac{1}{m} + 2a\sqrt{m} + a^2
 \intertext{Then, as \(a \geq 0\),}
-0 > 2 - \frac{1}{m}
-\frac{1}{m} > 2
+0 > 2 - \frac{1}{m} \\
+\frac{1}{m} > 2 \\
 m < \frac{1}{2}
 \end{align*}
-This contradiction thus shows it is impossible to have more than \(1+ \sqrt k\) mismatches in a given position without the total cost exceeding \(k\), when \(k=m\).
+This contradiction thus shows it is impossible to have more than \(1+ \sqrt k\) mismatches for a given \(i\) without the total cost exceeding \(k\), when \(k=m\). Thus this algorithm must be \(O(n\sqrt{k})\) for this special case.
 
-In order to maximise the number of mismatches without exceeding \(k\), they must be spaced evenly throughout the pattern, with the first error at position \(0\) and the last at position \(m-1\). With \(e = \sqrt k\) mismatches, the average distance between errors will be \(l_{avg} = \frac{m-1}{e-1}\) (\(1\) is subtracted from \(m\) and \(e\) to account for the first error in position 0). This means the average cost will equate to
-\begin{algin*}
-c_{avg} = \frac{m}{l_{avg}} \\ 
-c_{avg} = \frac{m}{\frac{m-1}{e-1}}
-c_{avg} = \frac{m(e-1)}{m-1}
-c_{avg} = \frac{m(\sqrt m - 1)}{m-1}
-TC = e * c_{avg}
-TC = \frac{(\sqrt m) * m(\sqrt m - 1)}{m-1}
-
-\end{align*}
 
 % Force to question 3
 \setcounter{section}{2}
