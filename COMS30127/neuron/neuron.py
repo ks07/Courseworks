@@ -23,7 +23,7 @@ def euler_iafn(f, y_0, t_0, t_e, h, y_th, y_reset):
     
     return (t_vals, y_vals, spike_cnt)
 
-#dv/dt
+#
 def integrate_and_fire_f(e_l__mV = -70, r_m__MOhm = 10, i__nA = 3.1, tau_m__ms = 10, extra_v_func = lambda t,v: 0):
     def iaff(t, y):
         e_l = e_l__mV * (10**-3)
@@ -34,6 +34,46 @@ def integrate_and_fire_f(e_l__mV = -70, r_m__MOhm = 10, i__nA = 3.1, tau_m__ms =
         return (e_l - v + r_m * i + extra_v_func(t, y)) / tau_m
     return iaff
 
+def leaky_integrate_and_fire(t, v_0__mV = -70, e_l__mV = -70, r_m__MOhm = 10, i__nA = 3.1, tau_m__ms = 10):
+    v_0 = v_0__mV * (10**-3)
+    e_l = e_l__mV * (10**-3)
+    r_m = r_m__MOhm * (10**6)
+    i_e = i__nA * (10**-9)
+    tau_m = tau_m__ms * (10**-3)
+
+    v_t = e_l + r_m * i_e + (v_0 - e_l - r_m * i_e) * math.exp(-t / tau_m)
+    return v_t
+
+def euler_iafn_t(f, y_0, t_0, t_e, h, y_th, y_reset):
+    y_n = y_0
+    y_m = y_0
+
+    t_vals = np.arange(t_0, t_e + h, h)
+    y_vals = []
+    y_comp = []
+    spike_cnt = 0
+
+    t_spike = t_vals[0]
+    for t_n in t_vals:
+
+        #print("t: ", t_n, "\ty: ", y_n)
+        y_vals.append(y_n)
+        y_n = y_n + h * f(t_n, y_n)
+        if y_n >= y_th:
+            #print('t: ', t_n, 's => Spike!')
+            y_n = y_reset
+            spike_cnt += 1
+        
+        # Try using the actual equation instead of integrating
+        y_comp.append(y_m)
+        y_m = leaky_integrate_and_fire(t_n - t_spike)
+
+        if y_m >= y_th:
+            y_m = y_reset
+            t_spike = t_n
+
+    return (t_vals, y_vals, spike_cnt, y_comp)
+
 def part1():
     print('Running Part 1')
     v_reset = -70 * (10**-3)
@@ -42,9 +82,9 @@ def part1():
     t_e = 1.0
     h = 1 * (10 **-3)
     v_th = -40 * (10**-3)
-    plot_vals = euler_iafn(integrate_and_fire_f(), y_0, t_0, t_e, h, v_th, v_reset)
+    plot_vals = euler_iafn_t(integrate_and_fire_f(), y_0, t_0, t_e, h, v_th, v_reset)
     
-    plt.plot(plot_vals[0], plot_vals[1], label='DT=1ms')
+    plt.plot(plot_vals[0], plot_vals[1], plot_vals[0], plot_vals[3], label='DT=1ms')
     plt.title('Plot of single neuron leaky integrate and fire model')
     plt.ylabel('Voltage Function V(t) (V)')
     plt.xlabel('Time t (s)')
@@ -239,7 +279,7 @@ def part5():
     plt.show()
 
 if __name__ == '__main__':
-    #part1()
+    part1()
     #part2()
     #part3()
     #part4()
