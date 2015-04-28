@@ -178,38 +178,11 @@ def part4():
 def part5():
     print('Running Part 5')
     v_reset = -70 * (10**-3)
-    y_0 = v_reset
+    v_0 = v_reset
     t_0 = 0.0
     t_e = 3.0
     h = 1 * (10 **-3)
     v_th = -40 * (10**-3)
-
-    # r_m__MOhm = 10
-    # r_m = r_m__MOhm * (10**6)
-
-    # # Hodgkin & Huxley model
-    # # TODO: If this can take the last spike time, we might be able to mess with part 4?
-    # def v_k_func(t, v):
-    #     """ Gives the additional p.d. in the neuron from potassium current. """
-    #     g_0 = 0
-    #     e_k = -80 * (10**-3)
-    #     delta_g = 0.01 * (10**-6)
-    #     tau_slow = 200 * (10**-3)
-
-    #     # TODO: Powers of 10?
-    #     def a_n(v):
-    #         ffmv = 55 * (10**-3)
-    #         return 0.01 * (v + ffmv)/(1 - math.exp(-(v + ffmv)/10))
-
-    #     def b_n(v):
-    #         return 0.125 * math.exp(-(v + 65 * (10**-3))/80)
-
-    #     g_k = 
-
-    #     i_k = g_k * (e_k - v)
-    #     return -(r_m * i_k)
-
-    # plot_vals = euler_iafn(integrate_and_fire_f(r_m__MOhm = r_m__MOhm, extra_v_func = v_k_func), y_0, t_0, t_e, h, v_th, v_reset)
 
     e_l = -70 * (10**-3)
     r_m = 10 * (10**6)
@@ -226,21 +199,14 @@ def part5():
 
     def neuron_model(t, v, g_k):
         """ Gets dV/dt of the neuron with a slow potassium current. """
-        
+        i_k = g_k * (e_k - v)
 
-        i_k = g_k * (y_0 - e_k)
-
-#        return (e_l - v - r_m_g_s * p_s(t, t_f) * (v - e_s) + r_m_i_e) / tau_m
         return (e_l - v + r_m * (i + i_k)) / tau_m
 
     v_vals = []
     g_vals = []
-
-    # Need to link two neurons/functions, so can't re-use old method
-    # TODO: Maybe we can - function like objects and overloads, or cheat with some globals
-    v_n = y_0
+    v_n = v_0
     t_f = 0.0
-
     g_k = g_0
 
     dt = 1 * (10**-3)
@@ -256,7 +222,7 @@ def part5():
             g_k += delta_g
         else:
             # No spike, should decay g_k
-            g_k = g_k + dt * g_k_model(t_n, g_k) 
+            g_k = g_k + dt * g_k_model(t_n, g_k)
         g_vals.append(g_k)
     
     plt.plot(t_vals, v_vals, label='DT=1ms')
