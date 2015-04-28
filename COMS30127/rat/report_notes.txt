@@ -2,7 +2,7 @@
 Neuron Pos Plot
 ================
 
-1. Majority of firings concentrated around C1, not at C2. Why?
+1. Majority of firings concentrated around C1, not at C2. Why? Maybe this is a "Place Cell" in the hippocampus, with a place field around C1.
 
 2. Majority of firings in the central corridor after having made the turn that informs future choice. Perhaps neuron 2 is related
    to making the decision based on recalling the previous turn?
@@ -18,11 +18,20 @@ Neuron Pos Plot
 Neuron Auto Corr Plot
 ======================
 
-Might show underlying frequencies in spike train. E.g. most neurons appear to spike in 0.1s intervals
+Might show underlying frequencies in spike train. E.g. most neurons appear to spike in 0.1s intervals. Like a noisy sine wave.
 
 =======================
 Neuron Cross Corr Plot
 =======================
 
-Diagonal shows the auto corr. As expected, much higher auto correlation than cross. Not sure these graphs are even correct, let
-alone what they show.
+Diagonal shows the auto corr. As expected, much higher auto correlation than cross. More spikes for the later neurons so graphs scale.
+
+CC(2,1) : Some spikes at 0.5 second delay.
+
+CC(4,1), CC(4,2), CC(4,3) : Little correlation, not much variation between the lowest and highest peaks.
+
+=======================
+Neuron Firing Rate Plot
+=======================
+
+???
