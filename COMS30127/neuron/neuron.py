@@ -65,7 +65,7 @@ def euler_iafn_t(f, y_0, t_0, t_e, h, y_th, y_reset):
             spike_cnt += 1
         
         # Try using the actual equation instead of integrating
-        y_comp.append(y_m)
+        y_vals.append(y_m)
         y_m = leaky_integrate_and_fire(t_n - t_spike)
 
         if y_m >= y_th:
