@@ -33,6 +33,30 @@
 
 \begin{document}
 
+% Question 1
+\section{Hash Functions}
+
+\subsection{Output Probability}
+
+\(h_z\) is picked uniformly at random from \(H_1\), thus the value of \(z\) is selected uniformly at random from \([m]\). The set of hash functions \(H_1\) is based upon splitting the input key, \(x\), into \(l\) bit strings of \(\log m\) bits. As \(x\) can be any value in \(U\), and likewise \(z\) can be any value in \([m]\) we can say that
+\begin{align*}
+\forall b \in x, \text{Pr}(b = 1) = \frac{1}{2}
+\intertext{and}
+\forall b \in z, \text{Pr}(b = 1) = \frac{1}{2},
+\end{align*}
+where \(b\) denotes a single bit. The hash function \(h_z\) uses the XOR
+operation to combine both \(z\) and all the bit strings in \(x\). By observing
+the truth table of the XOR operation, it is clear that there is an equal
+probability of either outcome when supplied with two random input bits. Thus, a
+bitwise XOR performed on two bitstrings, (\(A, B\)) of length \(\log m\) must
+produce output satisfying \(\forall b \in A \oplus B, \text{Pr}(b = 1) =
+\frac{1}{2},\) which is equivalent to \(\text{Pr}(A \oplus B = v) =
+\frac{1}{m},\) where \(v \in [m]\). Performing the XOR operation on \(v\) with
+another uniformly random bitstring will again give equal probability as in the
+above expression involving \(A\) and \(B\). Therefore, as the hash function
+\(h_z\) repeatedly applies the XOR operation in this manner, it must be the case
+that \(\text{Pr}(h(x) = j) = \frac{1}{m}\), where \(j \in [m]\) and \(x \in U\).
+
 % Force to question 2
 \setcounter{section}{1}
 % Question 2
