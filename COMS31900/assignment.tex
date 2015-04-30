@@ -31,12 +31,15 @@
 \renewcommand{\thesubsection}{\arabic{section}.\roman{subsection}}
 \renewcommand{\thesubsubsection}{\thesubsection.\alph{subsubsection}}
 
+% Define an xor command that shows the oplus symbol
+\newcommand{\xor}{\oplus}
+
 \begin{document}
 
 % Question 1
 \section{Hash Functions}
 
-\subsection{Output Probability}
+\subsection{\(H_1\) Output Probability}
 
 \(h_z\) is picked uniformly at random from \(H_1\), thus the value of \(z\) is selected uniformly at random from \([m]\). The set of hash functions \(H_1\) is based upon splitting the input key, \(x\), into \(l\) bit strings of \(\log m\) bits. As \(x\) can be any value in \(U\), and likewise \(z\) can be any value in \([m]\) we can say that
 \begin{align*}
@@ -49,13 +52,52 @@ operation to combine both \(z\) and all the bit strings in \(x\). By observing
 the truth table of the XOR operation, it is clear that there is an equal
 probability of either outcome when supplied with two random input bits. Thus, a
 bitwise XOR performed on two bitstrings, (\(A, B\)) of length \(\log m\) must
-produce output satisfying \(\forall b \in A \oplus B, \text{Pr}(b = 1) =
-\frac{1}{2},\) which is equivalent to \(\text{Pr}(A \oplus B = v) =
+produce output satisfying \(\forall b \in A \xor B, \text{Pr}(b = 1) =
+\frac{1}{2},\) which is equivalent to \(\text{Pr}(A \xor B = v) =
 \frac{1}{m},\) where \(v \in [m]\). Performing the XOR operation on \(v\) with
 another uniformly random bitstring will again give equal probability as in the
 above expression involving \(A\) and \(B\). Therefore, as the hash function
 \(h_z\) repeatedly applies the XOR operation in this manner, it must be the case
 that \(\text{Pr}(h(x) = j) = \frac{1}{m}\), where \(j \in [m]\) and \(x \in U\).
+
+\subsection{\(H_1\) Weakly Universal Set of Hash Functions}
+
+From the lecture slides, week 2, a set of hash functions is weakly universal if,
+\begin{align*}
+\forall x,y \in U, x \neq y, \text{Pr}(h(x) = h(y)) \leq \frac{1}{m},
+\end{align*}
+where \(h\) is chosen uniformly at random from \(H\). To disprove that \(H_1\)
+is such a set, it is sufficient to show that a pair of keys can be selected that
+result in a probability of greater than \(\frac{1}{m}\). Consider that the XOR
+operation is both associative and commutative. This means that \(b_0 \xor b_1
+\xor b_2\) is equivalent to \(b_2 \xor b_1 \xor b_0\), or any other permutation
+of the operations on the three bits. Performing bitwise XOR over multiple
+bitstrings must also follow this behaviour. Therefore, consider an input key
+\(x\), of length \(\log u = 9\), with \(\log m = 3\):
+\begin{align*}
+x = \{\, x_0, x_1, \ldots, x_8 \,\} \\
+x = \{\, B_0(x), B_1(x), B_2(x) \,\} \\
+B_i(x) = \{\, x_{i \log m}, \ldots, x_{(i+1) \log m - 1} \,\} \\
+|z| = |B_i(x)| \\
+h_z(x) = z \xor B_0 \xor B_1 \xor B_2
+\end{align*}
+Then, consider another input key \(y\), which is constructed as a permutation of
+the set of \(B_i(x)\). For example,
+\begin{align*}
+y = \{\, B_0(y) (= B_2(x)), B_1(y) (= B_1(x)), B_2(y) (= B_0(x)) \,\}.
+\end{align*}
+Considering the earlier comments on the XOR operation, the following is trivially true:
+\begin{align*}
+B_0(y) \xor B_1(y) \xor B_2(y) = B_0(x) \xor B_1(x) \xor B_2(x).
+\intertext{Therefore, we can say that}
+\forall h \in H_1, \text{Pr}(h(x) = h(y)) = 1.
+\end{align*}
+
+This contradicts the definition of a weakly universal set of hash
+functions. Thus, \(H_1\) cannot possibly be a weakly universal set of hash
+functions, as we can select a pair of keys that will produce the same output
+regardless of the value of \(z\) (i.e. the chosen \(h\)).
+
 
 % Force to question 2
 \setcounter{section}{1}
