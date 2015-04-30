@@ -61,7 +61,7 @@ above expression involving \(A\) and \(B\). Therefore, as the hash function
 \(h_z\) repeatedly applies the XOR operation in this manner, it must be the case
 that \(\text{Pr}(h(x) = j) = \frac{1}{m}\), where \(j \in [m]\) and \(x \in U\).
 
-\subsection{\(H_1\) Weakly Universal Set of Hash Functions}
+\subsection{\(H_1\) - Not a Weakly Universal Set of Hash Functions}
 
 From the lecture slides, week 2, a set of hash functions is weakly universal if,
 \begin{align*}
@@ -120,6 +120,63 @@ subsection \ref{subsec:h1outprob}, a bitwise XOR performed on two bitstrings,
 \(\text{Pr}(z \xor B_k(x) = j) = \frac{1}{m}, \forall j \in [m], \forall x \in
 U\). As \(h'_{z,k}(x) = z \xor B_k(x)\), it must be the case that \(\forall j
 \in m, \forall x \in U, h \in H_2, \text{Pr}(h(x) = j) = \frac{1}{m}.\)
+
+\subsection{\(H_2\) - A Weakly Universal Set of Hash Functions?}
+
+For \(H_2\) to be weakly universal, it would need to be the case that,
+\begin{align*}
+\forall x,y \in U, x \neq y, \text{Pr}(h(x) = h(y)) \leq \frac{1}{m},
+\end{align*}
+where \(h\) is chosen uniformly at random from \(H_2\). The hash functions here perform an XOR between a uniformly random \(z\) and a chunk of \(x\). As this \(z\) value is part of the selected \(h\), \(z\) can be disregarded when considering the probability of two hash function outputs. This can be shown by considering that XOR is it's own inverse, i.e. \(a \xor b \xor a = b\), then expanding the above statement to:
+\begin{align*}
+\forall x,y \in U, x \neq y, \text{Pr}(z \xor B_k(x) = z \xor B_k(y)) \leq \frac{1}{m},
+\intertext{and then cancelling the z factors from both sides,}
+\forall x,y \in U, x \neq y, \text{Pr}(z \xor B_k(x) \xor z = z \xor B_k(y) \xor z) \leq \frac{1}{m}, \\
+\forall x,y \in U, x \neq y, \text{Pr}(B_k(x) = B_k(y)) \leq \frac{1}{m}.
+\end{align*}
+
+Now that z has been shown irrelevant to the weakly universal condition, the proof relies solely on the choice of \(k\), and the probability that a given chunk will be identical to the corresponding chunk in the second key. As \(k \in [\frac{\log u}{\log m}]\), and \(k\) is selected uniformly randomly, \(\text{Pr}(k = j) = \frac{1}{\frac{\log u}{\log m}} = \frac{\log m}{\log u}\), for any \(j\).
+
+The probability that two corresponding chunks of two keys, \(B_j(x)\) and \(B_j(y)\), are equal, for some fixed \(j \in [\frac{\log u}{\log m}]\), is given by
+\begin{align*}
+\text{Pr}(B_j(x) = B_j(y)) = \frac{M}{\frac{\log u}{\log m}},
+\intertext{where \(M\) is the number of matching chunks, i.e. the number of values of \(k\) such that}
+B_k(x) = B_k(y).
+\intertext{As both \(x\) and \(y\) must be distinct, the value of M can be defined as}
+0 \leq M < \frac{\log u}{\log m},
+\intertext{which gives an upper bound on the probability,}
+\text{Pr}(B_j(x) = B_j(y)) < \frac{\frac{\log u}{\log m}}{\frac{\log u}{\log m}} = 1.
+\end{align*}
+
+Therefore, combining the probability of blocks of a given index being identical with the probability of selecting such an index (\(k\)), gives the following probability,
+\begin{align*}
+\text{Pr}(B_k(x) = B_k(y)) = \frac{M}{\frac{\log u}{\log m}} * \frac{1}{\frac{\log u}{\log m}} = \frac{M}{(\frac{\log u}{\log m})^2}.
+\intertext{As \(M\) is a random variable, depending on \(x\) and \(y\), it is necessary to find an inequality for this probability. More specifically, consider the upper bound, which can be shown by substituting}
+M = \frac{\log u}{\log m}, \\
+\text{Pr}(B_k(x) = B_k(y)) < \frac{\frac{\log u}{\log m}}{(\frac{\log u}{\log m})^2}, \\
+\text{Pr}(B_k(x) = B_k(y)) < \frac{1}{\frac{\log u}{\log m}}, \\
+\text{Pr}(B_k(x) = B_k(y)) < \frac{\log m}{\log u}, \\
+\end{align*}
+
+In order for this to be weakly universal, this probability, and thus the latter term of the above, must satisfy
+\begin{align*}
+\text{Pr}(B_k(x) = B_k(y)) < \frac{\log m}{\log u} \leq \frac{1}{m}.
+\intertext{This can be rearranged as follows:}
+\frac{\log m}{\log u} \leq \frac{1}{m} \\
+\log m \log m \leq \log u.
+\end{align*}
+
+Some conditions exist on \(u\) and \(m\), they are:
+\begin{align*}
+u > m, \\
+\log m | \log u, \text{or,} \log u = a \log m,
+m = 2^b, \\
+u = 2^{b + c},
+\intertext{for some integers \(a, b, c > 0\). Combining these gives}
+\log (2^{b+c}) = a \log (2^b), \\
+b + c = a b
+c = a b - b
+\end{align*}
 
 % Force to question 2
 \setcounter{section}{1}
