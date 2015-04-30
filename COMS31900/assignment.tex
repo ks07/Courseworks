@@ -163,20 +163,24 @@ In order for this to be weakly universal, this probability, and thus the latter 
 \text{Pr}(B_k(x) = B_k(y)) < \frac{\log m}{\log u} \leq \frac{1}{m}.
 \intertext{This can be rearranged as follows:}
 \frac{\log m}{\log u} \leq \frac{1}{m} \\
-\log m \log m \leq \log u.
+m \log m \leq \log u.
 \end{align*}
 
 Some conditions exist on \(u\) and \(m\), they are:
 \begin{align*}
 u > m, \\
-\log m | \log u, \text{or,} \log u = a \log m,
-m = 2^b, \\
-u = 2^{b + c},
-\intertext{for some integers \(a, b, c > 0\). Combining these gives}
-\log (2^{b+c}) = a \log (2^b), \\
-b + c = a b
-c = a b - b
+\log m | \log u, \text{or,} \log u = a \log m, \\
+2^{\log u} = 2^{a \log m}, \\
+u = m^a.
 \end{align*}
+
+This observation of the relationship between \(u\) and \(m\), namely that \(u = m^a\) for some integer value \(a \geq 2\), gives
+\begin{align*}
+m \log m \leq \log u, \\
+m \log m \leq \log m^a, \\
+2^m * m \leq m^a, \\
+2^m \leq m^(a-1)
+
 
 % Force to question 2
 \setcounter{section}{1}
