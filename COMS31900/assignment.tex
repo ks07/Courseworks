@@ -40,6 +40,7 @@
 \section{Hash Functions}
 
 \subsection{\(H_1\) Output Probability}
+\label{subsec:h1outprob}
 
 \(h_z\) is picked uniformly at random from \(H_1\), thus the value of \(z\) is selected uniformly at random from \([m]\). The set of hash functions \(H_1\) is based upon splitting the input key, \(x\), into \(l\) bit strings of \(\log m\) bits. As \(x\) can be any value in \(U\), and likewise \(z\) can be any value in \([m]\) we can say that
 \begin{align*}
@@ -98,6 +99,27 @@ functions. Thus, \(H_1\) cannot possibly be a weakly universal set of hash
 functions, as we can select a pair of keys that will produce the same output
 regardless of the value of \(z\) (i.e. the chosen \(h\)).
 
+\subsection{\(H_2\) Output Probability}
+
+The family of hash functions \(H_2\) differs from that of \(H_1\) in that the
+randomly selected value of \(z\) is XOR'ed with a randomly selected block of the
+input key (where both \(z\) and \(k\) are selected uniformly randomly), as
+opposed to all key blocks. Similarly to \(H_1\), \(H_2\) is based upon splitting
+the input key, \(x\), into \(l\) bit strings of \(\log m\) bits, denoted
+\(B_k(x)\). As \(x\) can be any value in \(U\), and likewise \(z\) can be any
+value in \([m]\) we can again say that
+\begin{align*}
+\forall b \in x, \text{Pr}(b = 1) = \frac{1}{2}
+\intertext{and}
+\forall b \in z, \text{Pr}(b = 1) = \frac{1}{2},
+\end{align*}
+where \(b\) denotes a single bit. The hash function \(h_z\) uses the XOR
+operation to combine both \(z\) and a bit string \(B_k(x)\). As argued in
+subsection \ref{subsec:h1outprob}, a bitwise XOR performed on two bitstrings,
+(\(z, B_k(x)\)) of length \(\log m\) must produce output satisfying
+\(\text{Pr}(z \xor B_k(x) = j) = \frac{1}{m}, \forall j \in [m], \forall x \in
+U\). As \(h'_{z,k}(x) = z \xor B_k(x)\), it must be the case that \(\forall j
+\in m, \forall x \in U, h \in H_2, \text{Pr}(h(x) = j) = \frac{1}{m}.\)
 
 % Force to question 2
 \setcounter{section}{1}
