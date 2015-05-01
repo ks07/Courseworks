@@ -318,6 +318,7 @@ every iteration, and set to the desired \(X\) if \(TC > k\). Thus it must be the
 case that the output \(D\) is correct.
 
 \subsection{\(O(n \sqrt k)\) Solution With \(k=m\)}
+\label{subsec:nrkspeckspread}
 
 The algorithm shown in subsection \ref{subsec:nkkspread} satisfies the time complexity requirement of \(O(n \sqrt k)\) when \(k=m\), without alteration. This can be proved by reconsidering the bounds on the inner loop that was previously argued to be \(O(k)\) due to the minimum cost of a mismatch being \(1.0\). Whilst this is certainly the case, the cost of a mismatch can only be \(1.0\) in two specific circumstances; the first error always has a cost of \(1.0\), and the only other errors that can cost this little must have a distance \(l=m\). As this distance is equal to the length of the pattern, it is only possible for this error to be at position \(m-1\)\footnote{Considering that array and string indices are 0-based.}, with the previous error at position \(0\). Moving these errors closer together increases the cost, as does inserting mismatches between the two. Thus all errors can only have a cost of \(1.0\) per error if there are at most \(2\) mismatches present.
 
@@ -353,6 +354,38 @@ m > 2 - \frac{1}{m} + m + 2a\sqrt{m} + a^2 \\
 m < \frac{1}{2}
 \end{align*}
 This contradiction thus shows it is impossible to have more than \(1+ \sqrt k\) mismatches for a given \(i\) without the total cost exceeding \(k\), when \(k=m\). Thus this algorithm must be \(O(n\sqrt{k})\) for this special case.
+
+\subsection{\(O(n \sqrt k)\) General Solution}
+
+The algorithm described in subsection \ref{subsec:nkkspread} also has \(O(n \sqrt k)\) time complexity in the general case. Subsection \ref{subsec:nrkspeckspread} proved that this is the case when \(k = m\), thus it remains to show this is true both when \(k < m\) and \(k > m\). Note that \(0 \leq k \leq m^2\). Similarly to the previous subsection, the proofs presented here will continue from the assumption that the inner loop needs to be shown to iterate less than \(\sqrt{k}\) in order to meet the \(O(n \sqrt k)\) target.
+
+\subsubsection{\(k < m\)}
+
+Assume that the inner loop iterates more than \(\sqrt{k}\), thus the number of
+mismatches, \(e\), in the current alignment must satisfy \(e > \sqrt{k}\),
+whilst the total cost, \(TC\), must satisfy \(TC < k\). From subsection
+\ref{subsec:nrkspeckspread}, note that \(TC = 1 + \frac{e^2m}{m-1}\). In the case
+that \(k < m\),
+\begin{align*}
+TC = 1 + \frac{e^2m}{m-1} < k, \\
+e > \sqrt{k}, \text{ so } e = \sqrt{k} + a, a > 0 \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+m - 1 + m(k + 2a \sqrt{k} + a^2) < km - k, \\
+m - 1 + km + 2ma \sqrt{k} + ma^2 < km - k, \\
+m + 2ma \sqrt{k} + ma^2 < 1 - k, \\
+k < m, \text{ so } k = m + b, b > 0 \\
+m + 2ma \sqrt{m + b} + ma^2 < 1 - m - b, \\
+2m + 2ma \sqrt{m + b} + ma^2 + b < 1, \\
+m(2 + 2a \sqrt{m + b} + a^2) + b < 1.
+\intertext{As \(b > 0\), consider the lower bound of b to get}
+m(2 + 2a \sqrt{m} + a^2) < 1.
+\intertext{Then note that, with the lower bound of \(a > 0\),}
+m(2 + 0 + 0) < 1.
+\end{align*}
+Thus, as \(m > 0\), this is clearly a contradiction, and the loop must not
+iterate more than \(\sqrt{k}\) times without exceeding \(k\). Therefore, in this
+case, the algorithm is in \(O(n \sqrt k)\).
 
 
 % Force to question 3
