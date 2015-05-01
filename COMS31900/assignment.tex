@@ -698,9 +698,9 @@ points, partitioned between the nodes on that level. Thus, the overall space is
 tree over the existing trees, thus increasing the power on the log, giving a
 space requirement of \(O(n \log^{d-1} n)\).
 
-The preprocessing time needed to create this data structure is also \(O(n
-\log^{d-1} n)\). This follows from the 2D situation in a similar manner to the
-space requirement, where each dimension requires a balanced tree, except for the
+The preprocessing time to create this data structure is \(O(n \log^{d-1}
+n)\). This follows from the 2D situation in a similar manner to the space
+requirement, where each dimension requires a balanced tree, except for the
 first, which is comprised of sorted arrays.
 
 Performing a range counting query on this data structure is very similar to the
