@@ -127,7 +127,12 @@ For \(H_2\) to be weakly universal, it would need to be the case that,
 \begin{align*}
 \forall x,y \in U, x \neq y, \text{Pr}(h(x) = h(y)) \leq \frac{1}{m},
 \end{align*}
-where \(h\) is chosen uniformly at random from \(H_2\). The hash functions here perform an XOR between a uniformly random \(z\) and a chunk of \(x\). As this \(z\) value is part of the selected \(h\), \(z\) can be disregarded when considering the probability of two hash function outputs. This can be shown by considering that XOR is it's own inverse, i.e. \(a \xor b \xor a = b\), then expanding the above statement to:
+where \(h\) is chosen uniformly at random from \(H_2\). The hash functions here
+perform an XOR between a uniformly random \(z\) and a chunk of \(x\). As this
+\(z\) value is part of the selected \(h\), \(z\) can be disregarded when
+considering the probability of two hash function outputs. This can be shown by
+considering that XOR is it's own inverse, i.e. \(a \xor b \xor a = b\), then
+expanding the above statement to:
 \begin{align*}
 \forall x,y \in U, x \neq y, \text{Pr}(z \xor B_k(x) = z \xor B_k(y)) \leq \frac{1}{m},
 \intertext{and then cancelling the z factors from both sides,}
@@ -135,52 +140,69 @@ where \(h\) is chosen uniformly at random from \(H_2\). The hash functions here 
 \forall x,y \in U, x \neq y, \text{Pr}(B_k(x) = B_k(y)) \leq \frac{1}{m}.
 \end{align*}
 
-Now that z has been shown irrelevant to the weakly universal condition, the proof relies solely on the choice of \(k\), and the probability that a given chunk will be identical to the corresponding chunk in the second key. As \(k \in [\frac{\log u}{\log m}]\), and \(k\) is selected uniformly randomly, \(\text{Pr}(k = j) = \frac{1}{\frac{\log u}{\log m}} = \frac{\log m}{\log u}\), for any \(j\).
+Now that z has been shown irrelevant to the weakly universal condition, the
+proof relies solely on the choice of \(k\), and the probability that a given
+chunk will be identical to the corresponding chunk in the second key. As \(k \in
+[\frac{\log u}{\log m}]\), and \(k\) is selected uniformly randomly,
+\(\text{Pr}(k = j) = \frac{1}{\frac{\log u}{\log m}} = \frac{\log m}{\log u}\),
+for any \(j\).
 
 The probability that two corresponding chunks of two keys, \(B_j(x)\) and \(B_j(y)\), are equal, for some fixed \(j \in [\frac{\log u}{\log m}]\), is given by
 \begin{align*}
 \text{Pr}(B_j(x) = B_j(y)) = \frac{M}{\frac{\log u}{\log m}},
 \intertext{where \(M\) is the number of matching chunks, i.e. the number of values of \(k\) such that}
 B_k(x) = B_k(y).
-\intertext{As both \(x\) and \(y\) must be distinct, the value of M can be defined as}
-0 \leq M < \frac{\log u}{\log m},
-\intertext{which gives an upper bound on the probability,}
-\text{Pr}(B_j(x) = B_j(y)) < \frac{\frac{\log u}{\log m}}{\frac{\log u}{\log m}} = 1.
+\intertext{Select some input key \(x\), and create a distinct, related \(y\) such that}
+l = \frac{\log u}{\log m}, \\
+x = \{\, B_0(x), B_1(x), \ldots, B_{l-2}(x), B_{l-1}(x) \,\}, \\
+y = \{\, B_0(x), B_1(x), \ldots, B_{l-2}(x), B_{l-1}(y) \,\}, \\
+B_{l-1}(y) \neq B_{l-1}(x), \\
+\forall i \in [l-2], B_i(y) = B_i(x).
 \end{align*}
+Intuitively, \(y\) is identical to \(x\), apart from the very last block. This
+could be achieved with an operation such as \(y = x \xor 1\).
 
-Therefore, combining the probability of blocks of a given index being identical with the probability of selecting such an index (\(k\)), gives the following probability,
+In this \(x,y\) pair, as previously shown, the probability of \(k = l-1\) is
+\(\frac{1}{l}\). Conversely, the probability of selecting any value of k not
+equal to \(l-1\) is \(\frac{l-1}{l}\). Taking this into account, an expression
+for the probability of selecting identical blocks, and thus producing identical
+hash outputs, is given by
 \begin{align*}
-\text{Pr}(B_k(x) = B_k(y)) = \frac{M}{\frac{\log u}{\log m}} * \frac{1}{\frac{\log u}{\log m}} = \frac{M}{(\frac{\log u}{\log m})^2}.
-\intertext{As \(M\) is a random variable, depending on \(x\) and \(y\), it is necessary to find an inequality for this probability. More specifically, consider the upper bound, which can be shown by substituting}
-M = \frac{\log u}{\log m}, \\
-\text{Pr}(B_k(x) = B_k(y)) < \frac{\frac{\log u}{\log m}}{(\frac{\log u}{\log m})^2}, \\
-\text{Pr}(B_k(x) = B_k(y)) < \frac{1}{\frac{\log u}{\log m}}, \\
-\text{Pr}(B_k(x) = B_k(y)) < \frac{\log m}{\log u}, \\
+\text{Pr}[k \neq l-1] = \frac{l-1}{l}
+\text{Pr}[B_k(x) = B_k(y)] = \frac{l-1}{l} = 1 - \frac{1}{l}
+1 - \frac{1}{l} = 1 - \frac{\log m}{\log u}
+\intertext{In order for this to meet the weakly universal condition,}
+\text{Pr}[B_k(x) = B_k(y)] = 1 - \frac{\log m}{\log u} \leq \frac{1}{m}.
 \end{align*}
 
-In order for this to be weakly universal, this probability, and thus the latter term of the above, must satisfy
-\begin{align*}
-\text{Pr}(B_k(x) = B_k(y)) < \frac{\log m}{\log u} \leq \frac{1}{m}.
-\intertext{This can be rearranged as follows:}
-\frac{\log m}{\log u} \leq \frac{1}{m} \\
-m \log m \leq \log u.
-\end{align*}
-
-Some conditions exist on \(u\) and \(m\), they are:
+In order to simplify this inequality, consider the restrictions on \(u\) and \(m\):
 \begin{align*}
 u > m, \\
-\log m | \log u, \text{or,} \log u = a \log m, \\
+\log m | \log u, \text{or,} \log u = a \log m, a \in \mathbb{N}, a \geq 2, \\
 2^{\log u} = 2^{a \log m}, \\
 u = m^a.
 \end{align*}
 
-This observation of the relationship between \(u\) and \(m\), namely that \(u = m^a\) for some integer value \(a \geq 2\), gives
+Rearranging the probability equation and substituting this gives
 \begin{align*}
-m \log m \leq \log u, \\
-m \log m \leq \log m^a, \\
-2^m * m \leq m^a, \\
-2^m \leq m^(a-1)
+1 - \frac{\log m}{\log u} \leq \frac{1}{m}, \\
+m \log u - m \log m \leq \log u, \\
+m \log m^a - m \log m \leq \log m^a, \\
+am \log m - m \log m \leq a \log m, \\
+am - m \leq a, \\
+m(a-1) \leq a, \\
+m \leq \frac{a}{a-1}.
+\intertext{Observe that both \(m\) and \(a\) are integers, and \(a \geq 2\), \(m \geq 2\). (Trivially, \(m\) must be at least \(2\) in order for the hash function to be useful at all.) With this information, it is clear that}
+max(\frac{a}{a-1}) = 2,
+\intertext{and}
+\frac{a}{a-1} \xrightarrow 1 \text{ as } a \xrightarrow \infty.
+\intertext{Thus, clearly for any other value of \(a\) and \(m\), it is untrue that}
+m \leq \frac{a}{a-1}.
+\end{align*}
 
+This contradiction shows that \(H_2\) cannot possibly be a weakly universal set
+of hash functions, except for the corner case where \(m = 2\) and \(a = 2\),
+i.e. \(u = m^2 = 4\).
 
 % Force to question 2
 \setcounter{section}{1}
