@@ -266,6 +266,13 @@ for i in range(0, n - m):
 return D
 \end{lstlisting}
 
+An intuitive overview of this algorithm is given by considering it as a modified
+version of the kangaroo algorithm. For every alignment of the pattern in the
+text, an LCP query is used to find the distance to the next mismatch. This
+distance is used to calculate the cost, and increment the position of the inner
+loop. This inner loop breaks when either the end of the pattern/text is reached
+by the 'hop', or the total cost exceeds the parameter \(k\).
+
 \subsubsection{Time Complexity}
 
 This algorithm runs in \(O(nk)\) time. This can be shown by considering that the
