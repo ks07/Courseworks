@@ -387,6 +387,44 @@ Thus, as \(m > 0\), this is clearly a contradiction, and the loop must not
 iterate more than \(\sqrt{k}\) times without exceeding \(k\). Therefore, in this
 case, the algorithm is in \(O(n \sqrt k)\).
 
+\subsubsection{\(k > m\)}
+
+Again, assume that the inner loop iterates more than \(\sqrt{k}\), thus the number of
+mismatches, \(e\), in the current alignment must satisfy \(e > \sqrt{k}\),
+whilst the total cost, \(TC\), must satisfy \(TC < k\). From subsection
+\ref{subsec:nrkspeckspread}, note that \(TC = 1 + \frac{e^2m}{m-1}\). In the case
+that \(k > m\),
+\begin{align*}
+TC = 1 + \frac{e^2m}{m-1} < k, \\
+e > \sqrt{k}, \text{ so } e = \sqrt{k} + a, a > 0 \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+m - 1 + m(k + 2a \sqrt{k} + a^2) < km - k, \\
+m - 1 + km + 2ma \sqrt{k} + ma^2 < km - k, \\
+m + 2ma \sqrt{k} + ma^2 < 1 - k, \\
+k > m, \text{ so } k = m - b, m > b > 0 \\
+m + 2ma \sqrt{m - b} + ma^2 < 1 - m + b, \\
+2m + 2ma \sqrt{m - b} + ma^2 < 1 + b, \\
+m(2 + 2a \sqrt{m - b} + a^2) < 1 + b,
+\intertext{As \(a > 0\), consider the lower bound of \(a\) to get}
+m(2 + 0 + 0) < 1 + b,
+\intertext{as \(\sqrt{m - b} > 0\). Subtracting \(1\) gives}
+2m - 1 < b.
+\intertext{Then note that, with the bounds of \(b\), \(m > b > 0\), even for the largest \(b\), i.e. \(b = m - 1\),}
+2m - 1 < m - 1, \\
+2m < m, \\
+2 < 1.
+\end{align*}
+Thus this is clearly a contradiction, and the loop must not iterate more than
+\(\sqrt{k}\) times without exceeding \(k\). Therefore, in this case, the
+algorithm is in \(O(n \sqrt k)\).
+
+\subsubsection{General Conclusion}
+
+It has been shown that the algorithm must be \(O(n \sqrt k)\) time complexity
+when \(k = m\), when \(k < m\), and when \(k > m\). As these proofs cover all
+possible values of \(k\), clearly the algorithm must have \(O(n \sqrt k)\) time
+complexity for all choices of \(k\).
 
 % Force to question 3
 \setcounter{section}{2}
