@@ -141,11 +141,13 @@ expanding the above statement to:
 \end{align*}
 
 Now that z has been shown irrelevant to the weakly universal condition, the
-proof relies solely on the choice of \(k\), and the probability that a given
-chunk will be identical to the corresponding chunk in the second key. As \(k \in
-[\frac{\log u}{\log m}]\), and \(k\) is selected uniformly randomly,
-\(\text{Pr}(k = j) = \frac{1}{\frac{\log u}{\log m}} = \frac{\log m}{\log u}\),
-for any \(j\).
+proof relies solely on the choice of \(k\), and the probability that the
+relevant chunk will be identical to the corresponding chunk in the second key.
+As \(k \in [\frac{\log u}{\log m}]\), and \(k\) is selected uniformly randomly,
+\begin{align*}
+\text{Pr}(k = j) = \frac{1}{\frac{\log u}{\log m}} = \frac{\log m}{\log u},
+\end{align*}
+for all \(j \in [\frac{\log u}{\log m}]\).
 
 The probability that two corresponding chunks of two keys, \(B_j(x)\) and \(B_j(y)\), are equal, for some fixed \(j \in [\frac{\log u}{\log m}]\), is given by
 \begin{align*}
@@ -163,22 +165,22 @@ Intuitively, \(y\) is identical to \(x\), apart from the very last block. This
 could be achieved with an operation such as \(y = x \xor 1\).
 
 In this \(x,y\) pair, as previously shown, the probability of \(k = l-1\) is
-\(\frac{1}{l}\). Conversely, the probability of selecting any value of k not
-equal to \(l-1\) is \(\frac{l-1}{l}\). Taking this into account, an expression
-for the probability of selecting identical blocks, and thus producing identical
-hash outputs, is given by
+\(\frac{1}{l}\). Conversely, the probability of selecting any value \(k \neq
+l-1\) is \(\frac{l-1}{l}\). Taking this into account, an expression for the
+probability of selecting identical blocks, and thus producing identical hash
+outputs, is given by
 \begin{align*}
-\text{Pr}[k \neq l-1] = \frac{l-1}{l}
-\text{Pr}[B_k(x) = B_k(y)] = \frac{l-1}{l} = 1 - \frac{1}{l}
-1 - \frac{1}{l} = 1 - \frac{\log m}{\log u}
+\text{Pr}[k \neq l-1] = \frac{l-1}{l}, \\
+\text{Pr}[B_k(x) = B_k(y)] = \frac{l-1}{l} = 1 - \frac{1}{l}, \\
+1 - \frac{1}{l} = 1 - \frac{\log m}{\log u}.
 \intertext{In order for this to meet the weakly universal condition,}
 \text{Pr}[B_k(x) = B_k(y)] = 1 - \frac{\log m}{\log u} \leq \frac{1}{m}.
 \end{align*}
 
-In order to simplify this inequality, consider the restrictions on \(u\) and \(m\):
+To simplify this inequality, consider the restrictions on \(u\) and \(m\):
 \begin{align*}
 u > m, \\
-\log m | \log u, \text{or,} \log u = a \log m, a \in \mathbb{N}, a \geq 2, \\
+\log m | \log u, \text{ or, } \log u = a \log m, a \in \mathbb{N}, a \geq 2, \\
 2^{\log u} = 2^{a \log m}, \\
 u = m^a.
 \end{align*}
@@ -195,14 +197,14 @@ m \leq \frac{a}{a-1}.
 \intertext{Observe that both \(m\) and \(a\) are integers, and \(a \geq 2\), \(m \geq 2\). (Trivially, \(m\) must be at least \(2\) in order for the hash function to be useful at all.) With this information, it is clear that}
 max(\frac{a}{a-1}) = 2,
 \intertext{and}
-\frac{a}{a-1} \xrightarrow 1 \text{ as } a \xrightarrow \infty.
-\intertext{Thus, clearly for any other value of \(a\) and \(m\), it is untrue that}
+\lim_{a \to \infty} \frac{a}{a-1} = 1.
+\intertext{Whilst this is trivially true when \(a = 2, m = 2\), clearly for any other values of \(a\) and \(m\), it is untrue that}
 m \leq \frac{a}{a-1}.
 \end{align*}
 
 This contradiction shows that \(H_2\) cannot possibly be a weakly universal set
 of hash functions, except for the corner case where \(m = 2\) and \(a = 2\),
-i.e. \(u = m^2 = 4\).
+i.e. \(u = m^2 = 4\). This corner case can be explained by considering that it would cause there to be only two possible blocks (or choices of \(k\)), and thus for distinct keys it must be a \(\frac{1}{2}\) probability of collision, which is equal to \(\frac{1}{m = 2}\).
 
 % Force to question 2
 \setcounter{section}{1}
