@@ -1,0 +1,1228 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{color}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{fancyhdr}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\pagestyle{fancy}
+\lhead{George Field}
+
+\pagenumbering{arabic}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+% Add 'Question' prefix to section numbering
+\renewcommand{\thesection}{Question \arabic{section}}
+% Redefine (sub-)subsection numbering to match the assignment
+\renewcommand{\thesubsection}{\arabic{section}.\roman{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\alph{subsubsection}}
+
+% Define an xor command that shows the oplus symbol
+\newcommand{\xor}{\oplus}
+
+\begin{document}
+
+% Question 1
+\section{Hash Functions}
+
+\subsection{\(H_1\) Output Probability}
+\label{subsec:h1outprob}
+
+\(h_z\) is picked uniformly at random from \(H_1\), thus the value of \(z\) is selected uniformly at random from \([m]\). The set of hash functions \(H_1\) is based upon splitting the input key, \(x\), into \(l\) bit strings of \(\log m\) bits. As \(x\) can be any value in \(U\), and likewise \(z\) can be any value in \([m]\) we can say that
+\begin{align*}
+\forall b \in x, \text{Pr}(b = 1) = \frac{1}{2}
+\intertext{and}
+\forall b \in z, \text{Pr}(b = 1) = \frac{1}{2},
+\end{align*}
+where \(b\) denotes a single bit. The hash function \(h_z\) uses the XOR
+operation to combine both \(z\) and all the bit strings in \(x\). By observing
+the truth table of the XOR operation, it is clear that there is an equal
+probability of either outcome when supplied with two random input bits. Thus, a
+bitwise XOR performed on two bitstrings, (\(A, B\)) of length \(\log m\) must
+produce output satisfying \(\forall b \in A \xor B, \text{Pr}(b = 1) =
+\frac{1}{2},\) which is equivalent to \(\text{Pr}(A \xor B = v) =
+\frac{1}{m},\) where \(v \in [m]\). Performing the XOR operation on \(v\) with
+another uniformly random bitstring will again give equal probability as in the
+above expression involving \(A\) and \(B\). Therefore, as the hash function
+\(h_z\) repeatedly applies the XOR operation in this manner, it must be the case
+that \(\text{Pr}(h(x) = j) = \frac{1}{m}\), where \(j \in [m]\) and \(x \in U\).
+
+\subsection{\(H_1\) - Not a Weakly Universal Set of Hash Functions}
+
+From the lecture slides, week 2, a set of hash functions is weakly universal if,
+\begin{align*}
+\forall x,y \in U, x \neq y, \text{Pr}(h(x) = h(y)) \leq \frac{1}{m},
+\end{align*}
+where \(h\) is chosen uniformly at random from \(H\). To disprove that \(H_1\)
+is such a set, it is sufficient to show that a pair of keys can be selected that
+result in a probability of greater than \(\frac{1}{m}\). Consider that the XOR
+operation is both associative and commutative. This means that \(b_0 \xor b_1
+\xor b_2\) is equivalent to \(b_2 \xor b_1 \xor b_0\), or any other permutation
+of the operations on the three bits. Performing bitwise XOR over multiple
+bitstrings must also follow this behaviour. Therefore, consider an input key
+\(x\), of length \(\log u = 9\), with \(\log m = 3\):
+\begin{align*}
+x = \{\, x_0, x_1, \ldots, x_8 \,\} \\
+x = \{\, B_0(x), B_1(x), B_2(x) \,\} \\
+B_i(x) = \{\, x_{i \log m}, \ldots, x_{(i+1) \log m - 1} \,\} \\
+|z| = |B_i(x)| \\
+h_z(x) = z \xor B_0 \xor B_1 \xor B_2
+\end{align*}
+Then, consider another input key \(y\), which is constructed as a permutation of
+the set of \(B_i(x)\). For example,
+\begin{align*}
+y = \{\, B_0(y) (= B_2(x)), B_1(y) (= B_1(x)), B_2(y) (= B_0(x)) \,\}.
+\end{align*}
+Considering the earlier comments on the XOR operation, the following is trivially true:
+\begin{align*}
+B_0(y) \xor B_1(y) \xor B_2(y) = B_0(x) \xor B_1(x) \xor B_2(x).
+\intertext{Therefore, we can say that}
+\forall h \in H_1, \text{Pr}(h(x) = h(y)) = 1.
+\end{align*}
+
+This contradicts the definition of a weakly universal set of hash
+functions. Thus, \(H_1\) cannot possibly be a weakly universal set of hash
+functions, as we can select a pair of keys that will produce the same output
+regardless of the value of \(z\) (i.e. the chosen \(h\)).
+
+\subsection{\(H_2\) Output Probability}
+
+The family of hash functions \(H_2\) differs from that of \(H_1\) in that the
+randomly selected value of \(z\) is XOR'ed with a randomly selected block of the
+input key (where both \(z\) and \(k\) are selected uniformly randomly), as
+opposed to all key blocks. Similarly to \(H_1\), \(H_2\) is based upon splitting
+the input key, \(x\), into \(l\) bit strings of \(\log m\) bits, denoted
+\(B_k(x)\). As \(x\) can be any value in \(U\), and likewise \(z\) can be any
+value in \([m]\) we can again say that
+\begin{align*}
+\forall b \in x, \text{Pr}(b = 1) = \frac{1}{2}
+\intertext{and}
+\forall b \in z, \text{Pr}(b = 1) = \frac{1}{2},
+\end{align*}
+where \(b\) denotes a single bit. The hash function \(h_z\) uses the XOR
+operation to combine both \(z\) and a bit string \(B_k(x)\). As argued in
+subsection \ref{subsec:h1outprob}, a bitwise XOR performed on two bitstrings,
+(\(z, B_k(x)\)) of length \(\log m\) must produce output satisfying
+\(\text{Pr}(z \xor B_k(x) = j) = \frac{1}{m}, \forall j \in [m], \forall x \in
+U\). As \(h'_{z,k}(x) = z \xor B_k(x)\), it must be the case that \(\forall j
+\in m, \forall x \in U, h \in H_2, \text{Pr}(h(x) = j) = \frac{1}{m}.\)
+
+\subsection{\(H_2\) - A Weakly Universal Set of Hash Functions?}
+
+For \(H_2\) to be weakly universal, it would need to be the case that,
+\begin{align*}
+\forall x,y \in U, x \neq y, \text{Pr}(h(x) = h(y)) \leq \frac{1}{m},
+\end{align*}
+where \(h\) is chosen uniformly at random from \(H_2\). The hash functions here
+perform an XOR between a uniformly random \(z\) and a chunk of \(x\). As this
+\(z\) value is part of the selected \(h\), \(z\) can be disregarded when
+considering the probability of two hash function outputs. This can be shown by
+considering that XOR is it's own inverse, i.e. \(a \xor b \xor a = b\), then
+expanding the above statement to:
+\begin{align*}
+\forall x,y \in U, x \neq y, \text{Pr}(z \xor B_k(x) = z \xor B_k(y)) \leq \frac{1}{m},
+\intertext{and then cancelling the z factors from both sides,}
+\forall x,y \in U, x \neq y, \text{Pr}(z \xor B_k(x) \xor z = z \xor B_k(y) \xor z) \leq \frac{1}{m}, \\
+\forall x,y \in U, x \neq y, \text{Pr}(B_k(x) = B_k(y)) \leq \frac{1}{m}.
+\end{align*}
+
+Now that z has been shown irrelevant to the weakly universal condition, the
+proof relies solely on the choice of \(k\), and the probability that the
+relevant chunk will be identical to the corresponding chunk in the second key.
+As \(k \in [\frac{\log u}{\log m}]\), and \(k\) is selected uniformly randomly,
+\begin{align*}
+\text{Pr}(k = j) = \frac{1}{\frac{\log u}{\log m}} = \frac{\log m}{\log u},
+\end{align*}
+for all \(j \in [\frac{\log u}{\log m}]\).
+
+The probability that two corresponding chunks of two keys, \(B_j(x)\) and \(B_j(y)\), are equal, for some fixed \(j \in [\frac{\log u}{\log m}]\), is given by
+\begin{align*}
+\text{Pr}(B_j(x) = B_j(y)) = \frac{M}{\frac{\log u}{\log m}},
+\intertext{where \(M\) is the number of matching chunks, i.e. the number of values of \(k\) such that}
+B_k(x) = B_k(y).
+\intertext{Select some input key \(x\), and create a distinct, related \(y\) such that}
+l = \frac{\log u}{\log m}, \\
+x = \{\, B_0(x), B_1(x), \ldots, B_{l-2}(x), B_{l-1}(x) \,\}, \\
+y = \{\, B_0(x), B_1(x), \ldots, B_{l-2}(x), B_{l-1}(y) \,\}, \\
+B_{l-1}(y) \neq B_{l-1}(x), \\
+\forall i \in [l-2], B_i(y) = B_i(x).
+\end{align*}
+Intuitively, \(y\) is identical to \(x\), apart from the very last block. This
+could be achieved with an operation such as \(y = x \xor 1\).
+
+In this \(x,y\) pair, as previously shown, the probability of \(k = l-1\) is
+\(\frac{1}{l}\). Conversely, the probability of selecting any value \(k \neq
+l-1\) is \(\frac{l-1}{l}\). Taking this into account, an expression for the
+probability of selecting identical blocks, and thus producing identical hash
+outputs, is given by
+\begin{align*}
+\text{Pr}[k \neq l-1] = \frac{l-1}{l}, \\
+\text{Pr}[B_k(x) = B_k(y)] = \frac{l-1}{l} = 1 - \frac{1}{l}, \\
+1 - \frac{1}{l} = 1 - \frac{\log m}{\log u}.
+\intertext{In order for this to meet the weakly universal condition,}
+\text{Pr}[B_k(x) = B_k(y)] = 1 - \frac{\log m}{\log u} \leq \frac{1}{m}.
+\end{align*}
+
+To simplify this inequality, consider the restrictions on \(u\) and \(m\):
+\begin{align*}
+u > m, \\
+\log m | \log u, \text{ or, } \log u = a \log m, a \in \mathbb{N}, a \geq 2, \\
+2^{\log u} = 2^{a \log m}, \\
+u = m^a.
+\end{align*}
+
+Rearranging the probability equation and substituting this gives
+\begin{align*}
+1 - \frac{\log m}{\log u} \leq \frac{1}{m}, \\
+m \log u - m \log m \leq \log u, \\
+m \log m^a - m \log m \leq \log m^a, \\
+am \log m - m \log m \leq a \log m, \\
+am - m \leq a, \\
+m(a-1) \leq a, \\
+m \leq \frac{a}{a-1}.
+\intertext{Observe that both \(m\) and \(a\) are integers, and \(a \geq 2\), \(m \geq 2\). (Trivially, \(m\) must be at least \(2\) in order for the hash function to be useful at all.) With this information, it is clear that}
+max(\frac{a}{a-1}) = 2,
+\intertext{and}
+\lim_{a \to \infty} \frac{a}{a-1} = 1.
+\intertext{Whilst this is trivially true when \(a = 2, m = 2\), clearly for any other values of \(a\) and \(m\), it is untrue that}
+m \leq \frac{a}{a-1}.
+\end{align*}
+
+This contradiction shows that \(H_2\) cannot possibly be a weakly universal set
+of hash functions, except for the corner case where \(m = 2\) and \(a = 2\),
+i.e. \(u = m^2 = 4\). This corner case can be explained by considering that it
+would cause there to be only two possible blocks (or choices of \(k\)), and thus
+for distinct keys it must be a \(\frac{1}{2}\) probability of collision, which
+is equal to \(\frac{1}{m = 2}\).
+
+% Force to question 2
+\setcounter{section}{1}
+% Question 2
+\section{k-Spread}
+
+\subsection{\(O(nk)\) Solution}
+\label{subsec:nkkspread}
+
+This algorithm requires preprocessing the input text and pattern for LCP
+queries, as described in the lecture slides, week 10. The LCP algorithm returns
+the length of the longest common prefix between a position in the text and a
+position in the pattern. The following pseudocode describes an algorithm to
+solve the k-spread problem.
+
+\begin{lstlisting}
+# Receive as input a text string T of length n, a pattern string P of length m, and a non-negative integer k denoting the maximum cost of errors. The output, D, is an array of length n - m + 1.
+
+# Preprocess T and P in order to use LCP to find mismatches. (O(n))
+PreprocessLCP(T, P)
+
+# Loop through every position of P in T (O(n - m))
+for i in range(0, n - m):
+  TC = 0.0
+  j = 0
+  # Find the length until the first mismatch using an LCP query (O(1))
+  L = LCP(i, j)
+
+  if L < m:
+    # There is at least 1 error. The first is always cost 1. (O(1))
+    TC = 1.0
+    # Jump to the index after the mismatch. (O(1))
+    i = i + L + 1
+    j = j + L + 1
+    # Loop finding errors until total cost exceeds k. (O(k))
+    while TC <= k:
+      # Look for the next mismatch and jump over it. (O(1))
+      L = LCP(i, j)
+      i = i + L + 1
+      j = j + L + 1
+      if j >= m or i >= n:
+        # Reached the end of either text or pattern, must stop. (O(1))
+        break
+      else:
+        # The cost of each error is calculated based on the distance to the previous. (O(1))
+        TC = TC + (m/(L+1))
+
+  # Check the found cost (O(1))
+  if TC > k:
+    # Set output to some constant X if it exceeds the cost
+    D[i] = X
+  else:
+    D[i] = TC
+
+# D should now hold the cost values for every position of P in T (O(1))
+return D
+\end{lstlisting}
+
+An intuitive overview of this algorithm is given by considering it as a modified
+version of the kangaroo algorithm. For every alignment of the pattern in the
+text, an LCP query is used to find the distance to the next mismatch. This
+distance is used to calculate the cost, and increment the position of the inner
+loop. This inner loop breaks when either the end of the pattern/text is reached
+by the 'hop', or the total cost exceeds the parameter \(k\).
+
+\subsubsection{Time Complexity}
+
+This algorithm runs in \(O(nk)\) time. This can be shown by considering that the
+algorithm is required to calculate a value for every \(d_s(i)\), where \(i \in
+\{\, 0 ... n-m+1 \,\}\). As \(0 < m \leq n\), the \(O(n-m)\) factor can be
+simplified to \(O(n)\). The input to the algorithm is preprocessed for LCP
+queries, as described in the lecture slides week 10, in \(O(n)\) time. For each
+calculation of \(d_s(i)\), the distance to the next mismatch is calculated using
+an LCP query, also described in the lecture slides, taking constant (\(O(1)\))
+time. This calculation is performed repeatedly, along with some other constant
+time operations, until the total cost, \(TC \text{ a.k.a. } d_s(i)\), exceeds the
+limit \(k\), or the LCP query finds no mismatches up to the end of the
+pattern. If there are no more mismatches present in the current alignment of the
+pattern and text, the inner loop body will perform a single LCP query, and then
+break out of the loop, thus taking \(O(1)\) time. Therefore, the worst case time
+complexity must be exhibited when the number of mismatches is maximised. The
+cost of the first error found is \(1.0\), with further errors having a cost,
+\(C\), of \(m/L\), where \(L\) is the distance to the previous error. As \(L
+\leq m\), \(C \geq 1.0\). Therefore, the upper bound of \(TC\), \(k\) must be
+hit in at most \(k/1.0=k\) errors, thus giving a time complexity of the inner
+loop of \(O(k)\). Combined with the time factor from the outer loop, and the
+preprocessing time, this gives an overall time complexity of \(O(nk + n)\),
+which is equivalent to \(O(nk)\).
+
+\subsubsection{Correctness}
+
+From the lecture slides, week 10, \(LCP(i,j)\) returns the largest integer \(L\) such that:
+\begin{align*}
+T[i...i+L-1]=P[j...j+L-1],
+\intertext{or alternatively,}
+T[i+L] \neq P[j+L].
+\end{align*}
+Therefore, if \(j+L+1 \geq m\) (or indeed the equivalent argument for \(i\)),
+there must be no further mismatches between \(P\) and \(T\) from their
+respective positions \(j\) and \(i\) to the end of \(P\). Conversely, if \(j+L+1
+< m\), there must be an error present at position \(j+L\). Therefore, the
+strategy of the algorithm of 'jumping' to the position (\(i+L+1\), \(j+L+1\)),
+i.e. calculating \(LCP(i+L+1,j+L+1)\), must not skip over any errors in the
+current alignment, other than the one just identified. Thus it remains only to
+show that the cost of each error is calculated correctly. This is the case as
+the algorithm uses the value of \(L\) returned by \(LCP(i,j)\) in the cost
+calculation. As previously stated, a mismatch must be present at position
+\(j+L\). The value of \(j\) is set to the index after the previous error, thus
+their must be an error at \(j-1\). This gives the distance between the two
+errors of \((j+L) - (j-1) = L+1\).
+
+These searches and cost calculations are repeated for every \(i \in \{\, 0
+... n-m+1 \,\}\), and the cost is stored in \(D[i]\). This value is checked
+every iteration, and set to the desired \(X\) if \(TC > k\). Thus it must be the
+case that the output \(D\) is correct.
+
+\subsection{\(O(n \sqrt k)\) Solution With \(k=m\)}
+\label{subsec:nrkspeckspread}
+
+The algorithm shown in subsection \ref{subsec:nkkspread} satisfies the time complexity requirement of \(O(n \sqrt k)\) when \(k=m\), without alteration. This can be proved by reconsidering the bounds on the inner loop that was previously argued to be \(O(k)\) due to the minimum cost of a mismatch being \(1.0\). Whilst this is certainly the case, the cost of a mismatch can only be \(1.0\) in two specific circumstances; the first error always has a cost of \(1.0\), and the only other errors that can cost this little must have a distance \(l=m\). As this distance is equal to the length of the pattern, it is only possible for this error to be at position \(m-1\)\footnote{Considering that array and string indices are 0-based.}, with the previous error at position \(0\). Moving these errors closer together increases the cost, as does inserting mismatches between the two. Thus all errors can only have a cost of \(1.0\) per error if there are at most \(2\) mismatches present.
+
+It is thus required to show if, when \(k=m\), the loop will exit before encountering more than \(\sqrt m\) mismatches (as in the previous subsection it was shown the loop performs constant time operations for each iteration). If this is the case, it implies that if the loop hits the restriction of total cost, it must do so by encountering less than \(\sqrt m\) mismatches. To prove this by contradiction, suppose that there exists some text \(T\), that, at position \(i\) with some pattern \(P\), there are more than \(\sqrt m\) mismatches with \(TC \leq k\). In order to maximise the number of mismatches without exceeding \(k\), the first error must be at position \(0\) (as any added space before the first error will not change it's cost from \(1.0\), whereas adding space after will reduce the cost of the next) and the last at position \(m-1\). Let \(e\) be the number of mismatches after the first in this configuration.
+
+The total cost of a set of mismatches is minimised when the mismatches are evenly spaced (as best as possible) throughout \(P\). This is because the calculation of per error cost (\(c\)) is (for all errors except the first) \(c=\frac{m}{l}\), where \(l\) is the distance between mismatches, thus \(c \propto \frac{1}{l}\). Where
+\begin{align*}
+x_0 > 0, \\
+a > 0,
+\intertext{and}
+b = 2a
+\intertext{it is true that}
+\frac{1}{x_0} + \frac{1}{x_0 + b} > 2 \frac{1}{x_0 + a}.
+\end{align*}
+
+Returning to the aformentioned configuration, let \(e\) be the number of mismatches after the first one (at position 0). With the assumption that \(e\) divides the remaining space in the pattern, \(m-1\), the equation for the total cost is given by
+\begin{align*}
+TC = 1 + e \frac{m}{\frac{m-1}{e}} = 1 + \frac{e^2m}{m-1}
+\intertext{For the loop to iterate more than \(\sqrt{(k=m)}\) times, \(e > \sqrt{(k=m)}\) and \(TC < (k = m)\). Assuming this is true,}
+m > 1 + \frac{e^2m}{m-1} \\
+m^2 - m > m - 1 + e^2m \\
+m^2 > 2m - 1 + e^2m \\
+m^2 - e^2m > 2m - 1 \\
+m - e^2 > 2 - \frac{1}{m} \\
+m > 2 - \frac{1}{m} + e^2
+\intertext{As \(e > \sqrt{m}\),}
+m > 2 - \frac{1}{m} + (\sqrt{m} + a)^2 \\
+m > 2 - \frac{1}{m} + m + 2a\sqrt{m} + a^2 \\
+0 > 2 - \frac{1}{m} + 2a\sqrt{m} + a^2
+\intertext{Then, as \(a \geq 0\),}
+0 > 2 - \frac{1}{m} \\
+\frac{1}{m} > 2 \\
+m < \frac{1}{2}
+\end{align*}
+This contradiction thus shows it is impossible to have more than \(1+ \sqrt k\) mismatches for a given \(i\) without the total cost exceeding \(k\), when \(k=m\). Thus this algorithm must be \(O(n\sqrt{k})\) for this special case.
+
+\subsection{\(O(n \sqrt k)\) General Solution}
+
+The algorithm described in subsection \ref{subsec:nkkspread} also has \(O(n \sqrt k)\) time complexity in the general case. Subsection \ref{subsec:nrkspeckspread} proved that this is the case when \(k = m\), thus it remains to show this is true both when \(k < m\) and \(k > m\). Note that \(0 \leq k \leq m^2\). Similarly to the previous subsection, the proofs presented here will continue from the assumption that the inner loop needs to be shown to iterate less than \(\sqrt{k}\) in order to meet the \(O(n \sqrt k)\) target.
+
+\subsubsection{\(k < m\)}
+
+Assume that the inner loop iterates more than \(\sqrt{k}\), thus the number of
+mismatches, \(e\), in the current alignment must satisfy \(e > \sqrt{k}\),
+whilst the total cost, \(TC\), must satisfy \(TC < k\). From subsection
+\ref{subsec:nrkspeckspread}, note that \(TC = 1 + \frac{e^2m}{m-1}\). In the case
+that \(k < m\),
+\begin{align*}
+TC = 1 + \frac{e^2m}{m-1} < k, \\
+e > \sqrt{k}, \text{ so } e = \sqrt{k} + a, a > 0 \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+m - 1 + m(k + 2a \sqrt{k} + a^2) < km - k, \\
+m - 1 + km + 2ma \sqrt{k} + ma^2 < km - k, \\
+m + 2ma \sqrt{k} + ma^2 < 1 - k, \\
+k < m, \text{ so } k = m + b, b > 0 \\
+m + 2ma \sqrt{m + b} + ma^2 < 1 - m - b, \\
+2m + 2ma \sqrt{m + b} + ma^2 + b < 1, \\
+m(2 + 2a \sqrt{m + b} + a^2) + b < 1.
+\intertext{As \(b > 0\), consider the lower bound of b to get}
+m(2 + 2a \sqrt{m} + a^2) < 1.
+\intertext{Then note that, with the lower bound of \(a > 0\),}
+m(2 + 0 + 0) < 1.
+\end{align*}
+Thus, as \(m > 0\), this is clearly a contradiction, and the loop must not
+iterate more than \(\sqrt{k}\) times without exceeding \(k\). Therefore, in this
+case, the algorithm is in \(O(n \sqrt k)\).
+
+\subsubsection{\(k > m\)}
+
+Again, assume that the inner loop iterates more than \(\sqrt{k}\), thus the number of
+mismatches, \(e\), in the current alignment must satisfy \(e > \sqrt{k}\),
+whilst the total cost, \(TC\), must satisfy \(TC < k\). From subsection
+\ref{subsec:nrkspeckspread}, note that \(TC = 1 + \frac{e^2m}{m-1}\). In the case
+that \(k > m\),
+\begin{align*}
+TC = 1 + \frac{e^2m}{m-1} < k, \\
+e > \sqrt{k}, \text{ so } e = \sqrt{k} + a, a > 0 \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+TC = 1 + \frac{(\sqrt{k}+a)^2m}{m-1} < k, \\
+m - 1 + m(k + 2a \sqrt{k} + a^2) < km - k, \\
+m - 1 + km + 2ma \sqrt{k} + ma^2 < km - k, \\
+m + 2ma \sqrt{k} + ma^2 < 1 - k, \\
+k > m, \text{ so } k = m - b, m > b > 0 \\
+m + 2ma \sqrt{m - b} + ma^2 < 1 - m + b, \\
+2m + 2ma \sqrt{m - b} + ma^2 < 1 + b, \\
+m(2 + 2a \sqrt{m - b} + a^2) < 1 + b,
+\intertext{As \(a > 0\), consider the lower bound of \(a\) to get}
+m(2 + 0 + 0) < 1 + b,
+\intertext{as \(\sqrt{m - b} > 0\). Subtracting \(1\) gives}
+2m - 1 < b.
+\intertext{Then note that, with the bounds of \(b\), \(m > b > 0\), even for the largest \(b\), i.e. \(b = m - 1\),}
+2m - 1 < m - 1, \\
+2m < m, \\
+2 < 1.
+\end{align*}
+Thus this is clearly a contradiction, and the loop must not iterate more than
+\(\sqrt{k}\) times without exceeding \(k\). Therefore, in this case, the
+algorithm is in \(O(n \sqrt k)\).
+
+\subsubsection{General Conclusion}
+
+It has been shown that the algorithm must be \(O(n \sqrt k)\) time complexity
+when \(k = m\), when \(k < m\), and when \(k > m\). As these proofs cover all
+possible values of \(k\), clearly the algorithm must have \(O(n \sqrt k)\) time
+complexity for all choices of \(k\).
+
+% Force to question 3
+\setcounter{section}{2}
+% Question 3
+\section{Range Counting}
+
+\subsection{1-Dimension}
+\label{subsec:1drangecount}
+
+The approach to performing 1D range counting is very similar to the 1D range
+searching problem as detailed in the lecture slides, week 11. The algorithm
+requires sorting the input set \(S\) into an array, thus occupying \(O(n)\)
+space and taking \(O(n \log n)\) preprocessing time. This sort could be
+performed using HeapSort, which is \(O(n \log n)\) - no further preprocessing
+is required. Performing count queries on this structure is then a simple matter
+of performing binary search twice upon the array, once to find the
+successor\footnote{The successor of a value \(x\) in a set \(S\) is the
+ smallest \(x_s \in S\) such that \(x_s \geq x\). Similarly, the predecessor
+ of \(x\) in \(S\) is the smallest \(x_p \in S\) such that \(x_p \geq x\).} of
+\(x_1\), and again to find the predecessor\footnotemark[\value{footnote}] of
+\(x_2\). Binary search is in \(O(\log n)\), thus performing it twice gives us
+\(O(2 \log n)\), that is equivalent to \(O(\log n)\). The final step is a
+simple \(O(1)\) subtraction operation on the indices returned from binary
+search, giving the count of elements in the range \(x_1 \leq x \leq x_2\). The
+following pseudocode outlines this algorithm.
+
+\begin{lstlisting}
+# Receive as input a set S of n 1D points, and two bounds X1 and X2
+
+# Sort the input set using an O(n log n) algorithm
+Sorted = NlogNSort(S)
+
+# Use binary search to find the index of the successor of X1 (O(log n))
+SuccessorX1 = SuccBinarySearch(Sorted, X1)
+# Use binary search again to find index of the predecessor of X2 (O(log n))
+PredecessorX2 = PredBinarySearch(Sorted, X2)
+
+# Take the difference of the two returned indices (O(1))
+k = PredecessorX2 - SuccessorX1
+
+# k should now hold the number of elements in the given range
+return k
+\end{lstlisting}
+
+As previously mentioned, in the above pseudocode the sorting step could be
+implemented using HeapSort. The two functions SuccBinarySearch and
+PredBinarySearch find the index\footnote{Note that the definition of successor
+ and predecessor have been altered slightly here, to account for the corner
+ case where the value being searched for is greater than the largest element
+ of \(S\). In this case, the index returned should be \(|S|\), presuming a
+ 0-based indexing system.} of the successor and predecessor of a given value
+in the supplied sorted array, respectively. In the Python programming language,
+the bisect module provides implementations of binary search that can be used to
+perform these operations.
+
+\subsubsection{Correctness}
+
+As \(Sorted\) is a sorted array, it holds that
+\begin{align*}
+\forall x_i, x_{i+1} \in Sorted : x_i \leq x_{i+1}.
+\intertext{SuccBinarySearch finds the value of \(i_s\), given some \(x_1\), such that}
+\forall x_i \in Sorted, i \geq i_s : x_1 \leq x_i.
+\intertext{Similarly, PredBinarySearch finds \(i_p\), given some \(x_2\), such that}
+\forall x_i \in Sorted, i < i_p : x_i \leq x_2.
+\intertext{Combining these three properties, therefore}
+\forall i \in \mathbb{N}_0, i \geq i_s, i < i_p : x_1 \leq Sorted_i \leq x_2.
+\intertext{\(Sorted\) is contiguous, thus we can say that}
+i_p - i_s = k
+\intertext{where}
+k = |X|, X = \{\, x : x \in U, x_1 \leq x \leq x_2 \,\}.
+\end{align*}
+
+To summarise, as \(Sorted\) is a sorted array, we can find the smallest and
+largest elements in the desired range using binary search. We can then subtract
+the difference in indices of the smallest element, and the element following
+the largest. This will give us the number of elements, \(k\), in the desired
+query range.
+
+\subsection{2-Dimensional}
+\label{subsec:2drangecount}
+
+Expanding the range counting problem into 2 dimensions requires building a
+balanced binary tree\footnote{For example, an AVL tree.}, using one dimension
+as the key. To ease explanation with regards to the 1-Dimensional case, the
+\(y\) coordinate will be used to build this tree. Each node in the tree will
+represent a single point in \(U\), and so will store an additional field that
+is the \(x\) coordinate. Additionally, in order to meet the desired worst-case
+time guarantees, each node will hold a sorted array, in the same manner as
+subsection \ref{subsec:1drangecount}. The elements of this array will be the
+\(y\) coordinates of all points in the subtree rooted at this node (thus also
+including this node's \(y\) value).
+
+This data structure requires \(O(n \log n)\) space. This is explained by the
+lecture slides, week 11, where each level of the tree holds nodes containing
+arrays that are disjoint subsets of \(U\). Each node also holds an extra
+element for the associated \(x\) coordinate, taking up an additional \(O(n)\)
+space. Thus, the data structure is \(O(n \log n + n)\), which is equivalent to
+\(O(n \log n)\).
+
+The preprocessing time for this data structure is also similar to the lecture
+slides. The only thing not explicitly stated in the slides that is present here
+is that each node also holds \(y\). These can simply be inserted whilst
+creating the tree, thus not increasing the worst case preprocessing time.
+
+Performing a range counting query on this structure requires searching the tree
+for the split node. Then, the successor of \(y_1\) must be found in the tree,
+by recursing down the tree from the split. At each node along the search path,
+if that node's \(x\) coordinate is within the desired range, the node's \(y\)
+coordinate should be checked, and the count should be incremented by \(1\). The
+algorithm then checks the right child of the current node, and performs the 1D
+range counting algorithm (subsection \ref{subsec:1drangecount}), adding the
+returned count to the running total. This algorithm is detailed in the
+following pseudocode:
+
+\begin{lstlisting}
+# Receive as input four bounds (X1,Y1) and (X2,Y2) and the preprocessed tree data structure rooted at Root
+
+# Search the tree from root, returning the node where the searches for Y1 and Y2 would diverge - i.e. the highest node in the tree with Y1 <= Y <= Y2 (O(log n))
+Split = FindSplit(Root, Y1, Y2)
+
+# Check that the region between Y1 and Y2 actually intersects with U (O(1))
+if Split is None:
+  # Y1 > max(U.y) or Y2 < min(U.y)
+  return 0
+
+# Initialise the count, k, to 0 (O(1))
+k = 0
+
+# Check the x coordinate held in Split, and add this to the count if suitable (O(1))
+if X1 <= Split.x <= X2:
+  k = k + 1
+
+# Search down the tree for the successor of Y1. (O(log n) iterations)
+Current = Split.left
+while Current is not None:
+  if Y1 <= Current.y:
+    # Count this node if the X coordinate is within range. (O(1))
+    if X1 <= Current.x <= X2:
+      k = k + 1
+
+    # The entire right subtree must be within the Y range. (O(log n))
+    k_right = RangeCount1D(Current.right.sorted, X1, X2)
+    k = k + k_right
+
+    # Recurse to the left subtree. (O(1))
+    Current = Current.left
+  else:
+    # This node is outside the range, recurse to the right subtree. (O(1))
+    Current = Current.right
+
+# Search down the tree for the predecessor of Y2. (O(log n) iterations)
+Current = Split.right
+while Current is not None:
+  if Current.y <= Y2:
+    # Count this node if the X coordinate is within range. (O(1))
+    if X1 <= Current.x <= X2:
+      k = k + 1
+
+    # The entire left subtree must be within the Y range. (O(log n))
+    k_left = RangeCount1D(Current.left.sorted, X1, X2)
+    k = k + k_left
+
+    # Recurse to the right subtree. (O(1))
+    Current = Current.right
+  else:
+    # This node is outside the range, recurse to the left subtree. (O(1))
+    Current = Current.left
+
+# k should now hold the number of elements in the given range
+return k
+\end{lstlisting}
+
+In the above pseudocode, \(Root\), \(Split\), and \(Current\) are nodes,
+holding properties that describe the corresponding coordinates (as \(Node.x\)
+and \(Node.y\)), the left and right child nodes (as \(Node.left\) and
+\(Node.right\), that are None if no child exists in that direction), and the
+sorted array of all x coordinates in the subtree rooted at that node (as
+\(Node.sorted\)). The algorithm RangeCount1D is that which is described in
+subsection \ref{subsec:1drangecount}.
+
+\subsubsection{Query Runtime Analysis}
+
+As is discussed in the lecture slides, week 11, and reasserted in the above
+pseudocode, findig the successor of \(y_1\) takes \(O(\log n)\) time. This is
+due to the search visiting only a single node at each level of the
+tree\footnote{More strictly, two nodes are visited at each level, including the
+ target of each 1DRangeCount invocation.}. As the tree is a balanced
+binary search tree, it has \(O(\log n)\) depth. At each level of the tree,
+there is a possible invocation of \(1DRangeCount\). As shown in subsection
+\ref{subsec:1drangecount}, this query is \(O(\log n)\), due to the binary
+searches performed on the sorted array. The other operations performed at each
+iteration of the search are all \(O(1)\). Therefore, the entire search
+operation for the predecessor of \(y_1\) is \(O(\log^2 n)\). Comparing this to
+the search for the predecessor of \(y_2\) reveals that the algorithm is the
+same but with mirrored comparisons and recursion directions. Thus this loop
+must also be \(O(\log^2 n)\), and the entire query algorithm must be in
+\(O(2\log^2 n)\), which is equivalent to \(O(\log^2 n)\).
+
+\subsubsection{Correctness}
+
+The definition of a binary search tree states that
+\begin{align*}
+\forall N \in TreeNodes : N_{Left} \leq N < N_{Right}
+\intertext{and (treating a node, n, as the set of nodes in the subtree rooted at n)}
+\forall N \in TreeNodes, \forall L \in N_{Left} : L \leq N \\
+\forall N \in TreeNodes, \forall R \in N_{Right} : N < R
+\intertext{The algorithm presented here adjusts this definition slightly, using (keyed) tuples as nodes, and ordering nodes based upon the \(y\) coordinate stored in each - e.g.}
+\forall N \in TreeNodes : y_{N_{Left}} \leq y_N < y_{N_{Right}}.
+\end{align*}
+
+This algorithm begins by searching for the highest node,
+\(Split\)\footnote{Closely related to the Lowest Common Ancestor in terms of
+ trees, albeit in this case we have no guarantee that the values we are
+ considering are actually nodes in the tree.}, such that
+\begin{align*}
+y_1 \leq y_{Split} \leq y_2
+\intertext{The algorithm then searches to the left of \(Split\) to find the leftmost (or lowest) leaf, \(L\), where}
+y_1 \leq y_L
+\intertext{From the binary tree definitions, all nodes to the left of split must have \(y\) values that do not exceed \(y_2\). Thus, at each node \(Curr\) in the search path, it can be shown that there are two possibilities based upon the value of \(y_{Curr}\) for each child's subtree, i.e.}
+\forall Curr \in LeftPath, \forall R \in Curr_{Right} :
+\begin{cases}
+y_1      \leq y_R \leq y_2 & \text{if } y_{Curr} \geq y_1 \\
+y_{Curr} \leq y_R \leq y_2 & \text{if } y_{Curr}   <  y_1
+\end{cases}&
+\intertext{and}
+\forall Curr \in LeftPath, \forall L \in Curr_{Left} :
+\begin{cases}
+y_L \leq y_{Curr} & \text{if } y_{Curr} \geq y_1 \\
+y_L   <  y_1      & \text{if } y_{Curr}   <  y_1
+\end{cases}&.
+\end{align*}
+Thus, at any point in the search path, there is a single subtree that is either
+completely excluded from the query range (and is not considered when modifying
+the total) or completely included in the query range in terms of the key
+dimension, \(y\) (and is thus considered in terms of the \(x\) coordinates using
+1DRangeCount. The opposite subtree may or may not contain points within the
+query range, and thus must be considered in terms of it's children - i.e. that
+child becomes \(Curr\), and the algorithm recurses another level down the
+tree. Clearly, this results in the running total being incremented for every
+single valid point in \(LeftPath\), apart from the point represented by \(Curr\)
+itself. However, the algorithm explicitly increments the running total by 1 if
+\(x_1 \leq x_{Curr} \leq x_2\) and \(y_1 \leq y_{Curr} \leq y_2\) for every
+\(Curr\).
+
+Once the algorithm has reached the end of the left search path (i.e. the point
+where the uncertain subtree is in fact empty), the same arguments can be applied
+to the right search path, which is nothing more than the mirror image of the
+left case. Therefore, we have shown that both the left and right search paths
+have accounted for all within range points either side of the Split. This leaves
+only the point stored at \(Split\) neglected, which is covered at the beginning
+of the algorithm with an explicit check of \(x_{Split}\). With the assumption
+that the 1DRangeCount algorithm has proven correctness (shown in subsection
+\ref{subsec:1drangecount}), this algorithm must return the count of elements in
+the desired range.
+
+\subsection{d-Dimensions}
+\label{subsec:ddrangecount}
+
+Generalising the 2-dimensional range counting problem into d-dimensions (\(d >
+1\)) is straightforward, as it involves expanding the tree structure used to
+\(d-1\) nested trees, where the innermost trees hold the sorted arrays of the
+final dimension. In other words, to create a data structure for querying in 3
+dimensions (\(d = 3\), with dimensions \(\{\,x,y,z\,\}\)), a balanced tree keyed
+by the third dimension (\(z\)) should be built. Each node in this tree should
+contain a 2D data structure (as described in subsection
+\ref{subsec:2drangecount}) for all points in the subtree rooted at that node. In
+terms of space, the 2D range counting structure is \(O(n \log n)\). As the outer
+tree is balanced, it has \(\log n\) levels, and each level contains up to \(n\)
+points, partitioned between the nodes on that level. Thus, the overall space is
+\(O(n \log^2 n)\). Expanding this to an extra dimension simply nests another
+tree over the existing trees, thus increasing the power on the log, giving a
+space requirement of \(O(n \log^{d-1} n)\).
+
+The preprocessing time to create this data structure is \(O(n \log^{d-1}
+n)\). This follows from the 2D situation in a similar manner to the space
+requirement, where each dimension requires a balanced tree, except for the
+first, which is comprised of sorted arrays.
+
+Performing a range counting query on this data structure is very similar to the
+2-dimensional case. The query can be performed in \(O(\log^d n)\) time, by
+searching down the outer-most tree from the split point, as in the 2D case. Each
+node considered along the search path will contain a nested structure for \(d -
+1\) dimensions, invoking the algorithm on this subset of the input
+dimensions. Eventually the algorithm will reach the base case of \(d = 2\),
+performing the algorithm described in subsection \ref{subsec:2drangecount}.
+
+\begin{lstlisting}
+# Receive as input the number of dimensions d, a list of bounds B = [l1, h1, l2, h2 ... ld, hd] and the preprocessed d-dimensional tree data structure rooted at Root.
+
+# If we are supplied an input of 2 dimensions, use the 2D algorithm as a base case. (O(n log^((d=2)-1) n))
+if d == 2:
+  return RangeCount2D(Root, (l1, l2), (l2, h2))
+else:
+  # Search the tree from root, returning the node where the searches for ld and hd would diverge - i.e. the highest node in the tree with ld <= v <= hd (O(log n))
+  Split = FindSplit(Root, ld, hd)
+
+  # Check that the region between ld and hd actually intersects with U (O(1))
+  if Split is None:
+    # ld > max(U.d) or hd < min(U.d)
+    return 0
+
+  # Initialise the count, k, to 0 (O(1))
+  k = 0
+
+  # Check point held in Split, and add this to the count if suitable (O(1))
+  if AllDimsInBounds(Split, B):
+    # ln <= Split.dims[n] <= hn, for all n
+    k = k + 1
+
+  # Search down the tree for the successor of ld. (O(log n) iterations)
+  Current = Split.left
+  while Current is not None:
+    if ld <= Current.dim[d]:
+      # Count this node if it's point is within range. (O(d))
+      if AllDimsInBounds(Current, B):
+        k = k + 1
+
+      # The entire right subtree must be within the [ld, hd] range, check lower dimensions. (O(log^(d-1) n))
+      k_right = RangeCountDD(Current.right.tree, d-1, B=[l1 ... h(d-1)])
+      k = k + k_right
+
+      # Recurse to the left subtree. (O(1))
+      Current = Current.left
+    else:
+      # This node is outside the range, recurse to the right subtree. (O(1))
+      Current = Current.right
+
+  # Search down the tree for the predecessor of hd. (O(log n) iterations)
+  Current = Split.right
+  while Current is not None:
+    if Current.dim[d] <= hd:
+      # Count this node if it's point is within range. (O(d))
+      if AllDimsInBounds(Current, B):
+        k = k + 1
+
+      # The entire left subtree must be within the [ld, hd] range, check lower dimensions. (O(log^(d-1) n))
+      k_left = RangeCountDD(Current.left.tree, d-1, B=[l1 ... h(d-1)])
+      k = k + k_left
+
+      # Recurse to the right subtree. (O(1))
+      Current = Current.right
+    else:
+      # This node is outside the range, recurse to the left subtree. (O(1))
+      Current = Current.left
+
+  # k should now hold the number of elements in the given range
+  return k
+\end{lstlisting}
+
+In the above pseudocode, \(Root\), \(Split\), and \(Current\) are nodes, holding
+properties that describe the corresponding coordinates (in an array \(Node.dim =
+[x, y, z ... d]\)), the left and right child nodes (as \(Node.left\) and
+\(Node.right\), that are None if no child exists in that direction), and either
+a \(d-1\)-dimensional tree structure of all points (in \(d-1\) dimensions) in
+the subtree rooted at that node (as \(Node.tree\)) where \(d-1 > 1\), or a
+sorted array for the base case where \(d-1 = 1\). The algorithm RangeCount2D is
+that which is described in subsection \ref{subsec:2drangecount}. This algorithm
+is recursive, i.e. it calls RangeCountDD. However, each call of RangeCountDD
+uses a dimensionality of \(d-1\), so this will eventually reach the base case of
+RangeCount2D. As \(d\) is constant (the data structure must be built before
+querying, thus the dimensionality is fixed before computation), these calls
+could be unrolled, but are left generic here for clarity and brevity. This pseudocode also utilises a function AllDimsInBounds, which, given an input point P and the list of bounds B, is defined as follows:
+\begin{displaymath}
+AllDimsInBounds_B(P) =
+\begin{cases}
+True  & \text{if } \forall q \in Dims : l_q \leq q_R \leq h_q \\
+False & \text{otherwise}
+\end{cases}
+\end{displaymath}
+
+\subsubsection{Query Runtime Analysis}
+
+The runtime of a range counting query using this algorithm and data structure is
+\(O(\log^d n)\). This can be proven inductively with assumption that the base
+case, i.e. 2-dimensional, is \(O(\log^2 n)\), which was proven previously in
+subsection \ref{subsec:2drangecount}. The \(d\)-dimensional query shown here
+simply builds upon that of the (\(d-1\))-dimensional query algorithm, by calling
+said algorithm upon any child node, N, connected to the successor and
+predecessor search paths, where \(ld \leq N.dim[d] \leq hd\). There are at most
+two child nodes per level of the tree that fit this criteria, and there are
+\(\log n\) levels in the balanced tree. A single dimension of the query thus
+takes \(O(\log n \times 2 \times Time_{d-1})\), where \(Time_{d-1}\) is the time
+complexity of the (\(d-1\))-dimensional query algorithm. Going back to the base
+case of \(d=2\), it follows that the overall time complexity of this algorithm
+is thus \(O(\log^d n)\).\footnote{For example, for \(d=3\), we get a complexity
+  of \(O(\log n \times 2 \times Time_{d-1})\), where \(Time_{d-1}\) is the time
+  of a 2D query, \(O(\log^2 n)\). This gives an overall time complexity of
+  \(O(\log^3 n)\).}
+
+\subsubsection{Correctness}
+
+The correctness of this algorithm in d-dimensions can be proven inductively, by
+building upon the proof put forward for correctness of the RangeCount2D
+algorithm (subsetion \ref{subsec:2drangecount} that acts as the base case of
+this algorithm. Here the same steps as the 2D algorithm are now performed,
+except we now check all D-dimensions for every point along the search path, and
+when an entire child's subtree is considered, the \(d-1\)-dimensional algorithm
+is called. As before, correctness can be explained using the definition of a
+binary search tree, which states
+\begin{align*}
+\forall N \in TreeNodes : N_{Left} \leq N < N_{Right}
+\intertext{and (treating a node, n, as the set of nodes in the subtree rooted at n)}
+\forall N \in TreeNodes, \forall L \in N_{Left} : L \leq N \\
+\forall N \in TreeNodes, \forall R \in N_{Right} : N < R
+\intertext{The algorithm presented here adjusts this definition slightly, using (keyed) tuples as nodes, and ordering nodes based upon the \(d\) coordinate stored in each - e.g.}
+\forall N \in TreeNodes : d_{N_{Left}} \leq d_N < d_{N_{Right}}.
+\end{align*}
+
+This algorithm begins by searching for the highest node, \(Split\), such that
+\begin{align*}
+l_d \leq d_{Split} \leq h_d
+\intertext{The algorithm then searches to the left of \(Split\) to find the leftmost (or lowest) leaf, \(L\), where}
+l_d \leq d_L
+\intertext{From the binary tree definitions, all nodes to the left of split must have \(d\) values that do not exceed \(h_d\). Thus, at each node \(Curr\) in the search path, it can be shown that there are two possibilities based upon the value of \(d_{Curr}\) for each child's subtree, i.e.}
+\forall Curr \in LeftPath, \forall R \in Curr_{Right} :
+\begin{cases}
+l_d      \leq d_R \leq h_d & \text{if } d_{Curr} \geq l_d \\
+d_{Curr} \leq d_R \leq h_d & \text{if } d_{Curr}   <  l_d
+\end{cases}&
+\intertext{and}
+\forall Curr \in LeftPath, \forall L \in Curr_{Left} :
+\begin{cases}
+d_L \leq d_{Curr} & \text{if } d_{Curr} \geq l_d \\
+d_L   <  l_d      & \text{if } d_{Curr}   <  l_d
+\end{cases}&.
+\end{align*}
+Thus, at any point in the search path, there is a single subtree that is either
+completely excluded from the query range (and is not considered when modifying
+the total) or completely included in the query range in terms of the key
+dimension, \(d\) (and is thus considered in terms of all \(d-1\) coordinates
+(\(x ... d-1\))), using RangeCountDD with \(d-1\). The opposite subtree may or
+may not contain points within the query range, and thus must be considered in
+terms of it's children - i.e. that child becomes \(Curr\), and the algorithm
+recurses another level down the tree. Clearly, this results in the running total
+being incremented for every single valid point in \(LeftPath\), apart from the
+point represented by \(Curr\) itself. However, the algorithm explicitly
+increments the running total by 1 if \(\forall p \in B : l_p \leq p_{Curr} \leq
+h_p\) for every \(Curr\).
+
+Once the algorithm has reached the end of the left search path (i.e. the point
+where the uncertain subtree is in fact empty), the same arguments can be applied
+to the right search path, which is nothing more than the mirror image of the
+left case. Therefore, we have shown that both the left and right search paths
+have accounted for all within range points either side of the Split. This leaves
+only the point stored at \(Split\) neglected, which is covered at the beginning
+of the algorithm with an explicit check of every dimension for that specific
+point. Thus this d-dimensional approach is proven correct, under the assumption
+that the (\(d-1\))-dimensional algorithm is correct. The base case of this
+algorithm, where \(d=2\), has previously been proven correct in subsection
+\ref{subsec:2drangecount}. Therefore, this algorithm must return the correct
+count of elements in the desired range, for the desired number of dimensions.
+
+\subsection{2D Triangle Counting}
+
+The d-dimensional range counting data structure and algorithm can be used to solve the 2D orthogonal range triangle counting problem. A trivial implementation can be created by treating each of the 6 coordinates that define a triangle as separate dimensions, whereby the 3 x coordinates share the same bounds, as do the 3 y coordinates. However, a more optimal algorithm can be defined that reduces each input triangle to a bounding rectangle, with sides parallel to the x and y axis. This bounding rectangle can be represented by two opposite corners, which can the be interpreted similarly to the 'six dimension' solution suggested previously.
+
+\subsubsection{Preprocessing and Space}
+
+The original input set \(S\), of \(n\) triangles (\(x_1, y_1, x_2, y_2, x_3, y_3\)), must be preprocessed into a set \(T\), of \(n\) bounding rectangles. This can be described by the following function:
+\begin{displaymath}
+BoundingRectangle(T) = (x_{min}, y_{min}, x_{max}, y_{max})
+\end{displaymath}
+where
+\begin{align*}
+x_{min} = min(x_1, x_2, x_3), \quad x_{max} = max(x_1, x_2, x_3)& \\
+y_{min} = min(y_1, y_2, y_3), \quad y_{max} = max(y_1, y_2, y_3)&
+\end{align*}
+This preprocessing step is \(O(n)\). The set \(T\) can then be used to build a
+4-dimensional data structure as described in subsection
+\ref{subsec:ddrangecount}, where each min/max coordinate is treated as a
+different pseudo-dimension. Thus, the overall preprocessing is \(O(n \log^3 n)\), with
+space of \(O(n \log^3 n)\).
+
+\subsubsection{Query Algorithm}
+
+The query algorithm used here is identical to that of the d-dimensional point
+solution, where \(d=4\), and \(B = (x_1, x_2, y_1, y_2, x_1, x_2, y_1,
+y_2)\). For the avoidance of confusion, throughout this section the dimensions
+will be labelled \(s\), \(t\), \(u\), and \(v\), representing \(x_{min}\),
+\(y_{min}\), \(x_{max}\), and \(y_{max}\) respectively. In order to perform the
+triangle counting algorithm, it is sufficient to use the d-dimensional query
+algorithm using the previously specified parameters. The bounds \(x_1\) and
+\(x_2\) are used as the bounds for \(s\) and \(u\), while \(y_1\) and \(y_2\)
+are used as the bounds for \(t\) and \(v\).
+
+\subsubsection{Runtime Analysis}
+
+As the query algorithm here is just a wrapper to the d-dimensional range
+counting algorithm, with \(d=4\), the time complexity is thus \(O(\log^4 n)\).
+
+\subsubsection{Correctness}
+
+Assuming that the d-dimensional range counting algorithm is correct (which is
+proved in subsection \ref{subsec:ddrangecount}), the correctness of this
+algorithm lies in the proof that a bounding rectangle is sufficient to show that
+the triangle is fully enclosed in the rectangular limits of the
+query. Relabelling the various coordinates of triangle corners is trivially
+correct when considering that the d-dimensional structure is merely counting the
+number of tuples of a fixed size (i.e. \(d\)), whose values all fall between two
+bounds. Thus, a triangle (or bounding rectangle) counted as within range by that
+algorithm is simply one where the defined points fall within the appropriate
+dimension's bounds; i.e. all the points are between the x and y upper and lower bounds.
+
+A bounding rectangle, \(R\), is defined in terms of the minimum and maximum
+\(x\) and \(y\) coordinates of a triangle, \(T\). Begin by considering the \(s\)
+and \(t\) dimensions (representing \(x_{min}\) and \(y_{min}\)). By definition,
+\begin{align*}
+\forall x \in T : x_{min} \leq x
+\intertext{and}
+\forall y \in T : y_{min} \leq y.
+\end{align*}
+The limits for these dimensions are taken from the query parameters, \(x_1\)
+through \(y_2\), thus if invoked with only these two dimensions, and \(d=2\),
+the d-dimensional algorithm will give us the count, \(k\), such that
+\begin{align*}
+k = |C|, C = \{\, (x_{min}, y_{min}) : (x_{min}, y_{min}) \in S, x_1 \leq x_{min} \leq x_2, y_1 \leq y_{min} \leq y_2 \,\}.
+\end{align*}
+As previously shown, no other point in a triangle can be below the minimum, thus
+this count must be correct when considering every point within the triangle,
+when considering the lower bound only. This leaves only the upper bounds needing
+consideration, which are simply covered by the symmetrical argument by the
+definition of the maximum:
+\begin{align*}
+\forall x \in T : x_{max} \geq x
+\intertext{and}
+\forall y \in T : y_{max} \geq y.
+\end{align*}
+Thus it is clear that the count returned here is correct for all 4
+pseudo-dimensions, identically to the argument made for the 2 minimum dimensions
+discussed previously.
+
+% Question 4
+\section{Bin Packing Approximations}
+
+\subsection{6 Approximation}
+
+A 3 approximation for this bin packing problem can be found by making use of
+the FirstFitDecreasing algorithm, with the set of all gems partitioned into two
+subsets. One such subset should hold only a single type of gem, whilst the
+other subset should hold the remaining two types of gem. The following proofs
+do not consider the effect of choosing different gem types to partition around;
+in my algorithm I will simply partition the n input gems into a subset AB,
+containing all gems of type A and B, and a subset C, containing all gems of
+type C. The following pseudocode makes use of a FirstFitDecreasing function,
+that implements the algorithm as discussed in the lecture slides. This function
+takes as input a list of gems and outputs the number of sacks required.
+
+\begin{lstlisting}
+# Receive as input a list N of n gems, i.e. n = |N|
+
+AB = []
+C  = []
+
+# Partition the gems, O(n)
+for gem in N:
+  if gem.type == C:
+    C.append(gem)
+  else:
+    AB.append(gem)
+
+s = 0
+
+# As only two types of gem, cannot mix more than two types in a sack. O(n^2)
+s = FirstFitDecreasing(AB)
+
+# Repeat for type C, again O(n^2)
+s = s + FirstFitDecreasing(C)
+
+# s should now hold the count of bins required
+return s
+\end{lstlisting}
+
+\subsubsection{Runtime Analysis}
+From the lecture slides, week 13, we have that the FirstFitDecreasing algorithm
+is \(O(n^2)\), from the sorting operation that needs to be performed before
+assigning items to bins. As the annotated pseudocode describes, we perform an
+\(O(n)\) preprocessing step whereby the gems are split into two subsets. This
+is a simple loop over all elements in N; this loop is executed n times,
+performing \(O(1)\) operations in the body of the loop. The algorithm then runs
+the FirstFitDecreasing algorithm twice, giving a worst case runtime of \(O(2n^2
++ n)\), which is equivalent to \(O(n^2)\). By definition, this is polynomial
+time.
+
+\subsubsection{Correctness}
+From the lecture slides, week 13, the FirstFitDecreasing algorithm produces
+valid solutions; the algorithm operates by finding the first bin that satisfies
+the equation \(t + w \leq c\), where t is the total weight of items already in
+the bin, w is the weight of the item currently being considered, and c is the
+capacity of each bin (c = 1.0, in this case).
+
+The algorithm must therefore produce valid solutions for both subsets of N (AB
+and C), at least in terms of sack capacity. However, the problem also specifies
+a restriction on the mixing of gem types; no sack may contain a gem of type A,
+a gem of type B, and a gem of type C. This algorithm avoids violating this
+condition by partitioning the gems such that the FirstFitDecreasing algorithm
+is never supplied with gems of all three types at once, so it cannot produce an
+invalid packing. The algorithm combines the two packings (of AB and of C), by
+simply concatenating the two; or in this case, by summing the outputs of
+FirstFitDecreasing. In other words, the number of sacks needed for all gems of
+type A and B is found, then the number for type C is found, and the final
+solution keeps type C completely separated from the others.
+
+\subsubsection{Approximation Factor}
+From the lecture slides, week 13, we are shown that the FirstFitDecreasing
+algorithm produces a \(\frac{3}{2}\) approximation. \((Opt \leq s \leq
+\frac{3}{2} Opt)\). Consider each subset individually; denoting the optimal
+solution for the AB subset as \(Opt_{AB}\), and similarly \(Opt_C\) for the C
+subset. Running FFD on these subsets will produce packings that satisfy:
+
+\begin{alignat*}{2}
+Opt_{AB}         &\leq        &s_{AB} \quad &\leq \quad \frac{3}{2} Opt_{AB}
+\intertext{and}
+Opt_C            &\leq        &s_C \quad    &\leq \frac{3}{2} Opt_C
+\intertext{that when combined give an inequality for the overall approximation}
+Opt_{AB} + Opt_C &\leq s_{AB} &+ s_C        &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C \\
+Opt_{AB} + Opt_C &\leq        &s \quad      &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C
+\end{alignat*}
+
+In order to demonstrate the bounds of the approximation in terms of the global
+optimum, \(Opt\), i.e. the optimum when considering all three types
+simultaneously, it is necessary to show the relationship between the two local
+optimums, \(Opt_{AB}\) and \(Opt_C\), and \(Opt\). It must be the case that
+\(Opt_C \leq Opt\). This can be explained by considering that C is a subset of N,
+thus by definition C must have at most n elements. Therefore, in the most
+extreme case the entirety of N will in fact be gems of type C - thus the local
+optimum packing for C will be equal to the global optimum for N, \(Opt\). The
+only other possibility is that the subset C has fewer elements than N. Clearly
+in this case, \(Opt_C \leq Opt\), as removing items from the input cannot
+possibly increase the required number of bins, as all gems have positive
+weights.
+
+The same argument can be made for the subset AB, as there are no restrictions
+on sacks containing only two types of gem other than the standard capacity
+limit. Thus it follows that \(Opt_{AB} \leq Opt\). This can be used to express
+the upper bounds of the above approximation inequality in terms of the global
+optimum, like so:
+
+\begin{alignat*}{2}
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq \frac{3}{2} Opt_{AB} + \frac{3}{2} Opt_C \\
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq \frac{3}{2} Opt + \frac{3}{2} Opt \\
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq 2 ( \frac{3}{2} Opt ) \\
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq 3 Opt
+\end{alignat*}
+
+In a similar manner, the lower bound can be simplified by observing that in the
+best case, all elements of N are grouped into only one of \(Opt_{AB}\) or
+\(Opt_C\). In this situation, either \(s_{AB} = 0\) or \(s_{C} = 0\) will be
+true, thus \(s = s_x\). Going back to the definition of FirstFitDecreasing,
+this means that the lower bound of the inequality must be \(Opt\). In any other
+situation, the lower bound must be greater than or equal to \(Opt\) - this is
+clear from the definition of Opt as the most efficient packing possible - it
+cannot be beaten. Thus, we can simplify the entire inequality as follows:
+
+\begin{alignat*}{2}
+Opt_{AB} + Opt_C &\leq \quad &s \quad &\leq 3 Opt \\
+Opt              &\leq \quad &s \quad &\leq 3 Opt
+\intertext{\centering Which clearly satisfies:}
+Opt              &\leq \quad &s \quad &\leq 6 Opt
+\end{alignat*}
+
+\subsection{Tighter Approximation}
+
+A 2 approximation for the gem packing problem can be achieved by modifying the
+NextFit algorithm - albeit with a constant factor on the worst case
+performance, giving the inequality:
+
+\begin{displaymath}
+Opt \leq s \leq 2 Opt + 1
+\end{displaymath}
+
+This is achieved by sorting the input list, N, into type order, such that all
+gems of type A are followed by those of type B, and then by type C. This sorted
+input list is then fed through a modified version of the NextFit algorithm,
+whereby an extra check is added to ensure that a bin holding both A and B gems
+will not be considered suitable for a gem of type C. (In this case, the current
+bin will move to the next, as if the capacity limit for the current bin had
+been exceeded by this differently typed gem.) In the following subsections it
+will be shown that this condition can only be triggered under a very specific
+set of conditions, and will only result in one extra bin being added to the
+output. The pseudocode below details this approach.
+
+\begin{lstlisting}
+# Receive as input a list N of n gems, i.e. n = |N|
+
+A = []
+B = []
+C = []
+
+# Partition the gems, O(n)
+for gem in N:
+  if gem.type == A:
+    A.append(gem)
+  elif gem.type == B:
+    B.append(gem)
+  elif gem.type == C:
+    C.append(gem)
+
+# Current sack number
+s = 0
+# Current sack weight total
+total = 0.0
+# Does current sack contain an A type gem?
+hasA = False
+
+# Concatenate lists A, B, and C (O(1))
+L = A + B + C
+
+# Loop through all gems in L, adding to the current bin until it is no longer
+# possible, then moving to the next bin. (O(n))
+for gem in L:
+  hasA = hasA or (gem.type == A)
+  total = total + gem.weight
+  if (total > 1.0) or (hasA and gem.type == C):
+    # The current bin is unsuitable for this gem, move to the next
+    s = s + 1
+    total = gem.weight
+    hasA = (gem.type == A)
+
+# Need to check if the current bin has been used.
+if total > 0.0:
+  s = s + 1
+
+# s should now hold the count of bins required
+return s
+\end{lstlisting}
+
+Note that this implementation will work with any chosen permutation of list
+concatenation in L - e.g. \(L = C + B + A\).
+
+\subsubsection{Runtime Analysis}
+From the lecture slides, week 13, we have that the NextFit algorithm is
+\(O(n)\). As the annotated pseudocode describes, we perform an \(O(n)\)
+preprocessing step whereby the gems are sorted into three subsets based upon
+their type. This is a simple loop over all elements in N; this loop is executed
+n times, performing \(O(1)\) operations in the body of the loop. The algorithm
+then runs the modified NextFit algorithm. As demonstrated in the pseduocode,
+this modified NextFit loop continues to be \(O(n)\) - the only modifications
+being the addition of some constant time operations to the loop body, that runs
+n times. Overall this gives a worst case runtime of \(O(2n)\), which is
+equivalent to \(O(n)\). By definition, this is polynomial time.
+
+\subsubsection{Correctness}
+The core bin packing loop of the algorithm shown here is very similar to the
+standard NextFit algorithm described in the lecture slides, week 13. The
+standard NextFit algorithm produces valid solutions; the algorithm checks that
+adding an element to the current bin will not exceed it's capacity (1.0 for the
+given problem). This check is still present in the modified algorithm, such
+that the restriction on total bin weight will never be exceeded.
+
+The second restriction, whereby the mixing of all three gem types may not share
+a single sack, is guaranteed by a combination of the preprocessing sort by
+type, and the check against adding a C type gem to a bin that holds an A type
+gem. The input list, L, is iterated over in order of type. Thus once we begin
+considering C type gems, there will be no more A or B type gems to be
+processed. Therefore, it is sufficient to check that when adding a C type gem
+that the current bin does not contain an A type gem. In this case, the same
+action is taken as is used to handle an over-capacity bin - i.e. the current
+bin is moved to a new bin, and the current gem is inserted into this new
+bin. This ensures that all three types are never placed into the same sack.
+
+\subsubsection{Approximation Factor}
+In most cases this modified algorithm will follow the performance of the
+original NextFit algorithm. From the lecture slides, week 13, we have that
+NextFit finds approximations for s in the range \(Opt \leq s \leq 2 Opt\). The
+only time that the algorithm presented here performs packing differently from
+the original is when a C type gem is encountered and the current bin contains
+at least one A type gem. Due to the sort operation performed as a preprocessing
+step, there is only one situation where an A type gem may exist in the current
+bucket whilst considering a C type gem. This will be the case if, and only if:
+
+\begin{displaymath}
+\exists a \in A, \exists c \in C \text{ \quad such that \quad } a.weight + \sum\nolimits_{b \in B} b.weight + c.weight \leq 1.0
+\end{displaymath}
+
+In this special case, the current bin is finished early, and a new bin is
+considered. This shifting operation wastes less than one sack's worth of
+capacity, thus adding a single sack onto the found packing in the worst
+case. Therefore we find the approximation to be described by the following
+inequality:
+
+\begin{displaymath}
+Opt \leq s \leq 2 Opt + 1
+\end{displaymath}
+
+The lower bound here can be achieved in the case where there is only a single input gem, among others. As per the definition of \(Opt\), clearly the algorithm cannot find a packing better than this limit.
+
+\end{document}
