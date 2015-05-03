@@ -64,15 +64,16 @@ def attack() :
 
   chunksize = 50
   chunks = n / 50
+
   #for i in range(1):
     #for j in range(1,2):
   for i in range(first, last+1):
-    for j in range(1,chunks):
+    for j in range(1,chunks+1):
       #print(i, j)
       ccarg = numpy.column_stack((traces[:,(j-1)*chunksize:j*chunksize], power_consumption[:,i]))
       cmatrix = numpy.corrcoef(ccarg, rowvar=0)
       #print(numpy.mean(ccarg), numpy.mean(cmatrix), ccarg.shape, cmatrix.shape, cmatrix[7,5], cmatrix[32,12])
-      key_trace[i,(j-1)*chunksize:j*chunksize+1] = cmatrix[chunksize,0:chunksize+1];
+      key_trace[i,(j-1)*chunksize:j*chunksize] = cmatrix[chunksize,0:chunksize];
       #print(key_trace[i,(j-1)*chunksize:j*chunksize])
       #print(key_trace.shape, numpy.mean(key_trace))
 
