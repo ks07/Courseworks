@@ -80,6 +80,14 @@ def attack() :
   global kt
   kt = key_trace
 
+  # Correct key index should be the one where the trace has the highest correlation.
+  prime_suspects, _ = numpy.unravel_index((kt.argmin(), kt.argmax), kt.shape)
+
+  # TODO: What if these don't match?
+  assert prime_suspects[0] == prime_suspects[1]
+  
+  
+
 def launch_target(executable) :
   # Produce a sub-process representing the attack target.
   target = subprocess.Popen( args   = executable,
