@@ -41,7 +41,6 @@ def attack() :
   traces = ws['traces']
 
   kbytes = 16
-  b = 1
   for b in range(kbytes):
     inputs = ws['inputs'][:,b]
     #inputs = ws['inputs']
@@ -67,8 +66,8 @@ def attack() :
     chunksize = 50
     chunks = n / 50
   
-    #for i in range(1):
-      #for j in range(1,2):
+    #for i in range(last, last+1):
+      #for j in range(chunks,chunks+1):
     for i in range(first, last+1):
       for j in range(1,chunks+1):
         #print(i, j)
@@ -83,7 +82,7 @@ def attack() :
     kt = key_trace
   
     # Correct key index should be the one where the trace has the highest correlation.
-    prime_suspects, _ = numpy.unravel_index((kt.argmin(), kt.argmax), kt.shape)
+    prime_suspects, _ = numpy.unravel_index((kt.argmin(), kt.argmax()), kt.shape)
   
     # TODO: What if these don't match?
     assert prime_suspects[0] == prime_suspects[1]
