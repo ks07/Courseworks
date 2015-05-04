@@ -31,7 +31,7 @@ def attack() :
 
 
   # Try recreating the matlab code
-  ws = scipy.io.loadmat('WS1.mat', squeeze_me=True)
+  ws = scipy.io.loadmat('WS2.mat', squeeze_me=True)
 
   first = 0
   last = 255
@@ -40,52 +40,54 @@ def attack() :
   byte_Hamming_weight = ws['byte_Hamming_weight']
   traces = ws['traces']
 
+  kbytes = 16
   b = 1
-  # inputs = ws['inputs'][:,b]
-  inputs = ws['inputs']
-
-  print('Predicting intermediate values ...')
-  m,n = ws['traces'].shape
-
-  key = range(256)
-  after_sbox = numpy.zeros((m,256), dtype=numpy.uint8)
-
-  for i in range(m):
-    xored = inputs[i] ^ key
-    after_sbox[i,:] = SubBytes[xored]
-
-  key_trace = numpy.zeros((256,n))
-
-  # correlation method
-  print('Predicting the instantaneous power consumption ...')
-  power_consumption = byte_Hamming_weight[after_sbox]
-
-  print('Generating the correlation traces ...')
-
-  chunksize = 50
-  chunks = n / 50
-
-  #for i in range(1):
-    #for j in range(1,2):
-  for i in range(first, last+1):
-    for j in range(1,chunks+1):
-      #print(i, j)
-      ccarg = numpy.column_stack((traces[:,(j-1)*chunksize:j*chunksize], power_consumption[:,i]))
-      cmatrix = numpy.corrcoef(ccarg, rowvar=0)
-      #print(numpy.mean(ccarg), numpy.mean(cmatrix), ccarg.shape, cmatrix.shape, cmatrix[7,5], cmatrix[32,12])
-      key_trace[i,(j-1)*chunksize:j*chunksize] = cmatrix[chunksize,0:chunksize];
-      #print(key_trace[i,(j-1)*chunksize:j*chunksize])
-      #print(key_trace.shape, numpy.mean(key_trace))
-
-  global kt
-  kt = key_trace
-
-  # Correct key index should be the one where the trace has the highest correlation.
-  prime_suspects, _ = numpy.unravel_index((kt.argmin(), kt.argmax), kt.shape)
-
-  # TODO: What if these don't match?
-  assert prime_suspects[0] == prime_suspects[1]
+  for b in range(kbytes):
+    inputs = ws['inputs'][:,b]
+    #inputs = ws['inputs']
   
+    print('Predicting intermediate values ...')
+    m,n = ws['traces'].shape
+  
+    key = range(256)
+    after_sbox = numpy.zeros((m,256), dtype=numpy.uint8)
+  
+    for i in range(m):
+      xored = inputs[i] ^ key
+      after_sbox[i,:] = SubBytes[xored]
+  
+    key_trace = numpy.zeros((256,n))
+  
+    # correlation method
+    print('Predicting the instantaneous power consumption ...')
+    power_consumption = byte_Hamming_weight[after_sbox]
+  
+    print('Generating the correlation traces ...')
+  
+    chunksize = 50
+    chunks = n / 50
+  
+    #for i in range(1):
+      #for j in range(1,2):
+    for i in range(first, last+1):
+      for j in range(1,chunks+1):
+        #print(i, j)
+        ccarg = numpy.column_stack((traces[:,(j-1)*chunksize:j*chunksize], power_consumption[:,i]))
+        cmatrix = numpy.corrcoef(ccarg, rowvar=0)
+        #print(numpy.mean(ccarg), numpy.mean(cmatrix), ccarg.shape, cmatrix.shape, cmatrix[7,5], cmatrix[32,12])
+        key_trace[i,(j-1)*chunksize:j*chunksize] = cmatrix[chunksize,0:chunksize];
+        #print(key_trace[i,(j-1)*chunksize:j*chunksize])
+        #print(key_trace.shape, numpy.mean(key_trace))
+  
+    global kt
+    kt = key_trace
+  
+    # Correct key index should be the one where the trace has the highest correlation.
+    prime_suspects, _ = numpy.unravel_index((kt.argmin(), kt.argmax), kt.shape)
+  
+    # TODO: What if these don't match?
+    assert prime_suspects[0] == prime_suspects[1]
+    print(b, prime_suspects[0])
   
 
 def launch_target(executable) :
