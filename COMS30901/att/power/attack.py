@@ -1,8 +1,17 @@
 #!/usr/bin/env python2
 from __future__ import print_function
 import sys, subprocess, math
-import scipy.io, numpy
+import numpy
+#import scipy.io
+import pickle
+np = numpy
 
+queries = 0
+target = None
+target_in = None
+target_out = None
+
+# m should be a list/array of 8 bit integers
 def interact(m) :
   global queries
   queries = queries + 1
@@ -10,8 +19,15 @@ def interact(m) :
   pad_bytes = 16
 
   # Send plaintext m to attack target as hex octet string.
-  # Target appears to treat m as little endian, no padding required
-  target_in.write( "{0:x}\n".format(m) )
+  # Target appears to treat m as little endian, no padding required on 2nd?
+  # TODO: Check this works, maybe we need to reverse
+  # Trololo no nditer in this numpy version
+  for b in range(len(m)):
+    target_in.write( "{0:0{pad}x}".format(int(m[b]), pad=2) )
+
+
+#  target_in.write( "{0:0{pad}x}{1:0{pad}x}{2:0{pad}x}{3:0{pad}x}\n".format(m[0], m[1], m[2], m[3], pad=8))
+  target_in.write("\n")
   target_in.flush()
 
   # Receive comma separated power trace of ints
@@ -26,40 +42,81 @@ def interact(m) :
 
   return (c, trace)
 
+def gather_interactions() :
+  # Unfortunately numpy doesn't support 128 bit types
+  # Generate 200 messages of 4 32 bit integers (16 bytes)
+  # A 'bug'/caveat with the random generator means it can't handle the entire uint64 range
+  # nor will it work with signed bounds.
+  # Access byte values by using an 8 bit view
+  tinfo = np.iinfo(np.uint32)
+  inputs = np.random.random_integers(tinfo.min, tinfo.max, (200, 4)).astype(np.uint32).view(np.uint8)
+
+  traces = []
+
+  for m in inputs:
+    _, trace = interact(m)
+    traces.append(trace)
+    
+  traces = np.asarray(traces, dtype=np.uint8)
+
+  return (inputs, traces)
+
 def attack() :
 #  (c, trace) = interact(0xabcd)
 
+  global inputs
+  global traces
+
+  all_inputs, traces = gather_interactions()
+
+  m,n = traces.shape
+  
+  # n must divide the chunksize (50)
+  # we only imitate the first round, so take ~10%
+  rough = n / 10
+  rough = int(math.ceil(float(rough) / 50.0)) * 50
+
+  traces = traces[:,0:rough]
+
+  print(traces.shape)
 
   # Try recreating the matlab code
-  ws = scipy.io.loadmat('WS2.mat', squeeze_me=True)
+#  ws = scipy.io.loadmat('WS2.mat', squeeze_me=True)
+  ridyourselfofme = open('pickled', 'r')
+  youcontinuetodisappoint = pickle.load(ridyourselfofme)
+
+  byte_Hamming_weight = youcontinuetodisappoint[0]
+  SubBytes = youcontinuetodisappoint[1]
 
   first = 0
   last = 255
 
-  SubBytes = ws['SubBytes']
-  byte_Hamming_weight = ws['byte_Hamming_weight']
-  traces = ws['traces']
+  #SubBytes = ws['SubBytes']
+  #byte_Hamming_weight = ws['byte_Hamming_weight']
+  #traces = ws['traces']
+
+  print(traces.shape)
 
   kbytes = 16
   for b in range(kbytes):
-    inputs = ws['inputs'][:,b]
+    inputs = all_inputs[:,b]
     #inputs = ws['inputs']
   
     print('Predicting intermediate values ...')
-    m,n = ws['traces'].shape
+    m,n = traces.shape
   
     key = range(256)
     after_sbox = numpy.zeros((m,256), dtype=numpy.uint8)
   
     for i in range(m):
       xored = inputs[i] ^ key
-      after_sbox[i,:] = SubBytes[xored]
+      after_sbox[i,:] = SubBytes.flat[xored]
   
     key_trace = numpy.zeros((256,n))
   
     # correlation method
     print('Predicting the instantaneous power consumption ...')
-    power_consumption = byte_Hamming_weight[after_sbox]
+    power_consumption = byte_Hamming_weight.flat[after_sbox]
   
     print('Generating the correlation traces ...')
   
@@ -81,16 +138,28 @@ def attack() :
     global kt
     kt = key_trace
   
+    #print(kt.argmin(), kt.argmax(), kt.shape)
+
     # Correct key index should be the one where the trace has the highest correlation.
-    prime_suspects, _ = numpy.unravel_index((kt.argmin(), kt.argmax()), kt.shape)
-  
-    # TODO: What if these don't match?
-    assert prime_suspects[0] == prime_suspects[1]
-    print(b, prime_suspects[0])
+    # Old numpy versions :(
+    argmin = kt.argmin()
+    argmax = kt.argmax()
+    prime_suspects = [None,None]
+    prime_suspects[0], _ = numpy.unravel_index(argmin, kt.shape)
+    prime_suspects[1], _ = numpy.unravel_index(argmax, kt.shape)
+
+    selected = prime_suspects[1]
+
+    if (kt.flat[argmin] > kt.flat[argmax]):
+      # Pick the min, higher magnitude
+      selected = prime_suspects[0]
+
+    print(b, selected)
   
 
 def launch_target(executable) :
   # Produce a sub-process representing the attack target.
+  global target
   target = subprocess.Popen( args   = executable,
                              stdout = subprocess.PIPE,
                              stdin  = subprocess.PIPE )
