@@ -1,10 +1,7 @@
 #!/usr/bin/env python2
 from __future__ import print_function
 import sys, subprocess, math
-import numpy
-#import scipy.io
-import pickle
-np = numpy
+import numpy as np
 
 queries = 0
 target = None
@@ -39,6 +36,11 @@ sbox = np.asarray([
     0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0,
     0x54, 0xbb, 0x16 ])
 
+# Calculate the hamming weights of all 256 possible key values
+# There are probably faster ways of computing this, and hard-coding the array would be
+# sensible... but this is fast and simple
+byte_Hamming_weight = np.asarray([bin(i).count('1') for i in range(256)])
+
 # m should be a list/array of 8 bit integers
 def interact(m) :
   global queries
@@ -47,9 +49,7 @@ def interact(m) :
   pad_bytes = 16
 
   # Send plaintext m to attack target as hex octet string.
-  # Target appears to treat m as little endian, no padding required on 2nd?
-  # TODO: Check this works, maybe we need to reverse
-  # Trololo no nditer in this numpy version
+  # No nditer in this numpy version :(
   for b in range(len(m)):
     target_in.write( "{0:0{pad}x}".format(int(m[b]), pad=2) )
 
@@ -61,6 +61,7 @@ def interact(m) :
 
   assert (vec[0] == len(vec) - 1), "Received trace length doesn't match samples"
 
+  # Cut out the length field
   trace = vec[1:]
 
   # Receive ciphertext c from attack target.
@@ -88,46 +89,46 @@ def gather_interactions() :
   return (inputs, traces)
 
 def attack() :
+  # Get a set of random inputs and their power traces
   all_inputs, traces = gather_interactions()
 
-  m,n = traces.shape
+  _,n = traces.shape
 
-  # n must divide the chunksize (50)
+  # number of measurements (n) must divide the chunksize (50)
   # we only imitate the first round, so take ~10%
-  rough = n / 10
-  rough = int(math.ceil(float(rough) / 50.0)) * 50
+  rough = int(math.ceil(float(n / 10) / 50.0)) * 50
 
+  # Reduce the trace measurements
   traces = traces[:,0:rough]
 
-  print(traces.shape)
-
-  # Calculate the hamming weights of all 256 possible key values
-  # There are probably faster ways of computing this, and hard-coding the array would be
-  # sensible... but this is fast and simple
-  byte_Hamming_weight = np.asarray([bin(i).count('1') for i in range(256)])
-
+  # Possible key byte values to consider (all of them is a good idea)
   first = 0
   last = 255
 
-  kbytes = 16
-  for b in range(kbytes):
+  byte_count = 16
+
+  # Output list
+  found_key = [None]*byte_count
+
+  # Loop through all 16 bytes of the key
+  for b in range(byte_count):
     inputs = all_inputs[:,b]
 
     print('Predicting intermediate values ...')
     m,n = traces.shape
 
     key = range(256)
-    after_sbox = numpy.zeros((m,256), dtype=numpy.uint8)
+    after_sbox = np.zeros((m,256), dtype=np.uint8)
 
     for i in range(m):
       xored = inputs[i] ^ key
       after_sbox[i,:] = sbox[xored]
 
-    key_trace = numpy.zeros((256,n))
+    key_trace = np.zeros((256,n))
 
     # correlation method
     print('Predicting the instantaneous power consumption ...')
-    power_consumption = byte_Hamming_weight.flat[after_sbox]
+    power_consumption = byte_Hamming_weight[after_sbox]
 
     print('Generating the correlation traces ...')
 
@@ -136,8 +137,8 @@ def attack() :
 
     for i in range(first, last+1):
       for j in range(1,chunks+1):
-        ccarg = numpy.column_stack((traces[:,(j-1)*chunksize:j*chunksize], power_consumption[:,i]))
-        cmatrix = numpy.corrcoef(ccarg, rowvar=0)
+        ccarg = np.column_stack((traces[:,(j-1)*chunksize:j*chunksize], power_consumption[:,i]))
+        cmatrix = np.corrcoef(ccarg, rowvar=0)
         key_trace[i,(j-1)*chunksize:j*chunksize] = cmatrix[chunksize,0:chunksize];
 
     # Correct key index should be the one where the trace has the highest correlation.
@@ -145,17 +146,21 @@ def attack() :
     argmin = key_trace.argmin()
     argmax = key_trace.argmax()
     prime_suspects = [None,None]
-    prime_suspects[0], _ = numpy.unravel_index(argmin, key_trace.shape)
-    prime_suspects[1], _ = numpy.unravel_index(argmax, key_trace.shape)
+    prime_suspects[0], _ = np.unravel_index(argmin, key_trace.shape)
+    prime_suspects[1], _ = np.unravel_index(argmax, key_trace.shape)
 
+    # Pick the max by default
     selected = prime_suspects[1]
 
-    if (key_trace.flat[argmin] > key_trace.flat[argmax]):
-      # Pick the min, higher magnitude
+    print(key_trace.flat[argmin], abs(key_trace.flat[argmin]))
+    if (abs(key_trace.flat[argmin]) > key_trace.flat[argmax]):
+      # Pick the min if higher magnitude
       selected = prime_suspects[0]
 
-    print(b, selected)
+    print('Found key byte #{0:d} = {1:x}'.format(b, selected))
+    found_key[b] = selected
 
+  return found_key
 
 def launch_target(executable) :
   # Produce a sub-process representing the attack target.
