@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function
+from Crypto.Cipher import AES
 import sys, subprocess, math
 import numpy as np
 
@@ -108,7 +109,7 @@ def attack() :
   byte_count = 16
 
   # Output list
-  found_key = [None]*byte_count
+  found_key = np.empty(byte_count, dtype=np.uint8)
 
   # Loop through all 16 bytes of the key
   for b in range(byte_count):
@@ -169,8 +170,26 @@ def launch_target(executable) :
                              stdout = subprocess.PIPE,
                              stdin  = subprocess.PIPE )
 
-
   return target
+
+def verify_key(found_key) :
+  key = found_key.tostring()
+
+  # Generate some random 16 byte m
+  m = np.random.random_integers(0, 255, 16).astype(np.uint8)
+
+  # Find the real ciphertext of m
+  c,_ = interact(m)
+
+  # Find the ciphertext of m under key
+  enc = AES.new(key, AES.MODE_ECB)
+  c_test = enc.encrypt(m.tostring())
+
+  # Get back as an int... somewhat inelegant
+  c_test = int(c_test.encode('hex'), 16)
+
+  print(c, c_test)
+  return c_test == c
 
 if ( __name__ == "__main__" ) :
   if (len(sys.argv) != 2) :
@@ -188,12 +207,16 @@ if ( __name__ == "__main__" ) :
   queries = 0
 
   # Execute a function representing the attacker.
-  attack()
+  found_key = attack()
 
   # Check our guess
-  #assert(verify_m(m))
+  assert verify_key(found_key)
 
-  #print("Recovered key k:\n{0:x}".format(k))
+  key_hex = found_key.tostring().encode('hex')
+
+  assert len(key_hex) == 32
+
+  print("Recovered key k:\n{0:s}".format(key_hex))
 
   print("Total target interactions:", queries)
 
