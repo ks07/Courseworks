@@ -98,8 +98,8 @@ def to_bytes(n, length, endianness='big'):
     return s if endianness == 'big' else s[::-1]
 
 # Probably a nicer way to do this
-def c_to_state(c):
-  return [ord(b) for b in to_bytes(c, 32)]
+def c_to_state(c, byte_count):
+  return [ord(b) for b in to_bytes(c, byte_count)]
 
 # Finite field multiplication in GF(2^8)
 # Courtesy of https://gist.github.com/bonsaiviking/5571001
@@ -114,6 +114,27 @@ def gmul(a, b):
     b >>= 1
   return p
 
+def stage_1(x, x_p, eqs, great_key_vault):
+  for d_n_params in eqs:
+    # Loop through all possible delta values
+    for d_n in range(byte_end):
+      poss_k = [[] for _ in d_n_params] # 4 bytes per delta, should be defined above
+      assert len(poss_k) == 4
+      # Loop through all 4 key bytes in this set of equations
+      for i, (n, mulfac) in enumerate(d_n_params):
+        # Loop through all values for each key byte
+        for k_n in range(byte_end):
+          res = rsbox[x[n] ^ k_n] ^ rsbox[xp[n] ^ k_n]
+          # Temporarily store the key byte's value if it satisfies the equation
+          if res == gmul(mulfac, d_n):
+            poss_k[i].append(k_n)
+      # Should only have 4 solutions at most
+      assert all((len(sols) <= 4 for sols in poss_k))
+      # If no solutions for any of the equations, discard
+      if all(poss_k):
+        for i, (key_i, _) in enumerate(d_n_params):
+          great_key_vault[key_i].append((d_n, poss_k[i]))
+
 def attack():
   # Pick some fixed message for now
   m = 132453297378738698636537746945527344052
@@ -126,18 +147,26 @@ def attack():
   
   # Get faulty ciphertext
   c_faulty = interact(fault, m)
+  c_faulty_2 = interact(fault, m)
 
   print(hex(c_valid))
   print(hex(c_faulty))
-
-  x  = c_to_state(c_valid)
-  xp = c_to_state(c_faulty)
+  print(hex(c_faulty_2))
 
   # First chunk of key bytes k1, k8, k11, k14
   byte_end = 256
   key_bytes = 16
 
+  # Convert ciphertexts into byte list
+  x  = c_to_state(c_valid, key_bytes)
+  xp = c_to_state(c_faulty, key_bytes)
+  xp_2 = c_to_state(c_faulty_2, key_bytes)
+
+  assert len(x) == key_bytes
+  assert len(xp) == key_bytes
+
   great_key_vault = [[] for _ in range(key_bytes)]
+  great_key_vault_2 = [[] for _ in range(key_bytes)]
 
   # Equation params => [d_n][x|k_i][f * d_n]
   eqs = (
@@ -151,160 +180,15 @@ def attack():
     ((12,3), (9,2),  (6,1),  (3,1) )
   )
 
-  for d_n_params in eqs:
-    for d_n in range(byte_end):
-      poss_k = [[] for _ in range]
-      for k_i in range(byte_end):
-        i = d_n[0][0]
-        f = d_n[0][1]
-        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
-        if res == gmul(f, d_n):
-          poss_k[0] = k_i
-      for k_i in range(byte_end):
-        i = d_n[1][0]
-        f = d_n[1][1]
-        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
-        if res == gmul(f, d_n):
-          poss_k[1] = k_i
-      for k_i in range(byte_end):
-        i = d_n[2][0]
-        f = d_n[2][1]
-        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
-        if res == gmul(f, d_n):
-          poss_k[2] = k_i
-      for k_i in range(byte_end):
-        i = d_n[3][0]
-        f = d_n[3][1]
-        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
-        if res == gmul(f, d_n):
-          poss_k[3] = k_i
-          # TODO: Check this... loop more? .append(res)! (and not =)
-  for d_1 in range(byte_end):
-    poss_k_0 = []
-    for k_0 in range(byte_end):
-      res = rsbox[x[0] ^ k_0] ^ rsbox[xp[0] ^ k_0]
-      if res == gmul(d_1, 2):
-        poss_k_0.append(res)
-    poss_k_13 = []
-    for k_13 in range(byte_end):
-      res = rsbox[x[13] ^ k_13] ^ rsbox[xp[13] ^ k_13]
-      if res == d_1:
-        poss_k_13.append(res)
-    poss_k_10 = []
-    for k_10 in range(byte_end):
-      res = rsbox[x[10] ^ k_10] ^ rsbox[xp[10] ^ k_10]
-      if res == d_1:
-        poss_k_10.append(res)
-    poss_k_7 = []
-    for k_7 in range(byte_end):
-      res = rsbox[x[7] ^ k_7] ^ rsbox[xp[7] ^ k_7]
-      if res == gmul(d_1, 3):
-        poss_k_7.append(res)
-    
-    # If no solutions for any of the equations, discard
-    if (not poss_k_0 or not poss_k_13 or not poss_k_10 or not poss_k_7):
-      continue
-    else:
-      great_key_vault[0] += poss_k_0
-      great_key_vault[13] += poss_k_13
-      great_key_vault[10] += poss_k_10
-      great_key_vault[7] += poss_k_7
-
-  for d_2 in range(byte_end):
-    poss_k_4 = []
-    for k_4 in range(byte_end):
-      res = rsbox[x[4] ^ k_4] ^ rsbox[xp[4] ^ k_4]
-      if res == d_2:
-        poss_k_4.append(res)
-    poss_k_1 = []
-    for k_1 in range(byte_end):
-      res = rsbox[x[1] ^ k_1] ^ rsbox[xp[1] ^ k_1]
-      if res == d_2:
-        poss_k_1.append(res)
-    poss_k_14 = []
-    for k_14 in range(byte_end):
-      res = rsbox[x[14] ^ k_14] ^ rsbox[xp[14] ^ k_14]
-      if res == gmul(3, d_2):
-        poss_k_14.append(res)
-    poss_k_11 = []
-    for k_11 in range(byte_end):
-      res = rsbox[x[11] ^ k_11] ^ rsbox[xp[11] ^ k_11]
-      if res == gmul(2, d_2):
-        poss_k_11.append(res)
-    
-    # If no solutions for any of the equations, discard
-    if (not poss_k_4 or not poss_k_1 or not poss_k_14 or not poss_k_11):
-      continue
-    else:
-      great_key_vault[4] += poss_k_4
-      great_key_vault[1] += poss_k_1
-      great_key_vault[14] += poss_k_14
-      great_key_vault[11] += poss_k_11
-
-  for d_3 in range(byte_end):
-    poss_k_8 = []
-    for k_8 in range(byte_end):
-      res = rsbox[x[8] ^ k_8] ^ rsbox[xp[8] ^ k_8]
-      if res == d_3:
-        poss_k_8.append(res)
-    poss_k_5 = []
-    for k_5 in range(byte_end):
-      res = rsbox[x[5] ^ k_5] ^ rsbox[xp[5] ^ k_5]
-      if res == gmul(3, d_3):
-        poss_k_5.append(res)
-    poss_k_2 = []
-    for k_2 in range(byte_end):
-      res = rsbox[x[2] ^ k_2] ^ rsbox[xp[2] ^ k_2]
-      if res == gmul(2, d_3):
-        poss_k_2.append(res)
-    poss_k_15 = []
-    for k_15 in range(byte_end):
-      res = rsbox[x[15] ^ k_15] ^ rsbox[xp[15] ^ k_15]
-      if res == d_3:
-        poss_k_15.append(res)
-    
-    # If no solutions for any of the equations, discard
-    if (not poss_k_8 or not poss_k_5 or not poss_k_2 or not poss_k_15):
-      continue
-    else:
-      great_key_vault[8] += poss_k_8
-      great_key_vault[5] += poss_k_5
-      great_key_vault[2] += poss_k_2
-      great_key_vault[15] += poss_k_15
-
-  for d_4 in range(byte_end):
-    poss_k_12 = []
-    for k_12 in range(byte_end):
-      res = rsbox[x[12] ^ k_12] ^ rsbox[xp[12] ^ k_12]
-      if res == gmul(3, d_4):
-        poss_k_12.append(res)
-    poss_k_9 = []
-    for k_9 in range(byte_end):
-      res = rsbox[x[9] ^ k_9] ^ rsbox[xp[9] ^ k_9]
-      if res == gmul(2, d_4):
-        poss_k_9.append(res)
-    poss_k_6 = []
-    for k_6 in range(byte_end):
-      res = rsbox[x[6] ^ k_6] ^ rsbox[xp[6] ^ k_6]
-      if res == d_4:
-        poss_k_6.append(res)
-    poss_k_3 = []
-    for k_3 in range(byte_end):
-      res = rsbox[x[3] ^ k_3] ^ rsbox[xp[3] ^ k_3]
-      if res == d_4:
-        poss_k_3.append(res)
-    
-    # If no solutions for any of the equations, discard
-    if (not poss_k_12 or not poss_k_9 or not poss_k_6 or not poss_k_3):
-      continue
-    else:
-      great_key_vault[12] += poss_k_12
-      great_key_vault[9] += poss_k_9
-      great_key_vault[6] += poss_k_6
-      great_key_vault[3] += poss_k_3
+  stage_1(x, xp, eqs, great_key_vault)
+  stage_1(x, xp_2, eqs, great_key_vault_2)
 
   for i in range(key_bytes):
     print(i, len(great_key_vault[i]))
+    print(great_key_vault[i])
+  
+  # Find the intersection between the repeats.
+  for i, 
 
 if ( __name__ == '__main__' ) :
   if (len(sys.argv) != 2) :
