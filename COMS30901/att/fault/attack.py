@@ -112,7 +112,7 @@ def gmul(a, b):
     if a & 0x100:
       a ^= 0x11b
     b >>= 1
-  return p 
+  return p
 
 def attack():
   # Pick some fixed message for now
@@ -139,6 +139,46 @@ def attack():
 
   great_key_vault = [[] for _ in range(key_bytes)]
 
+  # Equation params => [d_n][x|k_i][f * d_n]
+  eqs = (
+    # d_1
+    ((0,2),  (13,1), (10,1), (7,3) ),
+    # d_2                    
+    ((4,1),  (1,1),  (14,3), (11,2)),
+    # d_3                    
+    ((8,1),  (5,3),  (2,2),  (15,1)),
+    # d_4                    
+    ((12,3), (9,2),  (6,1),  (3,1) )
+  )
+
+  for d_n_params in eqs:
+    for d_n in range(byte_end):
+      poss_k = [[] for _ in range]
+      for k_i in range(byte_end):
+        i = d_n[0][0]
+        f = d_n[0][1]
+        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
+        if res == gmul(f, d_n):
+          poss_k[0] = k_i
+      for k_i in range(byte_end):
+        i = d_n[1][0]
+        f = d_n[1][1]
+        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
+        if res == gmul(f, d_n):
+          poss_k[1] = k_i
+      for k_i in range(byte_end):
+        i = d_n[2][0]
+        f = d_n[2][1]
+        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
+        if res == gmul(f, d_n):
+          poss_k[2] = k_i
+      for k_i in range(byte_end):
+        i = d_n[3][0]
+        f = d_n[3][1]
+        res = rsbox[x[i] ^ k_i] ^ rsbox[xp[i] ^ k_i]
+        if res == gmul(f, d_n):
+          poss_k[3] = k_i
+          # TODO: Check this... loop more? .append(res)! (and not =)
   for d_1 in range(byte_end):
     poss_k_0 = []
     for k_0 in range(byte_end):
