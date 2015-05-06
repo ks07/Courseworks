@@ -114,8 +114,9 @@ def gmul(a, b):
     b >>= 1
   return p
 
-def stage_1(x, x_p, eqs, great_key_vault):
-  for d_n_params in eqs:
+def stage_1(x, xp, eqs, great_key_vault):
+  byte_end = 256
+  for i_d, d_n_params in enumerate(eqs):
     # Loop through all possible delta values
     for d_n in range(byte_end):
       poss_k = [[] for _ in d_n_params] # 4 bytes per delta, should be defined above
@@ -132,8 +133,8 @@ def stage_1(x, x_p, eqs, great_key_vault):
       assert all((len(sols) <= 4 for sols in poss_k))
       # If no solutions for any of the equations, discard
       if all(poss_k):
-        for i, (key_i, _) in enumerate(d_n_params):
-          great_key_vault[key_i].append((d_n, poss_k[i]))
+        # Add to the results for this equation set the possible vals of each key byte
+        great_key_vault[i_d].append(poss_k)
 
 def attack():
   # Pick some fixed message for now
@@ -165,9 +166,6 @@ def attack():
   assert len(x) == key_bytes
   assert len(xp) == key_bytes
 
-  great_key_vault = [[] for _ in range(key_bytes)]
-  great_key_vault_2 = [[] for _ in range(key_bytes)]
-
   # Equation params => [d_n][x|k_i][f * d_n]
   eqs = (
     # d_1
@@ -180,15 +178,45 @@ def attack():
     ((12,3), (9,2),  (6,1),  (3,1) )
   )
 
+
+  great_key_vault = [[] for _ in eqs]
+  great_key_vault_2 = [[] for _ in eqs]
+
   stage_1(x, xp, eqs, great_key_vault)
   stage_1(x, xp_2, eqs, great_key_vault_2)
 
-  for i in range(key_bytes):
-    print(i, len(great_key_vault[i]))
-    print(great_key_vault[i])
+  for gkv in (great_key_vault, great_key_vault_2):
+    for i, content in enumerate(gkv):
+      print(i, len(content))
+      print(content)
   
   # Find the intersection between the repeats.
-  for i, 
+  
+  # Loop through each equation set.
+  for eq_i, (poss_sets, corresp_sets) in enumerate(zip(great_key_vault, great_key_vault_2)):
+    # Loop through the possibility sets in this equation set
+    for poss_set in poss_sets:
+      # Take the first key byte values and check them against the corresponding poss
+      for key_byte_val in poss_set[0]:
+        for other_set in corresp_sets:
+          # Check presence of any of the current values here
+          if key_byte_val in other_set[0]:
+            # Found a match, consider the next
+            #print(eq_i, key_byte_val)
+            for pos, (key_byte_val_chunk, other_chunk) in enumerate(zip(poss_set[1:], other_set[1:])):
+              for val in key_byte_val_chunk:
+                if val in other_chunk:
+                  # If in continue to the next.
+                  if pos == 2:
+                    print(eq_i, 'Match V', poss_set)
+                    print(eq_i, 'Match ^', other_set)
+                else:
+                  # Really should break out here but we can't
+                  pass
+              
+             # for 
+#    for 
+                  #pass
 
 if ( __name__ == '__main__' ) :
   if (len(sys.argv) != 2) :
