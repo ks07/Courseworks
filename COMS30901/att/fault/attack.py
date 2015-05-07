@@ -145,21 +145,22 @@ def KeyScheduleCore(r, k_r_1):
 
   return k_r
 
-def InvKeyScheduleCore(r, k_r):
-  # Get key in byte list form, if not already
-  try:
-    k_r_1 = c_to_state(k_r, 4)
-  except TypeError:
-    k_r_1 = list(k_r)
+# def InvKeyScheduleCore(r, k_r):
+#   # Get key in byte list form, if not already
+#   try:
+#     k_r_1 = c_to_state(k_r, 4)
+#   except TypeError:
+#     k_r_1 = list(k_r)
   
-  # Invert the core operations
-  k_r_1[0] ^= Rcon[r]
-  k_r_1 = [rsbox[k_byte] for k_byte in k_r_1]
-  k_r_1 = k_r_1[-1:] + k_r_1[:-1]
+#   # Invert the core operations
+#   print(r)
+#   k_r_1[0] ^= Rcon[r]
+#   k_r_1 = [rsbox[k_byte] for k_byte in k_r_1]
+#   k_r_1 = k_r_1[-1:] + k_r_1[:-1]
   
-  assert KeyScheduleCore(r, k_r_1) == k_r
+#   assert KeyScheduleCore(r, k_r_1) == k_r
 
-  return k_r_1
+#   return k_r_1
 
 # The key k, and the desired round r
 def KeySchedule(k, r):
@@ -179,10 +180,10 @@ def KeySchedule(k, r):
   # Set rcon iteration to 1
   i = 1
 
-  while len(k_ex) < b:
+  while len(k_ex) < n * (r+1):
     # Create the next 4 bytes
     t = k_ex[-4:]
-    KeyScheduleCore(i, t)
+    t = KeyScheduleCore(i, t)
     i += 1
     t = [x ^ y for x,y in zip(t, k_ex[-n:4-n])]
 
@@ -193,7 +194,46 @@ def KeySchedule(k, r):
       t = [x ^ y for x,y in zip(k_ex[-4:], k_ex[-n:4-n])]
       k_ex += t
 
-  return k_ex[(r-1)*16:r*16]
+
+  return k_ex, k_ex[r*16:(r+1)*16]
+
+def InvKeySchedule(k_r, r):
+  # Params for AES-128
+  n = 16
+  b = 176
+
+  # Expanded key
+  k_ex = [None] * (n * (r+1))
+  # Fill the known chunk
+  #for i, byte_val in enumerate(k_r):
+  #  k_ex[r*16 + i] = byte_val
+  k_ex[r*n:] = k_r
+
+  i = r
+
+  while len(k_ex) > n:
+    for _ in range(3):
+      print(k_ex)
+      t = k_ex[-4:]
+      k_ex = k_ex[:-4]
+      chunk = [t_e ^ x for t_e, x in zip(t, k_ex[-4:])]
+      # Insert the newly found chunk
+      assert k_ex[-n] is None
+      k_ex[-n:4-n] = chunk
+
+    print(k_ex)
+    new4 = k_ex[-4:]
+    k_ex = k_ex[:-4]
+    i -= 1
+    ksc_chunk = KeyScheduleCore(i, k_ex[-4:])
+    first4 = [t_e ^ x for t_e, x in zip(new4, ksc_chunk)]
+
+    #k_ex[-n:4-n] = chunk
+    assert k_ex[-n] is None
+    k_ex[-n:4-n] = new4
+    print(len(k_ex), k_ex[-n:])
+
+  return k_ex[:n]
 
 def stage_1(x, xp, eqs, great_key_vault):
   byte_end = 256
