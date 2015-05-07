@@ -115,6 +115,86 @@ def gmul(a, b):
     b >>= 1
   return p
 
+# Courtesy of the itertools recipes
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return itertools.izip(a, b)
+
+# Courtesy of http://en.wikipedia.org/wiki/Rijndael_key_schedule
+# AES-128 only needs the first 11 elements
+Rcon = [0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36]
+
+# Takes 4 bytes of the key.
+def KeyScheduleCore(r, k_r_1):
+  # Get key in byte list form, if not already
+  try:
+    k_r = c_to_state(k_r_1, 4)
+  except TypeError:
+    k_r = list(k_r_1)
+
+  # Circular left shift (i.e. put the MSByte on the right)
+  k_r = k_r[1:] + k_r[:1]
+
+  # S-box all bytes
+  k_r = [sbox[k_byte] for k_byte in k_r]
+
+  # Use rcon with the first byte only
+  k_r[0] ^= Rcon[r]
+
+  return k_r
+
+def InvKeyScheduleCore(r, k_r):
+  # Get key in byte list form, if not already
+  try:
+    k_r_1 = c_to_state(k_r, 4)
+  except TypeError:
+    k_r_1 = list(k_r)
+  
+  # Invert the core operations
+  k_r_1[0] ^= Rcon[r]
+  k_r_1 = [rsbox[k_byte] for k_byte in k_r_1]
+  k_r_1 = k_r_1[-1:] + k_r_1[:-1]
+  
+  assert KeyScheduleCore(r, k_r_1) == k_r
+
+  return k_r_1
+
+# The key k, and the desired round r
+def KeySchedule(k, r):
+  # Params for AES-128
+  n = 16
+  b = 176
+  
+  # First part of expanded key is the key
+  # Get key in byte list form, if not already
+  try:
+    k_ex = c_to_state(k, n)
+  except TypeError:
+    k_ex = list(k)
+
+  assert len(k_ex) == n
+
+  # Set rcon iteration to 1
+  i = 1
+
+  while len(k_ex) < b:
+    # Create the next 4 bytes
+    t = k_ex[-4:]
+    KeyScheduleCore(i, t)
+    i += 1
+    t = [x ^ y for x,y in zip(t, k_ex[-n:4-n])]
+
+    k_ex += t
+
+    # Create the next 12 bytes
+    for _ in range(3):
+      t = [x ^ y for x,y in zip(k_ex[-4:], k_ex[-n:4-n])]
+      k_ex += t
+
+  return k_ex[(r-1)*16:r*16]
+
 def stage_1(x, xp, eqs, great_key_vault):
   byte_end = 256
   for i_d, d_n_params in enumerate(eqs):
