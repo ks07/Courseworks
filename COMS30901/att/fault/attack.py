@@ -115,13 +115,6 @@ def gmul(a, b):
     b >>= 1
   return p
 
-# Courtesy of the itertools recipes
-def pairwise(iterable):
-    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return itertools.izip(a, b)
-
 # Courtesy of http://en.wikipedia.org/wiki/Rijndael_key_schedule
 # AES-128 only needs the first 11 elements
 Rcon = [0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36]
@@ -144,23 +137,6 @@ def KeyScheduleCore(r, k_r_1):
   k_r[0] ^= Rcon[r]
 
   return k_r
-
-# def InvKeyScheduleCore(r, k_r):
-#   # Get key in byte list form, if not already
-#   try:
-#     k_r_1 = c_to_state(k_r, 4)
-#   except TypeError:
-#     k_r_1 = list(k_r)
-  
-#   # Invert the core operations
-#   print(r)
-#   k_r_1[0] ^= Rcon[r]
-#   k_r_1 = [rsbox[k_byte] for k_byte in k_r_1]
-#   k_r_1 = k_r_1[-1:] + k_r_1[:-1]
-  
-#   assert KeyScheduleCore(r, k_r_1) == k_r
-
-#   return k_r_1
 
 # The key k, and the desired round r
 def KeySchedule(k, r):
@@ -194,9 +170,17 @@ def KeySchedule(k, r):
       t = [x ^ y for x,y in zip(k_ex[-4:], k_ex[-n:4-n])]
       k_ex += t
 
-
   return k_ex, k_ex[r*16:(r+1)*16]
 
+
+def GetKey(k_r, r):
+  k_prev = list(k_r)
+  while r > 0:
+    k_prev = IRK(k_prev, r)
+    r -= 1
+  return k_prev
+
+# Very helpful diagram of KeySchedule: http://crypto.stackexchange.com/a/1527
 def InvKeySchedule(k_r, r):
   # Params for AES-128
   n = 16
@@ -234,6 +218,15 @@ def InvKeySchedule(k_r, r):
     print(len(k_ex), k_ex[-n:])
 
   return k_ex[:n]
+def IRK(k_r, r):
+  k_prev = [None] * 16
+
+  k_prev[3*4:4*4] = [a ^ b for a,b in zip(k_r[3*4:4*4], k_r[2*4:3*4])]
+  k_prev[2*4:3*4] = [a ^ b for a,b in zip(k_r[2*4:3*4], k_r[1*4:2*4])]
+  k_prev[1*4:2*4] = [a ^ b for a,b in zip(k_r[1*4:2*4], k_r[0*4:1*4])]
+  k_prev[0*4:1*4] = [a ^ b for a,b in zip(k_r[0*4:1*4], KeyScheduleCore(r, k_prev[3*4:4*4]))]
+
+  return k_prev
 
 def stage_1(x, xp, eqs, great_key_vault):
   byte_end = 256
