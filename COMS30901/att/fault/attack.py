@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from __future__ import print_function
-import sys, subprocess, math
+import sys, subprocess, math, itertools
+
 
 queries = 0
 
@@ -191,32 +192,48 @@ def attack():
       print(content)
   
   # Find the intersection between the repeats.
+  key_guess = [None] * key_bytes
   
   # Loop through each equation set.
-  for eq_i, (poss_sets, corresp_sets) in enumerate(zip(great_key_vault, great_key_vault_2)):
+  for eq_i, (eq_params, poss_sets, other_sets) in enumerate(zip(eqs, great_key_vault, great_key_vault_2)):
     # Loop through the possibility sets in this equation set
-    for poss_set in poss_sets:
-      # Take the first key byte values and check them against the corresponding poss
-      for key_byte_val in poss_set[0]:
-        for other_set in corresp_sets:
-          # Check presence of any of the current values here
-          if key_byte_val in other_set[0]:
-            # Found a match, consider the next
-            #print(eq_i, key_byte_val)
-            for pos, (key_byte_val_chunk, other_chunk) in enumerate(zip(poss_set[1:], other_set[1:])):
-              for val in key_byte_val_chunk:
-                if val in other_chunk:
-                  # If in continue to the next.
-                  if pos == 2:
-                    print(eq_i, 'Match V', poss_set)
-                    print(eq_i, 'Match ^', other_set)
-                else:
-                  # Really should break out here but we can't
-                  pass
+    for (poss_set, other_set) in itertools.product(poss_sets, other_sets):
+      in_both = (set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set))
+      # Check if all the bytes have matches. This should short circuit the generator where possible!
+      if in_both and all(in_both):
+        # Recompute as the generator will be empty
+        in_both = [set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set)]
+        for byte_def, byte_val_set in zip(eq_params, in_both):
+          assert len(byte_val_set) == 1, 'Second fault did not eliminate all possibilities'
+          key_guess[byte_def[0]] = byte_val_set.pop()
+        break
+      
+  print(map(hex, key_guess))
+
+#       # Take the first key byte values and check them against the corresponding poss
+#       for key_byte_val in poss_set[0]:
+#         for other_set in corresp_sets:
+#           # Check presence of any of the current values here
+#           if key_byte_val in other_set[0]:
+#             # Found a match, consider the next
+#             #print(eq_i, key_byte_val)
+            
+#             for pos, (key_byte_val_chunk, other_chunk) in enumerate(zip(set(poss_set[1:]), other_set[1:])):
               
-             # for 
-#    for 
-                  #pass
+#               for val in key_byte_val_chunk:
+#                 if val in other_chunk:
+#                   # If in continue to the next.
+#                   if pos == 2:
+#                     print(eq_i, 'Match V', poss_set)
+#                     print(eq_i, 'Match ^', other_set)
+#                     for 
+#                 else:
+#                   # Really should break out here but we can't
+#                   pass
+              
+#              # for 
+# #    for 
+#                   #pass
 
 if ( __name__ == '__main__' ) :
   if (len(sys.argv) != 2) :
