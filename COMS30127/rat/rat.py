@@ -4,7 +4,8 @@ from bisect import bisect_left
 import itertools as itt
 import numpy as np
 import matplotlib.pyplot as plt
-
+import matplotlib.colors
+itertools = itt
 def gather_input():
     times = [int(z.strip()) for z in open('time.csv').readlines()]
     x = [float(z.strip()) for z in open('x.csv').readlines()]
@@ -15,15 +16,18 @@ def gather_input():
 def run():
     times, x, y, neuron = gather_input()
 
-    neuron_pos_plot(times, x, y, neuron)
-    neuron_autocorrelograms_plot(neuron)
-    neuron_correlograms_plot(neuron)
+#    neuron_pos_plot(times, x, y, neuron)
+#    neuron_autocorrelograms_plot(neuron)
+#    neuron_correlograms_plot(neuron)
+    neuron_firerate_pos_plot(times, x, y, neuron)
 #    neuron_firerate_plot(min(times), max(times), neuron)
 
 # Need to find the nearest time point
-def binsearch_time_pos(times, x, y, target_time):
+def binsearch_time_pos(times, x, y, target_time, inc_time = False):
     i = bisect_left(times, target_time)
     if times[i] == target_time:
+        if inc_time:
+            return (x[i], y[i], target_time)
         return (x[i], y[i])
     else:
         # Interpolate between the points... let's simply take a biased average
@@ -46,6 +50,8 @@ def binsearch_time_pos(times, x, y, target_time):
         interp_x = border_x[0] + (t_frac * x_diff)
         interp_y = border_y[0] + (t_frac * y_diff)
 
+        if inc_time:
+            return (interp_x, interp_y, target_time)
         return (interp_x, interp_y)
 
 def neuron_pos_plot(times, x, y, neuron):
@@ -123,6 +129,80 @@ def neuron_correlograms_plot(neurons):
     # Any adjustments to the layout fall flat as soon as the window is resized, even like this.
     plt.tight_layout()
     plt.subplots_adjust(top=0.95)
+    plt.show()
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return itertools.izip(a, b)
+
+def neuron_firerate_pos_plot(times, x, y, neurons):
+    fig, ax = plt.subplots(3, 4, gridspec_kw={'height_ratios':[10,10,1]}) # Requires matplotlib 1.4 => use pip
+
+    neuron_pos = [[binsearch_time_pos(times, x, y, t, True) for t in n] for n in neurons]
+    
+    fig.suptitle('Neuron Firerate Regions', fontsize=16)
+
+    colors = ('b', 'g', 'r', 'y')
+    for n, pos_list in enumerate(neuron_pos):
+        # Split the world into 3x3 grid
+        
+        x_tops = np.linspace(0,300,9)
+        y_tops = np.linspace(0,250,9)
+
+        bins = [ [ [] for _ in x_tops ] for _ in y_tops ]
+        bin_means = [ [None] * len(x_tops) for _ in y_tops ]
+
+        for e in pos_list:
+            x, y, time = e
+            my_x = 1
+            my_y = 0
+
+            for x_i, x_top in enumerate(x_tops):
+                if x < x_top:
+                    my_x = x_i
+                    break
+            for y_i, y_top in enumerate(y_tops):
+                if y < y_top:
+                    my_y = y_i
+                    break
+            my_bin = bins[my_x][my_y]
+            my_bin.append(time)
+
+        # Loop through bins and calculate the time difference
+        
+        for x, somecol in enumerate(bins):
+            for y, somebin in enumerate(somecol):
+                bin_diffs = []
+                for time_a, time_b in pairwise(somebin):
+                    t_diff = time_b - time_a
+                    bin_diffs.append(t_diff)
+                if not bin_diffs:
+                    bin_means[x][y] = 0
+                else:
+                    bin_means[x][y] = np.mean(bin_diffs)
+
+        plt.hist2d([x - 1 for x in x_tops]*len(y_tops),[y - 1 for y in y_tops]*len(x_tops),weights=np.array(bin_means, order='F').flatten(order='F'),bins=[x_tops,y_tops],)
+        plt.show()
+
+
+        # Scatter
+        ax[0][n].scatter([pos[0] for pos in pos_list], [pos[1] for pos in pos_list], c=colors[n])
+        ax[0][n].set_ylim([0,250])
+        ax[0][n].set_xlim([0,300])
+        ax[0][n].set_title('Neuron {0}'.format(n + 1))
+        ax[0][n].set_xlabel('X Position')
+        ax[0][n].set_ylabel('Y Position')
+        
+        # Heatmap/hexplot
+        im = ax[1][n].hexbin([pos[0] for pos in pos_list], [pos[1] for pos in pos_list], bins='log', gridsize=30)
+        ax[1][n].set_xlabel('X Position')
+        ax[1][n].set_ylabel('Y Position')
+        cb = fig.colorbar(im, cax=ax[2][n], orientation='horizontal')
+        cb.set_label('log10(N)')
+
+    # Would savefig here, but it's too much work to get the formatting/layout correct
     plt.show()
 
 def neuron_firerate_plot(mintime, maxtime, neurons):
