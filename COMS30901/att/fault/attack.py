@@ -96,7 +96,6 @@ def verify_key(m, c, found_key) :
   # Get back as an int... somewhat inelegant
   c_test = int(c_test.encode('hex'), 16)
 
-  print(c, c_test)
   return c_test == c
 
 def sub_bytes_inv(state):
@@ -275,9 +274,9 @@ def attack():
   c_faulty = interact(fault, m)
   c_faulty_2 = interact(fault, m)
 
-  print(hex(c_valid))
-  print(hex(c_faulty))
-  print(hex(c_faulty_2))
+  print('Valid ciphertext:', hex(c_valid))
+  print('Faulty ciphertext 1:', hex(c_faulty))
+  print('Faulty ciphertext 2:', hex(c_faulty_2))
 
   # First chunk of key bytes k1, k8, k11, k14
   byte_end = 256
