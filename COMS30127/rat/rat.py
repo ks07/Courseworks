@@ -18,7 +18,7 @@ def run():
     neuron_pos_plot(times, x, y, neuron)
     neuron_autocorrelograms_plot(neuron)
     neuron_correlograms_plot(neuron)
-    neuron_firerate_plot(min(times), max(times), neuron)
+#    neuron_firerate_plot(min(times), max(times), neuron)
 
 # Need to find the nearest time point
 def binsearch_time_pos(times, x, y, target_time):
@@ -53,7 +53,7 @@ def neuron_pos_plot(times, x, y, neuron):
 
     neuron_pos = [[binsearch_time_pos(times, x, y, t) for t in n] for n in neuron]
     
-    fig.suptitle('Neuron Firing Positions', fontsize=14)
+    fig.suptitle('Neuron Firing Positions', fontsize=16)
 
     colors = ('b', 'g', 'r', 'y')
     for n, pos_list in enumerate(neuron_pos):
@@ -78,7 +78,7 @@ def neuron_pos_plot(times, x, y, neuron):
 def neuron_autocorrelograms_plot(neurons):
     fig, ax = plt.subplots(1, 4)
 
-    fig.suptitle('Neuron Firing Auto-Correlograms')
+    fig.suptitle('Neuron Firing Auto-Correlograms', fontsize = 16)
 
     for i, neuron in enumerate(neurons):
         # Try doing it manually by calculating the difference.
@@ -95,32 +95,29 @@ def neuron_autocorrelograms_plot(neurons):
     plt.show()
 
 def neuron_correlograms_plot(neurons):
-    fig, axs = plt.subplots(4, 4, sharex=True)
+    fig, axs = plt.subplots(1, 2)
 
-    fig.suptitle('Neuron Firing Cross-Correlograms')
+    fig.suptitle('Neuron Firing Cross-Correlograms', fontsize = 16)
 
-    for ax, (neuronA, neuronB) in itt.izip(axs.flat, itt.product(neurons, repeat=2)):
+    for ax, (neuronA, neuronB) in itt.izip(axs, [(neurons[0],neurons[2]), (neurons[1],neurons[3])]):
+        print(len(neuronA), len(neuronB))
         # Try doing it manually by calculating the difference.
         diffs = [ta - tb for ta in neuronA for tb in neuronB]
         # Bin the differences, skip 0 as it's not particularly interesting
-        bins = np.arange(100, 10000, 100)
+        bins = np.arange(-10000, 10000, 100)
         n, bins, _ = ax.hist(diffs, bins=bins)
         #ax[i].set_title('Neuron {0}'.format(i + 1))
         #ax.set_xlabel('delta t (e-4 s)')
         #ax.set_ylabel('Spike Count')
         ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-
-    # Label the columns with the neuron number
-    for i, ax in enumerate(axs[0]):
-        ax.set_title('Neuron {0}'.format(i + 1))
-
-    # Label only the bottom row with the x axis label
-    for ax in axs[-1]:
+        ax.set_xlim(-10000, 10000)
+        ax.set_ylabel('Spike Count')
         ax.set_xlabel('delta t (e-4 s)')
 
-    # Label the rows with the neuron number, by abusing the y axis label
-    for i, ax in enumerate(zip(*axs)[0]):
-        ax.set_ylabel('Neuron {0}\nSpike Count'.format(i + 1))
+    # Label the columns with the neuron number
+    #for i, ax in enumerate(axs[0]):
+    axs[0].set_title('Neuron {0} v {1}'.format(1,3))
+    axs[1].set_title('Neuron {0} v {1}'.format(2,4))
 
     plt.get_current_fig_manager().window.showMaximized()
     # Any adjustments to the layout fall flat as soon as the window is resized, even like this.
