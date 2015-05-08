@@ -53,7 +53,7 @@ def neuron_pos_plot(times, x, y, neuron):
 
     neuron_pos = [[binsearch_time_pos(times, x, y, t) for t in n] for n in neuron]
     
-    fig.suptitle('Neuron Firing Positions')
+    fig.suptitle('Neuron Firing Positions', fontsize=14)
 
     colors = ('b', 'g', 'r', 'y')
     for n, pos_list in enumerate(neuron_pos):
@@ -72,6 +72,7 @@ def neuron_pos_plot(times, x, y, neuron):
         cb = fig.colorbar(im, cax=ax[2][n], orientation='horizontal')
         cb.set_label('log10(N)')
 
+    # Would savefig here, but it's too much work to get the formatting/layout correct
     plt.show()
 
 def neuron_autocorrelograms_plot(neurons):
