@@ -85,10 +85,11 @@ def part1():
     plot_vals = euler_iafn_t(integrate_and_fire_f(), y_0, t_0, t_e, h, v_th, v_reset)
 
     plt.plot(plot_vals[0], plot_vals[3], label='DT=1ms')
-    plt.title('Plot of single neuron leaky integrate and fire model')
+    plt.title('Plot of Single Neuron Leaky Integrate and Fire Model')
     plt.ylabel('Voltage Function V(t) (V)')
     plt.xlabel('Time t (s)')
     plt.legend(loc=4)
+    plt.savefig('p1.png')
     plt.show()
 
 def part2a():
@@ -119,6 +120,7 @@ def part2b(min_i_e__A):
     plt.ylabel('Voltage Function V(t) (V)')
     plt.xlabel('Time t (s)')
     plt.legend(loc=4)
+    plt.savefig('p2b.png')
     plt.show()
 
 def part2():
@@ -145,10 +147,11 @@ def part3():
 
     # TODO: Better plot
     plt.plot(i_vals__nA, srate_vals__Hz, label='Spike Rate')
-    plt.title('Plot of firing rate as function of input current')
+    plt.title('Plot of Firing Rate as Function of Input Current')
     plt.ylabel('Spike Rate (Hz)')
     plt.xlabel('Input Current I_e (nA)')
     plt.legend(loc=4)
+    plt.savefig('p3.png')
     plt.show()
 
 def part4x(e_s, s_type):
@@ -196,10 +199,11 @@ def part4x(e_s, s_type):
 
     plt.plot(t_vals, v_vals[0], label='Neuron A')
     plt.plot(t_vals, v_vals[1], label='Neuron B')
-    plt.title('Plot of two neurons with ' + s_type + ' synaptic connections; leaky integrate and fire model')
+    plt.title('Plot of Two Neurons with ' + s_type + ' Synaptic Connections')
     plt.ylabel('Voltage Function V(t) (V)')
     plt.xlabel('Time t (s)')
     plt.legend(loc=4)
+    plt.savefig('p4_{0:s}.png'.format(s_type))
     plt.show()
 
 def part4():
@@ -211,9 +215,9 @@ def part4():
     e_s_b = -80 * (10**-3)
 
     print('Running Part 4a')
-    part4x(e_s_a, 'excitatory')
+    part4x(e_s_a, 'Excitatory')
     print('Running Part 4b')
-    part4x(e_s_b, 'inhibitory')
+    part4x(e_s_b, 'Inhibitory')
 
 def part5():
     print('Running Part 5')
@@ -270,6 +274,7 @@ def part5():
     plt.ylabel('Voltage Function V(t) (V)')
     plt.xlabel('Time t (s)')
     plt.legend(loc=4)
+    plt.savefig('p5.png')
     plt.show()
 
 if __name__ == '__main__':
