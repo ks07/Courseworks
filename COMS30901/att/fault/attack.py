@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 from __future__ import print_function
+from Crypto.Cipher import AES
 import sys, subprocess, math, itertools
-
+import numpy as np
 
 queries = 0
 
@@ -84,6 +85,19 @@ def interact(fault_spec, m):
   c = int( target_out.readline().strip(), 16 )
 
   return c
+
+def verify_key(m, c, found_key) :
+  key = np.asarray(found_key, dtype=np.uint8).tostring()
+
+  # Find the ciphertext of m under key
+  enc = AES.new(key, AES.MODE_ECB)
+  c_test = enc.encrypt(to_bytes(m, 16))
+
+  # Get back as an int... somewhat inelegant
+  c_test = int(c_test.encode('hex'), 16)
+
+  print(c, c_test)
+  return c_test == c
 
 def sub_bytes_inv(state):
   return [rsbox[x] for x in state]
@@ -197,7 +211,6 @@ def InvKeySchedule(k_r, r):
 
   while len(k_ex) > n:
     for _ in range(3):
-      print(k_ex)
       t = k_ex[-4:]
       k_ex = k_ex[:-4]
       chunk = [t_e ^ x for t_e, x in zip(t, k_ex[-4:])]
@@ -205,7 +218,6 @@ def InvKeySchedule(k_r, r):
       assert k_ex[-n] is None
       k_ex[-n:4-n] = chunk
 
-    print(k_ex)
     new4 = k_ex[-4:]
     k_ex = k_ex[:-4]
     i -= 1
@@ -215,7 +227,6 @@ def InvKeySchedule(k_r, r):
     #k_ex[-n:4-n] = chunk
     assert k_ex[-n] is None
     k_ex[-n:4-n] = new4
-    print(len(k_ex), k_ex[-n:])
 
   return k_ex[:n]
 def IRK(k_r, r):
@@ -292,17 +303,16 @@ def attack():
     ((12,3), (9,2),  (6,1),  (3,1) )
   )
 
-
   great_key_vault = [[] for _ in eqs]
   great_key_vault_2 = [[] for _ in eqs]
 
   stage_1(x, xp, eqs, great_key_vault)
   stage_1(x, xp_2, eqs, great_key_vault_2)
 
-  for gkv in (great_key_vault, great_key_vault_2):
-    for i, content in enumerate(gkv):
-      print(i, len(content))
-      print(content)
+  # for gkv in (great_key_vault, great_key_vault_2):
+  #   for i, content in enumerate(gkv):
+  #     print(i, len(content))
+  #     print(content)
   
   # Find the intersection between the repeats.
   key_guess = [None] * key_bytes
@@ -320,33 +330,15 @@ def attack():
           assert len(byte_val_set) == 1, 'Second fault did not eliminate all possibilities'
           key_guess[byte_def[0]] = byte_val_set.pop()
         break
-      
+
+  key_guess = GetKey(key_guess, 10)
+
   print(map(hex, key_guess))
 
-#       # Take the first key byte values and check them against the corresponding poss
-#       for key_byte_val in poss_set[0]:
-#         for other_set in corresp_sets:
-#           # Check presence of any of the current values here
-#           if key_byte_val in other_set[0]:
-#             # Found a match, consider the next
-#             #print(eq_i, key_byte_val)
-            
-#             for pos, (key_byte_val_chunk, other_chunk) in enumerate(zip(set(poss_set[1:]), other_set[1:])):
-              
-#               for val in key_byte_val_chunk:
-#                 if val in other_chunk:
-#                   # If in continue to the next.
-#                   if pos == 2:
-#                     print(eq_i, 'Match V', poss_set)
-#                     print(eq_i, 'Match ^', other_set)
-#                     for 
-#                 else:
-#                   # Really should break out here but we can't
-#                   pass
-              
-#              # for 
-# #    for 
-#                   #pass
+  # Check our guess
+  assert(verify_key(m, c_valid, key_guess))
+
+  return key_guess
 
 if ( __name__ == '__main__' ) :
   if (len(sys.argv) != 2) :
@@ -363,10 +355,7 @@ if ( __name__ == '__main__' ) :
   target_in  = target.stdin
 
   # Execute a function representing the attacker.
-  attack()
-
-  # # Check our guess
-  # assert(verify_m(m))
+  found_key = attack()
 
   # # Decode the found m to get the secret
   # s = eme_oaep_decode(I2OSP(m, int(math.ceil(math.log(N(), 256)))))
