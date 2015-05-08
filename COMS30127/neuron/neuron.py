@@ -151,6 +151,7 @@ def part3():
     plt.ylabel('Spike Rate (Hz)')
     plt.xlabel('Input Current I_e (nA)')
     plt.legend(loc=4)
+    plt.xlim(2,5)
     plt.savefig('p3.png')
     plt.show()
 
