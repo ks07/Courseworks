@@ -220,7 +220,7 @@ def part5():
     v_reset = -70 * (10**-3)
     v_0 = v_reset
     t_0 = 0.0
-    t_e = 3.0
+    t_e = 1.0
     h = 1 * (10 **-3)
     v_th = -40 * (10**-3)
 
@@ -266,14 +266,8 @@ def part5():
         g_vals.append(g_k)
     
     plt.plot(t_vals, v_vals, label='DT=1ms')
-    plt.title('Plot of single neuron leaky integrate and fire model')
+    plt.title('Plot of Single Neuron with Slow Potassium Current')
     plt.ylabel('Voltage Function V(t) (V)')
-    plt.xlabel('Time t (s)')
-    plt.legend(loc=4)
-    plt.show()
-    plt.plot(t_vals, g_vals, label='DT=1ms')
-    plt.title('Plot of single neuron leaky integrate and fire model')
-    plt.ylabel('g_k')
     plt.xlabel('Time t (s)')
     plt.legend(loc=4)
     plt.show()
