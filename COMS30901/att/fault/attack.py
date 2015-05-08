@@ -98,12 +98,6 @@ def verify_key(m, c, found_key) :
 
   return c_test == c
 
-def sub_bytes_inv(state):
-  return [rsbox[x] for x in state]
-
-# Super cool
-#S = [ lambda state, sub_bytes() ]
-
 # Credit to https://stackoverflow.com/questions/16022556/
 # Dreams of Python 3.2 on the lab machines abound
 def to_bytes(n, length, endianness='big'):
@@ -185,7 +179,7 @@ def KeySchedule(k, r):
 
   return k_ex, k_ex[r*16:(r+1)*16]
 
-
+# Very helpful diagram of KeySchedule: http://crypto.stackexchange.com/a/1527
 def GetKey(k_r, r):
   k_prev = list(k_r)
   while r > 0:
@@ -193,41 +187,6 @@ def GetKey(k_r, r):
     r -= 1
   return k_prev
 
-# Very helpful diagram of KeySchedule: http://crypto.stackexchange.com/a/1527
-def InvKeySchedule(k_r, r):
-  # Params for AES-128
-  n = 16
-  b = 176
-
-  # Expanded key
-  k_ex = [None] * (n * (r+1))
-  # Fill the known chunk
-  #for i, byte_val in enumerate(k_r):
-  #  k_ex[r*16 + i] = byte_val
-  k_ex[r*n:] = k_r
-
-  i = r
-
-  while len(k_ex) > n:
-    for _ in range(3):
-      t = k_ex[-4:]
-      k_ex = k_ex[:-4]
-      chunk = [t_e ^ x for t_e, x in zip(t, k_ex[-4:])]
-      # Insert the newly found chunk
-      assert k_ex[-n] is None
-      k_ex[-n:4-n] = chunk
-
-    new4 = k_ex[-4:]
-    k_ex = k_ex[:-4]
-    i -= 1
-    ksc_chunk = KeyScheduleCore(i, k_ex[-4:])
-    first4 = [t_e ^ x for t_e, x in zip(new4, ksc_chunk)]
-
-    #k_ex[-n:4-n] = chunk
-    assert k_ex[-n] is None
-    k_ex[-n:4-n] = new4
-
-  return k_ex[:n]
 def IRK(k_r, r):
   k_prev = [None] * 16
 
@@ -259,6 +218,10 @@ def stage_1(x, xp, eqs, great_key_vault):
       if all(poss_k):
         # Add to the results for this equation set the possible vals of each key byte
         great_key_vault[i_d].append(poss_k)
+
+def stage_2(x, xp, great_key_vault):
+  byte_end = 256
+  f = rsbox[gmul(14, (rsbox[x[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10])))] ^ gmul(11, rsbox[x[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[x[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[x[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]])) ^ rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10])) ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]]))
 
 def attack():
   # Pick some fixed message for now
