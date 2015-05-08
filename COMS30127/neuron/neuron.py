@@ -83,8 +83,8 @@ def part1():
     h = 1 * (10 **-3)
     v_th = -40 * (10**-3)
     plot_vals = euler_iafn_t(integrate_and_fire_f(), y_0, t_0, t_e, h, v_th, v_reset)
-    
-    plt.plot(plot_vals[0], plot_vals[1], plot_vals[0], plot_vals[3], label='DT=1ms')
+
+    plt.plot(plot_vals[0], plot_vals[3], label='DT=1ms')
     plt.title('Plot of single neuron leaky integrate and fire model')
     plt.ylabel('Voltage Function V(t) (V)')
     plt.xlabel('Time t (s)')
