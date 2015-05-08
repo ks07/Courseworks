@@ -1,0 +1,72 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage[font=small, skip=0pt]{caption}
+\usepackage{subcaption}
+\geometry{margin=20mm}
+\setlength{\textfloatsep}{4pt plus 1.0pt minus 2.0pt}
+\setlength{\intextsep}{6.0pt plus 1.0pt minus 1.0pt}
+\setlength{\belowcaptionskip}{-6pt}
+\begin{document}
+
+\begingroup
+  \centering
+  \LARGE Lab 2: Model of a single neuron
+\endgroup
+
+\subsection*{Part 1: Simulate an integrate and fire model for 1s}
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.4]{Part1.png}
+  \caption{The voltage of a single neuron simulated with the integrate and fire model for 1s.}
+\end{figure}
+
+\subsection*{Part 2: Minimum current}
+
+The minimum current needed for the neuron in part 1 to produce an action potential is 3 nA.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.4]{Part2.png}
+  \caption{This voltage of the neuron in part 1 but with an input current of 2.9 nA for 1 second}
+\end{figure}
+
+\subsection*{Part 3: Find the firing rate above the above neuron}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.4]{Part3.png}
+  \caption{The firing rate for currents ranging from 2 nA and 5 nA at intervals of 0.1 nA}
+\end{figure}
+
+\subsection*{Part 4: Simulate two neurons with a synaptic connection}
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[scale=0.4]{Part4a.png}
+    \caption{The voltage against time for two neurons 
+      \\with an excitatory synaptic connection}
+    \label{fig:sub1}
+  \end{subfigure}%
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[scale=0.4]{Part4b.png}
+    \caption{The voltage against time for two neurons 
+      \\with an inhibatory synaptic connection}
+    \label{fig:sub2}
+  \end{subfigure}
+\end{figure}
+
+\vspace{5mm}
+In figure 4, where the synaptic connection is excitatory the spikes of both neurons tend to synchronise. This is because the excitatory synapse causes one neuron to be more likely to fire when the other neuron is firing and vice-versa. On the other hand we can see from figure 5 that an inhibitory connection between these two neurons causes the spikes to diverge. This is because one neuron firing discourages the other neuron from firing, meaning they spread apart until they converge at the maximal distance from one another.
+
+\subsection*{Part 5: Add a slow potassium current}
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.4]{Part5.png}
+  \caption{The voltage of the neuron in part 1 for 1 second with a slow potassium current added}
+\end{figure}
+
+\end{document}
