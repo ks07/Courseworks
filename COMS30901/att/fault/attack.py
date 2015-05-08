@@ -308,11 +308,6 @@ def attack():
 
   stage_1(x, xp, eqs, great_key_vault)
   stage_1(x, xp_2, eqs, great_key_vault_2)
-
-  # for gkv in (great_key_vault, great_key_vault_2):
-  #   for i, content in enumerate(gkv):
-  #     print(i, len(content))
-  #     print(content)
   
   # Find the intersection between the repeats.
   key_guess = [None] * key_bytes
@@ -331,12 +326,10 @@ def attack():
           key_guess[byte_def[0]] = byte_val_set.pop()
         break
 
-  key_guess = GetKey(key_guess, 10)
-
-  print(map(hex, key_guess))
+  key_guess = np.asarray(GetKey(key_guess, 10), dtype=np.uint8)
 
   # Check our guess
-  assert(verify_key(m, c_valid, key_guess))
+  assert (verify_key(m, c_valid, key_guess)), 'Recovered key appears incorrect'
 
   return key_guess
 
@@ -357,14 +350,11 @@ if ( __name__ == '__main__' ) :
   # Execute a function representing the attacker.
   found_key = attack()
 
-  # # Decode the found m to get the secret
-  # s = eme_oaep_decode(I2OSP(m, int(math.ceil(math.log(N(), 256)))))
+  key_hex = np.asarray(found_key, dtype=np.uint8).tostring().encode('hex')
+  print("Recovered key k:")
+  print(key_hex)
 
-  # print("Recovered plaintext m:\n{0:x}".format(m))
-  # print("Recovered secret s:")
-  # s_hex(s)
-
-  # print("Total target interactions:", queries)
+  print("Total target interactions:", queries)
 
   # Terminate the target process
   target.terminate()
