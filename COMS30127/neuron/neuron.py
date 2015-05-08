@@ -24,14 +24,14 @@ def euler_iafn(f, y_0, t_0, t_e, h, y_th, y_reset):
     return (t_vals, y_vals, spike_cnt)
 
 #
-def integrate_and_fire_f(e_l__mV = -70, r_m__MOhm = 10, i__nA = 3.1, tau_m__ms = 10, extra_v_func = lambda t,v: 0):
+def integrate_and_fire_f(e_l__mV = -70, r_m__MOhm = 10, i__nA = 3.1, tau_m__ms = 10):
     def iaff(t, y):
         e_l = e_l__mV * (10**-3)
         r_m = r_m__MOhm * (10**6)
         i = i__nA * (10**-9)
         tau_m = tau_m__ms * (10**-3)
         v = y
-        return (e_l - v + r_m * i + extra_v_func(t, y)) / tau_m
+        return (e_l - v + r_m * i) / tau_m
     return iaff
 
 def leaky_integrate_and_fire(t, v_0__mV = -70, e_l__mV = -70, r_m__MOhm = 10, i__nA = 3.1, tau_m__ms = 10):
