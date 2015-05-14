@@ -59,6 +59,10 @@ rsbox = [0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3,
          0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55,
          0x21, 0x0c, 0x7d]
 
+# TODO: REMOVE ME
+# Correct key, stored for fast debugging
+my_r8_key = [235, 234, 139, 46, 212, 8, 78, 240, 181, 151, 6, 254, 204, 26, 180, 213]
+
 class FaultSpec:
   def __init__(self, r, f, p, i, j):
     self.r = r
@@ -219,19 +223,50 @@ def stage_1(x, xp, eqs, great_key_vault):
         # Add to the results for this equation set the possible vals of each key byte
         great_key_vault[i_d].append(poss_k)
 
+# 2 f'
+# h = Rcon?
+def s2_fa(x, xp, k, h):
+  f = rsbox[gmul(14, rsbox[x[0] ^ k[0]] ^ k[0] ^ sbox[k[13] ^ k[9]] ^ h[10]) ^ gmul(11, rsbox[x[13] ^ k[13]] ^ k[1] ^ sbox[k[14] ^ k[10]]) ^ gmul(13, rsbox[x[10] ^ k[10]] ^ k[2] ^ sbox[k[15] ^ k[11]]) ^ gmul(9, rsbox[x[7] ^ k[7]] ^ k[3] ^ sbox[k[12] ^ k[8]])] ^ \
+      rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ k[0] ^ sbox[k[13] ^ k[9]] ^ h[10]) ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ k[1] ^ sbox[k[14] ^ k[10]]) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ k[2] ^ sbox[k[15] ^ k[11]]) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ k[3] ^ sbox[k[12] ^ k[8]])]
+
+# ^ rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10]))] ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]]))
+  return f
+
+# f'
+def s2_fb(x, xp, k):
+  f = rsbox[gmul(9, rsbox[x[12]^k[12]] ^ k[12] ^ k[8]) ^ gmul(14, rsbox[x[9] ^ k[9]] ^ k[9] ^ k[13]) ^ gmul(11, rsbox[x[6] ^ k[6]] ^ k[14] ^ k[10]) ^ gmul(13, rsbox[x[3] ^ k[3]] ^ k[15] ^ k[11])] ^ \
+      rsbox[gmul(9, rsbox[xp[12] ^ k[12]] ^ k[12] ^ k[8]) ^ gmul(14, rsbox[xp[9] ^ k[9]] ^ k[9] ^ k[13]) ^ gmul(11, rsbox[xp[6] ^ k[6]] ^ k[14] ^ k[10]) ^ gmul(13, rsbox[xp[3] ^ k[3]] ^ k[15] ^ k[11])]
+  return f
+
+# f'
+def s2_fc(x, xp, k):
+  f = rsbox[gmul(13, rsbox[x[8] ^ k[8]] ^ k[8] ^ k[4]) ^ gmul(9, rsbox[x[5] ^ k[5]] ^ k[9] ^ k[5]) ^ gmul(14, rsbox[x[2] ^ k[2]] ^ k[10] ^ k[6]) ^ gmul(11, rsbox[x[15] ^ k[15]] ^ k[11] ^ k[7])] ^ \
+      rsbox[gmul(13, rsbox[xp[8] ^ k[8]] ^ k[8] ^ k[4]) ^ gmul(9, rsbox[xp[5] ^ k[5]] ^ k[9] ^ k[5]) ^ gmul(14, rsbox[xp[2] ^ k[2]] ^ k[10] ^ k[6]) ^ gmul(11, rsbox[xp[15] ^ k[15]] ^ k[11] ^ k[7])]
+  return f
+
+# 3 f'
+def s2_fd(x, xp, k):
+  f = rsbox[gmul(11, rsbox[x[4] ^ k[4]] ^ k[4] ^ k[0]) ^ gmul(13, rsbox[x[1] ^ k[1]] ^ k[5] ^ k[1]) ^ gmul(9, rsbox[x[14] ^ k[14]] ^ k[6] ^ k[2]) ^ gmul(14, rsbox[x[11] ^ k[11]] ^ k[7] ^ k[3])] ^ \
+      rsbox[gmul(11, rsbox[xp[4] ^ k[4]] ^ k[4] ^ k[0]) ^ gmul(13, rsbox[xp[1] ^ k[1]] ^ k[5] ^ k[1]) ^ gmul(9, rsbox[xp[14] ^ k[14]] ^ k[6] ^ k[2]) ^ gmul(14, rsbox[xp[11] ^ k[11]] ^ k[7] ^ k[3])]
+  return f
+
 def stage_2(x, xp, great_key_vault):
   byte_end = 256
-  # 2 f'
-  f = rsbox[gmul(14, (rsbox[x[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10])))] ^ gmul(11, rsbox[x[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[x[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[x[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]])) ^ rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10]))] ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]]))
-  # f'
-  f = rsbox[gmul(9, rsbox[x[12]^k[12]] ^ k[12] ^ k[8]) ^ gmul(14, rsbox[x[9] ^ k[9]] ^ k[9] ^ k[13]) ^ gmul(11, rsbox[x[6] ^ k[6]] ^ k[14] ^ k[10]) ^ gmul(13, rsbox[x[3] ^ k[3]] ^ k[15] ^ k[12])] ^ \
-      rsbox[gmul(9, rsbox[xp[12] ^ k[12]] ^ k[12] ^ k[9]) ^ gmul(14, rsbox[xp[9] ^ k[9]] ^ k[9] ^ k[13]) ^ gmul(11, rsbox[xp[6] ^ k[6]] ^ k[14] ^ k[10]) ^ gmul(13, rsbox[xp[3] ^ k[3]] ^ k[15] ^ k[11])]
-  # f'
-  f = rsbox[gmul(13, rsbox[x[8] ^ k[8]] ^ k[9] ^ k[5]) ^ gmul(9, rsbox[x[5] ^ k[5]] ^ k[9] ^ k[5]) ^ gmul(14, rsbox[x[2] ^ k[2]] ^ k[11] ^ k[7]) ^ gmul(11, rsbox[x[15] ^ k[15]] ^ k[11] ^ k[7])] ^ \
-      rsbox[gmul(13, rsbox[xp[8] ^ k[8]] ^ k[9] ^ k[5]) ^ gmul(9, rsbox[xp[5] ^ k[5]] ^ k[9] ^ k[5]) ^ gmul(14, rsbox[xp[2] ^ k[2]] ^ k[11] ^ k[7]) ^ gmul(11, rsbox[xp[15] ^ k[15]] ^ k[11] ^ k[7])]
-  # 3 f'
-  f = rsbox[gmul(11, rsbox[x[4] ^ k[4]] ^ k[4] ^ k[1]) ^ gmul(13, rsbox[x[1] ^ k[1]] ^ k[5] ^ k[1]) ^ gmul(9, rsbox[x[14] ^ k[14]] ^ k[6] ^ k[2]) ^ gmul(14, rsbox[x[11] ^ k[11]] ^ k[7] ^ k[3])] ^ \
-      rsbox[gmul(11, rsbox[xp[4] ^ k[4]] ^ k[4] ^ k[1]) ^ gmul(13, rsbox[xp[1] ^ k[1]] ^ k[5] ^ k[1]) ^ gmul(9, rsbox[xp[14] ^ k[14]] ^ k[6] ^ k[2]) ^ gmul(14, rsbox[xp[11] ^ k[11]] ^ k[7] ^ k[3])]
+  # Test with gkv of correct round key only
+  k = great_key_vault
+  a = []
+  b = []
+  c = []
+  d = []
+  for fp in range(1, byte_end):
+    fa = s2_fa(x, xp, k, Rcon)
+    fb = s2_fb(x, xp, k)
+    fc = s2_fc(x, xp, k)
+    fd = s2_fd(x, xp, k)
+    #rint(gmul(3,fa), gmul(6,fb), gmul(6,fc), gmul(2,fd))
+    if fa == gmul(2, fp) and fb == fp and fc == fp and fd == gmul(fp, 3):
+      print('Got it')
+      print(fp)
 
 def attack():
   # Pick some fixed message for now
@@ -298,12 +333,16 @@ def attack():
           key_guess[byte_def[0]] = byte_val_set.pop()
         break
 
+  print(key_guess)
+  global round_key
+  round_key = key_guess
+
   key_guess = np.asarray(GetKey(key_guess, 10), dtype=np.uint8)
 
   # Check our guess
   assert (verify_key(m, c_valid, key_guess)), 'Recovered key appears incorrect'
 
-  return key_guess
+  return key_guess,
 
 if ( __name__ == '__main__' ) :
   if (len(sys.argv) != 2) :
