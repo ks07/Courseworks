@@ -221,7 +221,17 @@ def stage_1(x, xp, eqs, great_key_vault):
 
 def stage_2(x, xp, great_key_vault):
   byte_end = 256
-  f = rsbox[gmul(14, (rsbox[x[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10])))] ^ gmul(11, rsbox[x[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[x[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[x[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]])) ^ rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10])) ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]]))
+  # 2 f'
+  f = rsbox[gmul(14, (rsbox[x[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10])))] ^ gmul(11, rsbox[x[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[x[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[x[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]])) ^ rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ (k[0] ^ sbox[k[13] ^ k[9]] ^ h[10]))] ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ (k[1] ^ sbox[k[14] ^ k[10]])) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ (k[2] ^ sbox[k[15] ^ k[11]])) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ (k[3] ^ sbox[k[12] ^ k[8]]))
+  # f'
+  f = rsbox[gmul(9, rsbox[x[12]^k[12]] ^ k[12] ^ k[8]) ^ gmul(14, rsbox[x[9] ^ k[9]] ^ k[9] ^ k[13]) ^ gmul(11, rsbox[x[6] ^ k[6]] ^ k[14] ^ k[10]) ^ gmul(13, rsbox[x[3] ^ k[3]] ^ k[15] ^ k[12])] ^ \
+      rsbox[gmul(9, rsbox[xp[12] ^ k[12]] ^ k[12] ^ k[9]) ^ gmul(14, rsbox[xp[9] ^ k[9]] ^ k[9] ^ k[13]) ^ gmul(11, rsbox[xp[6] ^ k[6]] ^ k[14] ^ k[10]) ^ gmul(13, rsbox[xp[3] ^ k[3]] ^ k[15] ^ k[11])]
+  # f'
+  f = rsbox[gmul(13, rsbox[x[8] ^ k[8]] ^ k[9] ^ k[5]) ^ gmul(9, rsbox[x[5] ^ k[5]] ^ k[9] ^ k[5]) ^ gmul(14, rsbox[x[2] ^ k[2]] ^ k[11] ^ k[7]) ^ gmul(11, rsbox[x[15] ^ k[15]] ^ k[11] ^ k[7])] ^ \
+      rsbox[gmul(13, rsbox[xp[8] ^ k[8]] ^ k[9] ^ k[5]) ^ gmul(9, rsbox[xp[5] ^ k[5]] ^ k[9] ^ k[5]) ^ gmul(14, rsbox[xp[2] ^ k[2]] ^ k[11] ^ k[7]) ^ gmul(11, rsbox[xp[15] ^ k[15]] ^ k[11] ^ k[7])]
+  # 3 f'
+  f = rsbox[gmul(11, rsbox[x[4] ^ k[4]] ^ k[4] ^ k[1]) ^ gmul(13, rsbox[x[1] ^ k[1]] ^ k[5] ^ k[1]) ^ gmul(9, rsbox[x[14] ^ k[14]] ^ k[6] ^ k[2]) ^ gmul(14, rsbox[x[11] ^ k[11]] ^ k[7] ^ k[3])] ^ \
+      rsbox[gmul(11, rsbox[xp[4] ^ k[4]] ^ k[4] ^ k[1]) ^ gmul(13, rsbox[xp[1] ^ k[1]] ^ k[5] ^ k[1]) ^ gmul(9, rsbox[xp[14] ^ k[14]] ^ k[6] ^ k[2]) ^ gmul(14, rsbox[xp[11] ^ k[11]] ^ k[7] ^ k[3])]
 
 def attack():
   # Pick some fixed message for now
