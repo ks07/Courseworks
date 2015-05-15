@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from __future__ import print_function
 from Crypto.Cipher import AES
+from operator import itemgetter
 import sys, subprocess, math, itertools
 import numpy as np
 
@@ -61,7 +62,8 @@ rsbox = [0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3,
 
 # TODO: REMOVE ME
 # Correct key, stored for fast debugging
-my_r8_key = [235, 234, 139, 46, 212, 8, 78, 240, 181, 151, 6, 254, 204, 26, 180, 213]
+my_r10_key = [41, 5, 0, 209, 147, 17, 169, 37, 21, 99, 35, 222, 230, 106, 117, 44]
+my_key = [235, 234, 139, 46, 212, 8, 78, 240, 181, 151, 6, 254, 204, 26, 180, 213]
 
 class FaultSpec:
   def __init__(self, r, f, p, i, j):
@@ -226,9 +228,9 @@ def stage_1(x, xp, eqs, great_key_vault):
 # 2 f'
 # h = Rcon?
 def s2_fa(x, xp, k):
-  print(x)
-  print(xp)
-  print(k)
+  # print(x)
+  # print(xp)
+  # print(k)
   f = rsbox[gmul(14, rsbox[x[0] ^ k[0]] ^ k[0] ^ sbox[k[13] ^ k[9]] ^ Rcon[10]) ^ gmul(11, rsbox[x[13] ^ k[13]] ^ k[1] ^ sbox[k[14] ^ k[10]]) ^ gmul(13, rsbox[x[10] ^ k[10]] ^ k[2] ^ sbox[k[15] ^ k[11]]) ^ gmul(9, rsbox[x[7] ^ k[7]] ^ k[3] ^ sbox[k[12] ^ k[8]])] ^ \
       rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ k[0] ^ sbox[k[13] ^ k[9]] ^ Rcon[10]) ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ k[1] ^ sbox[k[14] ^ k[10]]) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ k[2] ^ sbox[k[15] ^ k[11]]) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ k[3] ^ sbox[k[12] ^ k[8]])]
   return f
@@ -268,37 +270,29 @@ def stage_2(x, xp, great_key_vault):
 
 
 
-  for eq_i, eq_set in enumerate(great_key_vault):
-    # Get all possible byte value configurations from joining every valid delta set of every possibly byte value config
-    eq_set_vals = reduce(itertools.chain, itertools.starmap(itertools.product, eq_set))
+  # Get all possible byte value configurations from joining every valid delta set of every possibly byte value config
+  eq_set_vals = itertools.product(*[reduce(itertools.chain, itertools.starmap(itertools.product, eq_set)) for eq_set in great_key_vault])
 
-  set_of_deltas = itertools.starmap(itertools.product, great_key_vault)
+  for combo in eq_set_vals:
+    # Sort the configurations by their eq_params
+    poss_k = map(itemgetter(1), sorted(itertools.chain(*[zip(map(itemgetter(0), eq_params),umm) for eq_params, umm in zip(eqs, combo)]), key=itemgetter(0)))
+    print(poss_k)
+    # 2 f'
+    fa = gmul(3, s2_fa(x, xp, poss_k))
+    # f'
+    fb = gmul(6, s2_fb(x, xp, poss_k))
+    # f'
+    fc = gmul(6, s2_fc(x, xp, poss_k))
+    # 3 f'
+    fd = gmul(2, s2_fd(x, xp, poss_k))
+    #rint(gmul(3,fa), gmul(6,fb), gmul(6,fc), gmul(2,fd))
+    if fa == fb == fc == fd:
+      print('Got it')
+      print(list(poss_k))
+  assert False
 
-  # Need to loop through every valid combination of found possible key bytes
-  # Loop through all possible combinations of the four sets
-  for poss_set_combo in itertools.product(*great_key_vault):
-    # poss_set_combo is a 3d list of {the four sets of fixed delta_i} of {their four bytes} of {their possible values (~2)}
-    # Get all possible combinations of possible values, set wise.
-    set_configs = itertools.starmap(itertools.product, poss_set_combo)
-    # Loop through the configurations
-    for byte_configuration in itertools.product(*set_configs):
-      # Need to sort the bytes
-      # Each thing in byte_conf is a 4x4 mat of int... who knows what they are
-      
-      print(len(list(byte_configuration)))
-      
-  for eq_params, poss_sets in zip(eqs, great_key_vault):
-    # Loop through the possibility sets in this equation set
-    for (poss_set, other_set) in itertools.product(poss_sets, other_sets):
-      in_both = (set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set))
-      # Check if all the bytes have matches. This should short circuit the generator where possible!
-      if in_both and all(in_both):
-        # Recompute as the generator will be empty
-        in_both = [set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set)]
-        for byte_def, byte_val_set in zip(eq_params, in_both):
-          assert len(byte_val_set) == 1, 'Second fault did not eliminate all possibilities'
-          key_guess[byte_def[0]] = byte_val_set.pop()
-        break
+  # set_of_deltas = itertools.starmap(itertools.product, great_key_vault)
+
 
   # Loop through every possible key byte combination
   for poss_k in itertools.product(*great_key_vault):
@@ -363,9 +357,9 @@ def attack():
   stage_1(x, xp, eqs, great_key_vault)
   stage_1(x, xp_2, eqs, great_key_vault_2)
   
-  print('Stage 2')
-  print(great_key_vault)
-  stage_2(x, xp, great_key_vault)
+  #print('Stage 2')
+  #print(great_key_vault)
+  #stage_2(x, xp, great_key_vault)
 
   # Find the intersection between the repeats.
   key_guess = [None] * key_bytes
@@ -386,14 +380,14 @@ def attack():
 
   print(key_guess)
   global round_key
-  round_key = key_guess
+  round_key = list(key_guess)
 
   key_guess = np.asarray(GetKey(key_guess, 10), dtype=np.uint8)
 
   # Check our guess
   assert (verify_key(m, c_valid, key_guess)), 'Recovered key appears incorrect'
 
-  return key_guess,
+  return key_guess
 
 if ( __name__ == '__main__' ) :
   if (len(sys.argv) != 2) :
