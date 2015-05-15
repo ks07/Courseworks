@@ -143,7 +143,7 @@ def KeySchedule(k, r):
   # Params for AES-128
   n = 16
   b = 176
-  
+
   # First part of expanded key is the key
   # Get key in byte list form, if not already
   try:
@@ -190,9 +190,9 @@ def IRK(k_r, r):
 
   return k_prev
 
-def stage_1(x, xp, eqs, great_key_vault):
+def stage_1(x, xp, great_key_vault):
   byte_end = 256
-  for i_d, d_n_params in enumerate(eqs):
+  for i_d, d_n_params in enumerate(s1_eqs):
     # Loop through all possible delta values
     for d_n in range(byte_end):
       poss_k = [[] for _ in d_n_params] # 4 bytes per delta, should be defined above
@@ -213,11 +213,7 @@ def stage_1(x, xp, eqs, great_key_vault):
         great_key_vault[i_d].append(poss_k)
 
 # 2 f'
-# h = Rcon?
 def s2_fa(x, xp, k):
-  # print(x)
-  # print(xp)
-  # print(k)
   f = rsbox[gmul(14, rsbox[x[0] ^ k[0]] ^ k[0] ^ sbox[k[13] ^ k[9]] ^ Rcon[10]) ^ gmul(11, rsbox[x[13] ^ k[13]] ^ k[1] ^ sbox[k[14] ^ k[10]]) ^ gmul(13, rsbox[x[10] ^ k[10]] ^ k[2] ^ sbox[k[15] ^ k[11]]) ^ gmul(9, rsbox[x[7] ^ k[7]] ^ k[3] ^ sbox[k[12] ^ k[8]])] ^ \
       rsbox[gmul(14, rsbox[xp[0] ^ k[0]] ^ k[0] ^ sbox[k[13] ^ k[9]] ^ Rcon[10]) ^ gmul(11, rsbox[xp[13] ^ k[13]] ^ k[1] ^ sbox[k[14] ^ k[10]]) ^ gmul(13, rsbox[xp[10] ^ k[10]] ^ k[2] ^ sbox[k[15] ^ k[11]]) ^ gmul(9, rsbox[xp[7] ^ k[7]] ^ k[3] ^ sbox[k[12] ^ k[8]])]
   return f
@@ -240,29 +236,27 @@ def s2_fd(x, xp, k):
       rsbox[gmul(11, rsbox[xp[4] ^ k[4]] ^ k[4] ^ k[0]) ^ gmul(13, rsbox[xp[1] ^ k[1]] ^ k[5] ^ k[1]) ^ gmul(9, rsbox[xp[14] ^ k[14]] ^ k[6] ^ k[2]) ^ gmul(14, rsbox[xp[11] ^ k[11]] ^ k[7] ^ k[3])]
   return f
 
-def stage_2(x, xp, great_key_vault):
-  byte_end = 256
-
-  # Equation params => [d_n][x|k_i][f * d_n]
-  eqs = (
-    # d_1
-    ((0,2),  (13,1), (10,1), (7,3) ),
-    # d_2                    
-    ((4,1),  (1,1),  (14,3), (11,2)),
-    # d_3                    
-    ((8,1),  (5,3),  (2,2),  (15,1)),
-    # d_4                    
-    ((12,3), (9,2),  (6,1),  (3,1) )
+# Defines the four equations used in stage 1. Required for unpacking stage 1 output.
+s1_eqs = (
+  # d_1
+  ((0,2),  (13,1), (10,1), (7,3) ),
+  # d_2
+  ((4,1),  (1,1),  (14,3), (11,2)),
+  # d_3
+  ((8,1),  (5,3),  (2,2),  (15,1)),
+  # d_4
+  ((12,3), (9,2),  (6,1),  (3,1) )
   )
 
-
+def stage_2(x, xp, great_key_vault):
+  byte_end = 256
 
   # Get all possible byte value configurations from joining every valid delta set of every possibly byte value config
   eq_set_vals = itertools.product(*[reduce(itertools.chain, itertools.starmap(itertools.product, eq_set)) for eq_set in great_key_vault])
 
   for combo in eq_set_vals:
     # Sort the configurations by their eq_params
-    poss_k = map(itemgetter(1), sorted(itertools.chain(*[zip(map(itemgetter(0), eq_params),umm) for eq_params, umm in zip(eqs, combo)]), key=itemgetter(0)))
+    poss_k = map(itemgetter(1), sorted(itertools.chain(*[zip(map(itemgetter(0), eq_params),umm) for eq_params, umm in zip(s1_eqs, combo)]), key=itemgetter(0)))
     print(poss_k)
     # 2 f'
     fa = gmul(3, s2_fa(x, xp, poss_k))
@@ -278,23 +272,6 @@ def stage_2(x, xp, great_key_vault):
       print(list(poss_k))
       assert False, 'dun good'
   assert False, 'dun bad'
-  # set_of_deltas = itertools.starmap(itertools.product, great_key_vault)
-
-
-  # Loop through every possible key byte combination
-  for poss_k in itertools.product(*great_key_vault):
-    # 2 f'
-    fa = gmul(3, s2_fa(x, xp, poss_k))
-    # f'
-    fb = gmul(6, s2_fb(x, xp, poss_k))
-    # f'
-    fc = gmul(6, s2_fc(x, xp, poss_k))
-    # 3 f'
-    fd = gmul(2, s2_fd(x, xp, poss_k))
-    #rint(gmul(3,fa), gmul(6,fb), gmul(6,fc), gmul(2,fd))
-    if fa == fb == fc == fd:
-      print('Got it')
-      print(list(poss_k))
 
 def attack():
   # Pick some fixed message for now
@@ -305,7 +282,7 @@ def attack():
 
   # Non-zero fault in round 8, before(0) in SubBytes(1) in state byte 0,0
   fault = FaultSpec(8, 1, 0, 0, 0)
-  
+
   # Get faulty ciphertext
   c_faulty = interact(fault, m)
   c_faulty_2 = interact(fault, m)
@@ -314,11 +291,10 @@ def attack():
   print('Faulty ciphertext 1:', hex(c_faulty))
   print('Faulty ciphertext 2:', hex(c_faulty_2))
 
-  # First chunk of key bytes k1, k8, k11, k14
   byte_end = 256
   key_bytes = 16
 
-  # Convert ciphertexts into byte list
+  # Convert correct and faulty ciphertexts into byte list
   x  = c_to_state(c_valid, key_bytes)
   xp = c_to_state(c_faulty, key_bytes)
   xp_2 = c_to_state(c_faulty_2, key_bytes)
@@ -326,33 +302,21 @@ def attack():
   assert len(x) == key_bytes
   assert len(xp) == key_bytes
 
-  # Equation params => [d_n][x|k_i][f * d_n]
-  eqs = (
-    # d_1
-    ((0,2),  (13,1), (10,1), (7,3) ),
-    # d_2                    
-    ((4,1),  (1,1),  (14,3), (11,2)),
-    # d_3                    
-    ((8,1),  (5,3),  (2,2),  (15,1)),
-    # d_4                    
-    ((12,3), (9,2),  (6,1),  (3,1) )
-  )
+  great_key_vault = [[] for _ in s1_eqs]
+  great_key_vault_2 = [[] for _ in s1_eqs]
 
-  great_key_vault = [[] for _ in eqs]
-  great_key_vault_2 = [[] for _ in eqs]
+  stage_1(x, xp, great_key_vault)
+  stage_1(x, xp_2, great_key_vault_2)
 
-  stage_1(x, xp, eqs, great_key_vault)
-  stage_1(x, xp_2, eqs, great_key_vault_2)
-  
   #print('Stage 2')
   #print(great_key_vault)
   #stage_2(x, xp, great_key_vault)
 
   # Find the intersection between the repeats.
   key_guess = [None] * key_bytes
-  
+
   # Loop through each equation set.
-  for eq_params, poss_sets, other_sets in zip(eqs, great_key_vault, great_key_vault_2):
+  for eq_params, poss_sets, other_sets in zip(s1_eqs, great_key_vault, great_key_vault_2):
     # Loop through the possibility sets in this equation set
     for (poss_set, other_set) in itertools.product(poss_sets, other_sets):
       in_both = (set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set))
