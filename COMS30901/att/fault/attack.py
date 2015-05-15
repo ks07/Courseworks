@@ -2,7 +2,7 @@
 from __future__ import print_function
 from Crypto.Cipher import AES
 from operator import itemgetter
-import sys, subprocess, math, itertools
+import sys, subprocess, math, itertools, random
 import numpy as np
 
 queries = 0
@@ -38,19 +38,6 @@ sbox =  [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
 rsbox = [None] * len(sbox)
 for i,e in enumerate(sbox):
   rsbox[e] = i
-
-# TODO: REMOVE ME
-# Correct keys, stored for fast debugging
-my_r10_key = [41, 5, 0, 209, 147, 17, 169, 37, 21, 99, 35, 222, 230, 106, 117, 44]
-my_key = [235, 234, 139, 46, 212, 8, 78, 240, 181, 151, 6, 254, 204, 26, 180, 213]
-# gkv with only correct
-faked_gkv = [[[[41], [106], [35], [37]]], [[[147], [5], [117], [222]]], [[[21], [17], [0], [44]]], [[[230], [99], [169], [209]]]]
-# gkv with only incorrect
-false_gkv = [[[[41], [106], [35], [37]]], [[[147], [5], [117], [222]]], [[[21], [17], [0], [44]]], [[[230], [99], [169], [208]]]]
-# gkv with correct and some random incorrect byte values, single deltas
-conf_gkv = [[[[41, 62], [106, 91], [35, 23], [75, 37]]], [[[1, 147], [240, 5], [12, 117], [189, 222]]], [[[21, 13], [255, 17], [12, 0], [12, 44]]], [[[99, 230], [54, 99, 56], [123, 169], [98, 209]]]]
-# gkv with correct and some random incorrect byte values, including an extra incorrect delta set
-ds_gkv = [[[[99], [99], [99], [99]], [[41, 62], [106, 91], [35, 23], [75, 37]]], [[[1, 147], [240, 5], [12, 117], [189, 222]]], [[[21, 13], [255, 17], [12, 0], [12, 44]]], [[[99, 230], [54, 99, 56], [123, 169], [98, 209]]]]
 
 class FaultSpec:
   def __init__(self, r, f, p, i, j):
@@ -180,7 +167,6 @@ def KeySchedule(k, r):
 
   return k_ex, k_ex[r*16:(r+1)*16]
 
-# Very helpful diagram of KeySchedule: http://crypto.stackexchange.com/a/1527
 def GetKey(k_r, r):
   k_prev = list(k_r)
   while r > 0:
@@ -188,6 +174,7 @@ def GetKey(k_r, r):
     r -= 1
   return k_prev
 
+# Very helpful diagram of KeySchedule: http://crypto.stackexchange.com/a/1527
 def IRK(k_r, r):
   k_prev = [None] * 16
 
@@ -288,8 +275,9 @@ def attack(twofault = False):
   else:
     print('Running single fault attack. Grab a coffee...')
 
-  # Pick some fixed message for now
-  m = 132453297378738698636537746945527344052
+  # Pick a random message
+  m = random.getrandbits(128)
+  #m = 132453297378738698636537746945527344052
 
   # Get correct ciphertext
   c_valid = interact(None, m)
@@ -347,7 +335,8 @@ def attack(twofault = False):
   else:
     # Single fault mode, run stage 2.
     print('Running stage 2...')
-    stage_2(x, xp, great_key_vault, m, c_valid)
+    key_guess = stage_2(x, xp, great_key_vault, m, c_valid)
+    key_guess = np.asarray(key_guess, dtype=np.uint8)
 
   # Check our guess
   assert (verify_key(m, c_valid, key_guess)), 'Recovered key appears incorrect'
