@@ -61,9 +61,17 @@ rsbox = [0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3,
          0x21, 0x0c, 0x7d]
 
 # TODO: REMOVE ME
-# Correct key, stored for fast debugging
+# Correct keys, stored for fast debugging
 my_r10_key = [41, 5, 0, 209, 147, 17, 169, 37, 21, 99, 35, 222, 230, 106, 117, 44]
 my_key = [235, 234, 139, 46, 212, 8, 78, 240, 181, 151, 6, 254, 204, 26, 180, 213]
+# gkv with only correct
+faked_gkv = [[[[41], [106], [35], [37]]], [[[147], [5], [117], [222]]], [[[21], [17], [0], [44]]], [[[230], [99], [169], [209]]]]
+# gkv with only incorrect
+false_gkv = [[[[41], [106], [35], [37]]], [[[147], [5], [117], [222]]], [[[21], [17], [0], [44]]], [[[230], [99], [169], [208]]]]
+# gkv with correct and some random incorrect byte values, single deltas
+conf_gkv = [[[[41, 62], [106, 91], [35, 23], [75, 37]]], [[[1, 147], [240, 5], [12, 117], [189, 222]]], [[[21, 13], [255, 17], [12, 0], [12, 44]]], [[[99, 230], [54, 99, 56], [123, 169], [98, 209]]]]
+# gkv with correct and some random incorrect byte values, including an extra incorrect delta set
+ds_gkv = [[[[99], [99], [99], [99]], [[41, 62], [106, 91], [35, 23], [75, 37]]], [[[1, 147], [240, 5], [12, 117], [189, 222]]], [[[21, 13], [255, 17], [12, 0], [12, 44]]], [[[99, 230], [54, 99, 56], [123, 169], [98, 209]]]]
 
 class FaultSpec:
   def __init__(self, r, f, p, i, j):
