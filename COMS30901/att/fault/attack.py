@@ -282,7 +282,12 @@ def stage_2(x, xp, great_key_vault, m, c_valid):
         return key_guess
   assert False, 'No correct keys identified at the end of stage 2!'
 
-def attack():
+def attack(twofault = False):
+  if twofault:
+    print('Running two fault attack.')
+  else:
+    print('Running single fault attack. Grab a coffee...')
+
   # Pick some fixed message for now
   m = 132453297378738698636537746945527344052
 
@@ -294,11 +299,9 @@ def attack():
 
   # Get faulty ciphertext
   c_faulty = interact(fault, m)
-  c_faulty_2 = interact(fault, m)
 
   print('Valid ciphertext:', hex(c_valid))
   print('Faulty ciphertext 1:', hex(c_faulty))
-  print('Faulty ciphertext 2:', hex(c_faulty_2))
 
   byte_end = 256
   key_bytes = 16
@@ -306,43 +309,45 @@ def attack():
   # Convert correct and faulty ciphertexts into byte list
   x  = c_to_state(c_valid, key_bytes)
   xp = c_to_state(c_faulty, key_bytes)
-  xp_2 = c_to_state(c_faulty_2, key_bytes)
 
   assert len(x) == key_bytes
   assert len(xp) == key_bytes
 
   great_key_vault = [[] for _ in s1_eqs]
-  great_key_vault_2 = [[] for _ in s1_eqs]
 
   stage_1(x, xp, great_key_vault)
-  stage_1(x, xp_2, great_key_vault_2)
 
-  #print('Stage 2')
-  #print(great_key_vault)
-  #stage_2(x, xp, great_key_vault)
+  if twofault:
+    # Double fault mode, find the intersection of key_vaults.
+    great_key_vault_2 = [[] for _ in s1_eqs]
+    c_faulty_2 = interact(fault, m)
+    print('Faulty ciphertext 2:', hex(c_faulty_2))
+    xp_2 = c_to_state(c_faulty_2, key_bytes)
+    assert len(xp_2) == key_bytes
+    stage_1(x, xp_2, great_key_vault_2)
 
-  # Find the intersection between the repeats.
-  key_guess = [None] * key_bytes
+    # Find the intersection between the repeats.
+    key_guess = [None] * key_bytes
 
-  # Loop through each equation set.
-  for eq_params, poss_sets, other_sets in zip(s1_eqs, great_key_vault, great_key_vault_2):
-    # Loop through the possibility sets in this equation set
-    for (poss_set, other_set) in itertools.product(poss_sets, other_sets):
-      in_both = (set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set))
-      # Check if all the bytes have matches. This should short circuit the generator where possible!
-      if in_both and all(in_both):
-        # Recompute as the generator will be empty
-        in_both = [set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set)]
-        for byte_def, byte_val_set in zip(eq_params, in_both):
-          assert len(byte_val_set) == 1, 'Second fault did not eliminate all possibilities'
-          key_guess[byte_def[0]] = byte_val_set.pop()
-        break
+    # Loop through each equation set.
+    for eq_params, poss_sets, other_sets in zip(s1_eqs, great_key_vault, great_key_vault_2):
+      # Loop through the possibility sets in this equation set
+      for (poss_set, other_set) in itertools.product(poss_sets, other_sets):
+        in_both = (set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set))
+        # Check if all the bytes have matches. This should short circuit the generator where possible!
+        if in_both and all(in_both):
+          # Recompute as the generator will be empty
+          in_both = [set(curr_byte).intersection(other_byte) for (curr_byte, other_byte) in zip(poss_set, other_set)]
+          for byte_def, byte_val_set in zip(eq_params, in_both):
+            assert len(byte_val_set) == 1, 'Second fault did not eliminate all possibilities'
+            key_guess[byte_def[0]] = byte_val_set.pop()
+          break
 
-  print(key_guess)
-  global round_key
-  round_key = list(key_guess)
-
-  key_guess = np.asarray(GetKey(key_guess, 10), dtype=np.uint8)
+    key_guess = np.asarray(GetKey(key_guess, 10), dtype=np.uint8)
+  else:
+    # Single fault mode, run stage 2.
+    print('Running stage 2...')
+    stage_2(x, xp, great_key_vault, m, c_valid)
 
   # Check our guess
   assert (verify_key(m, c_valid, key_guess)), 'Recovered key appears incorrect'
