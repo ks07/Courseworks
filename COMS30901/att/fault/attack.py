@@ -68,14 +68,14 @@ def interact(fault_spec, m):
   queries += 1
 
   # Send fault spec to attack target
-  target_in.write( '{0}\n'.format(fault_spec if fault_spec else '') )
+  target.stdin.write( '{0}\n'.format(fault_spec if fault_spec else '') )
 
   # Send plaintext m to attack target as 128-bit hex octet string
-  target_in.write( '{0:0{1}x}\n'.format(m, 32) )
-  target_in.flush()
+  target.stdin.write( '{0:0{1}x}\n'.format(m, 32) )
+  target.stdin.flush()
 
   # Receive ciphertext c from attack target.
-  c = int( target_out.readline().strip(), 16 )
+  c = int( target.stdout.readline().strip(), 16 )
 
   return c
 
@@ -385,10 +385,6 @@ if ( __name__ == '__main__' ) :
   target = subprocess.Popen( args   = sys.argv[ 1 ],
                              stdout = subprocess.PIPE,
                              stdin  = subprocess.PIPE )
-
-  # Construct handles to attack target standard input and output.
-  target_out = target.stdout
-  target_in  = target.stdin
 
   # Execute a function representing the attacker.
   found_key = attack()
