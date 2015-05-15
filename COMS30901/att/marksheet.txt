@@ -16,7 +16,7 @@
 So that we can calibrate and improve the assignment in the future, give us
 a rough idea how long (in hours) you spent on it *in total*:
 
-effort : [68] hours
+effort : [68+67] hours
 
 -------------------------------------------------------------------------------
 
@@ -28,7 +28,10 @@ by the assignment description of course).  Let us know what third-party
 source code or resources you used (if any) so it's clear what's your work 
 and what isn't:
 
-[...]
+[
+ Target interaction code (python) from the worksheets.
+ Some other miscellaneous functions and constants are attributed inline in the source code.
+]
 
 -------------------------------------------------------------------------------
 
@@ -65,21 +68,27 @@ the style or efficiency of a solution.
 		ef1be81543f99433
 	      ]
 
-[?] Stage 3 : an attack based on an injected fault
+[X] Stage 3 : an attack based on an injected fault
 
               - correct target material                              ( 40%)
               - solution quality wrt. efficiency, robustness etc.    ( 40%)
               - analysis questions                                   ( 20%)
 
-              target material : [...]
+              target material : [
+	        Recovered key k:
+		ebea8b2ed4084ef0b59706fecc1ab4d5
+	      ]
 
-[?] Stage 4 : an attack based on power consumption
+[X] Stage 4 : an attack based on power consumption
 
               - correct target material                              ( 40%)
               - solution quality wrt. efficiency, robustness etc.    ( 40%)
               - analysis questions                                   ( 20%)
 
-              target material : [...]
+              target material : [
+	        Recovered key k:
+                139313666944d39783daaab0983cc0cc
+              ]
                                                                      ------
                                                                      (400%)
 
@@ -94,21 +103,17 @@ source code) should go here:
 [
  I have implemented my attacks in python, both in files named attack.py.
  Provided these files are marked as executable, they can be invoked simply using
- ./attack.py <Command to invoke D> <Path to params file>. For example:
- ./attack.py ./56626.D 56626.param
+ ./attack.py <Command to invoke D>. For example:
+ ./attack.py ./56626.D
  
- Of special note in Stage 2 is I have an alternative, earlier version of my
- attack in the file 'attack_orig.py'. The standard attack.py in my stage 2
- attempts to implement some error correction, and also attempts to grow the list
- of samples used as needed whilst attacking the target. The random selection of
- ciphertexts means that my standard stage 2 attack can sometimes take a long time
- to find the target key, and may have some unexpected failures. My original attack
- is more robust and predictable in terms of execution time, due to the fixed, and
- rather generous, usage of 10000 samples. I have included both versions as a point
- of interest - the original version is a lot more reliable, but does need to be tuned
- to the attack target (i.e. longer keys will need larger sample sizes). The updated
- version in attack.py should be able to adapt to longer values of d, at the expense
- of execution time and some reliability.
+ Of special note in Stage 3, the fault attack, is that my implementation
+ contains both a one-fault and two-fault implementation. The two fault
+ implementation is ran by default. The one fault implementation can be ran by
+ setting the relevant parameter to the attack function. Unfortunately, I did not
+ have time to optimise/parallelise my one fault attack, thus the second stage
+ does not complete within the execution time limit. I have however tested it
+ with a severeley restricted output from stage 1 (both with and without the
+ correct key bytes present), and it appears to be correct.
 ]
 
 -------------------------------------------------------------------------------

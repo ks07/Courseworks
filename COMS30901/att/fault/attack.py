@@ -362,7 +362,7 @@ if ( __name__ == '__main__' ) :
   target_init(sys.argv[1])
 
   # Execute a function representing the attacker.
-  found_key = attack()
+  found_key = attack(twofault = True)
 
   # Possibly the cleanest way to hex-ify the key array
   key_hex = np.asarray(found_key, dtype=np.uint8).tostring().encode('hex')
