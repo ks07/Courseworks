@@ -1,0 +1,37 @@
+================
+Neuron Pos Plot
+================
+
+1. Majority of firings concentrated around C1, not at C2. Why? Maybe this is a "Place Cell" in the hippocampus, with a place field around C1.
+
+2. Majority of firings in the central corridor after having made the turn that informs future choice. Perhaps neuron 2 is related
+   to making the decision based on recalling the previous turn?
+
+3. ???
+
+4. A lot more spread, but concentrated at the left turn from F1 to the central arm. There is very little activity on the mirrored
+   turn coming from F2, so it seems likely this neuron is related to the left turning motion. There is not a significant
+   concentration near other left turns (e.g. at the end of the central arm, headed towards to C1). This shows that perhaps neuron
+   4 is related to remembering the forced left turn needed to make the later choice, instead of left turns in general.
+
+======================
+Neuron Auto Corr Plot
+======================
+
+Might show underlying frequencies in spike train. E.g. most neurons appear to spike in 0.1s intervals. Like a noisy sine wave.
+
+=======================
+Neuron Cross Corr Plot
+=======================
+
+Diagonal shows the auto corr. As expected, much higher auto correlation than cross. More spikes for the later neurons so graphs scale.
+
+CC(2,1) : Some spikes at 0.5 second delay.
+
+CC(4,1), CC(4,2), CC(4,3) : Little correlation, not much variation between the lowest and highest peaks.
+
+=======================
+Neuron Firing Rate Plot
+=======================
+
+???
