@@ -20,7 +20,10 @@
 \section*{COMS30127 Lab M: Analysis of Hippocampal Data}
 
 \subsection*{Introduction}
-The hippocampus is a region of the brain that is responsible for spatial memory and navigation. In order to investigate the function of neuronal cells within the hippocampus, electrodes were attached to 4 neurons in the hippocampus of rats, tasked with solving a simple maze. 
+The hippocampus is a region of the brain that is responsible for spatial memory
+and navigation. In order to investigate the function of neuronal cells within
+the hippocampus, electrodes were attached to 4 neurons in the hippocampus of
+rats, tasked with solving a simple maze.
 
 \begin{figure}[H]
   \centering
@@ -90,62 +93,22 @@ here. A quick evaluation of the two plots above shows that Neurons 2 and 4 have
 little correlation, with a fairly even set of histogram heights. Neurons 1 and 3
 on the other hand shows some correlation around the \SI{0.8}{\second} mark.
 
+\subsection*{Conclusion}
 
-
-
-%% \subsection*{Part 1: Simulated Integrate and Fire Model Neuron}
-%% \begin{figure}[H]
-%%   \centering
-%%   \includegraphics[scale=0.4]{p1.png}
-%%   \caption{The voltage of a single neuron with fixed input current simulated with the integrate and fire model for \SI{1}{\second}.}
-%%   \label{fig:n1}
-%% \end{figure}
-
-%% \subsection*{Part 2: Minimum Current for Action Potential}
-
-%% The minimum required current, \(I_{min}\), for an action potential is \SI{3}{\nano\ampere}.
-
-%% \begin{figure}[H]
-%%   \centering
-%%   \includegraphics[scale=0.4]{p2b.png}
-%%   \caption{Simulation of the neuron from Part 1 with the fixed input current reduced to \(I_{min} - \SI{0.1}{\nano\ampere}\).}
-%% \end{figure}
-
-%% \subsection*{Part 3: Simulated Firing Rate Against Input Current}
-
-%% \begin{figure}[H]
-%%   \centering
-%%   \includegraphics[scale=0.4]{p3.png}
-%%   \caption{The firing rate for fixed input currents ranging from \SI{2}{\nano\ampere} and \SI{5}{\nano\ampere} sampled at \SI{0.1}{\nano\ampere} intervals, from \SI{1.0}{\second} simulations.}
-%% \end{figure}
-
-%% \subsection*{Part 4: Neuron Pair with Synaptic Connections}
-%% \begin{figure}[H]
-%%   \centering
-%%   \begin{subfigure}{.5\textwidth}
-%%     \centering
-%%     \includegraphics[scale=0.4]{p4_Excitatory.png}
-%%     \caption{Excitatory Synaptic Connection}
-%%     \label{fig:sub1}
-%%   \end{subfigure}%
-%%   \begin{subfigure}{.5\textwidth}
-%%     \centering
-%%     \includegraphics[scale=0.4]{p4_Inhibitory.png}
-%%     \caption{Inhibitory Synaptic Connection}
-%%     \label{fig:sub2}
-%%   \end{subfigure}
-%%   \par\medskip
-%%   \caption{Plot of the voltage of two neurons with synaptic connections of differing types over time.}
-%% \end{figure}
-
-%% \vspace{5mm}
-%% The excitatory synaptic connection plot in figure \ref{fig:sub1} shows that the time between spikes quickly converges. This is because when one neuron spikes, the post-synaptic neuron experiences an increase of voltage. Converseley, the inhibitory synaptic connection in figure \ref{fig:sub2} shows that the spiking frequencies become out of phase. This is due to the post-synaptic potential decreasing. In both cases, the effect is compounded as the neurons spike, causing the effect to become more pronounced (until the neurons are either completely in or out of phase, respectively.
-
-%% \subsection*{Part 5: Slow Potassium Current}
-%% \begin{figure}[H]
-%%   \centering
-%%   \includegraphics[scale=0.4]{p5.png}
-%%   \caption{The simulated neuron shown in figure \ref{fig:n1} with an added slow potassium current.}
-%% \end{figure}
+In conclusion, from my analysis of the hippocampal data I have determined that
+neuron 1 is a place cell, with a place field corresponding to the start position
+F2. Neuron 2 appears to be related to recall from working memory, where it
+informs the choice made by neuron 4, which fires most often when making the
+right turn at the end of the central arm. I expect there to be corresponding
+neuron(s) not recorded in the data that have a preference to the opposite
+turn. The recall of neuron 2 would cause either neuron 4 or the related neurons
+to fire more rapidly, influencing the choice of the rat. Auto-correlograms of
+the recorded spike trains show the presence of theta-rhythms in the hippocampus,
+which are thought to enable retrieval of episodes from memory based on context,
+which would backup these ideas. The presence of a low frequency signal in neuron
+4 is interesting, although it's purpose is unclear. Unfortunately, due to the
+presence of these theta-rhythms, the cross-correlograms of neuron pairs are
+somewhat inconclusive, and cannot be used to backup the argument of the relation
+of neurons 2 and 4.
 
 \end{document}
