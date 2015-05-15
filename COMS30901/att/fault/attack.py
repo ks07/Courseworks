@@ -289,8 +289,8 @@ def stage_2(x, xp, great_key_vault):
     if fa == fb == fc == fd:
       print('Got it')
       print(list(poss_k))
-  assert False
-
+      assert False, 'dun good'
+  assert False, 'dun bad'
   # set_of_deltas = itertools.starmap(itertools.product, great_key_vault)
 
 
