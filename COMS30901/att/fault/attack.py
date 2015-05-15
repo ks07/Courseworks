@@ -69,6 +69,7 @@ def target_init(exe):
   target = subprocess.Popen( args   = exe,
                              stdout = subprocess.PIPE,
                              stdin  = subprocess.PIPE )
+  return target
 
 def interact(fault_spec, m):
   global queries
@@ -256,14 +257,13 @@ s1_eqs = (
   )
 
 def stage_2(x, xp, great_key_vault, m, c_valid):
-  byte_end = 256
-
   # Get all possible byte value configurations from joining every valid delta set of every possibly byte value config
-  eq_set_vals = itertools.product(*[reduce(itertools.chain, itertools.starmap(itertools.product, eq_set)) for eq_set in great_key_vault])
+  eq_set_vals = itertools.product(*[itertools.chain.from_iterable(itertools.starmap(itertools.product, eq_set)) for eq_set in great_key_vault])
 
   for combo in eq_set_vals:
-    # Sort the configurations by their eq_params
-    poss_rk = map(itemgetter(1), sorted(itertools.chain(*[zip(map(itemgetter(0), eq_params),umm) for eq_params, umm in zip(s1_eqs, combo)]), key=itemgetter(0)))
+    # Join the current key value combination with the equation parameters, flatten the list one level with a chain, and sort into the right order of key bytes to get a possible round key
+    # Use itemgetters to get only the key byte index or the key byte value.
+    poss_rk = map(itemgetter(1), sorted(itertools.chain.from_iterable([zip(map(itemgetter(0), eq_params),kbyte_val) for eq_params, kbyte_val in zip(s1_eqs, combo)]), key=itemgetter(0)))
     # 2 f'
     fa = gmul(3, s2_fa(x, xp, poss_rk))
     # f'
