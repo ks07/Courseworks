@@ -22,7 +22,10 @@ Q.3 For side-channel attacks, the number of acquisitions required can be
     attack on AES could be as efficient as a fault attack based on these
     measures.
 
+    The equivalent measure for fault attacks is the number of faulty ciphertexts obtained (or the number of faults induced). I don't believe a side channel attack on AES could be as efficient as a fault attack when considering these metrics. This is because a side channel attack (whether it be time, power, or otherwise) requires a fairly large number of acquisitions in order to perform the statistical analysis required to make hypothesis on the key we are attempting to recover (e.g. to correlate power traces against the estimated power consumption for each key byte value, as in my DPA attack). A fault attack can be much more powerful, as a single fault can modify the output of the encryption process in such a way as to reveal an entire round key, for example.
 
 Q.4 How do the properties of different AES round functions influence the
     effectiveness of your attack?  More specifically, imagine SubBytes is
     removed: does this help or hinder your attack?
+
+    AES uses an S-P network, where the Substitution and Permutation steps of the algorithm account for confusion and diffusion, respectively. The SubBytes operation, performing substitution/confusion, prevents AES from being a linear operation. Removing the SubBytes would make my attack easier. With the removal of the SubBytes operation, a linear system of equations could be devised relating each input byte to each byte of the ciphertext. This would make retrieving the key much easier, as exhaustive searches could be restricted to only considering single bytes at a time instead of the entire key. This would greatly reduce the total number of possibilities to be tested.
