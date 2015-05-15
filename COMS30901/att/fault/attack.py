@@ -255,7 +255,7 @@ s1_eqs = (
   ((12,3), (9,2),  (6,1),  (3,1) )
   )
 
-def stage_2(x, xp, great_key_vault):
+def stage_2(x, xp, great_key_vault, m, c_valid):
   byte_end = 256
 
   # Get all possible byte value configurations from joining every valid delta set of every possibly byte value config
@@ -263,22 +263,24 @@ def stage_2(x, xp, great_key_vault):
 
   for combo in eq_set_vals:
     # Sort the configurations by their eq_params
-    poss_k = map(itemgetter(1), sorted(itertools.chain(*[zip(map(itemgetter(0), eq_params),umm) for eq_params, umm in zip(s1_eqs, combo)]), key=itemgetter(0)))
-    print(poss_k)
+    poss_rk = map(itemgetter(1), sorted(itertools.chain(*[zip(map(itemgetter(0), eq_params),umm) for eq_params, umm in zip(s1_eqs, combo)]), key=itemgetter(0)))
     # 2 f'
-    fa = gmul(3, s2_fa(x, xp, poss_k))
+    fa = gmul(3, s2_fa(x, xp, poss_rk))
     # f'
-    fb = gmul(6, s2_fb(x, xp, poss_k))
+    fb = gmul(6, s2_fb(x, xp, poss_rk))
     # f'
-    fc = gmul(6, s2_fc(x, xp, poss_k))
+    fc = gmul(6, s2_fc(x, xp, poss_rk))
     # 3 f'
-    fd = gmul(2, s2_fd(x, xp, poss_k))
+    fd = gmul(2, s2_fd(x, xp, poss_rk))
     #rint(gmul(3,fa), gmul(6,fb), gmul(6,fc), gmul(2,fd))
     if fa == fb == fc == fd:
-      print('Got it')
-      print(list(poss_k))
-      assert False, 'dun good'
-  assert False, 'dun bad'
+      print('Possible round key:')
+      print(list(poss_rk))
+      # Stage 2 will not identify a single definitely correct round key. Must test each.
+      key_guess = GetKey(poss_rk, 10)
+      if verify_key(m, c_valid, key_guess):
+        return key_guess
+  assert False, 'No correct keys identified at the end of stage 2!'
 
 def attack():
   # Pick some fixed message for now
