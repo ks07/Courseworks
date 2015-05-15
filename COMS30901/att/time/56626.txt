@@ -1,0 +1,201 @@
+Q.1 The vendor of the attack target is concerned that news of this attack
+    could scare off potential customers; they will make any alteration
+    necessary (in software or hardware) to prevent the attack.  Explain the
+    options they have, and which one you would recommend.
+
+    Perhaps the simplest countermeasure the vendor could implement is the
+    addition of random delays to the algorithm, with the intention of hiding
+    variation in timing due to the private exponent. While at first glance this
+    might seem to be both sufficient and easily implemented, it must be
+    considered that this is equivalent to increasing the amount of noise in the
+    gathered sample times. Thus, this added noise can be filtered out, in return
+    for a linear increase in the number of samples required. (Put simply: random
+    noise can be averaged away if we take more samples.) This countermeasure is
+    therefore entirely ineffective, and will merely slow down an attacker a
+    small amount.
+
+    The vender could modify their software at a higher level, above that of the
+    cryptographic functions. For example, the server interface to the decryption
+    function could enforce a fixed time for responses to decryption requests.
+    If the decryption algorithm returned before this time limit, the server
+    could store the result until the time limit had been surpassed. This time
+    should be enough to cover the maximum possible time for a decryption. The
+    benefit of this countermeasure is that it should be relatively simple to
+    implement. The downside of this approach is that an attacker might be able
+    to gain timing information if the server accepts multiple requests at once.
+    For example, if the server can perform 8 decryptions at any one time, one
+    request waiting to send it's result might trigger the beginning of another
+    calculation, so an attacker could flood the server with requests and monitor
+    start times to find decryption times. I would therefore not recommend this
+    approach; it has potential to be ineffective, and there are alternatives
+    that actually improve the decryption algorithm itself, removing the reliance
+    on the server software for security.
+
+    A related countermeasure is to modify the Montgomery multiplication
+    algorithm such that the operation is constant time regardless of the need
+    for a reduction operation or not. Essentially, this boils down to always
+    performing the reduction, and refactoring the branch to return either the
+    reduced or the original result as necessary. Care must be taken here to
+    avoid a small difference in timing due to the implicit copy or discard of
+    the reduced result. Of special importance is that an optimising compiler may
+    attempt to remove the 'unnecessary' reduction step - so the developer should
+    check the produced system for existence of the timing difference they
+    attempted to mask. Due to this difficulty, as well as the timing difference
+    from the copy operation that may be hard to remove, I would not recommend
+    this approach.
+
+    An alternative countermeasure is message blinding, which makes use of the
+    homomorphic property of RSA. Prior to decryption, a random integer r is
+    chosen from [1, N). The multiplicative inverse of r is calculated modulo N,
+    as r^-1. The ciphertext c is then multiplied by r^e (mod N), before being
+    passed into the decryption function to find m'. After decryption, we unblind
+    the message by calculating m' * r^-1 (mod N), returning m, the original
+    message. This modification means that the attacker is no longer aware of the
+    number being fed into the exponentiation algorithm, thus they cannot
+    simulate it as is required by the timing attack. Some care must be taken to
+    ensure that the blinding algorithm itself isn't vulnerable to side channel
+    attacks.
+
+    I would recommend implementing message blinding, as it should remove any
+    opportunity of a timing attack, as the attacker can no longer know the input
+    to the decryption algorithm.
+
+Q.2 Let n denote the number of simulated clock cycles required to execute a
+    Montgomery multiplication on the attack target.  Estimate the value of
+    n (as accurately as you can) and explain how you did so.
+
+    As a basis for my estimate, I looked at a paper by Zhe Liu and Johann
+    Groszschaedl [1]. Clearly, the number of instructions performed is
+    related to the size in words of the numbers involved. In the paper, s is
+    used to denote the size of the modulus, N, in CPU words. They list the
+    following formulae for instruction counts using the CIOS method like our
+    target executable:
+
+    mul   = 2s^2 + s
+    add   = 8s^2 + 4s
+    load  = 4s^2 + 5s
+    store = 2s^2 + 3s
+
+    If we assume that the processor in question is an Intel Core 2 Duo, of the
+    Wolfdale variety, we can use the instruction latency/throughput data from
+    [2] to estimate the total clock cycles. The table below details the values I
+    have used from the source.
+
+    Operation | Instruction | Operands | Latency (cycles)
+    ----------+-------------+----------+-----------------
+    store     | MOV a)      | r,m      | 2
+    load      | MOV a)      | m,r      | 3
+    mul       | IMUL        | r64,r64  | 5
+    add       | ADD         | r,r/i    | 1
+
+    As my formulae for each operation don't indicate any notion of data
+    dependency, I have decided to make the assumption that every instruction is
+    dependent on the previous instruction. Thus, my calculation will use only
+    the latency value and will ignore throughput. This will introduce a large
+    amount of inaccuracy but is the best estimate I can make without much more
+    in-depth analysis.
+
+    n     = 2 * store + 3 * load + 5 * mul + 1 * add
+    store = 2s^2 + 3s
+    load  = 4s^2 + 5s
+    mul   = 2s^2 + s
+    add   = 8s^2 + 4s
+
+    n     = 4s^2 + 6s + 12s^2 + 15s + 10s^2 + 5s + 8s^2 + 4s
+    n     = (4+12+10+8)s^2 + (6+15+5+4)s
+    n     =          34s^2 +         30s
+
+    If we apply these numbers to the parameters in my attack, namely s = 16
+    64-bit words, for a ~1024 bit modulus N, we can estimate n for our example.
+
+    n_56626 = 34 * (16)^2 + 30 * (16)
+    n_56626 =     8704    +   480
+    n_56626 = 9184 (approx, theoretically)
+
+    This is clearly approaching an order of magnitude away from a realistic
+    value, if we consider that D returns execution times for the entire
+    decryption of around 50800 cycles. Therefore, I decided to use an
+    experimental approach using the executable D. The private exponent, d,
+    recovered by my attack contains 34 high bits, and 30 low bits, in a 64 bit
+    private key. Using a random sample of 10000 valid ciphertexts, I found the
+    mean time for a decryption operation was 50865 cycles. We can make a
+    reasonable assumption as to the number of Montgomery multiplications
+    performed:
+
+    Total_MontMuls = Prep_MMs + Square_MMs + Mult_MMs + Output_MMs
+    Prep_MMs       = 2  (init t to mont(1), find mont(c))
+    Square_MMs     = 64 (|d| in bits)
+    Mult_MMs       = 34 (Hamming weight of d)
+    Output_MMs     = 1  (conversion of t to m')
+    Total_MontMuls = 64 + 34 + 2 + 1
+                   = 101
+
+    To find an approximate cycle count for a single Montgomery multiplication we
+    can thus simply divide through the average time of 50865 by 101. This gives
+    an estimate of 504 cycles per multiplication, rounded to the nearest cycle.
+    Due to the difficulty of theoretically estimating the cycle count for the
+    algorithm, I am inclined to take this value of n = 504 as a good estimate,
+    discarding my previous attempt.
+
+    n = 504 (approx, experimentally)
+
+Q.7 Numerous factors might produce noise within measurements of execution
+    time: based on the given attack target and context, outline at least
+    two examples.
+
+    The given attack target, D, is a seperate server, thus there must be some
+    form of network connection connecting the attacker (or the frontline
+    servers) to D. There are a plethora of factors that can affect the
+    throughput and latency of this connection, which would manifest as noise in
+    measurements. For example, packet loss at a router due to network congestion
+    where a buffer has become full.
+
+    The target may also be hosting other services on top of the decryption
+    service we are targetting. As activity levels rise and fall in these other
+    services, the load on the target hardware may fluctuate, causing the amount
+    of resources that can be used for decryption to fluctuate. This will
+    manifest itself as variation in response times to requests, even for
+    identical inputs. This problem might be compounded if D is virtualised, as
+    is extremely common for internet servers.
+
+    Our simulated version of D can only perform decryptions in a serial manner.
+    It is reasonable to assume that there is some form of queueing or load
+    balancing present between users and D. Thus, this could obviously lead to
+    variations, or noise, in time measurements. If however we assume that this
+    is not the case, and the server D can handle an, for all practical intents,
+    unlimited number of requests in parallel, we fall back to the previous
+    comment that the load on the server will be affected by the number of
+    concurrent requests, affecting timings.
+
+Q.6 You were provided with a replica of the attack target.  If you used it,
+    explain how; if not, explain why, and how you could do so given more
+    time.
+
+    I did not make use of R in my attack, as I found I was able to attack the
+    square in the exponentiation algorithm without needing any particularly
+    involved calibration step. Rather, for my attack I simply observed the
+    difference in means between the various splits of ciphertexts and selected
+    a value of 4.0 as my 'final_cutoff' - i.e. the lower bound of meaningful
+    separations in terms of average execution time. While this number was more
+    than sufficient for the 64 bit exponent I had to uncover, it may not be
+    accurate for much longer exponents; splitting decryption times into
+    reduction and non-reduction groups produces smaller differences in averages
+    as we split based on less significant bits. Therefore, it is safe to assume
+    that as the length of d grows, this threshold value will eventually become
+    unsuitable. Put another way, I would use R to calibrate this threshold value
+    such that it was suitable for large d values around the size of N, by
+    examining the differences in timings when splitting near the least
+    significant bits.
+
+    It may also have been crucial had I chosen to attack the multiply, as Dhem
+    et al. explain in their paper. However, due to their findings on the
+    relative ease of attacking the square, I decided not to pursue this attack,
+    and will not discuss the application of R here - although the usage would be
+    similar to that as I previously described.
+
+[1] Z. Liu & J. Groszschaedl, New Speed Records for Montgomery Modular
+    Multiplication, AFRICACRYPT 2014
+    http://archiv.infsec.ethz.ch/education/fs08/secsem/Manger01.pdf
+[2] J.-F. Dhem, F. Koeune, P.-A. Leroux, P. Mestre, J.-J. Quisquater & J.-L.
+    Willems, A Practical Implementation of the Timing Attack, DICE 1998
+    http://www.uclouvain.be/crypto/services/download/publications.pdf.ba2a6ad854f479a8.7064663137332e706466.pdf

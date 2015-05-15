@@ -1,0 +1,119 @@
+-------------------------------------------------------------------------------
+
+1. Instructions
+
+- replace any [...] with free text,
+  and
+- replace the [?] with an X if you have completed that stage,
+- replace the [?] with an * if you have attempted that stage, but you know
+  it doesn't work completely; document why you think it doesn't work, plus
+  what you would do to fix the problem, at the end of the marksheet.
+
+-------------------------------------------------------------------------------
+
+2. Information
+
+So that we can calibrate and improve the assignment in the future, give us
+a rough idea how long (in hours) you spent on it *in total*:
+
+effort : [68+67] hours
+
+-------------------------------------------------------------------------------
+
+3. Citation
+
+Clearly it might have an influence on your mark, but the use of third-party
+resources *is* allowed *if* correctly cited (unless explicitly prohibited 
+by the assignment description of course).  Let us know what third-party 
+source code or resources you used (if any) so it's clear what's your work 
+and what isn't:
+
+[
+ Target interaction code (python) from the worksheets.
+ Some other miscellaneous functions and constants are attributed inline in the source code.
+]
+
+-------------------------------------------------------------------------------
+
+4. Marking
+
+The following gives a stage-by-stage description of the assignment marking
+scheme.  Note this acts as an indicative guideline only, including weights
+for each more obvious element (e.g., the functional correctness of a stage).
+For example, other elements outside this list *often* warrant an increase
+or decrease in marks; examples include hard to quantify features such as
+the style or efficiency of a solution.
+
+[X] Stage 1 : an attack based on error messages
+
+              - correct target material                              ( 40%)
+              - solution quality wrt. efficiency, robustness etc.    ( 40%)
+              - analysis questions                                   ( 20%)
+
+              target material : [
+	        Recovered plaintext m (hexadecimal):
+	        9ed07f8e8e230664f1d343a64e83df0d39a72869b62e6626f30cf453ac29c3bd8fe62d9ec3a15ff8b9327d03a4e96e24296e36ea44a170f229bee934e1fdd481a975e841f9ea42521b8cdddb977b879d46552574e8d5670cacb3ecd33a94448168215a304b10640a21ceaf79ef3f57c0b4a34bea615052b5a2e991a43e8ab
+                Recovered secret s (hexadecimal):
+                ed7a9119adcc4c3970ed44deadb27e050c1f7411
+              ]
+
+[X] Stage 2 : an attack based on execution time
+
+              - correct target material                              ( 40%)
+              - solution quality wrt. efficiency, robustness etc.    ( 40%)
+              - analysis questions                                   ( 20%)
+
+              target material : [
+	        Recovered private key d (hexadecimal):
+		ef1be81543f99433
+	      ]
+
+[X] Stage 3 : an attack based on an injected fault
+
+              - correct target material                              ( 40%)
+              - solution quality wrt. efficiency, robustness etc.    ( 40%)
+              - analysis questions                                   ( 20%)
+
+              target material : [
+	        Recovered key k:
+		ebea8b2ed4084ef0b59706fecc1ab4d5
+	      ]
+
+[X] Stage 4 : an attack based on power consumption
+
+              - correct target material                              ( 40%)
+              - solution quality wrt. efficiency, robustness etc.    ( 40%)
+              - analysis questions                                   ( 20%)
+
+              target material : [
+	        Recovered key k:
+                139313666944d39783daaab0983cc0cc
+              ]
+                                                                     ------
+                                                                     (400%)
+
+-------------------------------------------------------------------------------
+
+5. Documentation
+
+Any other documentation, notes or comments that you think are important or
+might be easy to overlook (e.g., a subtle issue or technique in associated
+source code) should go here:
+
+[
+ I have implemented my attacks in python, both in files named attack.py.
+ Provided these files are marked as executable, they can be invoked simply using
+ ./attack.py <Command to invoke D>. For example:
+ ./attack.py ./56626.D
+ 
+ Of special note in Stage 3, the fault attack, is that my implementation
+ contains both a one-fault and two-fault implementation. The two fault
+ implementation is ran by default. The one fault implementation can be ran by
+ setting the relevant parameter to the attack function. Unfortunately, I did not
+ have time to optimise/parallelise my one fault attack, thus the second stage
+ does not complete within the execution time limit. I have however tested it
+ with a severeley restricted output from stage 1 (both with and without the
+ correct key bytes present), and it appears to be correct.
+]
+
+-------------------------------------------------------------------------------
