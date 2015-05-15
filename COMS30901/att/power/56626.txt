@@ -23,8 +23,21 @@ Q.4 DPA attacks rely on a leakage model; for an Intel 8051, one might
     consider Hamming weight or Hamming distance models for example. Explain
     and justify the choice of model you used (e.g., explain why/how the
     attack target might leak information in this way).
+
+    I have used the Hamming weight power model in my attack. The hamming weight power model assumes that a target device will draw current proportional to the number of bits being driven high on an output bus. For example, an 8 bit data bus driving the hex value 0xFF would be assumed to draw approximately twice the power as when it was driving 0x0F. This model is very simplistic, and does not accurately describe the power usage of an electronic component, yet it is accurate enough to succesfully correlate power traces in order to recover the AES key. The alternative power model, the Hamming distance power model, considers power consumption as proportional to the number of bits being driven that have changed over a given time period (e.g. one clock cycle). This is equivalent to calculating the Hamming weight of the XOR of the values on an output bus before and after the sample. This power model is more accurate than the Hamming weight, yet requires more knowledge about the target circuit's implementation in order to be used. Therefore, I chose to use the Hamming weight.
+
 Q.7 DPA attacks include a statistical analysis step, for which one option
     is use of the t-test.  Explain what the difference between a standard
     t-test and Kocher's method is.  Given that in a DPA attack one might
     have unequal sets of measurements associated with 0 and 1, is a
     standard t-test actually an appropriate choice?
+
+    Kocher's method, as discussed in his paper Differential Power Analysis[1], involves simply calculating the difference between the means of power traces where a given bit is 1 versus 0. This is repeated for every bit in the key. The standard t-test, on the other hand, compares two distributions with assumed equal variance by calculating 
+
+    t = (X_bar_1 - X_bar_2) / (s_x1_x2 * sqrt(2/n))
+    where the two groups are numbered 1 and 2 (for the traces grouped by the relevant bit value), and s_x1_x2 is the grand standard deviation, defined by:
+    s_x1_x2 = sqrt(0.5*(s_x1^2 + s_x2^2)
+
+    In words, the standard t-test is the difference of the means (similar to Kocher's), divided by the grand standard deviation multiplied by a factor related to the sample size, which is the standard error of the difference between the two means. As this t-test assumes that the sample sizes of both sets are equal, it is not suitable as the analysis step in the DPA attack.
+
+[1] http://www.cryptography.com/public/pdf/DPA.pdf
