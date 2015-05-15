@@ -63,6 +63,13 @@ class FaultSpec:
   def __str__(self):
     return '{r},{f},{p},{i},{j}'.format(r=self.r, f=self.f ,p=self.p, i=self.i, j=self.j)
 
+def target_init(exe):
+  # Produce a sub-process representing the attack target.
+  global target
+  target = subprocess.Popen( args   = exe,
+                             stdout = subprocess.PIPE,
+                             stdin  = subprocess.PIPE )
+
 def interact(fault_spec, m):
   global queries
   queries += 1
@@ -345,14 +352,12 @@ if ( __name__ == '__main__' ) :
     print('Usage: attack.py <target executable>')
     sys.exit(1)
 
-  # Produce a sub-process representing the attack target.
-  target = subprocess.Popen( args   = sys.argv[ 1 ],
-                             stdout = subprocess.PIPE,
-                             stdin  = subprocess.PIPE )
+  target_init(sys.argv[1])
 
   # Execute a function representing the attacker.
   found_key = attack()
 
+  # Possibly the cleanest way to hex-ify the key array
   key_hex = np.asarray(found_key, dtype=np.uint8).tostring().encode('hex')
   print("Recovered key k:")
   print(key_hex)
