@@ -1,0 +1,49 @@
+;for( int i = 0; i < 10; i++ ) {
+;    A[ i ] = B[ i ] + C[ i ];
+;}
+
+start:
+    ; base of A, B, and C
+    la r1,vecA
+    la r2,vecB
+    la r3,vecC
+    movi r0,0
+    movi r7,6
+loop_start:
+    ; load B[i]
+    ld r4,r2,r0
+    ; load C[i]
+    ld r5,r3,r0
+    add r6,r4,r5
+    st r6,r1,r0
+    addi r0,1
+    ; break if i (r0) >= 10 (r7)
+    bge r0,r7,loop_end
+    br loop_start
+loop_end:
+    ; Infinite loop
+    nop
+    br loop_end
+
+; data segment - .data?
+vecB:
+    .word 10
+    .word 92
+    .word 65
+    .word 13
+    .word 21
+    .word 1234
+vecC:
+    .word 249
+    .word 212
+    .word 40
+    .word 11
+    .word 10009
+    .word 1
+vecA:
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
