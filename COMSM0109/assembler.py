@@ -3,9 +3,37 @@
 from itertools import izip_longest
 import sys
 
+def explode_ins(ins):
+    # Can't unpack directly here as nop has no args!
+    split = ins.strip().split(' ', 1)
+    op = split[0].strip()
+    args = [] if op == 'nop' else split[1].strip().split(',')
+    return (op, args);
+
+def implode_ins(op, args):
+    return op + ' ' + ",".join(str(a) for a in args);
+
+def code_size(code):
+    if code.startswith("la "):
+        return 2
+    return 1
+
+def expand_pseudo(code, labels):
+    """ If given a pseudocode instruction, expand it to actual instructions. Data pseudo-instructions (e.g. .word) are ignored here, as they are just literals. Returns a list. """
+    if code.startswith("la "):
+        # la translates to movi and moui
+        _, args = explode_ins(code);
+        return [
+            implode_ins('movi', [args[0], labels[args[1]] & 0xFFFF]),
+            implode_ins('moui', [args[0], labels[args[1]] >> 16])
+        ]
+    else:
+        return [code];
+
 def pass1(source):
-    """ First pass needs to calculate the address of labels. """
+    """ First pass needs to calculate the address of labels. We're also going to abuse it to replace pseudo-instructions. """
     labels = {}
+    ins_list = []
     addr = 0
     for line in source:
         if line.strip() and line.lstrip()[0] != ';':
@@ -23,15 +51,18 @@ def pass1(source):
                     labels[label] = addr
                 if code:
                     # If there is code, increment addr.
-                    addr += 1
+                    size = code_size(code) # Handle pseudo-instructions
+                    addr += size
+                    ins_list.append(code) # Code expanded if necessary later.
     return (ins_list, labels)
 
-# This is terrible... unfortunately I have lots of 5 bit chunks.
+# Messy... unfortunately I have lots of co-prime sized chunks.
 formats = {
     'nop': (0,0),
     'add': (1,'r','r','r',0),
     'sub': (1,'r','r','r',1),
     'mul': (1,'r','r','r',2),
+    'addi': (2,'r','i',0),
     'movi': (2,'r','i',6),
     'moui': (2,'r','i',7),
     'ld': (3,'r','r','r',0),
@@ -43,35 +74,51 @@ formats = {
     'bge': (9,'r','r','i'),
 }
 
-def gen_ins(ins, args, labels):
+def gen_ins(ins, labels):
     """ Formats instruction. """
-    frmt = formats[ins]
-    # Get bits 31-26
-    val = frmt[0] << 26
-    shift = 26
-    to_add = 0
-    for elem, arg in izip_longest(frmt[1:], None):
-        if elem == 'r':
-            shift -= 5
-            to_add = int(arg[1:])
-        elif elem == 'i':
-            shift -= 16
-            to_add = arg
-        else:
-            shift = 0
-            to_add = arg
-        val |= (to_add << shift)
+    op, args = explode_ins(ins)
+    if op == '.word':
+        # Special pseudo-instruction that is just a literal to load into memory at startup
+        val = int(args[0])
+    else:
+        frmt = formats[op]
+        # Get bits 31-26
+        shift = 26
+        val = frmt[0] << shift
+        for elem, arg in izip_longest(frmt[1:], args):
+            if elem == 'r':
+                shift -= 5
+                to_add = int(arg[1:])
+            elif elem == 'i':
+                shift -= 16
+                # FIXME: ???
+                if arg in labels:
+                    to_add = labels[arg]
+                else:
+                    to_add = int(arg)
+            else:
+                shift = 0
+                to_add = elem
+            val |= (to_add << shift)
+    # val now (hopefully) contains a 32-bit instruction.
+    #print ins
+    #print hex(val)
+    #print "{0:08x}".format(val)
+    print "{0:032b}".format(val)
 
 def pass2(ins_list, labels):
     """ Second pass to generate object code. """
-    for addr, ins in enumerate(ins_list):
-        
+    addr = 0
+    for orig_ins in ins_list:
+        expanded = expand_pseudo(orig_ins, labels)
+        for ins in expanded:
+            addr += 1
+            gen_ins(ins, labels)
 
 def main():
     source = sys.stdin.readlines()
-    parsed = parse(source)
     ins_list, labels = pass1(source)
-
+    pass2(ins_list, labels)
 
 if __name__ == '__main__' :
     main()
