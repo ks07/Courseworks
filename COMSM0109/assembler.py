@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from itertools import izip_longest
-import sys
+import sys, numpy
 
 def explode_ins(ins):
     # Can't unpack directly here as nop has no args!
@@ -101,19 +101,38 @@ def gen_ins(ins, labels):
                 to_add = elem
             val |= (to_add << shift)
     # val now (hopefully) contains a 32-bit instruction.
+    assert val >> 32 == 0
+    
+    return val
     #print ins
     #print hex(val)
     #print "{0:08x}".format(val)
-    print "{0:032b}".format(val)
+    #print "{0:032b}".format(val)
+    
 
 def pass2(ins_list, labels):
     """ Second pass to generate object code. """
     addr = 0
+    # 1MB memory
+    memory = numpy.zeros(262250, dtype=numpy.uint32)
+    # Open debug output
+    dbg_out = open('out.dbg', 'w')
     for orig_ins in ins_list:
+        dbg_out.write(orig_ins)
+        dbg_out.write("\n")
         expanded = expand_pseudo(orig_ins, labels)
         for ins in expanded:
+            out = gen_ins(ins, labels)
+            # Write debug out.
+            dbg_out.write("{0:08x} {0:032b}\n".format(out, out))
+            # Store binary out.
+            memory[addr] = out
             addr += 1
-            gen_ins(ins, labels)
+    # Mark the end of the file for debugging purposes.
+    dbg_out.write("{0:08x} {0:032b}\n".format(0xDEADBEEF, 0xDEADBEEF))
+    memory[addr] = 0xDEADBEEF
+    memory.tofile('out.bin')
+    dbg_out.close()
 
 def main():
     source = sys.stdin.readlines()
