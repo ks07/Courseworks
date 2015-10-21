@@ -43,7 +43,7 @@ class Instruction:
 
     def execute(self):
         # TODO: Should this just be a big if or do we want polymorphism?
-        print self
+        print "Executing", self # Morbid
         return
 
     def __str__(self):
@@ -91,7 +91,6 @@ class Decoder:
             for opc, frmt in possible:
                 if frmt[-1] == diff:
                     return Instruction(opc, frmt, word)
-            
 
 class CPU:
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -103,6 +102,35 @@ class CPU:
         self._pc = 0
         self._decoder = Decoder()
 
+    def _exec(self, ins):
+        # Not sure if we want to keep this logic here...
+        print ins
+        opc = ins.getOpc()
+        opr = ins.getOpr()
+        # TODO: Order these sensibly
+        if opc == 'movi':
+            self._reg[opr[0]] = opr[1]
+        elif opc == 'moui':
+            self._reg[opr[0]] |= (opr[1] << 16)
+        elif opc == 'ld':
+            # TODO: De-dupe the r_base + r_offset logic?
+            self._reg[opr[0]] = self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ]
+        elif opc == 'add':
+            self._reg[opr[0]] = self._reg[opr[1]] + self._reg[opr[2]]
+        elif opc == 'st':
+            self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ]
+        elif opc == 'addi':
+            self._reg[opr[0]] += opr[1]
+        elif opc == 'bge':
+            # TODO: Pipeline will ruin this...
+            if self._reg[opr[0]] >= self._reg[opr[1]]:
+                self._pc = opr[2]
+        elif opc == 'br':
+            # TODO: And this...
+            self._pc = opr[0]
+        elif opc == 'nop':
+            print "Doing NOP'in!"
+
     def step(self):
         # Fetch
         word = self._mem[self._pc]
@@ -111,10 +139,12 @@ class CPU:
         # Decode
         ins = self._decoder.decode(word)
         # Execute
-        ins.execute()
+        self._exec(ins)
+        print self._reg
 
 def start(mem_file):
     cpu = CPU(mem_file)
+    # Manual stepping
     while True:
         sys.stdin.readline()
         cpu.step()
