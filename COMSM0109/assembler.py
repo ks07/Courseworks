@@ -118,10 +118,14 @@ def pass2(ins_list, labels):
     # Open debug output
     dbg_out = open('out.dbg', 'w')
     for orig_ins in ins_list:
-        dbg_out.write(orig_ins)
-        dbg_out.write("\n")
         expanded = expand_pseudo(orig_ins, labels)
+        if len(expanded) > 1:
+            # Print the original to debug if it's a pseudo-instruction
+            dbg_out.write(orig_ins)
+            dbg_out.write("\n")
         for ins in expanded:
+            dbg_out.write(ins)
+            dbg_out.write("\n")
             out = gen_ins(ins, labels)
             # Write debug out.
             dbg_out.write("{0:08x} {0:032b}\n".format(out, out))
