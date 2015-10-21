@@ -1,12 +1,25 @@
 #!/usr/bin/env python
 
+from itertools import izip_longest
 import sys, numpy as np
 
 class Instruction:
     """ An instruction. """
 
+    @staticmethod
+    def _decf2strf(frmt):
+        """ Converts a decode format tuple to a python str.format compatible format string. Static method. """
+        strf = []
+        for a in frmt[1:-1]:
+            if a == 'r':
+                strf.append('r{:d}')
+            else:
+                strf.append('{:d}')
+        return "{} " + ",".join(strf)
+
     def __init__(self, opcode, frmt, word):
         self._opcode = opcode
+        self._frmt_str = Instruction._decf2strf(frmt) # If we subclass this becomes unnecessary?
         # Note the similarity to gen_ins in assember!
         operands = []
         shift = 26
@@ -35,7 +48,7 @@ class Instruction:
 
     def __str__(self):
         # This is the implode_ins function in the assembler!
-        return "{} {}".format(self._opcode, ",".join(str(a) for a in self._operands))
+        return self._frmt_str.format(self._opcode, *self._operands)
 
 class Decoder:
     """ A decode unit. """
