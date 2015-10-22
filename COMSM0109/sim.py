@@ -95,14 +95,61 @@ class Decoder:
                 if frmt[-1] == diff:
                     return Instruction(opc, frmt, word)
 
+class StatefulComponent:
+    """ A component in the CPU that holds some state. """
+
+class RegisterFile:
+    """ A register file, holding 32 general purpose registers. """
+
+    def __init__(self):
+        self._state = np.zeros(32, dtype=np.uint32)
+        self._state_nxt = np.zeros_like(self._state)
+
+    def advstate(self):
+        """ Set the current state to next state. """
+        np.copyto(self._state_nxt, self._state, casting='no')
+
+    # Need to be careful that we don't try to read from the wrong state - careful planning of architecture!
+    def update(self, reg, val):
+        self._state_nxt[reg] = val
+
+    def __setitem__(self, key, value):
+        # Allows indexed update. (e.g. rf[1] = 10)
+        self.update(key, value)
+
+    def fetch(self, reg):
+        # TODO: Is this the right state to read from?
+        return self._state_nxt[reg]
+
+    def __getitem__(self, key):
+        # Allows indexed retrieval.
+        return self.fetch(key)
+
+    def __len__(self):
+        return len(self._state)
+    
+    def diff(self):
+        """ Prints any changes to state. """
+        diff = self._state_nxt - self._state
+        for r in (r for (r,d) in enumerate(diff) if d != 0):
+            return 'r{0:02d}: {1:08x} ({1:d}) => {2:08x} ({2:d})'.format(r, self._state[r], self._state_nxt[r])
+
+    def __str__(self):
+        return self.diff()
+        
 class CPU:
     """ A simple scalar processor simulator. Super-scalar coming soon... """
 
     def __init__(self, mem_file):
+        # State (current and next)
         self._mem = np.fromfile(mem_file, dtype=np.uint32)
+        self._mem_nxt = np.zeros_like(self._mem)
         print "Loaded", self._mem.size, "words into memory."
-        self._reg = np.zeros(32, dtype=np.uint32)
+        self._reg = RegisterFile()
         self._pc = 0
+        self._pc_nxt = 0
+
+        # Non-stateful components
         self._decoder = Decoder()
 
     def _exec(self, ins):
@@ -134,6 +181,11 @@ class CPU:
         elif opc == 'nop':
             print "Doing NOP'in!"
 
+    def _update(self):
+        """ Updates the state of all components, ready for the next iteration. """
+        # TODO: Expand state to others (i.e. pc)
+        self._reg.advstate();
+            
     def step(self):
         # Fetch
         word = self._mem[self._pc]
@@ -143,6 +195,7 @@ class CPU:
         ins = self._decoder.decode(word)
         # Execute
         self._exec(ins)
+        # Update states
         print self._reg
 
     def dump(self, start, end):
