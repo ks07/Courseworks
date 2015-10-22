@@ -107,7 +107,7 @@ class RegisterFile:
 
     def advstate(self):
         """ Set the current state to next state. """
-        np.copyto(self._state_nxt, self._state, casting='no')
+        np.copyto(self._state, self._state_nxt, casting='no')
 
     # Need to be careful that we don't try to read from the wrong state - careful planning of architecture!
     def update(self, reg, val):
@@ -131,11 +131,13 @@ class RegisterFile:
     def diff(self):
         """ Prints any changes to state. """
         diff = self._state_nxt - self._state
+        out = []
         for r in (r for (r,d) in enumerate(diff) if d != 0):
-            return 'r{0:02d}: {1:08x} ({1:d}) => {2:08x} ({2:d})'.format(r, self._state[r], self._state_nxt[r])
+            out.append('r{0:02d}: {1:08x} ({1:d}) => {2:08x} ({2:d})'.format(r, self._state[r], self._state_nxt[r]))
+        return "\n".join(out)
 
     def __str__(self):
-        return self.diff()
+        return str(self._state_nxt);
         
 class CPU:
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -197,6 +199,7 @@ class CPU:
         self._exec(ins)
         # Update states
         print self._reg
+        self._update()
 
     def dump(self, start, end):
         for addr in range(start, end + 1):
