@@ -105,19 +105,13 @@ class Decoder:
 class StatefulComponent:
     """ A component in the CPU that holds some state. """
 
-class Memory:
-    """ A memory. """
-
-    def __init__(self, mem_file):
-        self._state = np.fromfile(mem_file, dtype=np.uint32)
-        self._state_nxt = self._state.copy()
-
     def advstate(self):
         """ Set the current state to next state. """
         np.copyto(self._state, self._state_nxt, casting='no')
 
     # Need to be careful that we don't try to read from the wrong state - careful planning of architecture!
     def update(self, addr, val):
+        """ Sets a single element of the state. """
         self._state_nxt[addr] = val
 
     def __setitem__(self, key, value):
@@ -125,6 +119,7 @@ class Memory:
         self.update(key, value)
 
     def fetch(self, addr):
+        """ Gets a single element of the state. """
         # TODO: Is this the right state to read from?
         return self._state_nxt[addr]
 
@@ -134,6 +129,13 @@ class Memory:
 
     def __len__(self):
         return len(self._state)
+
+class Memory(StatefulComponent):
+    """ A memory. """
+
+    def __init__(self, mem_file):
+        self._state = np.fromfile(mem_file, dtype=np.uint32)
+        self._state_nxt = self._state.copy()
 
     def diff(self):
         """ Prints any changes to state. """
@@ -145,40 +147,14 @@ class Memory:
 
     def __str__(self):
         # TODO: Too much to print
-        lines = []
-        for (i,a),(j,b),(k,c),(l,d) in grouper(enumerate(self._state_nxt), 4):
-            lines.append("{0:>2d}: {1:>10d}\t{2:>2d}: {3:>10d}\t{4:>2d}: {5:>10d}\t{6:>2d}: {7:>10d}".format(i,a,j,b,k,c,l,d))
-        return "\n".join(lines);
+        return str(self._state)
 
-class RegisterFile:
+class RegisterFile(StatefulComponent):
     """ A register file, holding 32 general purpose registers. """
 
     def __init__(self):
         self._state = np.zeros(32, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
-
-    def advstate(self):
-        """ Set the current state to next state. """
-        np.copyto(self._state, self._state_nxt, casting='no')
-
-    # Need to be careful that we don't try to read from the wrong state - careful planning of architecture!
-    def update(self, reg, val):
-        self._state_nxt[reg] = val
-
-    def __setitem__(self, key, value):
-        # Allows indexed update. (e.g. rf[1] = 10)
-        self.update(key, value)
-
-    def fetch(self, reg):
-        # TODO: Is this the right state to read from?
-        return self._state_nxt[reg]
-
-    def __getitem__(self, key):
-        # Allows indexed retrieval.
-        return self.fetch(key)
-
-    def __len__(self):
-        return len(self._state)
 
     def diff(self):
         """ Prints any changes to state. """
