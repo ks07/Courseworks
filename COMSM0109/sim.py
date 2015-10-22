@@ -3,6 +3,13 @@
 from itertools import izip_longest
 import sys, numpy as np
 
+# itertools recipe
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+    args = [iter(iterable)] * n
+    return izip_longest(fillvalue=fillvalue, *args)
+
 class Instruction:
     """ An instruction. """
 
@@ -137,7 +144,10 @@ class RegisterFile:
         return "\n".join(out)
 
     def __str__(self):
-        return str(self._state_nxt);
+        lines = []
+        for (i,a),(j,b),(k,c),(l,d) in grouper(enumerate(self._state_nxt), 4):
+            lines.append("{0:>2d}: {1:>10d}\t{2:>2d}: {3:>10d}\t{4:>2d}: {5:>10d}\t{6:>2d}: {7:>10d}".format(i,a,j,b,k,c,l,d))
+        return "\n".join(lines);
         
 class CPU:
     """ A simple scalar processor simulator. Super-scalar coming soon... """
