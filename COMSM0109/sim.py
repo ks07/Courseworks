@@ -22,6 +22,9 @@ class Instruction:
                 strf.append('r{:d}')
             else:
                 strf.append('{:d}')
+        # Need to cover end = imm
+        if frmt[-1] == 'i':
+            strf.append('{:d}')
         return "{} " + ",".join(strf)
 
     def __init__(self, opcode, frmt, word):
@@ -69,6 +72,7 @@ class Decoder:
         'add': (1,'r','r','r',0),
         'sub': (1,'r','r','r',1),
         'mul': (1,'r','r','r',2),
+        'mov': (1,'r','r',6),
         'addi': (2,'r','i',0),
         'movi': (2,'r','i',6),
         'moui': (2,'r','i',7),
@@ -116,6 +120,7 @@ class StatefulComponent:
 
     def __setitem__(self, key, value):
         # Allows indexed update. (e.g. rf[1] = 10)
+        print "Set", key, "from", self[key], "to", value
         self.update(key, value)
 
     def fetch(self, addr):
@@ -199,6 +204,10 @@ class CPU:
             self._reg[opr[0]] = self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ]
         elif opc == 'add':
             self._reg[opr[0]] = self._reg[opr[1]] + self._reg[opr[2]]
+        elif opc == 'sub':
+            self._reg[opr[0]] = self._reg[opr[1]] - self._reg[opr[2]]
+        elif opc == 'mov':
+            self._reg[opr[0]] = self._reg[opr[1]]
         elif opc == 'st':
             self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'addi':
@@ -210,13 +219,23 @@ class CPU:
         elif opc == 'br':
             # TODO: And this...
             self._pc = opr[0]
+        elif opc == 'bn':
+            # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
+            if self._reg[opr[0]] >> 31:
+                self._pc = opr[1]
+        elif opc == 'bz':
+            if self._reg[opr[0]] == 0:
+                self._pc = opr[1]
         elif opc == 'nop':
             print "Doing NOP'in!"
+        else:
+            print "WARNING: Unimplemented opcode:", opc
 
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
         # TODO: Expand state to others (i.e. pc)
-        self._reg.advstate();
+        self._reg.advstate()
+        self._mem.advstate()
 
     def step(self):
         # Fetch
@@ -229,6 +248,7 @@ class CPU:
         self._exec(ins)
         # Update states
         print self._reg
+        print "PC =", self._pc
         self._update()
 
     def dump(self, start, end):
@@ -250,5 +270,7 @@ def start(mem_file):
             cpu.step()
 
 if __name__ == '__main__' :
+    # Ignore overflow warnings - we expect it!
+    np.seterr(over='ignore')
     mem_file = sys.argv[1]
     start(mem_file)
