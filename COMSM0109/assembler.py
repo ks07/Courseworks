@@ -79,7 +79,7 @@ def gen_ins(ins, labels):
     op, args = explode_ins(ins)
     if op == '.word':
         # Special pseudo-instruction that is just a literal to load into memory at startup
-        val = int(args[0])
+        val = int(args[0], 0)
     else:
         frmt = formats[op]
         # Get bits 31-26
@@ -95,7 +95,8 @@ def gen_ins(ins, labels):
                 if arg in labels:
                     to_add = labels[arg]
                 else:
-                    to_add = int(arg)
+                    # base 0 parses like a literal
+                    to_add = int(arg, 0)
             else:
                 shift = 0
                 to_add = elem
@@ -104,10 +105,6 @@ def gen_ins(ins, labels):
     assert val >> 32 == 0
     
     return val
-    #print ins
-    #print hex(val)
-    #print "{0:08x}".format(val)
-    #print "{0:032b}".format(val)
     
 
 def pass2(ins_list, labels):

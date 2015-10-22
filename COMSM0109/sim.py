@@ -33,6 +33,9 @@ class Instruction:
             else:
                 raise ValueError("Bad argument type when trying to get operand from word.", arg, opcode, frmt, word)
             operands.append((word >> shift) & mask)
+        # Need to cover the case where the end of the instruction is an immediate
+        if frmt[-1] == 'i':
+            operands.append(word & 0xFFFF)
         self._operands = tuple(operands)
 
     def getOpc(self):
@@ -118,7 +121,7 @@ class CPU:
         elif opc == 'add':
             self._reg[opr[0]] = self._reg[opr[1]] + self._reg[opr[2]]
         elif opc == 'st':
-            self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ]
+            self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'addi':
             self._reg[opr[0]] += opr[1]
         elif opc == 'bge':
@@ -142,12 +145,23 @@ class CPU:
         self._exec(ins)
         print self._reg
 
+    def dump(self, start, end):
+        for addr in range(start, end + 1):
+            print "{0:08x} | {1:08x} ({1:})".format(addr, self._mem[addr])
+
 def start(mem_file):
     cpu = CPU(mem_file)
     # Manual stepping
     while True:
-        sys.stdin.readline()
-        cpu.step()
+        usr = sys.stdin.readline().strip()
+        if usr.startswith('d'):
+            args = map(int, usr.split(' ')[1:])
+            cpu.dump(args[0], args[1])
+        elif usr.startswith('r'):
+            print "Resetting CPU..."
+            cpu = CPU(mem_file)
+        else:
+            cpu.step()
 
 if __name__ == '__main__' :
     mem_file = sys.argv[1]

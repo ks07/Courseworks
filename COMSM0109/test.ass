@@ -26,6 +26,7 @@ loop_end:
     br loop_end
 
 ; data segment - .data?
+    .word 0xDEADBEEF
 vecB:
     .word 10
     .word 92
@@ -33,6 +34,8 @@ vecB:
     .word 13
     .word 21
     .word 1234
+
+    .word 0xDEADBEEF
 vecC:
     .word 249
     .word 212
@@ -40,6 +43,8 @@ vecC:
     .word 11
     .word 10009
     .word 1
+
+    .word 0xDEADBEEF
 vecA:
     .word 0
     .word 0
