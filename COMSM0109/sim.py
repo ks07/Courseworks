@@ -73,11 +73,17 @@ class Decoder:
         'sub': (1,'r','r','r',1),
         'mul': (1,'r','r','r',2),
         'and': (1,'r','r','r',3),
+        'or': (1,'r','r','r',4),
+        'xor': (1,'r','r','r',5),
         'mov': (1,'r','r',6),
         'shl': (1,'r','r','r',8),
         'shr': (1,'r','r','r',9),
         'addi': (2,'r','i',0),
         'subi': (2,'r','i',1),
+        'muli': (2,'r','i',2),
+        'andi': (2,'r','i',3),
+        'ori': (2,'r','i',4),
+        'xori': (2,'r','i',5),
         'movi': (2,'r','i',6),
         'moui': (2,'r','i',7),
         'ld': (3,'r','r','r',0),
@@ -109,6 +115,7 @@ class Decoder:
             for opc, frmt in possible:
                 if frmt[-1] == diff:
                     return Instruction(opc, frmt, word)
+            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word,  '{:032b}'.format(word))
 
 class StatefulComponent:
     """ A component in the CPU that holds some state. """
@@ -199,13 +206,8 @@ class CPU:
         opc = ins.getOpc()
         opr = ins.getOpr()
         # TODO: Order these sensibly
-        if opc == 'movi':
-            self._reg[opr[0]] = opr[1]
-        elif opc == 'moui':
-            self._reg[opr[0]] |= (opr[1] << 16)
-        elif opc == 'ld':
-            # TODO: De-dupe the r_base + r_offset logic?
-            self._reg[opr[0]] = self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ]
+        if opc == 'nop':
+            print "Doing NOP'in!"
         elif opc == 'add':
             self._reg[opr[0]] = self._reg[opr[1]] + self._reg[opr[2]]
         elif opc == 'sub':
@@ -214,37 +216,54 @@ class CPU:
             self._reg[opr[0]] = self._reg[opr[1]] * self._reg[opr[2]]
         elif opc == 'and':
             self._reg[opr[0]] = self._reg[opr[1]] & self._reg[opr[2]]
+        elif opc == 'or':
+            self._reg[opr[0]] = self._reg[opr[1]] | self._reg[opr[2]]
+        elif opc == 'xor':
+            self._reg[opr[0]] = self._reg[opr[1]] ^ self._reg[opr[2]]
         elif opc == 'mov':
             self._reg[opr[0]] = self._reg[opr[1]]
         elif opc == 'shl':
             self._reg[opr[0]] = self._reg[opr[1]] << self._reg[opr[2]]
         elif opc == 'shr':
             self._reg[opr[0]] = self._reg[opr[1]] >> self._reg[opr[2]]
-        elif opc == 'st':
-            self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'addi':
             self._reg[opr[0]] += opr[1]
         elif opc == 'subi':
             self._reg[opr[0]] -= opr[1]
-        elif opc == 'bge':
-            # TODO: Pipeline will ruin this...
-            if self._reg[opr[0]] >= self._reg[opr[1]]:
-                self._pc = opr[2]
+        elif opc == 'muli':
+            self._reg[opr[0]] *= opr[1]
+        elif opc == 'andi':
+            self._reg[opr[0]] &= opr[1]
+        elif opc == 'ori':
+            self._reg[opr[0]] |= opr[1]
+        elif opc == 'xori':
+            self._reg[opr[0]] ^= opr[1]
+        elif opc == 'movi':
+            self._reg[opr[0]] = opr[1]
+        elif opc == 'moui':
+            self._reg[opr[0]] |= (opr[1] << 16)
+        elif opc == 'ld':
+            # TODO: De-dupe the r_base + r_offset logic?
+            self._reg[opr[0]] = self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ]
+        elif opc == 'st':
+            self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'br':
             # TODO: And this...
             self._pc = opr[0]
+        elif opc == 'bz':
+            if self._reg[opr[0]] == 0:
+                self._pc = opr[1]
         elif opc == 'bn':
             # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
             if self._reg[opr[0]] >> 31:
                 self._pc = opr[1]
-        elif opc == 'bz':
-            if self._reg[opr[0]] == 0:
-                self._pc = opr[1]
         elif opc == 'beq':
             if self._reg[opr[0]] == self._reg[opr[1]]:
                 self._pc = opr[2]
-        elif opc == 'nop':
-            print "Doing NOP'in!"
+        elif opc == 'bge':
+            # TODO: Pipeline will ruin this...
+            if self._reg[opr[0]] >= self._reg[opr[1]]:
+                self._pc = opr[2]
         else:
             print "WARNING: Unimplemented opcode:", opc
 

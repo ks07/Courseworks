@@ -1,0 +1,100 @@
+; instruction tester, does nothing interesting
+
+start:
+    ; Test br
+    br brok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+brok:
+    ; Test bn,movi,moui
+    movi r15,0xFFFF
+    moui r15,0x7FFF
+    bn r15,fail
+    moui r14,0x8000
+    bn r14,bnok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+bnok:
+    ; Test bz
+    movi r0,0
+    bz r15,fail
+    bz r0,bzok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+bzok:
+    ; Test ld,mov,addi,subi,beq (and la)
+    la r13,fail
+    mov r12,r13
+    beq r13,r0,fail
+    addi r12,197
+    subi r12,100
+    subi r12,97
+    beq r13,r12,beqok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+beqok:
+    ; Test muli,bge,shl,shr,add,ori
+    movi r10,0xFFFF
+    movi r11,0
+    ori r11,0xFFFF
+    muli r10,2
+    movi r8,1
+    shl r11,r11,r8
+    shr r11,r11,r8
+    add r11,r11,r11
+    bge r10,r11,bge_eok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+bge_eok:
+    ; Test mul,and,andi,st,bge
+    la r13,fail
+    movi r20,1
+    ld r17,r13,r20 ; should load deadbeef into r17
+    movi r26,0xFFFF
+    moui r26,0xFFFF
+    and r17,r17,r26
+    mul r17,r17,r20
+    andi r26,0x000F ; should set r26 to 0x0000000F
+    st r26,r13,r20
+    bge r26,r17,fail
+    bge r17,r26,bge_gok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+bge_gok:
+    ; Test xori,st(by ld)
+    ld r19,r13,r20
+    movi r22,0x1111
+    xori r22,0x111E
+    beq r19,r22,stok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+stok:
+    ; Test xor,sub,bge
+    movi r31,0x3d92
+    moui r31,0x4719
+    sub r30,r22,r10 ; Put something in r30
+    xor r29,r22,r31 ; Put something in r29
+    xor r28,r30,r29
+    xor r28,r28,r29 ; Should invert itself
+    beq r28,r30,xorok
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+xorok:
+    ; Test or,sub,bz
+    movi r8,0
+    movi r5,0xAA55
+    or r8,r5,r8
+    sub r5,r8,r5
+    bz r5,pass
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+pass:
+    nop
+    nop
+    nop
+    br pass
+fail:
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+    .word 0xdeadbeef
+    br fail
