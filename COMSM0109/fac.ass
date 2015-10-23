@@ -1,0 +1,47 @@
+; basic recursive factorial algorithm (good enough)
+;fac(n) = n * fac(n-1)
+;fac(0) = 1
+
+
+start:
+    ; r0 = 0
+    movi r0,0
+    ; r1 = n (i.e. func arg)
+    movi r1,10
+    ; r2 = return val
+    movi r2,1
+    ; r6 = stack base
+    la r6,stack
+    ; r7 = stack pointer
+    la r7,stack
+fac:
+    bz r1,fac0
+    ; shove the current value of n on the stack.
+    st r1,r7,r0
+    ; move the stack pointer down 1
+    addi r7,1
+    ; set the argument for the next function call
+    subi r1,1
+    ; call fac again
+    br fac
+fac0:
+    ; Reached 0, unroll. Need to stop us mul'ing by 0.
+    movi r1,1
+facbase:
+    ; Reached 0, unroll.
+    ; Calc new return value
+    mul r2,r2,r1
+    ; Pop n from stack
+    subi r7,1
+    ld r1,r7,r0
+    ; if stack pointer == stack base (r7 == r6), we are at the end
+    beq r7,r6,end
+    ; else recurse again
+    br facbase
+end:
+    ; Result should now be in r2 (r2 = r1!)
+    nop
+    br end
+stack:
+    ; n starts at the top of the stack
+    .word 0

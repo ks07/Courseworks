@@ -77,6 +77,7 @@ class Decoder:
         'shl': (1,'r','r','r',8),
         'shr': (1,'r','r','r',9),
         'addi': (2,'r','i',0),
+        'subi': (2,'r','i',1),
         'movi': (2,'r','i',6),
         'moui': (2,'r','i',7),
         'ld': (3,'r','r','r',0),
@@ -223,6 +224,8 @@ class CPU:
             self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'addi':
             self._reg[opr[0]] += opr[1]
+        elif opc == 'subi':
+            self._reg[opr[0]] -= opr[1]
         elif opc == 'bge':
             # TODO: Pipeline will ruin this...
             if self._reg[opr[0]] >= self._reg[opr[1]]:
@@ -237,6 +240,9 @@ class CPU:
         elif opc == 'bz':
             if self._reg[opr[0]] == 0:
                 self._pc = opr[1]
+        elif opc == 'beq':
+            if self._reg[opr[0]] == self._reg[opr[1]]:
+                self._pc = opr[2]
         elif opc == 'nop':
             print "Doing NOP'in!"
         else:
