@@ -1,0 +1,41 @@
+start:
+    ; r6 = m1
+    movi r6,0x5555
+    moui r6,0x5555
+    ; r7 = m2
+    movi r7,0x3333
+    moui r7,0x3333
+    ; r8 = m4
+    movi r8,0x0f0f
+    moui r8,0x0f0f
+    ; r9 = h01
+    movi r9,0x0101
+    moui r9,0x0101
+    ; r0 = x
+    movi r0,0x8E5F
+    moui r0,0xA4B7
+    ; r1 = const 1!
+    movi r1,1
+    ; r2 = temp
+    ; x -= (x >> 1) & m1
+    shr r2,r0,r1
+    and r2,r2,r6
+    sub r0,r0,r2
+    ; x = (x & m2) + ((x >> 2) & m2)
+    movi r1,2 ; excuse to test shl?
+    shr r2,r0,r1
+    and r2,r2,r7
+    and r0,r0,r7
+    add r0,r0,r2
+    ; x = (x + (x >> 4)) & m4;
+    movi r1,4
+    shr r2,r0,r1
+    add r2,r2,r0
+    and r0,r2,r8
+    ; return (x * h01)>>56
+    mul r0,r0,r9
+    movi r1,24
+    shr r0,r0,r1
+end:
+    nop
+    br end

@@ -72,7 +72,10 @@ class Decoder:
         'add': (1,'r','r','r',0),
         'sub': (1,'r','r','r',1),
         'mul': (1,'r','r','r',2),
+        'and': (1,'r','r','r',3),
         'mov': (1,'r','r',6),
+        'shl': (1,'r','r','r',8),
+        'shr': (1,'r','r','r',9),
         'addi': (2,'r','i',0),
         'movi': (2,'r','i',6),
         'moui': (2,'r','i',7),
@@ -206,8 +209,16 @@ class CPU:
             self._reg[opr[0]] = self._reg[opr[1]] + self._reg[opr[2]]
         elif opc == 'sub':
             self._reg[opr[0]] = self._reg[opr[1]] - self._reg[opr[2]]
+        elif opc == 'mul':
+            self._reg[opr[0]] = self._reg[opr[1]] * self._reg[opr[2]]
+        elif opc == 'and':
+            self._reg[opr[0]] = self._reg[opr[1]] & self._reg[opr[2]]
         elif opc == 'mov':
             self._reg[opr[0]] = self._reg[opr[1]]
+        elif opc == 'shl':
+            self._reg[opr[0]] = self._reg[opr[1]] << self._reg[opr[2]]
+        elif opc == 'shr':
+            self._reg[opr[0]] = self._reg[opr[1]] >> self._reg[opr[2]]
         elif opc == 'st':
             self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'addi':
