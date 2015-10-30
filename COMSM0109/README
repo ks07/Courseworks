@@ -1,0 +1,28 @@
+Requires Python 2.7 and NumPY.
+
+Need to run the assembler to create the RAM image to load into the simulator.
+
+$ ./assembler.py < bsort.ass
+
+This will create two output files:
+
+out.dbg - A human readable file detailing the output of the assembler.
+out.bin - A binary file that is the starting state of memory for the simulator (i.e. program and any data)
+
+Note that the assembler will append the data 0xDEADBEEF at the end of output, to ease debugging. This is an
+invalid instruction, so should help identify bugs in code or simulation.
+
+After running the assembler you can invoke the simulator using:
+
+$ ./sim.py out.bin
+
+The simulator should start by giving the size of the memory loaded (should be 1M).
+Hitting enter will step through instructions in memory (performing fetch/decode/exec at once, for now)
+The simulator will print what instruction was executed, and the values in each register (and PC)
+At any time the simulator can be reset (and memory reloaded) by pressing r and hitting enter.
+At any time the simulator can print out the contents of memory by entering:
+
+d <start> <end>
+
+Where start and end are decimal addresses to print memory between (inclusive).
+Memory will be printed as hex and as unsigned ints.
