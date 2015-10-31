@@ -27,6 +27,14 @@ class Instruction:
             strf.append('{:d}')
         return "{} " + ",".join(strf)
 
+    @staticmethod
+    def NOP(debug = False):
+        """ Gets a NOP instruction, as a placeholder. If debug is set, the instruction should never be executed, and will throw an error if attempted. """
+        if debug:
+            return Instruction('dnop', (0,1), debug) # Abuse the word field to hold the potentially invalid inst
+        else:
+            return Instruction('nop', (0,0), 0)
+
     def __init__(self, opcode, frmt, word):
         self._opcode = opcode
         self._frmt_str = Instruction._decf2strf(frmt) # If we subclass this becomes unnecessary?
@@ -47,12 +55,18 @@ class Instruction:
         if frmt[-1] == 'i':
             operands.append(word & 0xFFFF)
         self._operands = tuple(operands)
+        # Store the source word, for debug.
+        self._word = word;
 
     def getOpc(self):
         return self._opcode
 
     def getOpr(self):
         return self._operands
+
+    def getWord(self):
+        """ Get word, for debugging! """
+        return self._word
 
     def execute(self):
         # TODO: Should this just be a big if or do we want polymorphism?
@@ -62,60 +76,6 @@ class Instruction:
     def __str__(self):
         # This is the implode_ins function in the assembler!
         return self._frmt_str.format(self._opcode, *self._operands)
-
-class Decoder:
-    """ A decode unit. """
-
-    # Should match that from assembler.py -- move to a separate file!
-    formats = {
-        'nop': (0,0),
-        'add': (1,'r','r','r',0),
-        'sub': (1,'r','r','r',1),
-        'mul': (1,'r','r','r',2),
-        'and': (1,'r','r','r',3),
-        'or': (1,'r','r','r',4),
-        'xor': (1,'r','r','r',5),
-        'mov': (1,'r','r',6),
-        'shl': (1,'r','r','r',8),
-        'shr': (1,'r','r','r',9),
-        'addi': (2,'r','i',0),
-        'subi': (2,'r','i',1),
-        'muli': (2,'r','i',2),
-        'andi': (2,'r','i',3),
-        'ori': (2,'r','i',4),
-        'xori': (2,'r','i',5),
-        'movi': (2,'r','i',6),
-        'moui': (2,'r','i',7),
-        'ld': (3,'r','r','r',0),
-        'st': (4,'r','r','r',0),
-        'br': (5,'i',0),
-        'bz': (6,'r','i',0),
-        'bn': (7,'r','i',0),
-        'beq': (8,'r','r','i'),
-        'bge': (9,'r','r','i'),
-    }
-
-    def decode(self, word):
-        """ Decodes a given word; return an Instruction object represented by word. """
-        group = word >> 26 # All instructions start with a possibly unique 6 bit ID
-        diff = word & 0x1F # Where ins not identified uniquely by group, the 5 LSBs should differentiate
-
-        possible = [(opc, frmt) for opc, frmt in Decoder.formats.iteritems() if frmt[0] == group]
-
-        if not possible:
-            # TODO: Better error display
-            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word)
-        elif len(possible) == 1:
-            opc, frmt = possible[0]
-            if diff != frmt[-1] and not isinstance(frmt[-1], basestring):
-                raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word)
-            # The Instruction constructor deals with splitting args.
-            return Instruction(opc, frmt, word)
-        else:
-            for opc, frmt in possible:
-                if frmt[-1] == diff:
-                    return Instruction(opc, frmt, word)
-            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word,  '{:032b}'.format(word))
 
 class StatefulComponent:
     """ A component in the CPU that holds some state. """
@@ -137,7 +97,7 @@ class StatefulComponent:
     def fetch(self, addr):
         """ Gets a single element of the state. """
         # TODO: Is this the right state to read from?
-        return self._state_nxt[addr]
+        return self._state[addr]
 
     def __getitem__(self, key):
         # Allows indexed retrieval.
@@ -184,7 +144,102 @@ class RegisterFile(StatefulComponent):
         lines = []
         for (i,a),(j,b),(k,c),(l,d) in grouper(enumerate(self._state_nxt), 4):
             lines.append("{0:>2d}: {1:>10d}\t{2:>2d}: {3:>10d}\t{4:>2d}: {5:>10d}\t{6:>2d}: {7:>10d}".format(i,a,j,b,k,c,l,d))
-        return "\n".join(lines);
+        return "\n".join(lines)
+
+class Decoder(StatefulComponent):
+    """ A decode unit. State is just the current instruction in this stage. """
+
+    def __init__(self):
+        self._state = np.zeros(1, dtype=np.uint32)
+        self._state_nxt = np.zeros_like(self._state)
+
+    def diff(self):
+        """ Prints the instruction now in the decode stage. """
+        return "" #TODO
+
+    def __str__(self):
+        return '' #TODO
+
+    # Should match that from assembler.py -- move to a separate file!
+    formats = {
+        'nop': (0,0),
+        'add': (1,'r','r','r',0),
+        'sub': (1,'r','r','r',1),
+        'mul': (1,'r','r','r',2),
+        'and': (1,'r','r','r',3),
+        'or': (1,'r','r','r',4),
+        'xor': (1,'r','r','r',5),
+        'mov': (1,'r','r',6),
+        'shl': (1,'r','r','r',8),
+        'shr': (1,'r','r','r',9),
+        'addi': (2,'r','i',0),
+        'subi': (2,'r','i',1),
+        'muli': (2,'r','i',2),
+        'andi': (2,'r','i',3),
+        'ori': (2,'r','i',4),
+        'xori': (2,'r','i',5),
+        'movi': (2,'r','i',6),
+        'moui': (2,'r','i',7),
+        'ld': (3,'r','r','r',0),
+        'st': (4,'r','r','r',0),
+        'br': (5,'i',0),
+        'bz': (6,'r','i',0),
+        'bn': (7,'r','i',0),
+        'beq': (8,'r','r','i'),
+        'bge': (9,'r','r','i'),
+    }
+
+    def decode(self):
+        """ Wrapper for decode, using input from state. Returns the instruction object. """
+        return self._decode(self._state[0])
+
+    def _decode(self, word):
+        """ Decodes a given word; return an Instruction object represented by word. """
+        group = word >> 26 # All instructions start with a possibly unique 6 bit ID
+        diff = word & 0x1F # Where ins not identified uniquely by group, the 5 LSBs should differentiate
+
+        possible = [(opc, frmt) for opc, frmt in Decoder.formats.iteritems() if frmt[0] == group]
+
+        if not possible:
+            # If invalid instruction, either the program is going to branch before this
+            # is executed, the program has a bug, or the sim has a bug!
+            # The first possibility is not an error, so replace instruction with something we can pass!
+            return Instruction.NOP(word)
+        elif len(possible) == 1:
+            opc, frmt = possible[0]
+            if diff != frmt[-1] and not isinstance(frmt[-1], basestring):
+                return Instruction.NOP(word)
+            # The Instruction constructor deals with splitting args.
+            return Instruction(opc, frmt, word)
+        else:
+            for opc, frmt in possible:
+                if frmt[-1] == diff:
+                    return Instruction(opc, frmt, word)
+            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word,  '{:032b}'.format(word))
+
+class InstructionFetcher(StatefulComponent):
+    """ The instruction fetching stage. State is the address we are loading from. (i.e. PC) """
+
+    def __init__(self, mem):
+        self._state = np.zeros(1, dtype=np.uint32)
+        self._state_nxt = np.zeros_like(self._state)
+        # Need a handle to memory (read-only access!)
+        self._mem = mem
+
+    def diff(self):
+        """ Prints the instruction now in the decode stage. """
+        return "" #TODO
+
+    def __str__(self):
+        return '' #TODO
+
+    def fetch(self):
+        """ Does the fetch from memory (with implied cache) """
+        return self._mem[self._state[0]]
+
+    def inc(self):
+        """ Increments the PC. """
+        self._state_nxt[0] = self._state[0] + 1
 
 class CPU:
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -194,20 +249,26 @@ class CPU:
         self._mem = Memory(mem_file)
         print "Loaded", len(self._mem), "words into memory."
         self._reg = RegisterFile()
-        self._pc = 0
-        self._pc_nxt = 0
+        self._ins = Instruction.NOP()
+        self._ins_nxt = Instruction.NOP()
 
-        # Non-stateful components
+        # Stage components (also with state!)
+        self._fetcher = InstructionFetcher(self._mem)
         self._decoder = Decoder()
+        # Execute step performed here for now TODO: Execute Unit/ALU
+
+        # Time counter
+        self._simtime = 0
 
     def _exec(self, ins):
         # Not sure if we want to keep this logic here...
         print ins
         opc = ins.getOpc()
         opr = ins.getOpr()
-        # TODO: Order these sensibly
         if opc == 'nop':
             print "Doing NOP'in!"
+        elif opc == 'dnop':
+            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
         elif opc == 'add':
             self._reg[opr[0]] = self._reg[opr[1]] + self._reg[opr[2]]
         elif opc == 'sub':
@@ -248,44 +309,62 @@ class CPU:
         elif opc == 'st':
             self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'br':
-            # TODO: And this...
-            self._pc = opr[0]
+            self._branch(opr[0])
         elif opc == 'bz':
             if self._reg[opr[0]] == 0:
-                self._pc = opr[1]
+                self._branch(opr[1])
         elif opc == 'bn':
             # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
             if self._reg[opr[0]] >> 31:
-                self._pc = opr[1]
+                self._branch(opr[1])
         elif opc == 'beq':
             if self._reg[opr[0]] == self._reg[opr[1]]:
-                self._pc = opr[2]
+                self._branch(opr[2])
         elif opc == 'bge':
-            # TODO: Pipeline will ruin this...
             if self._reg[opr[0]] >= self._reg[opr[1]]:
-                self._pc = opr[2]
+                self._branch(opr[2])
         else:
             print "WARNING: Unimplemented opcode:", opc
 
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
-        # TODO: Expand state to others (i.e. pc)
         self._reg.advstate()
         self._mem.advstate()
+        self._decoder.advstate()
+        self._fetcher.advstate()
+        self._ins = self._ins_nxt
+        # Need to increment time
+        self._simtime += 1
+
+    def _branch(self, dest):
+        """ Clears the pipeline and does the branch. """
+        print "Clearing the pipeline to branch!"
+        self._fetcher.update(0, dest) # Update the PC to point to the new address
+        self._decoder.update(0, 0) # Empty the decode register
+        self._ins_nxt = Instruction.NOP() # Empty the execute instruction reg
 
     def step(self):
-        # Fetch
-        word = self._mem[self._pc]
-        # Increment PC
-        self._pc += 1
-        # Decode
-        ins = self._decoder.decode(word)
-        # Execute
-        self._exec(ins)
-        # Update states
-        print self._reg
-        print "PC =", self._pc
+        # Fetch Stage
+        toDecode = self._fetcher.fetch()
+        # Set PC for next time step
+        self._fetcher.inc()
+        # Pass return values to simulate movement between stages
+        self._decoder.update(0, toDecode) # Note this should only affect state for next time (won't pass through)
+        # Decode Stage
+        toExecute = self._decoder.decode()
+        # Pass to execute
+        self._ins_nxt = toExecute
+        # Execute Stage (this might undo all the previous steps, if we branch!)
+        self._exec(self._ins)
+
+        # In theory, everything before this stage should have only changed the 'future' state.
+        # Update states (increment sim time)
         self._update()
+
+        # Display state after this step
+        print "Sim Time: ", self._simtime
+        print self._fetcher
+        print self._reg
 
     def dump(self, start, end):
         for addr in range(start, end + 1):
