@@ -31,11 +31,11 @@ facbase:
     ; Reached 0, unroll.
     ; Calc new return value
     mul r2,r2,r1
+    ; if stack pointer == stack base (r7 == r6), we are at the end
+    beq r7,r6,end
     ; Pop n from stack
     subi r7,1
     ld r1,r7,r0
-    ; if stack pointer == stack base (r7 == r6), we are at the end
-    beq r7,r6,end
     ; else recurse again
     br facbase
 end:
