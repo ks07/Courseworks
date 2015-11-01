@@ -10,7 +10,7 @@ def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return izip_longest(fillvalue=fillvalue, *args)
 
-class Instruction:
+class Instruction(object):
     """ An instruction. """
 
     @staticmethod
@@ -25,7 +25,7 @@ class Instruction:
         # Need to cover end = imm
         if frmt[-1] == 'i':
             strf.append('{:d}')
-        return "{} " + ",".join(strf)
+        return ("{} " + ",".join(strf)).rstrip()
 
     @staticmethod
     def NOP(debug = False):
@@ -35,7 +35,7 @@ class Instruction:
         else:
             return Instruction('nop', (0,0), 0)
 
-    def __init__(self, opcode, frmt, word):
+    def __init__(self, opcode, frmt, word, predicted=False):
         self._opcode = opcode
         self._frmt_str = Instruction._decf2strf(frmt) # If we subclass this becomes unnecessary?
         # Note the similarity to gen_ins in assember!
@@ -57,6 +57,8 @@ class Instruction:
         self._operands = tuple(operands)
         # Store the source word, for debug.
         self._word = word;
+        # Store if the branch predictor has decided to take this
+        self.predicted = predicted
 
     def getOpc(self):
         return self._opcode
@@ -68,16 +70,11 @@ class Instruction:
         """ Get word, for debugging! """
         return self._word
 
-    def execute(self):
-        # TODO: Should this just be a big if or do we want polymorphism?
-        print "Executing", self # Morbid
-        return
-
     def __str__(self):
         # This is the implode_ins function in the assembler!
         return self._frmt_str.format(self._opcode, *self._operands)
 
-class StatefulComponent:
+class StatefulComponent(object):
     """ A component in the CPU that holds some state. """
 
     def advstate(self):
@@ -91,7 +88,7 @@ class StatefulComponent:
 
     def __setitem__(self, key, value):
         # Allows indexed update. (e.g. rf[1] = 10)
-        print "Set", key, "from", self[key], "to", value
+        #print "Set", key, "from", self[key], "to", value
         self.update(key, value)
 
     def fetch(self, addr):
@@ -141,10 +138,22 @@ class RegisterFile(StatefulComponent):
         return "\n".join(out)
 
     def __str__(self):
-        lines = []
+        lines = ['Register File:']
         for (i,a),(j,b),(k,c),(l,d) in grouper(enumerate(self._state_nxt), 4):
-            lines.append("{0:>2d}: {1:>10d}\t{2:>2d}: {3:>10d}\t{4:>2d}: {5:>10d}\t{6:>2d}: {7:>10d}".format(i,a,j,b,k,c,l,d))
+            lines.append("r{0:>2d}: {1:>10d}\tr{2:>2d}: {3:>10d}\tr{4:>2d}: {5:>10d}\tr{6:>2d}: {7:>10d}".format(i,a,j,b,k,c,l,d))
         return "\n".join(lines)
+
+class BranchPredictor(StatefulComponent):
+    """ A static branch predictor. """
+
+    def predict(self, pc, ins):
+        """ Returns true if we predict the branch will be taken. """
+        if ins.getOpc() == 'br':
+            # Unconditional, always taken
+            return True
+        else:
+            dest = ins.getOpr()[-1]
+            return dest < pc
 
 class Decoder(StatefulComponent):
     """ A decode unit. State is just the current instruction in this stage. """
@@ -158,7 +167,7 @@ class Decoder(StatefulComponent):
         return "" #TODO
 
     def __str__(self):
-        return '' #TODO
+        return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self.decode()))
 
     # Should match that from assembler.py -- move to a separate file!
     formats = {
@@ -223,6 +232,8 @@ class InstructionFetcher(StatefulComponent):
     def __init__(self, mem):
         self._state = np.zeros(1, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
+        # Need to backup before changes (to undo bad predictions)
+        self._old_state = np.zeros_like(self._state)
         # Need a handle to memory (read-only access!)
         self._mem = mem
 
@@ -231,9 +242,19 @@ class InstructionFetcher(StatefulComponent):
         return "" #TODO
 
     def __str__(self):
-        return '' #TODO
+        return 'PC = {0:d}'.format(self._state[0])
 
-    def fetch(self):
+    # Need to override, to store old PC
+    def update(self, addr, val):
+        """ Stores the previous state when being updated. """
+        self._old_state[0] = self._state_nxt[0]
+        return super(self.__class__, self).update(addr, val)
+
+    def restore(self):
+        """ Restores the previously saved state, when branch prediction was wrong. """
+        self._state_nxt[0] = self._old_state[0]
+
+    def fetchIns(self): #TODO: Fix name conflict nicely!
         """ Does the fetch from memory (with implied cache) """
         return self._mem[self._state[0]]
 
@@ -241,7 +262,7 @@ class InstructionFetcher(StatefulComponent):
         """ Increments the PC. """
         self._state_nxt[0] = self._state[0] + 1
 
-class CPU:
+class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
 
     def __init__(self, mem_file):
@@ -260,13 +281,17 @@ class CPU:
         # Time counter
         self._simtime = 0
 
+        # Branch predictor (part of decode stage)
+        self._predictor = BranchPredictor()
+
     def _exec(self, ins):
+        print '* Execute stage is performing {0:s} (including reads/writes and logic, yikes!)'.format(str(ins))
+
         # Not sure if we want to keep this logic here...
-        print ins
         opc = ins.getOpc()
         opr = ins.getOpr()
         if opc == 'nop':
-            print "Doing NOP'in!"
+            pass
         elif opc == 'dnop':
             raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
         elif opc == 'add':
@@ -309,25 +334,25 @@ class CPU:
         elif opc == 'st':
             self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
         elif opc == 'br':
-            self._branch(opr[0])
+            # Should do nothing as we will always predict this!
+            #self._branch(opr[0])
+            print "* ...but br is always taken, so this is a nop!"
+            pass
         elif opc == 'bz':
-            if self._reg[opr[0]] == 0:
-                self._branch(opr[1])
+            self._branch(self._reg[opr[0]] == 0, ins.predicted, opr[1])
         elif opc == 'bn':
             # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
-            if self._reg[opr[0]] >> 31:
-                self._branch(opr[1])
+            self._branch(self._reg[opr[0]] >> 31, ins.predicted, opr[1])
         elif opc == 'beq':
-            if self._reg[opr[0]] == self._reg[opr[1]]:
-                self._branch(opr[2])
+            self._branch(self._reg[opr[0]] == self._reg[opr[1]], ins.predicted, opr[2])
         elif opc == 'bge':
-            if self._reg[opr[0]] >= self._reg[opr[1]]:
-                self._branch(opr[2])
+            self._branch(self._reg[opr[0]] >= self._reg[opr[1]], ins.predicted, opr[2])
         else:
             print "WARNING: Unimplemented opcode:", opc
 
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
+        print '\n---------Stepping---------\n'
         self._reg.advstate()
         self._mem.advstate()
         self._decoder.advstate()
@@ -336,42 +361,93 @@ class CPU:
         # Need to increment time
         self._simtime += 1
 
-    def _branch(self, dest):
-        """ Clears the pipeline and does the branch. """
-        print "Clearing the pipeline to branch!"
-        self._fetcher.update(0, dest) # Update the PC to point to the new address
-        self._decoder.update(0, 0) # Empty the decode register
-        self._ins_nxt = Instruction.NOP() # Empty the execute instruction reg
+    def _branch(self, cond, pred, dest):
+        """ Clears the pipeline and does the branch (if necessary!). """
+        if cond and not pred:
+            # Should have taken, but did not.
+            print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
+            self._fetcher.update(0, dest) # Update the PC to point to the new address
+            self._decoder.update(0, 0) # Empty the decode register
+            self._ins_nxt = Instruction.NOP() # Empty the execute instruction reg
+        elif not cond and pred:
+            # Shouldn't have taken, but did.
+            print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
+            self._fetcher.restore() # Load the original PC value from before prediction
+            self._decoder.update(0, 0) # Empty the decode register
+            self._ins_nxt = Instruction.NOP() # Empty the execute instruction reg
+        else:
+            print "* ...and the predictor was right, so this was a nop!"
+
+    def _usePrediction(self, pred, branch):
+        """ Uses the prediction to set the fetch target prematurely. Must run after fetch has set decoder input. """
+        if pred:
+            print "* Predictor (in decode stage) decided branch {0:s} will be taken.".format(str(branch))
+            dest = branch.getOpr()[-1] # TODO: Pass in?
+            # Set the new dest
+            self._fetcher.update(0, dest)
+            # The branch predictor will switch the input to the decode stage to a nop (whatever was there is after the branch and we don't want it!)
+            self._decoder.update(0, Instruction.NOP().getWord()) # WARNING! There is now a dependency that this must run AFTER fetch passes to decode!
+            # Need to tell the execute unit that the branch was taken already
+            branch.predicted = True
 
     def step(self):
+        """ Performs all the logic for the current sim time, and steps to the next. """
+        print '\n---Performing Cycle Logic---\n'
+
         # Fetch Stage
-        toDecode = self._fetcher.fetch()
+        toDecode = self._fetcher.fetchIns()
+        print '* Fetch stage loaded from mem, passing {0:08x} to decode stage.'.format(toDecode)
+
         # Set PC for next time step
         self._fetcher.inc()
+        print '* Fetch stage incremented PC.'
+
         # Pass return values to simulate movement between stages
         self._decoder.update(0, toDecode) # Note this should only affect state for next time (won't pass through)
+        # This is a simulator internal step (akin to driving reg input w/out clocking), no print!
+
         # Decode Stage
         toExecute = self._decoder.decode()
+        print '* Decode stage determined the instruction is {0:s}, passing to execution unit'.format(str(toExecute))
+
+        # TODO: Nicer condition
+        if toExecute.getOpc().startswith('b'):
+            # Predictor as part of decode
+            prediction = self._predictor.predict(self._fetcher[0], toExecute)
+            self._usePrediction(prediction, toExecute)
+            # Handles printing
+
         # Pass to execute
         self._ins_nxt = toExecute
+        # Sim internal
+
         # Execute Stage (this might undo all the previous steps, if we branch!)
         self._exec(self._ins)
+        # Handles printing
 
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)
         self._update()
 
+    def displayState(self):
         # Display state after this step
         print "Sim Time: ", self._simtime
         print self._fetcher
+        print self._decoder
+        print 'Now executing:', self._ins
         print self._reg
 
     def dump(self, start, end):
         for addr in range(start, end + 1):
             print "{0:08x} | {1:08x} ({1:})".format(addr, self._mem[addr])
 
+def clearTerm(msg = ''):
+    """ Clears terminal using ANSI escape sequence. """
+    print "\x1b[2J\x1b[H" + msg
+
 def start(mem_file):
     cpu = CPU(mem_file)
+    cpu.displayState()
     # Manual stepping
     while True:
         usr = sys.stdin.readline().strip()
@@ -379,10 +455,11 @@ def start(mem_file):
             args = usr.split(' ')[1:]
             cpu.dump(int(args[0], 0), int(args[1], 0))
         elif usr.startswith('r'):
-            print "Resetting CPU..."
+            clearTerm('Resetting CPU...')
             cpu = CPU(mem_file)
         else:
             cpu.step()
+            cpu.displayState()
 
 if __name__ == '__main__' :
     # Ignore overflow warnings - we expect it!
