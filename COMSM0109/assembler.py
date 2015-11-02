@@ -22,10 +22,19 @@ def expand_pseudo(code, labels):
     """ If given a pseudocode instruction, expand it to actual instructions. Data pseudo-instructions (e.g. .word) are ignored here, as they are just literals. Returns a list. """
     if code.startswith("la "):
         # la translates to movi and moui
-        _, args = explode_ins(code);
+        _, args = explode_ins(code)
         return [
             implode_ins('movi', [args[0], labels[args[1]] & 0xFFFF]),
             implode_ins('moui', [args[0], labels[args[1]] >> 16])
+        ]
+    elif code.startswith("ad "):
+        # ad (address diff) puts the difference between two labels into a reg, with an offset
+        _, args = explode_ins(code)
+        args[3] = int(args[3], 0)
+        # Limited to 16 bits, should never need more!
+        return [
+            implode_ins('movi', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) & 0xFFFF]),
+            implode_ins('moui', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) >> 16])
         ]
     else:
         return [code];

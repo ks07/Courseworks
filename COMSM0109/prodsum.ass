@@ -6,7 +6,7 @@ start:
     ; r0 = sum
     movi r0,0
     ; r1 = i = (n-1)
-    movi r1,5
+    ad r1,vecA,vecB,2
     ; r2 = a
     la r2,vecA
     ; r3 = b
