@@ -1,0 +1,47 @@
+; Sum of products
+; for i = n-1 down:
+;   sum = sum + a[i] * b[i]
+
+start:
+    ; r0 = sum
+    movi r0,0
+    ; r1 = i = (n-1)
+    movi r1,5
+    ; r2 = a
+    la r2,vecA
+    ; r3 = b
+    la r3,vecB
+loop_start:
+    ; r4 = a[i]
+    ld r4,r2,r1
+    ; r5 = b[i]
+    ld r5,r3,r1
+    ; r4 = a[i] * b[i]
+    mul r4,r4,r5
+    ; r0 = sum + (a[i] * b[i])
+    add r0,r0,r4
+    ; break if r1 zero
+    bz r1,loop_end
+    subi r1,1
+    br loop_start
+loop_end:
+    nop
+    br loop_end
+
+; data segment
+    .word 0xDEADBEEF
+vecA:
+    .word 10
+    .word 92
+    .word 65
+    .word 13
+    .word 21
+    .word 1234
+    .word 0xDEADBEEF
+vecB:
+    .word 249
+    .word 212
+    .word 40
+    .word 11
+    .word 10009
+    .word 1
