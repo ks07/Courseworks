@@ -54,6 +54,8 @@ class Instruction(object):
         self._word = word;
         # Store if the branch predictor has decided to take this
         self.predicted = predicted
+        # Store the output, for the writeback stage.
+        self._writeback = []
 
     def getOpc(self):
         return self._opcode
@@ -67,6 +69,15 @@ class Instruction(object):
     def getWord(self):
         """ Get word, for debugging! """
         return self._word
+
+    def setWBOutput(self, reg, val):
+        """ Sets the register/value for writeback output. """
+        # Put in a list, in case we add any instructions with multiple outputs
+        self._writeback = [(reg, val)]
+
+    def getWBOutput(self):
+        """ Gets the register/value for writeback output. """
+        return tuple(self._writeback)
 
     def __str__(self):
         # This is the implode_ins function in the assembler!

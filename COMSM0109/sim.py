@@ -20,6 +20,8 @@ class CPU(object):
         self._reg = RegisterFile()
         self._ins = Instruction.NOP()
         self._ins_nxt = Instruction.NOP()
+        self._wb = Instruction.NOP()
+        self._wb_nxt = Instruction.NOP()
 
         # Stage components (also with state!)
         self._fetcher = InstructionFetcher(self._mem)
@@ -32,72 +34,89 @@ class CPU(object):
         # Branch predictor (part of decode stage)
         self._predictor = BranchPredictor()
 
-    def _exec(self, ins):
+    def _exec(self):
+        ins = self._ins
+        
         print '* Execute stage is performing {0:s} (including reads/writes and logic, yikes!)'.format(str(ins))
 
         # Not sure if we want to keep this logic here...
         opc = ins.getOpc()
         opr = ins.getOpr()
         val = ins.getVal()
+
+        outReg = opr[0] if len(opr) > 0 else None# True for almost all opcodes
+        
         if opc == 'nop':
+            outReg = None
             pass
         elif opc == 'dnop':
             raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
         elif opc == 'add':
-            self._reg[opr[0]] = val[1] + val[2]
+            outVal = val[1] + val[2]
         elif opc == 'sub':
-            self._reg[opr[0]] = val[1] - val[2]
+            outVal = val[1] - val[2]
         elif opc == 'mul':
-            self._reg[opr[0]] = val[1] * val[2]
+            outVal = val[1] * val[2]
         elif opc == 'and':
-            self._reg[opr[0]] = val[1] & val[2]
+            outVal = val[1] & val[2]
         elif opc == 'or':
-            self._reg[opr[0]] = val[1] | val[2]
+            outVal = val[1] | val[2]
         elif opc == 'xor':
-            self._reg[opr[0]] = val[1] ^ val[2]
+            outVal = val[1] ^ val[2]
         elif opc == 'mov':
-            self._reg[opr[0]] = val[1]
+            outVal = val[1]
         elif opc == 'shl':
-            self._reg[opr[0]] = val[1] << val[2]
+            outVal = val[1] << val[2]
         elif opc == 'shr':
-            self._reg[opr[0]] = val[1] >> val[2]
+            outVal = val[1] >> val[2]
         elif opc == 'addi':
-            self._reg[opr[0]] = val[0] + opr[1]
+            outVal = val[0] + opr[1]
         elif opc == 'subi':
-            self._reg[opr[0]] = val[0] - opr[1]
+            outVal = val[0] - opr[1]
         elif opc == 'muli':
-            self._reg[opr[0]] = val[0] * opr[1]
+            outVal = val[0] * opr[1]
         elif opc == 'andi':
-            self._reg[opr[0]] = val[0] & opr[1]
+            outVal = val[0] & opr[1]
         elif opc == 'ori':
-            self._reg[opr[0]] = val[0] | opr[1]
+            outVal = val[0] | opr[1]
         elif opc == 'xori':
-            self._reg[opr[0]] = val[0] ^ opr[1]
+            outVal = val[0] ^ opr[1]
         elif opc == 'movi':
-            self._reg[opr[0]] = val[1]
+            outVal = val[1]
         elif opc == 'moui':
-            self._reg[opr[0]] = val[0] | (opr[1] << 16)
+            outVal = val[0] | (opr[1] << 16)
         elif opc == 'ld':
             # TODO: De-dupe the r_base + r_offset logic?
-            self._reg[opr[0]] = self._mem[ val[1] + val[2] ]
+            outVal = self._mem[ val[1] + val[2] ]
         elif opc == 'st':
+            outReg = None
             self._mem[ val[1] + val[2] ] = val[0]
         elif opc == 'br':
             # Should do nothing as we will always predict this!
+            outReg = None
             #self._branch(opr[0])
             print "* ...but br is always taken, so this is a nop!"
             pass
         elif opc == 'bz':
+            outReg = None
             self._branch(val[0] == 0, ins.predicted, opr[1])
         elif opc == 'bn':
             # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
+            outReg = None
             self._branch(val[0] >> 31, ins.predicted, opr[1])
         elif opc == 'beq':
+            outReg = None
             self._branch(val[0] == val[1], ins.predicted, opr[2])
         elif opc == 'bge':
+            outReg = None
             self._branch(val[0] >= val[1], ins.predicted, opr[2])
         else:
+            outReg = None
             print "WARNING: Unimplemented opcode:", opc
+
+        if not outReg is None:
+            ins.setWBOutput(outReg, outVal)
+        return ins
 
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
@@ -107,6 +126,7 @@ class CPU(object):
         self._decoder.advstate()
         self._fetcher.advstate()
         self._ins = self._ins_nxt
+        self._wb = self._wb_nxt
         # Need to increment time
         self._simtime += 1
 
@@ -138,6 +158,11 @@ class CPU(object):
             self._decoder.update(0, Instruction.NOP().getWord()) # WARNING! There is now a dependency that this must run AFTER fetch passes to decode!
             # Need to tell the execute unit that the branch was taken already
             branch.predicted = True
+
+    def _writeback(self):
+        for reg, val in self._wb.getWBOutput():
+            print '* Writeback stage is storing {0:d} in r{1:d} for {2:s}.'.format(val, reg, str(self._wb))
+            self._reg[reg] = val
 
     def step(self):
         """ Performs all the logic for the current sim time, and steps to the next. """
@@ -171,9 +196,15 @@ class CPU(object):
         # Sim internal
 
         # Execute Stage (this might undo all the previous steps, if we branch!)
-        self._exec(self._ins)
+        toWriteback = self._exec()
         # Handles printing
 
+        # Pass to writeback
+        self._wb_nxt = toWriteback
+
+        # Writeback stage
+        self._writeback()
+        
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)
         self._update()
@@ -184,6 +215,7 @@ class CPU(object):
         print self._fetcher
         print self._decoder
         print 'Now executing:', self._ins
+        print 'Now in writeback:', self._wb
         print self._reg
 
     def dump(self, start, end):
