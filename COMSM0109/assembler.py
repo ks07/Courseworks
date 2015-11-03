@@ -15,8 +15,8 @@ def implode_ins(op, args):
 
 def code_size(code):
     if code.startswith("la ") or code.startswith("ad "):
-        return 2*3
-    return 1*3
+        return 2*4
+    return 1*4
 
 def expand_pseudo(code, labels):
     """ If given a pseudocode instruction, expand it to actual instructions. Data pseudo-instructions (e.g. .word) are ignored here, as they are just literals. Returns a list. """
@@ -27,7 +27,9 @@ def expand_pseudo(code, labels):
             implode_ins('movi', [args[0], labels[args[1]] & 0xFFFF]),
             'nop',
             'nop',
+            'nop',
             implode_ins('moui', [args[0], labels[args[1]] >> 16]),
+            'nop',
             'nop',
             'nop'
         ]
@@ -40,12 +42,14 @@ def expand_pseudo(code, labels):
             implode_ins('movi', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) & 0xFFFF]),
             'nop',
             'nop',
+            'nop',
             implode_ins('moui', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) >> 16]),
+            'nop',
             'nop',
             'nop'
         ]
     else:
-        return [code,'nop','nop'];
+        return [code,'nop','nop','nop'];
 
 def pass1(source):
     """ First pass needs to calculate the address of labels. We're also going to abuse it to replace pseudo-instructions. """
