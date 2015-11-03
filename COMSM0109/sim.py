@@ -20,6 +20,8 @@ class CPU(object):
         self._reg = RegisterFile()
         self._ins = Instruction.NOP()
         self._ins_nxt = Instruction.NOP()
+        self._macc = Instruction.NOP()
+        self._macc_nxt = Instruction.NOP()
         self._wb = Instruction.NOP()
         self._wb_nxt = Instruction.NOP()
 
@@ -45,6 +47,7 @@ class CPU(object):
         val = ins.getVal()
 
         outReg = opr[0] if len(opr) > 0 else None# True for almost all opcodes
+        outAddr = None
         
         if opc == 'nop':
             outReg = None
@@ -87,10 +90,16 @@ class CPU(object):
             outVal = val[0] | (opr[1] << 16)
         elif opc == 'ld':
             # TODO: De-dupe the r_base + r_offset logic?
-            outVal = self._mem[ val[1] + val[2] ]
+            # TODO: Nicer handling of val/mem/writeback in this case
+#            outVal = self._mem[ val[1] + val[2] ]
+            outReg = None # TODO: lol, not true
+            outAddr = val[1] + val[2]
+            outVal = None # TODO: plz
         elif opc == 'st':
             outReg = None
-            self._mem[ val[1] + val[2] ] = val[0]
+            outAddr = val[1] + val[2]
+            outVal = val[0] #TODO: Oh please no
+#            self._mem[ val[1] + val[2] ] = val[0]
         elif opc == 'br':
             # Should do nothing as we will always predict this!
             outReg = None
@@ -116,6 +125,8 @@ class CPU(object):
 
         if not outReg is None:
             ins.setWBOutput(outReg, outVal)
+        if not outAddr is None:
+            ins.setMemOperation(outAddr, outVal)
         return ins
 
     def _update(self):
@@ -127,6 +138,7 @@ class CPU(object):
         self._fetcher.advstate()
         self._ins = self._ins_nxt
         self._wb = self._wb_nxt
+        self._macc = self._macc_nxt
         # Need to increment time
         self._simtime += 1
 
@@ -159,7 +171,22 @@ class CPU(object):
             # Need to tell the execute unit that the branch was taken already
             branch.predicted = True
 
+    def _memaccess(self):
+        """ Performs the memory access stage. """
+        memop = self._macc.getMemOperation()
+        if memop:
+            addr,write = memop
+            if write:
+                print '* Memory access stage wrote {0:d} to address {1:d} for {2:s}.'.format(write, addr, str(self._macc))
+                self._mem[addr] = write
+            else:
+                val = self._mem[addr]
+                print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._macc))
+                self._macc.setWBOutput(self._macc.getOpr()[0], val) # TODO: This will be broken by weird loads!
+        return self._macc
+
     def _writeback(self):
+        """ Performs the writeback stage. """
         for reg, val in self._wb.getWBOutput():
             print '* Writeback stage is storing {0:d} in r{1:d} for {2:s}.'.format(val, reg, str(self._wb))
             self._reg[reg] = val
@@ -196,9 +223,15 @@ class CPU(object):
         # Sim internal
 
         # Execute Stage (this might undo all the previous steps, if we branch!)
-        toWriteback = self._exec()
+        toMacc = self._exec()
         # Handles printing
 
+        # Pass to memory access
+        self._macc_nxt = toMacc
+
+        # Memory access stage
+        toWriteback = self._memaccess()
+        
         # Pass to writeback
         self._wb_nxt = toWriteback
 
@@ -215,6 +248,7 @@ class CPU(object):
         print self._fetcher
         print self._decoder
         print 'Now executing:', self._ins
+        print 'Now in memory access:', self._macc
         print 'Now in writeback:', self._wb
         print self._reg
 

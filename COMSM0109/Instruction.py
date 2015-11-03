@@ -56,6 +56,9 @@ class Instruction(object):
         self.predicted = predicted
         # Store the output, for the writeback stage.
         self._writeback = []
+        # Store memory op, for mem access stage.
+        self._memOpp = None
+        print 'Read values',values
 
     def getOpc(self):
         return self._opcode
@@ -69,6 +72,13 @@ class Instruction(object):
     def getWord(self):
         """ Get word, for debugging! """
         return self._word
+
+    def setMemOperation(self, addr, write=None):
+        # TODO: Can we stop doing this?
+        self._memOpp = (addr, write)
+
+    def getMemOperation(self):
+        return self._memOpp
 
     def setWBOutput(self, reg, val):
         """ Sets the register/value for writeback output. """
