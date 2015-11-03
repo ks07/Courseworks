@@ -23,7 +23,7 @@ class CPU(object):
 
         # Stage components (also with state!)
         self._fetcher = InstructionFetcher(self._mem)
-        self._decoder = Decoder()
+        self._decoder = Decoder(self._reg)
         # Execute step performed here for now TODO: Execute Unit/ALU
 
         # Time counter
@@ -38,63 +38,64 @@ class CPU(object):
         # Not sure if we want to keep this logic here...
         opc = ins.getOpc()
         opr = ins.getOpr()
+        val = ins.getVal()
         if opc == 'nop':
             pass
         elif opc == 'dnop':
             raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
         elif opc == 'add':
-            self._reg[opr[0]] = self._reg[opr[1]] + self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] + val[2]
         elif opc == 'sub':
-            self._reg[opr[0]] = self._reg[opr[1]] - self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] - val[2]
         elif opc == 'mul':
-            self._reg[opr[0]] = self._reg[opr[1]] * self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] * val[2]
         elif opc == 'and':
-            self._reg[opr[0]] = self._reg[opr[1]] & self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] & val[2]
         elif opc == 'or':
-            self._reg[opr[0]] = self._reg[opr[1]] | self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] | val[2]
         elif opc == 'xor':
-            self._reg[opr[0]] = self._reg[opr[1]] ^ self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] ^ val[2]
         elif opc == 'mov':
-            self._reg[opr[0]] = self._reg[opr[1]]
+            self._reg[opr[0]] = val[1]
         elif opc == 'shl':
-            self._reg[opr[0]] = self._reg[opr[1]] << self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] << val[2]
         elif opc == 'shr':
-            self._reg[opr[0]] = self._reg[opr[1]] >> self._reg[opr[2]]
+            self._reg[opr[0]] = val[1] >> val[2]
         elif opc == 'addi':
-            self._reg[opr[0]] += opr[1]
+            self._reg[opr[0]] = val[0] + opr[1]
         elif opc == 'subi':
-            self._reg[opr[0]] -= opr[1]
+            self._reg[opr[0]] = val[0] - opr[1]
         elif opc == 'muli':
-            self._reg[opr[0]] *= opr[1]
+            self._reg[opr[0]] = val[0] * opr[1]
         elif opc == 'andi':
-            self._reg[opr[0]] &= opr[1]
+            self._reg[opr[0]] = val[0] & opr[1]
         elif opc == 'ori':
-            self._reg[opr[0]] |= opr[1]
+            self._reg[opr[0]] = val[0] | opr[1]
         elif opc == 'xori':
-            self._reg[opr[0]] ^= opr[1]
+            self._reg[opr[0]] = val[0] ^ opr[1]
         elif opc == 'movi':
-            self._reg[opr[0]] = opr[1]
+            self._reg[opr[0]] = val[1]
         elif opc == 'moui':
-            self._reg[opr[0]] |= (opr[1] << 16)
+            self._reg[opr[0]] = val[0] | (opr[1] << 16)
         elif opc == 'ld':
             # TODO: De-dupe the r_base + r_offset logic?
-            self._reg[opr[0]] = self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ]
+            self._reg[opr[0]] = self._mem[ val[1] + val[2] ]
         elif opc == 'st':
-            self._mem[ self._reg[opr[1]] + self._reg[opr[2]] ] = self._reg[opr[0]]
+            self._mem[ val[1] + val[2] ] = val[0]
         elif opc == 'br':
             # Should do nothing as we will always predict this!
             #self._branch(opr[0])
             print "* ...but br is always taken, so this is a nop!"
             pass
         elif opc == 'bz':
-            self._branch(self._reg[opr[0]] == 0, ins.predicted, opr[1])
+            self._branch(val[0] == 0, ins.predicted, opr[1])
         elif opc == 'bn':
             # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
-            self._branch(self._reg[opr[0]] >> 31, ins.predicted, opr[1])
+            self._branch(val[0] >> 31, ins.predicted, opr[1])
         elif opc == 'beq':
-            self._branch(self._reg[opr[0]] == self._reg[opr[1]], ins.predicted, opr[2])
+            self._branch(val[0] == val[1], ins.predicted, opr[2])
         elif opc == 'bge':
-            self._branch(self._reg[opr[0]] >= self._reg[opr[1]], ins.predicted, opr[2])
+            self._branch(val[0] >= val[1], ins.predicted, opr[2])
         else:
             print "WARNING: Unimplemented opcode:", opc
 
@@ -156,7 +157,7 @@ class CPU(object):
 
         # Decode Stage
         toExecute = self._decoder.decode()
-        print '* Decode stage determined the instruction is {0:s}, passing to execution unit'.format(str(toExecute))
+        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecute))
 
         # TODO: Nicer condition
         if toExecute.getOpc().startswith('b'):

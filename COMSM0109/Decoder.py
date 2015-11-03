@@ -7,9 +7,11 @@ from Instruction import Instruction
 class Decoder(StatefulComponent):
     """ A decode unit. State is just the current instruction in this stage. """
 
-    def __init__(self):
+    def __init__(self, regfile):
         self._state = np.zeros(1, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
+        # Decode stage reads from register file.
+        self._reg = regfile
 
     def diff(self):
         """ Prints the instruction now in the decode stage. """
@@ -68,9 +70,9 @@ class Decoder(StatefulComponent):
             if diff != frmt[-1] and not isinstance(frmt[-1], basestring):
                 return Instruction.NOP(word)
             # The Instruction constructor deals with splitting args.
-            return Instruction(opc, frmt, word)
+            return Instruction(opc, frmt, word, self._reg)
         else:
             for opc, frmt in possible:
                 if frmt[-1] == diff:
-                    return Instruction(opc, frmt, word)
+                    return Instruction(opc, frmt, word, self._reg)
             raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word,  '{:032b}'.format(word))
