@@ -48,7 +48,7 @@ beqok:
 bge_eok:
     ; Test mul,and,andi,st,bge
     la r13,fail
-    movi r20,1
+    movi r20,2
     ld r17,r13,r20 ; should load deadbeef into r17
     movi r26,0xFFFF
     moui r26,0xFFFF
