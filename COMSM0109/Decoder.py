@@ -5,10 +5,15 @@ from StatefulComponent import StatefulComponent
 from Instruction import Instruction
 
 class Decoder(StatefulComponent):
-    """ A decode unit. State is just the current instruction in this stage. """
+    """ A decode unit. State is the current instruction in this stage, and a record of registers that are dirty. """
 
+    RBI_OFS = 0
+    RBD_OFS = 32
+    INS_IND = 64
+    
     def __init__(self, regfile):
-        self._state = np.zeros(1, dtype=np.uint32)
+        # First 32 elements represent bypassed inputs, next 32 are dirty flags, final element for current ins.
+        self._state = np.zeros(self.INS_IND + 1, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
         # Decode stage reads from register file.
         self._reg = regfile
@@ -51,7 +56,25 @@ class Decoder(StatefulComponent):
 
     def decode(self):
         """ Wrapper for decode, using input from state. Returns the instruction object. """
-        return self._decode(self._state[0])
+        # Needs to adjust dirty flags
+        for ri in range(self.RBD_OFS, self.RBD_OFS + 32):
+            if self._state[ri] > 0:
+                self._state[ri] -= 1
+        return self._decode(self._state[self.INS_IND])
+
+    # Need a wrapper for the reg file, simulating the bypass mux (for data hazards).
+    class RegisterWrapper(object):
+        """ Wraps the register file, decode specific. """
+        def __init__(self, regfile, dstate):
+            self._reg = regfile;
+            self._dstate = dstate;
+    
+        def __getitem__(self, ri):
+            # Check if the register is marked as dirty.
+            if self._dstate[Decoder.RBD_OFS + ri] == 0:
+                return self._reg[ri]
+            else:
+                return self._dstate[Decoder.RBI_OFS + ri]
 
     def _decode(self, word):
         """ Decodes a given word; return an Instruction object represented by word. """
