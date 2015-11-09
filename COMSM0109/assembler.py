@@ -14,9 +14,10 @@ def implode_ins(op, args):
     return op + ' ' + ",".join(str(a) for a in args);
 
 def code_size(code):
-    if code.startswith("la ") or code.startswith("ad "):
-        return 2*4
-    return 1*4
+    # TODO: don't expand ld here, need to do in hw.
+    if code.startswith("la ") or code.startswith("ad ") or code.startswith("ld "):
+        return 2
+    return 1
 
 def expand_pseudo(code, labels):
     """ If given a pseudocode instruction, expand it to actual instructions. Data pseudo-instructions (e.g. .word) are ignored here, as they are just literals. Returns a list. """
@@ -25,13 +26,7 @@ def expand_pseudo(code, labels):
         _, args = explode_ins(code)
         return [
             implode_ins('movi', [args[0], labels[args[1]] & 0xFFFF]),
-            'nop',
-            'nop',
-            'nop',
-            implode_ins('moui', [args[0], labels[args[1]] >> 16]),
-            'nop',
-            'nop',
-            'nop'
+            implode_ins('moui', [args[0], labels[args[1]] >> 16])
         ]
     elif code.startswith("ad "):
         # ad (address diff) puts the difference between two labels into a reg, with an offset
@@ -40,16 +35,13 @@ def expand_pseudo(code, labels):
         # Limited to 16 bits, should never need more!
         return [
             implode_ins('movi', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) & 0xFFFF]),
-            'nop',
-            'nop',
-            'nop',
-            implode_ins('moui', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) >> 16]),
-            'nop',
-            'nop',
-            'nop'
+            implode_ins('moui', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) >> 16])
         ]
+    elif code.startswith("ld "):
+        # buffer with a nop after to avoid data hazard
+        return [code, 'nop']
     else:
-        return [code,'nop','nop','nop'];
+        return [code];
 
 def pass1(source):
     """ First pass needs to calculate the address of labels. We're also going to abuse it to replace pseudo-instructions. """

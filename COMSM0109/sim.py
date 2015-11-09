@@ -13,6 +13,10 @@ from InstructionFetcher import InstructionFetcher
 class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
 
+    RBD1_IND = 32
+    RBD2_IND = 33
+    RBD3_IND = 34
+    
     def __init__(self, mem_file):
         # State (current and next)
         self._mem = Memory(mem_file)
@@ -20,6 +24,11 @@ class CPU(object):
         self._reg = RegisterFile()
         self._ins = Instruction.NOP()
         self._ins_nxt = Instruction.NOP()
+        # Holds values to be written by an instruction just executed. Last 3 values are bitfields
+        # for dirty markers for the previous 3 cycles (32 = exec (prev), 33 = acc (prev again), 34 = wb)
+        self._regbypass = np.zeros(35, dtype=np.uint32)
+        self._regbypass_nxt = np.zeros_like(self._regbypass)
+        self._regbypass
         self._macc = Instruction.NOP()
         self._macc_nxt = Instruction.NOP()
         self._wb = Instruction.NOP()
@@ -39,13 +48,22 @@ class CPU(object):
     def _exec(self):
         ins = self._ins
         
-        print '* Execute stage is performing {0:s} (including reads/writes and logic, yikes!)'.format(str(ins))
+        print '* Execute stage is performing {0:s}'.format(str(ins))
 
         # Not sure if we want to keep this logic here...
         opc = ins.getOpc()
         opr = ins.getOpr()
         val = ins.getVal()
 
+        print val
+
+        bbf = self._regbypass[self.RBD1_IND] | self._regbypass[self.RBD2_IND] | self._regbypass[self.RBD3_IND] 
+        for ri,vi in ins.getRegValMap().iteritems():
+            # Need to check if a value has been bypassed (would be done by decoder in real cpu)
+            if bbf & (1 << ri):
+                print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._regbypass[ri])
+                val[vi] = self._regbypass[ri];
+        
         outReg = opr[0] if len(opr) > 0 else None# True for almost all opcodes
         outAddr = None
         
@@ -125,6 +143,16 @@ class CPU(object):
 
         if not outReg is None:
             ins.setWBOutput(outReg, outVal)
+            # Need to pass back to bypass stage
+            # Also need to keep the old bypass values
+            self._regbypass_nxt = self._regbypass
+            self._regbypass_nxt[outReg] = outVal
+            # Set the bitfield for bypass 1, move bypass 2,3
+            # Need to do 3 stages as explained here:
+            # http://courses.cs.washington.edu/courses/cse378/02sp/sections/section7-1.html
+            self._regbypass_nxt[self.RBD3_IND] = self._regbypass[self.RBD2_IND]
+            self._regbypass_nxt[self.RBD2_IND] = self._regbypass[self.RBD1_IND]
+            self._regbypass_nxt[self.RBD1_IND] = (1 << outReg)
         if not outAddr is None:
             ins.setMemOperation(outAddr, outVal)
         return ins
@@ -137,6 +165,7 @@ class CPU(object):
         self._decoder.advstate()
         self._fetcher.advstate()
         self._ins = self._ins_nxt
+        self._regbypass = self._regbypass_nxt
         self._wb = self._wb_nxt
         self._macc = self._macc_nxt
         # Need to increment time
@@ -170,6 +199,8 @@ class CPU(object):
             self._decoder.update(0, Instruction.NOP().getWord()) # WARNING! There is now a dependency that this must run AFTER fetch passes to decode!
             # Need to tell the execute unit that the branch was taken already
             branch.predicted = True
+        else:
+            print "* Predictor (in decode stage) decided branch {0:s} will not be taken.".format(str(branch))
 
     def _memaccess(self):
         """ Performs the memory access stage. """
@@ -183,6 +214,8 @@ class CPU(object):
                 val = self._mem[addr]
                 print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._macc))
                 self._macc.setWBOutput(self._macc.getOpr()[0], val) # TODO: This will be broken by weird loads!
+                self._regbypass_nxt[self._macc.getOpr()[0]] = val
+                self._regbypass_nxt[self.RBD3_IND] |= (1 << self._macc.getOpr()[0])
         return self._macc
 
     def _writeback(self):

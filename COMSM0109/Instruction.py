@@ -28,6 +28,8 @@ class Instruction(object):
     def __init__(self, opcode, frmt, word, regfile, predicted=False):
         self._opcode = opcode
         self._frmt_str = Instruction._decf2strf(frmt) # If we subclass this becomes unnecessary?
+        # Store reg => val index mapping, for register bypassing.
+        self._rvmap = {}
         # Note the similarity to gen_ins in assember!
         operands = []
         values = [] # Decode stage should read from regs
@@ -36,7 +38,9 @@ class Instruction(object):
             if arg == 'r':
                 shift -= 5
                 mask = 0x1F
-                values.append(regfile[(word >> shift) & mask])
+                ri = (word >> shift) & mask
+                self._rvmap[ri] = len(values)
+                values.append(regfile[ri])
             elif arg == 'i':
                 shift -= 16
                 mask = 0xFFFF
@@ -49,7 +53,7 @@ class Instruction(object):
             operands.append(word & 0xFFFF)
             values.append(word & 0xFFFF)
         self._operands = tuple(operands)
-        self._values = tuple(values) # TODO?: some of these values will not be used (will grab output reg!)
+        self._values = values # TODO?: some of these values will not be used (will grab output reg!)
         # Store the source word, for debug.
         self._word = word;
         # Store if the branch predictor has decided to take this
@@ -72,6 +76,9 @@ class Instruction(object):
     def getWord(self):
         """ Get word, for debugging! """
         return self._word
+
+    def getRegValMap(self):
+        return self._rvmap
 
     def setMemOperation(self, addr, write=None):
         # TODO: Can we stop doing this?
