@@ -15,7 +15,7 @@ def implode_ins(op, args):
 
 def code_size(code):
     # TODO: don't expand ld here, need to do in hw.
-    if code.startswith("la ") or code.startswith("ad ") or code.startswith("ld "):
+    if code.startswith("la ") or code.startswith("ad "):
         return 2
     return 1
 
@@ -37,9 +37,6 @@ def expand_pseudo(code, labels):
             implode_ins('movi', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) & 0xFFFF]),
             implode_ins('moui', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) >> 16])
         ]
-    elif code.startswith("ld "):
-        # buffer with a nop after to avoid data hazard
-        return [code, 'nop']
     else:
         return [code];
 
