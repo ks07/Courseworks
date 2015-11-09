@@ -48,13 +48,12 @@ beqok:
 bge_eok:
     ; Test mul,and,andi,st,bge
     la r13,fail
-    movi r20,0
-    movi r21,1 ; rid of me
+    movi r20,1
     ld r17,r13,r20 ; should load deadbeef into r17
     movi r26,0xFFFF
     moui r26,0xFFFF
     and r17,r17,r26
-    mul r17,r17,r21 ; switch back to r20
+    mul r17,r17,r20
     andi r26,0x000F ; should set r26 to 0x0000000F
     st r26,r13,r20
     bge r26,r17,fail
