@@ -8,7 +8,7 @@ class Instruction(object):
         """ Converts a decode format tuple to a python str.format compatible format string. Static method. """
         strf = []
         for a in frmt[1:-1]:
-            if a == 'r':
+            if a == 'r' or a == 'o':
                 strf.append('r{:d}')
             else:
                 strf.append('{:d}')
@@ -30,17 +30,23 @@ class Instruction(object):
         self._frmt_str = Instruction._decf2strf(frmt) # If we subclass this becomes unnecessary?
         # Store reg => val index mapping, for register bypassing.
         self._rvmap = {}
+        self._oreg = None
         # Note the similarity to gen_ins in assember!
         operands = []
         values = [] # Decode stage should read from regs
         shift = 26
         for arg in frmt[1:-1]:
-            if arg == 'r':
+            if arg == 'r' or arg == 'o':
                 shift -= 5
                 mask = 0x1F
                 ri = (word >> shift) & mask
-                self._rvmap[ri] = len(values)
-                values.append(regfile[ri])
+                if arg == 'r':
+                    # Only read registers need to read corresp values (and be on the lookout for forwards)
+                    self._rvmap[ri] = len(values)
+                    values.append(regfile[ri])
+                else:
+                    # Store the output reg.
+                    self._oreg = ri
             elif arg == 'i':
                 shift -= 16
                 mask = 0xFFFF
@@ -77,6 +83,10 @@ class Instruction(object):
         """ Get word, for debugging! """
         return self._word
 
+    def getOutReg(self):
+        """ Gets the register that output is stored into, if any. """
+        return self._oreg
+    
     def getRegValMap(self):
         return self._rvmap
 

@@ -16,7 +16,7 @@ class CPU(object):
     RBD1_IND = 32
     RBD2_IND = 33
     RBD3_IND = 34
-    
+
     def __init__(self, mem_file):
         # State (current and next)
         self._mem = Memory(mem_file)
@@ -28,7 +28,6 @@ class CPU(object):
         # for dirty markers for the previous 3 cycles (32 = exec (prev), 33 = acc (prev again), 34 = wb)
         self._regbypass = np.zeros(35, dtype=np.uint32)
         self._regbypass_nxt = np.zeros_like(self._regbypass)
-        self._regbypass
         self._macc = Instruction.NOP()
         self._macc_nxt = Instruction.NOP()
         self._wb = Instruction.NOP()
@@ -47,7 +46,7 @@ class CPU(object):
 
     def _exec(self):
         ins = self._ins
-        
+
         print '* Execute stage is performing {0:s}'.format(str(ins))
 
         # Not sure if we want to keep this logic here...
@@ -57,39 +56,39 @@ class CPU(object):
 
         print val
 
-        bbf = self._regbypass[self.RBD1_IND] | self._regbypass[self.RBD2_IND] | self._regbypass[self.RBD3_IND] 
+        bbf = self._regbypass[self.RBD1_IND] | self._regbypass[self.RBD2_IND] | self._regbypass[self.RBD3_IND]
         for ri,vi in ins.getRegValMap().iteritems():
             # Need to check if a value has been bypassed (would be done by decoder in real cpu)
             if bbf & (1 << ri):
                 print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._regbypass[ri])
                 val[vi] = self._regbypass[ri];
-        
+
         outReg = opr[0] if len(opr) > 0 else None# True for almost all opcodes
         outAddr = None
-        
+
         if opc == 'nop':
             outReg = None
             pass
         elif opc == 'dnop':
             raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
         elif opc == 'add':
-            outVal = val[1] + val[2]
+            outVal = val[0] + val[1]
         elif opc == 'sub':
-            outVal = val[1] - val[2]
+            outVal = val[0] - val[1]
         elif opc == 'mul':
-            outVal = val[1] * val[2]
+            outVal = val[0] * val[1]
         elif opc == 'and':
-            outVal = val[1] & val[2]
+            outVal = val[0] & val[1]
         elif opc == 'or':
-            outVal = val[1] | val[2]
+            outVal = val[0] | val[1]
         elif opc == 'xor':
-            outVal = val[1] ^ val[2]
+            outVal = val[0] ^ val[1]
         elif opc == 'mov':
-            outVal = val[1]
+            outVal = val[0]
         elif opc == 'shl':
-            outVal = val[1] << val[2]
+            outVal = val[0] << val[1]
         elif opc == 'shr':
-            outVal = val[1] >> val[2]
+            outVal = val[0] >> val[1]
         elif opc == 'addi':
             outVal = val[0] + opr[1]
         elif opc == 'subi':
@@ -111,7 +110,7 @@ class CPU(object):
             # TODO: Nicer handling of val/mem/writeback in this case
 #            outVal = self._mem[ val[1] + val[2] ]
             outReg = None # TODO: lol, not true
-            outAddr = val[1] + val[2]
+            outAddr = val[0] + val[1]
             outVal = None # TODO: plz
         elif opc == 'st':
             outReg = None
@@ -141,17 +140,20 @@ class CPU(object):
             outReg = None
             print "WARNING: Unimplemented opcode:", opc
 
+        # Need to keep all the old bypass values
+        self._regbypass_nxt = self._regbypass
+        # Need to move bypass 2,3 up
+        # Need to do 3 stages as explained here:
+        # http://courses.cs.washington.edu/courses/cse378/02sp/sections/section7-1.html
+        self._regbypass_nxt[self.RBD3_IND] = self._regbypass[self.RBD2_IND]
+        self._regbypass_nxt[self.RBD2_IND] = self._regbypass[self.RBD1_IND]
+        self._regbypass_nxt[self.RBD1_IND] = 0
+
         if not outReg is None:
             ins.setWBOutput(outReg, outVal)
             # Need to pass back to bypass stage
-            # Also need to keep the old bypass values
-            self._regbypass_nxt = self._regbypass
             self._regbypass_nxt[outReg] = outVal
-            # Set the bitfield for bypass 1, move bypass 2,3
-            # Need to do 3 stages as explained here:
-            # http://courses.cs.washington.edu/courses/cse378/02sp/sections/section7-1.html
-            self._regbypass_nxt[self.RBD3_IND] = self._regbypass[self.RBD2_IND]
-            self._regbypass_nxt[self.RBD2_IND] = self._regbypass[self.RBD1_IND]
+            # Set the bitfield for bypass 1
             self._regbypass_nxt[self.RBD1_IND] = (1 << outReg)
         if not outAddr is None:
             ins.setMemOperation(outAddr, outVal)
@@ -214,8 +216,10 @@ class CPU(object):
                 val = self._mem[addr]
                 print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._macc))
                 self._macc.setWBOutput(self._macc.getOpr()[0], val) # TODO: This will be broken by weird loads!
-                self._regbypass_nxt[self._macc.getOpr()[0]] = val
-                self._regbypass_nxt[self.RBD3_IND] |= (1 << self._macc.getOpr()[0])
+                if not self._regbypass_nxt[self.RBD1_IND] & self._macc.getOpr()[0]:
+                    self._regbypass_nxt[self._macc.getOpr()[0]] = val
+                # Need to pass this back 2 steps
+                self._regbypass_nxt[self.RBD2_IND] |= (1 << self._macc.getOpr()[0])
         return self._macc
 
     def _writeback(self):
@@ -232,10 +236,6 @@ class CPU(object):
         toDecode = self._fetcher.fetchIns()
         print '* Fetch stage loaded from mem, passing {0:08x} to decode stage.'.format(toDecode)
 
-        # Set PC for next time step
-        self._fetcher.inc()
-        print '* Fetch stage incremented PC.'
-
         # Pass return values to simulate movement between stages
         self._decoder.update(0, toDecode) # Note this should only affect state for next time (won't pass through)
         # This is a simulator internal step (akin to driving reg input w/out clocking), no print!
@@ -243,6 +243,13 @@ class CPU(object):
         # Decode Stage
         toExecute = self._decoder.decode()
         print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecute))
+
+        # TODO: Nasty hack, we don't really want to compare like this...
+        # If the decoder is stalling, don't increment PC, hold the current value.
+        if toExecute.getWord() == self._decoder[0]:
+            # Set PC for next time step
+            self._fetcher.inc()
+            print '* Fetch stage incremented PC.'
 
         # TODO: Nicer condition
         if toExecute.getOpc().startswith('b'):
@@ -264,13 +271,13 @@ class CPU(object):
 
         # Memory access stage
         toWriteback = self._memaccess()
-        
+
         # Pass to writeback
         self._wb_nxt = toWriteback
 
         # Writeback stage
         self._writeback()
-        
+
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)
         self._update()

@@ -5,10 +5,13 @@ from StatefulComponent import StatefulComponent
 from Instruction import Instruction
 
 class Decoder(StatefulComponent):
-    """ A decode unit. State is just the current instruction in this stage. """
+    """ A decode unit. State is the current instruction in this stage, and an indicator for load stalling. """
 
+    RLD_IND = 1
+    NO_LD = 64
+    
     def __init__(self, regfile):
-        self._state = np.zeros(1, dtype=np.uint32)
+        self._state = np.zeros(2, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
         # Decode stage reads from register file.
         self._reg = regfile
@@ -18,20 +21,21 @@ class Decoder(StatefulComponent):
         return "" #TODO
 
     def __str__(self):
-        return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self.decode()))
+        return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))
 
     # Should match that from assembler.py -- move to a separate file!
+    # r = register read (may also be output); o = register output (no read); i = immediate
     formats = {
         'nop': (0,0),
-        'add': (1,'r','r','r',0),
-        'sub': (1,'r','r','r',1),
-        'mul': (1,'r','r','r',2),
-        'and': (1,'r','r','r',3),
-        'or': (1,'r','r','r',4),
-        'xor': (1,'r','r','r',5),
-        'mov': (1,'r','r',6),
-        'shl': (1,'r','r','r',8),
-        'shr': (1,'r','r','r',9),
+        'add': (1,'o','r','r',0),
+        'sub': (1,'o','r','r',1),
+        'mul': (1,'o','r','r',2),
+        'and': (1,'o','r','r',3),
+        'or': (1,'o','r','r',4),
+        'xor': (1,'o','r','r',5),
+        'mov': (1,'o','r',6),
+        'shl': (1,'o','r','r',8),
+        'shr': (1,'o','r','r',9),
         'addi': (2,'r','i',0),
         'subi': (2,'r','i',1),
         'muli': (2,'r','i',2),
@@ -40,7 +44,7 @@ class Decoder(StatefulComponent):
         'xori': (2,'r','i',5),
         'movi': (2,'r','i',6),
         'moui': (2,'r','i',7),
-        'ld': (3,'r','r','r',0),
+        'ld': (3,'o','r','r',0),
         'st': (4,'r','r','r',0),
         'br': (5,'i',0),
         'bz': (6,'r','i',0),
@@ -51,7 +55,21 @@ class Decoder(StatefulComponent):
 
     def decode(self):
         """ Wrapper for decode, using input from state. Returns the instruction object. """
-        return self._decode(self._state[0])
+        ins = self._decode(self._state[0])
+
+        # Store the output reg.
+        #TODO: Nicer check of load
+        ldreg = ins.getOutReg() if ins.getOutReg() is not None and ins.getOpc().startswith('ld')  else self.NO_LD
+        self.update(self.RLD_IND, ldreg)
+
+        # If the previously decoded ins was a load, check if there is a RAW dependency.
+        # if self._state[self.RLD_IND]] < 32:
+        if self._state[self.RLD_IND] in ins.getRegValMap():
+            print '* v---Inserting a bubble to avoid data hazard from RAW dependency after a load.' #TODO: Print order
+            # Need to stall both this and fetch stages to wait for the bubble.
+            self.update(0, self._state[0]) #TODO: This could be problematic if stages are re-ordered!
+            return Instruction.NOP() #TODO: Can the interaction between stages be handled by the stages, not CPU?
+        return ins
 
     def _decode(self, word):
         """ Decodes a given word; return an Instruction object represented by word. """
