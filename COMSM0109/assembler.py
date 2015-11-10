@@ -14,7 +14,6 @@ def implode_ins(op, args):
     return op + ' ' + ",".join(str(a) for a in args);
 
 def code_size(code):
-    # TODO: don't expand ld here, need to do in hw.
     if code.startswith("la ") or code.startswith("ad "):
         return 2
     return 1
