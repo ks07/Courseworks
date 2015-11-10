@@ -3,9 +3,8 @@
 start:
     ; r0 = pointer to A[0]
     la r0,array
-    ; r1 = n (length of array) TODO: Use pointer eq no need for len
-    la r1,array_end
-    sub r1,r1,r0
+    ; r1 = n (length of array)
+    ad r1,array_end,array,0
 oloop_start:
     ; r2 = newn (n optimisation)
     movi r2,0
