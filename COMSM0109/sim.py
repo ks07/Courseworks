@@ -54,8 +54,6 @@ class CPU(object):
         opr = ins.getOpr()
         val = ins.getVal()
 
-        print val
-
         bbf = self._regbypass[self.RBD1_IND] | self._regbypass[self.RBD2_IND] | self._regbypass[self.RBD3_IND]
         for ri,vi in ins.getRegValMap().iteritems():
             # Need to check if a value has been bypassed (would be done by decoder in real cpu)

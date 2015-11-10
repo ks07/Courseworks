@@ -59,7 +59,7 @@ class Instruction(object):
             operands.append(word & 0xFFFF)
             values.append(word & 0xFFFF)
         self._operands = tuple(operands)
-        self._values = values # TODO?: some of these values will not be used (will grab output reg!)
+        self._values = values
         # Store the source word, for debug.
         self._word = word;
         # Store if the branch predictor has decided to take this
@@ -68,7 +68,6 @@ class Instruction(object):
         self._writeback = []
         # Store memory op, for mem access stage.
         self._memOpp = None
-        print 'Read values',values
 
     def getOpc(self):
         return self._opcode
