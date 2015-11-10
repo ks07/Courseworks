@@ -3,6 +3,8 @@
 from itertools import izip_longest
 import sys, numpy
 
+from InstructionFormats import FORMATS
+
 def explode_ins(ins):
     # Can't unpack directly here as nop has no args!
     split = ins.strip().split(' ', 1)
@@ -65,35 +67,6 @@ def pass1(source):
                     ins_list.append(code) # Code expanded if necessary later.
     return (ins_list, labels)
 
-# Messy... unfortunately I have lots of co-prime sized chunks.
-formats = {
-    'nop': (0,0),
-    'add': (1,'r','r','r',0),
-    'sub': (1,'r','r','r',1),
-    'mul': (1,'r','r','r',2),
-    'and': (1,'r','r','r',3),
-    'or': (1,'r','r','r',4),
-    'xor': (1,'r','r','r',5),
-    'mov': (1,'r','r',6),
-    'shl': (1,'r','r','r',8),
-    'shr': (1,'r','r','r',9),
-    'addi': (2,'r','i',0),
-    'subi': (2,'r','i',1),
-    'muli': (2,'r','i',2),
-    'andi': (2,'r','i',3),
-    'ori': (2,'r','i',4),
-    'xori': (2,'r','i',5),
-    'movi': (2,'r','i',6),
-    'moui': (2,'r','i',7),
-    'ld': (3,'r','r','r',0),
-    'st': (4,'r','r','r',0),
-    'br': (5,'i',0),
-    'bz': (6,'r','i',0),
-    'bn': (7,'r','i',0),
-    'beq': (8,'r','r','i'),
-    'bge': (9,'r','r','i'),
-}
-
 def gen_ins(ins, labels):
     """ Formats instruction. """
     op, args = explode_ins(ins)
@@ -101,12 +74,12 @@ def gen_ins(ins, labels):
         # Special pseudo-instruction that is just a literal to load into memory at startup
         val = int(args[0], 0)
     else:
-        frmt = formats[op]
+        frmt = FORMATS[op]
         # Get bits 31-26
         shift = 26
         val = frmt[0] << shift
         for elem, arg in izip_longest(frmt[1:], args):
-            if elem == 'r':
+            if elem == 'r' or elem == 'o':
                 shift -= 5
                 to_add = int(arg[1:])
             elif elem == 'i':

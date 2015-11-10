@@ -3,6 +3,7 @@
 import numpy as np
 from StatefulComponent import StatefulComponent
 from Instruction import Instruction
+from InstructionFormats import FORMATS
 
 class Decoder(StatefulComponent):
     """ A decode unit. State is the current instruction in this stage, and an indicator for load stalling. """
@@ -23,35 +24,6 @@ class Decoder(StatefulComponent):
     def __str__(self):
         return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))
 
-    # Should match that from assembler.py -- move to a separate file!
-    # r = register read (may also be output); o = register output (no read); i = immediate
-    formats = {
-        'nop': (0,0),
-        'add': (1,'o','r','r',0),
-        'sub': (1,'o','r','r',1),
-        'mul': (1,'o','r','r',2),
-        'and': (1,'o','r','r',3),
-        'or': (1,'o','r','r',4),
-        'xor': (1,'o','r','r',5),
-        'mov': (1,'o','r',6),
-        'shl': (1,'o','r','r',8),
-        'shr': (1,'o','r','r',9),
-        'addi': (2,'r','i',0),
-        'subi': (2,'r','i',1),
-        'muli': (2,'r','i',2),
-        'andi': (2,'r','i',3),
-        'ori': (2,'r','i',4),
-        'xori': (2,'r','i',5),
-        'movi': (2,'r','i',6),
-        'moui': (2,'r','i',7),
-        'ld': (3,'o','r','r',0),
-        'st': (4,'r','r','r',0),
-        'br': (5,'i',0),
-        'bz': (6,'r','i',0),
-        'bn': (7,'r','i',0),
-        'beq': (8,'r','r','i'),
-        'bge': (9,'r','r','i'),
-    }
 
     def decode(self):
         """ Wrapper for decode, using input from state. Returns the instruction object. """
@@ -76,7 +48,7 @@ class Decoder(StatefulComponent):
         group = word >> 26 # All instructions start with a possibly unique 6 bit ID
         diff = word & 0x1F # Where ins not identified uniquely by group, the 5 LSBs should differentiate
 
-        possible = [(opc, frmt) for opc, frmt in Decoder.formats.iteritems() if frmt[0] == group]
+        possible = [(opc, frmt) for opc, frmt in FORMATS.iteritems() if frmt[0] == group]
 
         if not possible:
             # If invalid instruction, either the program is going to branch before this
