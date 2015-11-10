@@ -31,7 +31,7 @@ class Decoder(StatefulComponent):
 
         # Store the output reg.
         #TODO: Nicer check of load
-        ldreg = ins.getOutReg() if ins.getOutReg() is not None and ins.getOpc().startswith('ld')  else self.NO_LD
+        ldreg = ins.getOutReg() if ins.getOutReg() is not None and ins.getOpc().startswith('ld') else self.NO_LD
         self.update(self.RLD_IND, ldreg)
 
         # If the previously decoded ins was a load, check if there is a RAW dependency.

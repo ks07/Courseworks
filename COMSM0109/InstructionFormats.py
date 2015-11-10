@@ -2,6 +2,9 @@
 
 # Instruction format details for encode and decode - used by sim and assembler!
 
+# First element is the 6 bit opcode.
+# Following elements are 5 bits for registers, 16 bit immediates.
+# Final integer literal fills the remainder of the word
 # r = register read (may also be output); o = register output (no read); i = immediate
 FORMATS = {
     'nop': (0,0),
