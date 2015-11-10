@@ -10,6 +10,7 @@ from BranchPredictor import BranchPredictor
 from Decoder import Decoder
 from InstructionFetcher import InstructionFetcher
 from Executor import Executor
+from Writeback import Writeback
 
 class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -21,13 +22,12 @@ class CPU(object):
         self._reg = RegisterFile()
         self._macc = Instruction.NOP()
         self._macc_nxt = Instruction.NOP()
-        self._wb = Instruction.NOP()
-        self._wb_nxt = Instruction.NOP()
 
         # Stage components (also with state!)
         self._fetcher = InstructionFetcher(self._mem)
         self._decoder = Decoder(self._reg)
         self._executor = Executor(self) # Requires a reference to us, for branches
+        self._writeback = Writeback(self._reg)
 
         # Time counter
         self._simtime = 0
@@ -43,7 +43,7 @@ class CPU(object):
         self._decoder.advstate()
         self._fetcher.advstate()
         self._executor.advstate()
-        self._wb = self._wb_nxt
+        self._writeback.advstate()
         self._macc = self._macc_nxt
         # Need to increment time
         self._simtime += 1
@@ -95,12 +95,6 @@ class CPU(object):
                 self._executor.bypassBack(2, self._macc.getOpr()[0], val);
         return self._macc
 
-    def _writeback(self):
-        """ Performs the writeback stage. """
-        for reg, val in self._wb.getWBOutput():
-            print '* Writeback stage is storing {0:d} in r{1:d} for {2:s}.'.format(val, reg, str(self._wb))
-            self._reg[reg] = val
-
     def step(self):
         """ Performs all the logic for the current sim time, and steps to the next. """
         print '\n---Performing Cycle Logic---\n'
@@ -145,10 +139,10 @@ class CPU(object):
         toWriteback = self._memaccess()
 
         # Pass to writeback
-        self._wb_nxt = toWriteback
+        self._writeback.updateInstruction(toWriteback)
 
         # Writeback stage
-        self._writeback()
+        self._writeback.writeback()
 
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)
@@ -161,7 +155,7 @@ class CPU(object):
         print self._decoder
         print self._executor
         print 'Now in memory access:', self._macc
-        print 'Now in writeback:', self._wb
+        print self._writeback
         print self._reg
 
     def dump(self, start, end):
