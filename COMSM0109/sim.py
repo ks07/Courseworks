@@ -9,25 +9,16 @@ from RegisterFile import RegisterFile
 from BranchPredictor import BranchPredictor
 from Decoder import Decoder
 from InstructionFetcher import InstructionFetcher
+from Executor import Executor
 
 class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
-
-    RBD1_IND = 32
-    RBD2_IND = 33
-    RBD3_IND = 34
 
     def __init__(self, mem_file):
         # State (current and next)
         self._mem = Memory(mem_file)
         print "Loaded", len(self._mem), "words into memory."
         self._reg = RegisterFile()
-        self._ins = Instruction.NOP()
-        self._ins_nxt = Instruction.NOP()
-        # Holds values to be written by an instruction just executed. Last 3 values are bitfields
-        # for dirty markers for the previous 3 cycles (32 = exec (prev), 33 = acc (prev again), 34 = wb)
-        self._regbypass = np.zeros(35, dtype=np.uint32)
-        self._regbypass_nxt = np.zeros_like(self._regbypass)
         self._macc = Instruction.NOP()
         self._macc_nxt = Instruction.NOP()
         self._wb = Instruction.NOP()
@@ -36,126 +27,13 @@ class CPU(object):
         # Stage components (also with state!)
         self._fetcher = InstructionFetcher(self._mem)
         self._decoder = Decoder(self._reg)
-        # Execute step performed here for now TODO: Execute Unit/ALU
+        self._executor = Executor(self) # Requires a reference to us, for branches
 
         # Time counter
         self._simtime = 0
 
         # Branch predictor (part of decode stage)
         self._predictor = BranchPredictor()
-
-    def _exec(self):
-        ins = self._ins
-
-        print '* Execute stage is performing {0:s}'.format(str(ins))
-
-        # Not sure if we want to keep this logic here...
-        opc = ins.getOpc()
-        opr = ins.getOpr()
-        val = ins.getVal()
-
-        bbf = self._regbypass[self.RBD1_IND] | self._regbypass[self.RBD2_IND] | self._regbypass[self.RBD3_IND]
-        for ri,vi in ins.getRegValMap().iteritems():
-            # Need to check if a value has been bypassed (would be done by decoder in real cpu)
-            if bbf & (1 << ri):
-                print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._regbypass[ri])
-                val[vi] = self._regbypass[ri];
-
-        outReg = opr[0] if len(opr) > 0 else None# True for almost all opcodes
-        outAddr = None
-
-        if opc == 'nop':
-            outReg = None
-            pass
-        elif opc == 'dnop':
-            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
-        elif opc == 'add':
-            outVal = val[0] + val[1]
-        elif opc == 'sub':
-            outVal = val[0] - val[1]
-        elif opc == 'mul':
-            outVal = val[0] * val[1]
-        elif opc == 'and':
-            outVal = val[0] & val[1]
-        elif opc == 'or':
-            outVal = val[0] | val[1]
-        elif opc == 'xor':
-            outVal = val[0] ^ val[1]
-        elif opc == 'mov':
-            outVal = val[0]
-        elif opc == 'shl':
-            outVal = val[0] << val[1]
-        elif opc == 'shr':
-            outVal = val[0] >> val[1]
-        elif opc == 'addi':
-            outVal = val[0] + opr[1]
-        elif opc == 'subi':
-            outVal = val[0] - opr[1]
-        elif opc == 'muli':
-            outVal = val[0] * opr[1]
-        elif opc == 'andi':
-            outVal = val[0] & opr[1]
-        elif opc == 'ori':
-            outVal = val[0] | opr[1]
-        elif opc == 'xori':
-            outVal = val[0] ^ opr[1]
-        elif opc == 'movi':
-            outVal = val[1]
-        elif opc == 'moui':
-            outVal = val[0] | (opr[1] << 16)
-        elif opc == 'ld':
-            # TODO: De-dupe the r_base + r_offset logic?
-            # TODO: Nicer handling of val/mem/writeback in this case
-#            outVal = self._mem[ val[1] + val[2] ]
-            outReg = None # TODO: lol, not true
-            outAddr = val[0] + val[1]
-            outVal = None # TODO: plz
-        elif opc == 'st':
-            outReg = None
-            outAddr = val[1] + val[2]
-            outVal = val[0] #TODO: Oh please no
-#            self._mem[ val[1] + val[2] ] = val[0]
-        elif opc == 'br':
-            # Should do nothing as we will always predict this!
-            outReg = None
-            #self._branch(opr[0])
-            print "* ...but br is always taken, so this is a nop!"
-            pass
-        elif opc == 'bz':
-            outReg = None
-            self._branch(val[0] == 0, ins.predicted, opr[1])
-        elif opc == 'bn':
-            # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
-            outReg = None
-            self._branch(val[0] >> 31, ins.predicted, opr[1])
-        elif opc == 'beq':
-            outReg = None
-            self._branch(val[0] == val[1], ins.predicted, opr[2])
-        elif opc == 'bge':
-            outReg = None
-            self._branch(val[0] >= val[1], ins.predicted, opr[2])
-        else:
-            outReg = None
-            print "WARNING: Unimplemented opcode:", opc
-
-        # Need to keep all the old bypass values
-        self._regbypass_nxt = self._regbypass
-        # Need to move bypass 2,3 up
-        # Need to do 3 stages as explained here:
-        # http://courses.cs.washington.edu/courses/cse378/02sp/sections/section7-1.html
-        self._regbypass_nxt[self.RBD3_IND] = self._regbypass[self.RBD2_IND]
-        self._regbypass_nxt[self.RBD2_IND] = self._regbypass[self.RBD1_IND]
-        self._regbypass_nxt[self.RBD1_IND] = 0
-
-        if not outReg is None:
-            ins.setWBOutput(outReg, outVal)
-            # Need to pass back to bypass stage
-            self._regbypass_nxt[outReg] = outVal
-            # Set the bitfield for bypass 1
-            self._regbypass_nxt[self.RBD1_IND] = (1 << outReg)
-        if not outAddr is None:
-            ins.setMemOperation(outAddr, outVal)
-        return ins
 
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
@@ -164,8 +42,7 @@ class CPU(object):
         self._mem.advstate()
         self._decoder.advstate()
         self._fetcher.advstate()
-        self._ins = self._ins_nxt
-        self._regbypass = self._regbypass_nxt
+        self._executor.advstate()
         self._wb = self._wb_nxt
         self._macc = self._macc_nxt
         # Need to increment time
@@ -178,13 +55,13 @@ class CPU(object):
             print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
             self._fetcher.update(0, dest) # Update the PC to point to the new address
             self._decoder.update(0, 0) # Empty the decode register
-            self._ins_nxt = Instruction.NOP() # Empty the execute instruction reg
+            self._executor.invalidateInstruction() # Empty the execute instruction reg
         elif not cond and pred:
             # Shouldn't have taken, but did.
             print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
             self._fetcher.restore() # Load the original PC value from before prediction
             self._decoder.update(0, 0) # Empty the decode register
-            self._ins_nxt = Instruction.NOP() # Empty the execute instruction reg
+            self._executor.invalidateInstruction() # Empty the execute instruction reg
         else:
             print "* ...and the predictor was right, so this was a nop!"
 
@@ -214,10 +91,8 @@ class CPU(object):
                 val = self._mem[addr]
                 print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._macc))
                 self._macc.setWBOutput(self._macc.getOpr()[0], val) # TODO: This will be broken by weird loads!
-                if not self._regbypass_nxt[self.RBD1_IND] & self._macc.getOpr()[0]:
-                    self._regbypass_nxt[self._macc.getOpr()[0]] = val
-                # Need to pass this back 2 steps
-                self._regbypass_nxt[self.RBD2_IND] |= (1 << self._macc.getOpr()[0])
+
+                self._executor.bypassBack(2, self._macc.getOpr()[0], val);
         return self._macc
 
     def _writeback(self):
@@ -257,11 +132,10 @@ class CPU(object):
             # Handles printing
 
         # Pass to execute
-        self._ins_nxt = toExecute
-        # Sim internal
+        self._executor.updateInstruction(toExecute)
 
         # Execute Stage (this might undo all the previous steps, if we branch!)
-        toMacc = self._exec()
+        toMacc = self._executor.execute()
         # Handles printing
 
         # Pass to memory access
@@ -285,7 +159,7 @@ class CPU(object):
         print "Sim Time: ", self._simtime
         print self._fetcher
         print self._decoder
-        print 'Now executing:', self._ins
+        print self._executor
         print 'Now in memory access:', self._macc
         print 'Now in writeback:', self._wb
         print self._reg
