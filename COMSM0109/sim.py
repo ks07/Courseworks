@@ -10,6 +10,7 @@ from BranchPredictor import BranchPredictor
 from Decoder import Decoder
 from InstructionFetcher import InstructionFetcher
 from Executor import Executor
+from MemoryAccess import MemoryAccess
 from Writeback import Writeback
 
 class CPU(object):
@@ -20,13 +21,12 @@ class CPU(object):
         self._mem = Memory(mem_file)
         print "Loaded", len(self._mem), "words into memory."
         self._reg = RegisterFile()
-        self._macc = Instruction.NOP()
-        self._macc_nxt = Instruction.NOP()
 
         # Stage components (also with state!)
         self._fetcher = InstructionFetcher(self._mem)
         self._decoder = Decoder(self._reg)
         self._executor = Executor(self) # Requires a reference to us, for branches
+        self._memaccess = MemoryAccess(self._mem, self._executor) # Requires a ref to executor, for forwarding
         self._writeback = Writeback(self._reg)
 
         # Time counter
@@ -40,11 +40,11 @@ class CPU(object):
         print '\n---------Stepping---------\n'
         self._reg.advstate()
         self._mem.advstate()
-        self._decoder.advstate()
         self._fetcher.advstate()
+        self._decoder.advstate()
         self._executor.advstate()
+        self._memaccess.advstate()
         self._writeback.advstate()
-        self._macc = self._macc_nxt
         # Need to increment time
         self._simtime += 1
 
@@ -78,22 +78,6 @@ class CPU(object):
             branch.predicted = True
         else:
             print "* Predictor (in decode stage) decided branch {0:s} will not be taken.".format(str(branch))
-
-    def _memaccess(self):
-        """ Performs the memory access stage. """
-        memop = self._macc.getMemOperation()
-        if memop:
-            addr,write = memop
-            if write:
-                print '* Memory access stage wrote {0:d} to address {1:d} for {2:s}.'.format(write, addr, str(self._macc))
-                self._mem[addr] = write
-            else:
-                val = self._mem[addr]
-                print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._macc))
-                self._macc.setWBOutput(self._macc.getOpr()[0], val) # TODO: This will be broken by weird loads!
-
-                self._executor.bypassBack(2, self._macc.getOpr()[0], val);
-        return self._macc
 
     def step(self):
         """ Performs all the logic for the current sim time, and steps to the next. """
@@ -133,10 +117,10 @@ class CPU(object):
         # Handles printing
 
         # Pass to memory access
-        self._macc_nxt = toMacc
+        self._memaccess.updateInstruction(toMacc)
 
         # Memory access stage
-        toWriteback = self._memaccess()
+        toWriteback = self._memaccess.memaccess()
 
         # Pass to writeback
         self._writeback.updateInstruction(toWriteback)
@@ -154,7 +138,7 @@ class CPU(object):
         print self._fetcher
         print self._decoder
         print self._executor
-        print 'Now in memory access:', self._macc
+        print self._memaccess
         print self._writeback
         print self._reg
 
