@@ -22,12 +22,6 @@ class MemoryAccess(object):
 
     def memaccess(self):
         """ Performs the memory access stage. """
-        for reg, val in self._ins.getWBOutput():
-            print '* Writeback stage is storing {0:d} in r{1:d} for {2:s}.'.format(val, reg, str(self._ins))
-            self._reg[reg] = val
-            
-    def memaccess(self):
-        """ Performs the memory access stage. """
         memop = self._ins.getMemOperation()
         if memop:
             addr,write = memop

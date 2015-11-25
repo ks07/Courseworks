@@ -3,7 +3,6 @@
 import sys, numpy as np
 
 from Instruction import Instruction
-from StatefulComponent import StatefulComponent
 from Memory import Memory
 from RegisterFile import RegisterFile
 from BranchPredictor import BranchPredictor
