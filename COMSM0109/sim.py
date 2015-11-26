@@ -8,9 +8,7 @@ from RegisterFile import RegisterFile
 from BranchPredictor import BranchPredictor
 from Decoder import Decoder
 from InstructionFetcher import InstructionFetcher
-from Executor import Executor
-from MemoryAccess import MemoryAccess
-from Writeback import Writeback
+from ExecuteUnit import ExecuteUnit
 
 class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -21,12 +19,12 @@ class CPU(object):
         print "Loaded", len(self._mem), "words into memory."
         self._reg = RegisterFile()
 
-        # Stage components (also with state!)
+        # Initial stage components.
         self._fetcher = InstructionFetcher(self._mem)
         self._decoder = Decoder(self._reg)
-        self._executor = Executor(self) # Requires a reference to us, for branches
-        self._memaccess = MemoryAccess(self._mem, self._executor) # Requires a ref to executor, for forwarding
-        self._writeback = Writeback(self._reg)
+
+        # Superscalar stage components.
+        self._eu = ExecuteUnit(0, self._mem, self._reg, self)
 
         # Time counter
         self._simtime = 0
@@ -41,9 +39,7 @@ class CPU(object):
         self._mem.advstate()
         self._fetcher.advstate()
         self._decoder.advstate()
-        self._executor.advstate()
-        self._memaccess.advstate()
-        self._writeback.advstate()
+        self._eu.advstate()
         # Need to increment time
         self._simtime += 1
 
@@ -54,13 +50,13 @@ class CPU(object):
             print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
             self._fetcher.update(0, dest) # Update the PC to point to the new address
             self._decoder.update(0, 0) # Empty the decode register
-            self._executor.invalidateInstruction() # Empty the execute instruction reg
+            self._eu.invalidateExecute() # Empty the execute instruction reg
         elif not cond and pred:
             # Shouldn't have taken, but did.
             print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
             self._fetcher.restore() # Load the original PC value from before prediction
             self._decoder.update(0, 0) # Empty the decode register
-            self._executor.invalidateInstruction() # Empty the execute instruction reg
+            self._eu.invalidateExecute() # Empty the execute instruction reg
         else:
             print "* ...and the predictor was right, so this was a nop!"
 
@@ -108,24 +104,8 @@ class CPU(object):
             self._usePrediction(prediction, toExecute)
             # Handles printing
 
-        # Pass to execute
-        self._executor.updateInstruction(toExecute)
-
-        # Execute Stage (this might undo all the previous steps, if we branch!)
-        toMacc = self._executor.execute()
-        # Handles printing
-
-        # Pass to memory access
-        self._memaccess.updateInstruction(toMacc)
-
-        # Memory access stage
-        toWriteback = self._memaccess.memaccess()
-
-        # Pass to writeback
-        self._writeback.updateInstruction(toWriteback)
-
-        # Writeback stage
-        self._writeback.writeback()
+        # Pass to execute unit
+        self._eu.execute(toExecute)
 
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)
@@ -136,9 +116,7 @@ class CPU(object):
         print "Sim Time: ", self._simtime
         print self._fetcher
         print self._decoder
-        print self._executor
-        print self._memaccess
-        print self._writeback
+        print self._eu
         print self._reg
 
     def dump(self, start, end):
