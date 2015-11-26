@@ -74,6 +74,18 @@ class CPU(object):
         else:
             print "* Predictor (in decode stage) decided branch {0:s} will not be taken.".format(str(branch))
 
+    def halt(self):
+        """ Halts the simulation. """
+        print "Program has halted the simulation!"
+        if check_file:
+            print "Running check."
+            check_vars = {
+                'mem': self._mem,
+                'reg': self._reg
+            }
+            execfile(check_file, check_vars)
+        sys.exit(0)
+
     def step(self):
         """ Performs all the logic for the current sim time, and steps to the next. """
         print '\n---Performing Cycle Logic---\n'
@@ -146,5 +158,12 @@ def start(mem_file):
 if __name__ == '__main__' :
     # Ignore overflow warnings - we expect it!
     np.seterr(over='ignore')
-    mem_file = sys.argv[1]
-    start(mem_file)
+    if len(sys.argv) > 2:
+        check_file = sys.argv[2]
+    else:
+        check_file = False;
+    if len(sys.argv) > 1:
+        mem_file = sys.argv[1]
+        start(mem_file)
+    else:
+        print 'Must supply a filename to load into memory!'

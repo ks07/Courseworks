@@ -76,6 +76,8 @@ class Executor(StatefulComponent):
             pass
         elif opc == 'dnop':
             raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
+        elif opc == 'halt':
+            self._cpu.halt()
         elif opc == 'add':
             outVal = val[0] + val[1]
         elif opc == 'sub':

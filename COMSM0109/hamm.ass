@@ -37,5 +37,4 @@ start:
     movi r1,24
     shr r0,r0,r1
 end:
-    nop
-    br end
+    halt

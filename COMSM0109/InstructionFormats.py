@@ -8,6 +8,8 @@
 # r = register read (may also be output); o = register output (no read); i = immediate
 FORMATS = {
     'nop': (0,0),
+    #'halt': (0,2**26-1), # All ones in lower part
+    'halt': (0,0x1F),
     'add': (1,'o','r','r',0),
     'sub': (1,'o','r','r',1),
     'mul': (1,'o','r','r',2),
