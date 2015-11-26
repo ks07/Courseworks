@@ -43,8 +43,7 @@ iloop_end:
     br oloop_start
 oloop_end:
     ; Infinite loop
-    nop
-    br oloop_end
+    halt
 
     .word 0xdeadbeef
 array:
@@ -60,3 +59,16 @@ array:
     .word 99
 array_end:
     .word 0xdeadbeef
+
+;;;test;;;
+import sys, json
+lf = open('out_labels.json', 'r')
+labels = json.load(lf)
+arrS = labels['array']
+arrE = labels['array_end']
+
+for i in range(arrS,arrE-1):
+    if mem[i] > mem[i+1]:
+       print 'Fail!'
+       sys.exit(1);
+print 'Pass'

@@ -38,3 +38,12 @@ start:
     shr r0,r0,r1
 end:
     halt
+
+;;;test;;;
+import sys
+if reg[0] == 19:
+  print 'Correct!'
+  sys.exit(0);
+else:
+  print 'Fail!'
+  sys.exit(1);

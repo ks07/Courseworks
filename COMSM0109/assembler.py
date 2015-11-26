@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from itertools import izip_longest
-import sys, numpy
+import sys, numpy, json
 
 from InstructionFormats import FORMATS
 
@@ -138,10 +138,27 @@ def pass2(ins_list, labels):
     memory.tofile('out.bin')
     dbg_out.close()
 
+def splitraw(raw):
+    assend = len(raw)
+    for i,line in enumerate(raw):
+        if line.strip() == ';;;test;;;':
+            assend = i
+    ass = raw[0:assend]
+    tpy = raw[assend+1:]
+    return (ass,tpy)
+
+def createtest(tpy, labels):
+    tf = open('out_test.py', 'w')
+    jf = open('out_labels.json', 'w')
+    json.dump(labels, jf)
+    tf.writelines(tpy)
+    
 def main():
-    source = sys.stdin.readlines()
-    ins_list, labels = pass1(source)
+    raw = sys.stdin.readlines()
+    ass, tpy = splitraw(raw)
+    ins_list, labels = pass1(ass)
     pass2(ins_list, labels)
+    createtest(tpy, labels)
 
 if __name__ == '__main__' :
     main()
