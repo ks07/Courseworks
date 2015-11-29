@@ -108,15 +108,21 @@ class CPU(object):
         for toDecode in toDecodeList:
             print '* Fetch stage loaded from mem, passing {0:08x} to decode stage.'.format(toDecode)
 
-        # Tell fetch stage how much we need to replace next cycle.
-        self._fetcher[self._fetcher.FCI] = len(toDecodeList)
-        self._fetcher.inc()
-
-        # Pass fetched to decode
-        self._decoder.queueInstructions(toDecodeList)
 
         # Get issued instructions from decoder.
         issued = self._decoder.decode()
+
+        # Pass fetched to decode
+        self._decoder.queueInstructions(toDecodeList)
+        
+        # Need to stall the fetcher, if decoder is stalling.
+        # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
+        # Need to tell fetcher to go back to the previous instructs.
+        self._fetcher._state_nxt[self._fetcher.PCI] =  self._fetcher._state[self._fetcher.PCI] + len(issued)
+        
+        # Tell fetch stage how much we need to replace next cycle.
+        self._fetcher._state_nxt[self._fetcher.FCI] = 2 # TODO: ???????????
+#        self._fetcher.inc()
 
         print 'decoded', issued
 
@@ -175,6 +181,10 @@ def start(mem_file):
         elif usr.startswith('r'):
             clearTerm('Resetting CPU...')
             cpu = CPU(mem_file)
+        elif usr.startswith('a'):
+            # Show assembly for operand (decode operand)
+            arg = int(usr.split(' ')[1])
+            print cpu._decoder._decode(arg)
         else:
             cpu.step()
             cpu.displayState()

@@ -19,10 +19,6 @@ class InstructionFetcher(StatefulComponent):
         # Set the fetch count for the first iter.
         self._state[self.FCI] = width
 
-    def diff(self):
-        """ Prints the instruction now in the decode stage. """
-        return "" #TODO
-
     def __str__(self):
         return 'PC = {0:d}'.format(self._state[self.PCI])
 
@@ -38,8 +34,13 @@ class InstructionFetcher(StatefulComponent):
 
     def fetchIns(self): #TODO: Fix name conflict nicely!
         """ Does the fetch from memory (with implied cache)"""
+#        print 'PC INC:', self._state[self.FCI]
         return self._mem[self._state[self.PCI]:self._state[self.PCI]+self._state[self.FCI]]
 
     def inc(self):
         """ Increments the PC. """
         self._state_nxt[self.PCI] = self._state[self.PCI] + self._state[self.FCI]
+
+    def back(self, count):
+        """ In the case of a stall, need to reset PC. """
+        self._state_nxt[self.PCI] -= count;

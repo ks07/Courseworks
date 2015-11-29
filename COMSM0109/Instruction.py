@@ -38,18 +38,18 @@ class Instruction(object):
         values = [] # Decode stage should read from regs
         shift = 26
         for arg in frmt[1:-1]:
-            if arg == 'r' or arg == 'o':
+            if arg == 'r' or arg == 'w' or arg == 'rw':
                 shift -= 5
                 mask = 0x1F
                 ri = (word >> shift) & mask
-                if arg == 'r':
+                if arg == 'r' or arg == 'rw':
                     # Only read registers need to read corresp values (and be on the lookout for forwards)
                     self._rvmap[ri] = len(values)
                     values.append(regfile[ri])
                     if not regfile.validScoreboard(ri):
                         self._invregs.add(ri);
                     self._rregs.add(ri)
-                else:
+                if arg == 'w' or arg == 'rw':
                     # Store the output reg.
                     self._oreg = ri
             elif arg == 'i':

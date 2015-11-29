@@ -110,7 +110,7 @@ class Executor(StatefulComponent):
         elif opc == 'xori':
             outVal = val[0] ^ opr[1]
         elif opc == 'movi':
-            outVal = val[1]
+            outVal = opr[1]
         elif opc == 'moui':
             outVal = val[0] | (opr[1] << 16)
         elif opc == 'ld':

@@ -14,11 +14,13 @@ class Decoder(StatefulComponent):
     def __init__(self, regfile, width):
         # Width gives the number of instructions that are held and decoded.
         self.RLD_IND = width
-        self._state = np.zeros(width + 1, dtype=np.uint32)
+        self.EMP_IND = width + 1 # Index of empty counter, tells how many instructions from fetch to accept.
+        self._state = np.zeros(width + 2, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
         # Decode stage reads from register file.
         self._reg = regfile
         self._width = width
+        self._state[self.EMP_IND] = 2
 
     def __str__(self):
         #return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))
@@ -27,12 +29,16 @@ class Decoder(StatefulComponent):
     def advstate(self):
         # TODO: should call super
         np.copyto(self._state, self._state_nxt, casting='no')
-        # Need to compress the list of instructions
+        # Need to handle dependency checking
+        
     
     def queueInstructions(self, toDecodeList):
         # Put at end of waiting list in state.
-        print 'queued'
+        accept = self._state[self.EMP_IND]
+        print 'queued, accepting:', accept
         print self._state_nxt
+        print toDecodeList
+        toDecodeList = toDecodeList[:accept]
         print toDecodeList
         self._state_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = toDecodeList
         print self._state_nxt
@@ -58,14 +64,22 @@ class Decoder(StatefulComponent):
             if not ins._invregs:
                 # If any of the operands are not ready, the ins is not ready (blocking issue)
                 ready.append(ins)
+                # Need to mark the pending write in the register scoreboard.
+                print ins, 'OUT REG:', ins.getOutReg()
+                if ins.getOutReg() is not None:
+                    self._reg.markScoreboard(ins.getOutReg(), True);
             else:
                 break
 
         # Need to shift down by the number of instructions we are passing out.
         count = len(ready)
         self._state_nxt[:self.RLD_IND-count] = self._state[count:self.RLD_IND]
-        self._state_nxt[count:self.RLD_IND] = [0] * (self.RLD_IND-count)
+        self._state_nxt[self.RLD_IND-count:self.RLD_IND] = [0] * (count)
+
+        # Set the accept count
+        self._state_nxt[self.EMP_IND] = len(ready)
         
+        print 'Ready:', ready
         return ready
 
     def _decode(self, word):

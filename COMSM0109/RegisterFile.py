@@ -35,6 +35,7 @@ class RegisterFile(StatefulComponent):
         lines = ['Register File:']
         for (i,a),(j,b),(k,c),(l,d) in grouper(enumerate(self._state_nxt[:self.SCBD_IND]), 4):
             lines.append("r{0:>2d}: {1:>10d}\tr{2:>2d}: {3:>10d}\tr{4:>2d}: {5:>10d}\tr{6:>2d}: {7:>10d}".format(i,a,j,b,k,c,l,d))
+        lines.append('scoreboard ' + bin(self._state[self.SCBD_IND]))
         return "\n".join(lines)
 
     def markScoreboard(self, ri, dirty):
@@ -47,6 +48,7 @@ class RegisterFile(StatefulComponent):
         if scbd == new:
             print 'WARNING: Scoreboard update unnecessary!', ri, dirty
         self.update(self.SCBD_IND, new) #TODO: What happens when there's a dependency at the same time?
+        self._state[self.SCBD_IND] = new;
         
     def validScoreboard(self, ri):
         """ Checks if the scoreboard has a value marked as dirty. """
