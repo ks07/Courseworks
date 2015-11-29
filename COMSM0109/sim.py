@@ -2,6 +2,10 @@
 
 import sys, numpy as np
 
+from itertools import izip_longest
+
+from random import shuffle
+
 from Instruction import Instruction
 from Memory import Memory
 from RegisterFile import RegisterFile
@@ -19,12 +23,18 @@ class CPU(object):
         print "Loaded", len(self._mem), "words into memory."
         self._reg = RegisterFile()
 
+        self._decwidth = 2
+        
         # Initial stage components.
-        self._fetcher = InstructionFetcher(self._mem)
-        self._decoder = Decoder(self._reg)
+        self._fetcher = InstructionFetcher(self._mem, self._decwidth)
+
+        self._decoder = Decoder(self._reg, self._decwidth)
 
         # Superscalar stage components.
-        self._eu = ExecuteUnit(0, self._mem, self._reg, self)
+        self._eu = [
+            ExecuteUnit(0, self._mem, self._reg, self),
+            ExecuteUnit(1, self._mem, self._reg, self)
+        ]
 
         # Time counter
         self._simtime = 0
@@ -39,7 +49,8 @@ class CPU(object):
         self._mem.advstate()
         self._fetcher.advstate()
         self._decoder.advstate()
-        self._eu.advstate()
+        for eu in self._eu:
+            eu.advstate()
         # Need to increment time
         self._simtime += 1
 
@@ -50,13 +61,15 @@ class CPU(object):
             print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
             self._fetcher.update(0, dest) # Update the PC to point to the new address
             self._decoder.update(0, 0) # Empty the decode register
-            self._eu.invalidateExecute() # Empty the execute instruction reg
+            for eu in self._eu:
+                eu.invalidateExecute() # Empty the execute instruction reg
         elif not cond and pred:
             # Shouldn't have taken, but did.
             print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
             self._fetcher.restore() # Load the original PC value from before prediction
             self._decoder.update(0, 0) # Empty the decode register
-            self._eu.invalidateExecute() # Empty the execute instruction reg
+            for eu in self._eu:
+                eu.invalidateExecute() # Empty the execute instruction reg
         else:
             print "* ...and the predictor was right, so this was a nop!"
 
@@ -89,35 +102,46 @@ class CPU(object):
     def step(self):
         """ Performs all the logic for the current sim time, and steps to the next. """
         print '\n---Performing Cycle Logic---\n'
+        
+        # Fetch Stage (will fetch as many as has been requested by decode)
+        toDecodeList = self._fetcher.fetchIns()
+        for toDecode in toDecodeList:
+            print '* Fetch stage loaded from mem, passing {0:08x} to decode stage.'.format(toDecode)
 
-        # Fetch Stage
-        toDecode = self._fetcher.fetchIns()
-        print '* Fetch stage loaded from mem, passing {0:08x} to decode stage.'.format(toDecode)
+        # Tell fetch stage how much we need to replace next cycle.
+        self._fetcher[self._fetcher.FCI] = len(toDecodeList)
+        self._fetcher.inc()
 
-        # Pass return values to simulate movement between stages
-        self._decoder.update(0, toDecode) # Note this should only affect state for next time (won't pass through)
-        # This is a simulator internal step (akin to driving reg input w/out clocking), no print!
+        # Pass fetched to decode
+        self._decoder.queueInstructions(toDecodeList)
 
-        # Decode Stage
-        toExecute = self._decoder.decode()
-        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecute))
+        # Get issued instructions from decoder.
+        issued = self._decoder.decode()
 
-        # TODO: Nasty hack, we don't really want to compare like this...
-        # If the decoder is stalling, don't increment PC, hold the current value.
-        if toExecute.getWord() == self._decoder[0]:
-            # Set PC for next time step
-            self._fetcher.inc()
-            print '* Fetch stage incremented PC.'
+        print 'decoded', issued
 
-        # TODO: Nicer condition
-        if toExecute.getOpc().startswith('b'):
-            # Predictor as part of decode
-            prediction = self._predictor.predict(self._fetcher[0], toExecute)
-            self._usePrediction(prediction, toExecute)
-            # Handles printing
+#        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
-        # Pass to execute unit
-        self._eu.execute(toExecute)
+        # # TODO: Nasty hack, we don't really want to compare like this...
+        # # If the decoder is stalling, don't increment PC, hold the current value.
+        # if toExecuteA.getWord() == self._decoderA[0]:
+        #     # Set PC for next time step
+        #     self._fetcher.inc()
+        #     print '* Fetch stage incremented PC.'
+
+        # # TODO: Nicer condition
+        # if toExecute.getOpc().startswith('b'):
+        #     # Predictor as part of decode
+        #     prediction = self._predictor.predict(self._fetcher[0], toExecute)
+        #     self._usePrediction(prediction, toExecute)
+        #     # Handles printing
+
+
+        # Issue instructions to execute units #TODO: Targeted EUs (e.g. ALU, branch, Mem)
+        shuffle(issued) # Shuffle to flag up bugs!
+        for i,(eu,ins) in enumerate(izip_longest(self._eu, issued, fillvalue=Instruction.NOP())):
+            print 'EU', i, ins
+            eu.execute(ins)
 
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)

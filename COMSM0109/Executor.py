@@ -75,7 +75,8 @@ class Executor(StatefulComponent):
             outReg = None
             pass
         elif opc == 'dnop':
-            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
+            print 'WARNING: EXECUTING A DNOP!' # TODO: We rely on this causing exceptions for tests!
+            #raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
         elif opc == 'halt':
             self._cpu.halt()
         elif opc == 'add':
@@ -127,8 +128,9 @@ class Executor(StatefulComponent):
         elif opc == 'br':
             # Should do nothing as we will always predict this!
             outReg = None
-            #self._branch(opr[0])
+            self._cpu._branch(True, False, opr[0])
             print "* ...but br is always taken, so this is a nop!"
+
             pass
         elif opc == 'bz':
             outReg = None

@@ -46,5 +46,9 @@ class ExecuteUnit(object):
     def __str__(self):
         return '\n--Execution Unit {0:d}--\n{1:s}'.format(self._id, '\n'.join((str(stg) for stg in self._stages)))
 
+    # For list printing
+    def __repr__(self):
+        return str(self)
+    
     def invalidateExecute(self):
         self._executor.invalidateInstruction()

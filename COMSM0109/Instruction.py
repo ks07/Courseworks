@@ -31,6 +31,8 @@ class Instruction(object):
         # Store reg => val index mapping, for register bypassing.
         self._rvmap = {}
         self._oreg = None
+        self._rregs = set()
+        self._invregs = set()
         # Note the similarity to gen_ins in assember!
         operands = []
         values = [] # Decode stage should read from regs
@@ -44,6 +46,9 @@ class Instruction(object):
                     # Only read registers need to read corresp values (and be on the lookout for forwards)
                     self._rvmap[ri] = len(values)
                     values.append(regfile[ri])
+                    if not regfile.validScoreboard(ri):
+                        self._invregs.add(ri);
+                    self._rregs.add(ri)
                 else:
                     # Store the output reg.
                     self._oreg = ri
@@ -85,6 +90,10 @@ class Instruction(object):
     def getOutReg(self):
         """ Gets the register that output is stored into, if any. """
         return self._oreg
+
+    def getReadRegs(self):
+        """ Gets the set of read registers. """
+        return frozenset(self._rregs)
     
     def getRegValMap(self):
         return self._rvmap
@@ -108,3 +117,6 @@ class Instruction(object):
     def __str__(self):
         # This is the implode_ins function in the assembler!
         return self._frmt_str.format(self._opcode, *self._operands)
+
+    def __repr__(self):
+        return str(self)

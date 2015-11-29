@@ -13,11 +13,15 @@ def grouper(iterable, n, fillvalue=None):
     return izip_longest(fillvalue=fillvalue, *args)
 
 class RegisterFile(StatefulComponent):
-    """ A register file, holding 32 general purpose registers. """
+    """ A register file, holding 32 general purpose registers, and a scoreboard for validity."""
 
+    SCBD_IND = 32;
+    
     def __init__(self):
-        self._state = np.zeros(32, dtype=np.uint32)
+        self._state = np.zeros(33, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
+        self._state[self.SCBD_IND] = 0xFFFFFFFF
+        self._state_nxt[self.SCBD_IND] = 0xFFFFFFFF
 
     def diff(self):
         """ Prints any changes to state. """
@@ -29,6 +33,23 @@ class RegisterFile(StatefulComponent):
 
     def __str__(self):
         lines = ['Register File:']
-        for (i,a),(j,b),(k,c),(l,d) in grouper(enumerate(self._state_nxt), 4):
+        for (i,a),(j,b),(k,c),(l,d) in grouper(enumerate(self._state_nxt[:self.SCBD_IND]), 4):
             lines.append("r{0:>2d}: {1:>10d}\tr{2:>2d}: {3:>10d}\tr{4:>2d}: {5:>10d}\tr{6:>2d}: {7:>10d}".format(i,a,j,b,k,c,l,d))
         return "\n".join(lines)
+
+    def markScoreboard(self, ri, dirty):
+        """ Marks an entry in the reg file as dirty (or not). """
+        scbd = self._state[self.SCBD_IND]
+        if dirty:
+            new = scbd & (0xFFFFFFFF ^ (1 << ri))
+        else:
+            new = scbd | (1 << ri)
+        if scbd == new:
+            print 'WARNING: Scoreboard update unnecessary!', ri, dirty
+        self.update(self.SCBD_IND, new) #TODO: What happens when there's a dependency at the same time?
+        
+    def validScoreboard(self, ri):
+        """ Checks if the scoreboard has a value marked as dirty. """
+        print 'scoreboard', bin(self._state[self.SCBD_IND])
+        return self._state[self.SCBD_IND] & (1 << ri)
+    
