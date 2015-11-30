@@ -89,7 +89,7 @@ def gen_ins(ins, labels):
         shift = 26
         val = frmt[0] << shift
         for elem, arg in izip_longest(frmt[1:], args):
-            if elem == 'r' or elem == 'o':
+            if elem == 'r' or elem == 'w' or elem == 'rw':
                 shift -= 5
                 to_add = int(arg[1:])
             elif elem == 'i':

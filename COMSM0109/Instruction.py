@@ -8,7 +8,7 @@ class Instruction(object):
         """ Converts a decode format tuple to a python str.format compatible format string. Static method. """
         strf = []
         for a in frmt[1:-1]:
-            if a == 'r' or a == 'o':
+            if a == 'r' or a == 'w' or a =='rw':
                 strf.append('r{:d}')
             else:
                 strf.append('{:d}')

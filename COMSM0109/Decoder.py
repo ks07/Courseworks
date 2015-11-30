@@ -77,9 +77,13 @@ class Decoder(StatefulComponent):
         self._state_nxt[self.RLD_IND-count:self.RLD_IND] = [0] * (count)
 
         # Set the accept count
-        self._state_nxt[self.EMP_IND] = len(ready)
+        self._state[self.EMP_IND] = len(ready) # JEEPERS CREEPERS
         
         print 'Ready:', ready
+        if len(ready) < 2:
+            print 'DECODER IS BLOCKING/DELAYING'
+        else:
+            print 'DECODER OK'
         return ready
 
     def _decode(self, word):

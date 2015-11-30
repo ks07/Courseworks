@@ -104,9 +104,9 @@ class CPU(object):
         print '\n---Performing Cycle Logic---\n'
         
         # Fetch Stage (will fetch as many as has been requested by decode)
-        toDecodeList = self._fetcher.fetchIns()
-        for toDecode in toDecodeList:
-            print '* Fetch stage loaded from mem, passing {0:08x} to decode stage.'.format(toDecode)
+        toDecodeList, pc = self._fetcher.fetchIns()
+        for i,toDecode in enumerate(toDecodeList):
+            print '* Fetch stage loaded from mem, passing ({0:d}): {1:08d} to decode stage.'.format(pc+i, toDecode)
 
 
         # Get issued instructions from decoder.
@@ -118,7 +118,10 @@ class CPU(object):
         # Need to stall the fetcher, if decoder is stalling.
         # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
         # Need to tell fetcher to go back to the previous instructs.
+        print self._fetcher._state_nxt
+        print self._fetcher._state
         self._fetcher._state_nxt[self._fetcher.PCI] =  self._fetcher._state[self._fetcher.PCI] + len(issued)
+        print self._fetcher._state_nxt
         
         # Tell fetch stage how much we need to replace next cycle.
         self._fetcher._state_nxt[self._fetcher.FCI] = 2 # TODO: ???????????
@@ -183,8 +186,11 @@ def start(mem_file):
             cpu = CPU(mem_file)
         elif usr.startswith('a'):
             # Show assembly for operand (decode operand)
-            arg = int(usr.split(' ')[1])
-            print cpu._decoder._decode(arg)
+            arg = int(usr.split(' ')[1], 0)
+            try:
+                print cpu._decoder._decode(arg)
+            except:
+                print 'Not an instruction (dnop)'
         else:
             cpu.step()
             cpu.displayState()
