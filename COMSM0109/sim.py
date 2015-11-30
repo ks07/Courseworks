@@ -60,14 +60,14 @@ class CPU(object):
             # Should have taken, but did not.
             print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
             self._fetcher.update(0, dest) # Update the PC to point to the new address
-            self._decoder.update(0, 0) # Empty the decode register
+            self._decoder.pipelineClear()
             for eu in self._eu:
                 eu.invalidateExecute() # Empty the execute instruction reg
         elif not cond and pred:
             # Shouldn't have taken, but did.
             print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
             self._fetcher.restore() # Load the original PC value from before prediction
-            self._decoder.update(0, 0) # Empty the decode register
+            self._decoder.pipelineClear()
             for eu in self._eu:
                 eu.invalidateExecute() # Empty the execute instruction reg
         else:

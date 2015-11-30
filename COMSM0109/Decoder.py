@@ -20,7 +20,7 @@ class Decoder(StatefulComponent):
         # Decode stage reads from register file.
         self._reg = regfile
         self._width = width
-        self._state[self.EMP_IND] = 2
+        self._state[self.EMP_IND] = self._width
 
     def __str__(self):
         #return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))
@@ -30,7 +30,6 @@ class Decoder(StatefulComponent):
         # TODO: should call super
         np.copyto(self._state, self._state_nxt, casting='no')
         # Need to handle dependency checking
-        
     
     def queueInstructions(self, toDecodeList):
         # Put at end of waiting list in state.
@@ -42,6 +41,12 @@ class Decoder(StatefulComponent):
         print toDecodeList
         self._state_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = toDecodeList
         print self._state_nxt
+
+    def pipelineClear(self):
+        """ Called when the stage needs clearing due to a branch misprediction. """
+        self._state_nxt[:self._width] = 0 # Clear the instruction buffers
+        self._state_nxt[self.RLD_IND] = self.NO_LD # Don't need to bubble for load
+        self._state_nxt[self.EMP_IND] = self._width;
     
     def decode(self):
         """ Decodes current inputs, returns as many independent instructions as possible up to width. """
