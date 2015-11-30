@@ -114,6 +114,10 @@ class Instruction(object):
         """ Gets the register/value for writeback output. """
         return tuple(self._writeback)
 
+    def isBranch(self):
+        # TODO: Stop being hacky?
+        return self._opcode.startswith('b')
+
     def __str__(self):
         # This is the implode_ins function in the assembler!
         return self._frmt_str.format(self._opcode, *self._operands)

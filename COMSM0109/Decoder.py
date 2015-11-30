@@ -15,7 +15,8 @@ class Decoder(StatefulComponent):
         # Width gives the number of instructions that are held and decoded.
         self.RLD_IND = width
         self.EMP_IND = width + 1 # Index of empty counter, tells how many instructions from fetch to accept.
-        self._state = np.zeros(width + 2, dtype=np.uint32)
+        self.BRW_IND = width + 2 # Index of branch wait indicator, if set we should issue nothing until branch is resolved.
+        self._state = np.zeros(width + 3, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
         # Decode stage reads from register file.
         self._reg = regfile
@@ -47,34 +48,49 @@ class Decoder(StatefulComponent):
         self._state_nxt[:self._width] = 0 # Clear the instruction buffers
         self._state_nxt[self.RLD_IND] = self.NO_LD # Don't need to bubble for load
         self._state_nxt[self.EMP_IND] = self._width;
+
+    def branchResolved(self):
+        """ Called when a branch has been resolved (made it out of execute). Unblocks issue. """
+        self._state_nxt[self.BRW_IND] = 0
     
     def decode(self):
         """ Decodes current inputs, returns as many independent instructions as possible up to width. """
         ready = []
-        for ii in range(self._width):
-            ins = self._decode(self._state[ii])
+        if self._state[self.BRW_IND]:
+            # Waiting for a branch to resolve, block issue.
+            pass
+        else:
+            # No branches currently waiting, try to issue.
+            for ii in range(self._width):
+                ins = self._decode(self._state[ii])
 
-            # Store the output reg.
-            #TODO: Nicer check of load
-            ldreg = ins.getOutReg() if ins.getOutReg() is not None and ins.getOpc().startswith('ld') else self.NO_LD
-            self.update(self.RLD_IND, ldreg)
+                # Store the output reg.
+                #TODO: Nicer check of load
+                ldreg = ins.getOutReg() if ins.getOutReg() is not None and ins.getOpc().startswith('ld') else self.NO_LD
+                self.update(self.RLD_IND, ldreg)
 
-            # If the previously decoded ins was a load, check if there is a RAW dependency.
-            # if self._state[self.RLD_IND]] < 32:
-            if self._state[self.RLD_IND] in ins.getRegValMap():
-                print '* v---Inserting a bubble to avoid data hazard from RAW dependency after a load.' #TODO: Print order
-                # Need to stall both this and fetch stages to wait for the bubble.
-                self.update(ii, self._state[ii]) #TODO: This could be problematic if stages are re-ordered!
-                #return Instruction.NOP() #TODO: Can the interaction between stages be handled by the stages, not CPU?
-            if not ins._invregs:
-                # If any of the operands are not ready, the ins is not ready (blocking issue)
-                ready.append(ins)
-                # Need to mark the pending write in the register scoreboard.
-                print ins, 'OUT REG:', ins.getOutReg()
-                if ins.getOutReg() is not None:
-                    self._reg.markScoreboard(ins.getOutReg(), True);
-            else:
-                break
+                # If the previously decoded ins was a load, check if there is a RAW dependency.
+                # if self._state[self.RLD_IND]] < 32:
+                if self._state[self.RLD_IND] in ins.getRegValMap():
+                    print '* v---Inserting a bubble to avoid data hazard from RAW dependency after a load.' #TODO: Print order
+                    # Need to stall both this and fetch stages to wait for the bubble.
+                    self.update(ii, self._state[ii]) #TODO: This could be problematic if stages are re-ordered!
+                    #return Instruction.NOP() #TODO: Can the interaction between stages be handled by the stages, not CPU?
+                if not ins._invregs:
+                    # If any of the operands are not ready, the ins is not ready (blocking issue)
+                    ready.append(ins)
+                    # Need to mark the pending write in the register scoreboard.
+                    print ins, 'OUT REG:', ins.getOutReg()
+                    if ins.getOutReg() is not None:
+                        self._reg.markScoreboard(ins.getOutReg(), True);
+                else:
+                    break
+
+                # Regardless of data dependency, if this is a branch we don't want to pass any more ins (no speculative execution)
+                if ins.isBranch() or ins.getOpc() == 'halt': # Need to block on halt
+                    # Mark that we are waiting for a conditional.
+                    self._state_nxt[self.BRW_IND] = 1
+                    break
 
         # Need to shift down by the number of instructions we are passing out.
         count = len(ready)

@@ -56,6 +56,8 @@ class CPU(object):
 
     def _branch(self, cond, pred, dest):
         """ Clears the pipeline and does the branch (if necessary!). """
+        # Need to tell decoder that the branch has been resolved, so blocking can stop
+        self._decoder.branchResolved()
         if cond and not pred:
             # Should have taken, but did not.
             print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
@@ -191,6 +193,12 @@ def start(mem_file):
                 print cpu._decoder._decode(arg)
             except:
                 print 'Not an instruction (dnop)'
+        elif usr.startswith('c'):
+            # Continue for given number of cycles
+            arg = int(usr.split(' ')[1], 0)
+            while arg:
+                cpu.step()
+                arg -= 1
         else:
             cpu.step()
             cpu.displayState()

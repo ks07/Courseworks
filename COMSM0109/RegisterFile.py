@@ -15,7 +15,7 @@ def grouper(iterable, n, fillvalue=None):
 class RegisterFile(StatefulComponent):
     """ A register file, holding 32 general purpose registers, and a scoreboard for validity."""
 
-    SCBD_IND = 32;
+    SCBD_IND = 32 # Index of scoreboard for register value validity.
     
     def __init__(self):
         self._state = np.zeros(33, dtype=np.uint32)
