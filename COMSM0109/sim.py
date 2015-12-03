@@ -13,6 +13,7 @@ from BranchPredictor import BranchPredictor
 from Decoder import Decoder
 from InstructionFetcher import InstructionFetcher
 from ExecuteUnit import ExecuteUnit
+from BranchUnit import BranchUnit
 
 class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -37,7 +38,7 @@ class CPU(object):
         ] # General purpose EUs
         # Much simpler to handle branches if they all go through a single EU
         # For now, copy the generic EU, but this could (should?) be different
-        self._bru = ExecuteUnit(64, self._mem, self._reg, self) # Branch unit
+        self._bru = BranchUnit(64, self._mem, self._reg, self) # Branch unit
 
         # For iteration
         self._subpipes = tuple(self._eu + [self._bru])
