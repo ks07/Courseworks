@@ -34,13 +34,22 @@ class CPU(object):
         self._eu = [
             ExecuteUnit(0, self._mem, self._reg, self),
             ExecuteUnit(1, self._mem, self._reg, self)
-        ]
+        ] # General purpose EUs
+        # Much simpler to handle branches if they all go through a single EU
+        # For now, copy the generic EU, but this could (should?) be different
+        self._bru = ExecuteUnit(64, self._mem, self._reg, self) # Branch unit
+
+        # For iteration
+        self._subpipes = tuple(self._eu + [self._bru])
 
         # Time counter
         self._simtime = 0
 
         # Branch predictor (part of decode stage)
         self._predictor = BranchPredictor()
+
+        # Halt flag
+        self._haltpending = False
 
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
@@ -51,6 +60,7 @@ class CPU(object):
         self._decoder.advstate()
         for eu in self._eu:
             eu.advstate()
+        self._bru.advstate()
         # Need to increment time
         self._simtime += 1
 
@@ -65,6 +75,7 @@ class CPU(object):
             self._decoder.pipelineClear()
             for eu in self._eu:
                 eu.invalidateExecute() # Empty the execute instruction reg
+            self._bru.invalidateExecute()
         elif not cond and pred:
             # Shouldn't have taken, but did.
             print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
@@ -72,6 +83,7 @@ class CPU(object):
             self._decoder.pipelineClear()
             for eu in self._eu:
                 eu.invalidateExecute() # Empty the execute instruction reg
+            self._bru.invalidateExecute()
         else:
             print "* ...and the predictor was right, so this was a nop!"
 
@@ -83,7 +95,9 @@ class CPU(object):
             # Set the new dest
             self._fetcher.update(0, dest)
             # The branch predictor will switch the input to the decode stage to a nop (whatever was there is after the branch and we don't want it!)
-            self._decoder.update(0, Instruction.NOP().getWord()) # WARNING! There is now a dependency that this must run AFTER fetch passes to decode!
+            self._decoder.pipelineClear()
+#            self._decoder.update(0, Instruction.NOP().getWord()) # WARNING! There is now a dependency that this must run AFTER fetch passes to decode!
+#            self._decoder.update(1, Instruction.NOP().getWord()) # WARNING! There is now a dependency that this must run AFTER fetch passes to decode!
             # Need to tell the execute unit that the branch was taken already
             branch.predicted = True
         else:
@@ -112,7 +126,7 @@ class CPU(object):
 
 
         # Get issued instructions from decoder.
-        issued = self._decoder.decode()
+        issuedALU, issuedBRU = self._decoder.decode()
 
         # Pass fetched to decode
         self._decoder.queueInstructions(toDecodeList)
@@ -120,39 +134,43 @@ class CPU(object):
         # Need to stall the fetcher, if decoder is stalling.
         # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
         # Need to tell fetcher to go back to the previous instructs.
-        print self._fetcher._state_nxt
-        print self._fetcher._state
-        self._fetcher._state_nxt[self._fetcher.PCI] =  self._fetcher._state[self._fetcher.PCI] + len(issued)
-        print self._fetcher._state_nxt
+        self._fetcher.inc(len(issuedALU) + len(issuedBRU))
         
         # Tell fetch stage how much we need to replace next cycle.
-        self._fetcher._state_nxt[self._fetcher.FCI] = 2 # TODO: ???????????
-#        self._fetcher.inc()
+        self._fetcher.update(self._fetcher.FCI, 2) # TODO: ???????????
 
-        print 'decoded', issued
+        print 'decoded', issuedALU, issuedBRU
 
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
-        # # TODO: Nasty hack, we don't really want to compare like this...
-        # # If the decoder is stalling, don't increment PC, hold the current value.
-        # if toExecuteA.getWord() == self._decoderA[0]:
-        #     # Set PC for next time step
-        #     self._fetcher.inc()
-        #     print '* Fetch stage incremented PC.'
-
-        # # TODO: Nicer condition
-        # if toExecute.getOpc().startswith('b'):
-        #     # Predictor as part of decode
-        #     prediction = self._predictor.predict(self._fetcher[0], toExecute)
-        #     self._usePrediction(prediction, toExecute)
-        #     # Handles printing
-
+        # TODO: I'm not sure this works completely correctly
+        if self._haltpending or (issuedBRU and issuedBRU[0].isHalt()):
+            print 'HALT TIME'
+            if issuedBRU:
+                issuedBRU[0] = Instruction.NOP()
+            # If we are halting, wait for all pipes to clear before issue
+            self._haltpending = True
+            self._fetcher.update(self._fetcher.FCI, 0)
+            if not any((u.hasInstructions() for u in self._subpipes)):
+                self.halt()
 
         # Issue instructions to execute units #TODO: Targeted EUs (e.g. ALU, branch, Mem)
-        shuffle(issued) # Shuffle to flag up bugs!
-        for i,(eu,ins) in enumerate(izip_longest(self._eu, issued, fillvalue=Instruction.NOP())):
+        shuffle(issuedALU) # Shuffle to flag up bugs!
+        for i,(eu,ins) in enumerate(izip_longest(self._eu, issuedALU, fillvalue=Instruction.NOP())):
             print 'EU', i, ins
             eu.execute(ins)
+
+        # Need to execute with a nop to actually step the bru pipeline.
+        if not issuedBRU:
+            issuedBRU = [Instruction.NOP()]
+        for ins in issuedBRU:
+            print 'BRU', ins
+            if ins.isBranch():
+                # Predictor as part of decode
+                prediction = self._predictor.predict(self._fetcher[0], ins)
+                self._usePrediction(prediction, ins)
+            # Handles printing
+            self._bru.execute(ins)
 
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)
@@ -164,6 +182,7 @@ class CPU(object):
         print self._fetcher
         print self._decoder
         print self._eu
+        print self._bru
         print self._reg
 
     def dump(self, start, end):
@@ -199,6 +218,12 @@ def start(mem_file):
             while arg:
                 cpu.step()
                 arg -= 1
+                print '<CONTINUE COMPLETE>'
+                cpu.displayState()
+        elif usr.startswith('e'):
+            # Eval
+            arg = usr.split(' ', 1)[1]
+            print eval(arg, globals(), locals())
         else:
             cpu.step()
             cpu.displayState()

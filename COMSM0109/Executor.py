@@ -128,7 +128,7 @@ class Executor(StatefulComponent):
         elif opc == 'br':
             # Should do nothing as we will always predict this!
             outReg = None
-            self._cpu._branch(True, False, opr[0])
+            self._cpu._branch(True, ins.predicted, opr[0])
             print "* ...but br is always taken, so this is a nop!"
 
             pass

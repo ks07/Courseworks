@@ -17,8 +17,17 @@ class ExecuteUnit(object):
         # Easy iteration
         self._stages = (self._executor, self._memaccess, self._writeback)
 
+        # Pipeline information (currently for halt)
+        self.pipelen = len(self._stages)
+        self._stepcount = 0
+
     def execute(self, toExecute):
         """ Runs the current timestep. Should be issued an instruction. """
+        # Update the step count (used to tell if pipe is clear of instructions).
+        if toExecute.getOpc() == 'nop' or toExecute.getOpc() == 'dnop':
+            self._stepcount += 1
+        else:
+            self._stepcount = 0
         # Pass to execute
         self._executor.updateInstruction(toExecute)
 
@@ -52,3 +61,7 @@ class ExecuteUnit(object):
     
     def invalidateExecute(self):
         self._executor.invalidateInstruction()
+
+    def hasInstructions(self):
+        """ Tells if this unit has any instructions waiting to complete. (For halt) """
+        return self._stepcount < self.pipelen

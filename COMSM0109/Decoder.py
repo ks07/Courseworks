@@ -55,30 +55,49 @@ class Decoder(StatefulComponent):
     
     def decode(self):
         """ Decodes current inputs, returns as many independent instructions as possible up to width. """
-        ready = []
-        if self._state[self.BRW_IND]:
+        readyALU = []
+        readyBRU = []
+        if False and self._state[self.BRW_IND]:
             # Waiting for a branch to resolve, block issue.
             pass
         else:
             # No branches currently waiting, try to issue.
             for ii in range(self._width):
                 ins = self._decode(self._state[ii])
-
+                
+                ### LOAD DEP CHECKING NOT NEEDED ATM
                 # Store the output reg.
                 #TODO: Nicer check of load
-                ldreg = ins.getOutReg() if ins.getOutReg() is not None and ins.getOpc().startswith('ld') else self.NO_LD
-                self.update(self.RLD_IND, ldreg)
+#                ldreg = ins.getOutReg() if ins.getOutReg() is not None and ins.getOpc().startswith('ld') else self.NO_LD
+#                self.update(self.RLD_IND, ldreg)
 
                 # If the previously decoded ins was a load, check if there is a RAW dependency.
                 # if self._state[self.RLD_IND]] < 32:
-                if self._state[self.RLD_IND] in ins.getRegValMap():
-                    print '* v---Inserting a bubble to avoid data hazard from RAW dependency after a load.' #TODO: Print order
+#                if self._state[self.RLD_IND] in ins.getRegValMap():
+#                    print '* v---Inserting a bubble to avoid data hazard from RAW dependency after a load.' #TODO: Print order
                     # Need to stall both this and fetch stages to wait for the bubble.
-                    self.update(ii, self._state[ii]) #TODO: This could be problematic if stages are re-ordered!
+#                    self.update(ii, self._state[ii]) #TODO: This could be problematic if stages are re-ordered!
                     #return Instruction.NOP() #TODO: Can the interaction between stages be handled by the stages, not CPU?
                 if not ins._invregs:
                     # If any of the operands are not ready, the ins is not ready (blocking issue)
-                    ready.append(ins)
+                    if ins.isBranch():
+                        if self._state[self.BRW_IND]:
+                            # Need to block here, as we're only letting one branch through at a time
+                            break
+                        else:
+                            # Need to put into a different queue
+                            readyBRU.append(ins)
+                        # Don't want to dispatch anything else after the branch
+                        break
+                    elif ins.isHalt():
+                        # Want to dispatch on it's own.
+                        if readyBRU or readyALU:
+                            break
+                        else:
+                            # Put halts on the branch unit queue
+                            readyBRU.append(ins)
+                    else:
+                        readyALU.append(ins)
                     # Need to mark the pending write in the register scoreboard.
                     print ins, 'OUT REG:', ins.getOutReg()
                     if ins.getOutReg() is not None:
@@ -87,25 +106,26 @@ class Decoder(StatefulComponent):
                     break
 
                 # Regardless of data dependency, if this is a branch we don't want to pass any more ins (no speculative execution)
-                if ins.isBranch() or ins.getOpc() == 'halt': # Need to block on halt
+                if (ins.isBranch() and self._state_nxt[self.BRW_IND])  or ins.getOpc() == 'halt': # Need to block on halt
+                    # FOR NOW: Only let a single branch through.
                     # Mark that we are waiting for a conditional.
                     self._state_nxt[self.BRW_IND] = 1
                     break
 
         # Need to shift down by the number of instructions we are passing out.
-        count = len(ready)
+        count = len(readyALU) + len(readyBRU)
         self._state_nxt[:self.RLD_IND-count] = self._state[count:self.RLD_IND]
         self._state_nxt[self.RLD_IND-count:self.RLD_IND] = [0] * (count)
 
         # Set the accept count
-        self._state[self.EMP_IND] = len(ready) # JEEPERS CREEPERS
+        self._state[self.EMP_IND] = count # JEEPERS CREEPERS
         
-        print 'Ready:', ready
-        if len(ready) < 2:
+        print 'Ready:', readyALU, readyBRU
+        if count < self._width:
             print 'DECODER IS BLOCKING/DELAYING'
         else:
             print 'DECODER OK'
-        return ready
+        return (readyALU, readyBRU)
 
     def _decode(self, word):
         """ Decodes a given word; return an Instruction object represented by word. """
@@ -129,4 +149,5 @@ class Decoder(StatefulComponent):
             for opc, frmt in possible:
                 if frmt[-1] == diff:
                     return Instruction(opc, frmt, word, self._reg)
-            raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word,  '{:032b}'.format(word))
+            return Instruction.NOP(word)
+            #raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', word,  '{:032b}'.format(word))

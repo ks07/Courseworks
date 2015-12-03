@@ -25,7 +25,6 @@ class InstructionFetcher(StatefulComponent):
     # Need to override, to store old PC
     def update(self, addr, val):
         """ Stores the previous state when being updated. """
-        print "UPDATING FETCHER", addr, val
         self._old_state[self.PCI] = self._state_nxt[self.PCI]
         return super(self.__class__, self).update(addr, val)
 
@@ -35,13 +34,8 @@ class InstructionFetcher(StatefulComponent):
 
     def fetchIns(self): #TODO: Fix name conflict nicely!
         """ Does the fetch from memory (with implied cache)"""
-#        print 'PC INC:', self._state[self.FCI]
         return (self._mem[self._state[self.PCI]:self._state[self.PCI]+self._state[self.FCI]], self._state[self.PCI])
 
-    def inc(self):
-        """ Increments the PC. """
-        self._state_nxt[self.PCI] = self._state[self.PCI] + self._state[self.FCI]
-
-    def back(self, count):
-        """ In the case of a stall, need to reset PC. """
-        self._state_nxt[self.PCI] -= count;
+    def inc(self, count):
+        """ Increments the PC by a specified amount. """
+        self._state_nxt[self.PCI] = self._state[self.PCI] + count

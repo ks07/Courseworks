@@ -21,9 +21,7 @@ loop_start:
     bge r0,r7,loop_end
     br loop_start
 loop_end:
-    ; Infinite loop
-    nop
-    br loop_end
+    halt
 
 ; data segment - .data?
     .word 0xDEADBEEF
@@ -52,3 +50,20 @@ vecA:
     .word 0
     .word 0
     .word 0
+
+;;;test;;;
+import sys, json
+lf = open('out_labels.json', 'r')
+labels = json.load(lf)
+ivecA = labels['vecA']
+ivecB = labels['vecB']
+ivecC = labels['vecC']
+
+vecA = mem[ivecA:]
+vecB = mem[ivecB:ivecC-1]
+vecC = mem[ivecC:ivecA-1]
+for (a,b,c) in zip(vecA,vecB,vecC):
+    if a != b + c:
+        print 'Fail!', a, b, c
+	sys.exit(1);
+print 'Pass'
