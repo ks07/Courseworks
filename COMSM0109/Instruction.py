@@ -121,6 +121,9 @@ class Instruction(object):
     def isHalt(self):
         return self._opcode == 'halt'
 
+    def isLoadStore(self):
+        return self._opcode == 'ld' or self._opcode == 'st'
+
     def __str__(self):
         # This is the implode_ins function in the assembler!
         return self._frmt_str.format(self._opcode, *self._operands)

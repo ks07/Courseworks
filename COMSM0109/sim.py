@@ -37,11 +37,12 @@ class CPU(object):
             ExecuteUnit(1, self._mem, self._reg, self)
         ] # General purpose EUs
         # Much simpler to handle branches if they all go through a single EU
-        # For now, copy the generic EU, but this could (should?) be different
         self._bru = BranchUnit(64, self._mem, self._reg, self) # Branch unit
+        # Seperate EU for loads and stores
+        self._lsu = ExecuteUnit(32, self._mem, self._reg, self) # Load/Store unit
 
         # For iteration
-        self._subpipes = tuple(self._eu + [self._bru])
+        self._subpipes = tuple(self._eu + [self._bru, self._lsu])
 
         # Time counter
         self._simtime = 0
@@ -59,9 +60,8 @@ class CPU(object):
         self._mem.advstate()
         self._fetcher.advstate()
         self._decoder.advstate()
-        for eu in self._eu:
+        for eu in self._subpipes:
             eu.advstate()
-        self._bru.advstate()
         # Need to increment time
         self._simtime += 1
 
@@ -74,17 +74,15 @@ class CPU(object):
             print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
             self._fetcher.update(0, dest) # Update the PC to point to the new address
             self._decoder.pipelineClear()
-            for eu in self._eu:
+            for eu in self._subpipes:
                 eu.invalidateExecute() # Empty the execute instruction reg
-            self._bru.invalidateExecute()
         elif not cond and pred:
             # Shouldn't have taken, but did.
             print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
             self._fetcher.restore() # Load the original PC value from before prediction
             self._decoder.pipelineClear()
-            for eu in self._eu:
+            for eu in self._subpipes:
                 eu.invalidateExecute() # Empty the execute instruction reg
-            self._bru.invalidateExecute()
         else:
             print "* ...and the predictor was right, so this was a nop!"
 
@@ -127,7 +125,7 @@ class CPU(object):
 
 
         # Get issued instructions from decoder.
-        issuedALU, issuedBRU = self._decoder.decode()
+        issuedALU, issuedBRU, issuedLSU = self._decoder.decode()
 
         # Pass fetched to decode
         self._decoder.queueInstructions(toDecodeList)
@@ -135,12 +133,12 @@ class CPU(object):
         # Need to stall the fetcher, if decoder is stalling.
         # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
         # Need to tell fetcher to go back to the previous instructs.
-        self._fetcher.inc(len(issuedALU) + len(issuedBRU))
+        self._fetcher.inc(len(issuedALU) + len(issuedBRU) + len(issuedLSU))
         
         # Tell fetch stage how much we need to replace next cycle.
         self._fetcher.update(self._fetcher.FCI, 2) # TODO: ???????????
 
-        print 'decoded', issuedALU, issuedBRU
+        print 'decoded', issuedALU, issuedBRU, issuedLSU
 
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
@@ -160,6 +158,12 @@ class CPU(object):
         for i,(eu,ins) in enumerate(izip_longest(self._eu, issuedALU, fillvalue=Instruction.NOP())):
             print 'EU', i, ins
             eu.execute(ins)
+
+        if not issuedLSU:
+            issuedLSU = [Instruction.NOP()]
+        for ins in issuedLSU:
+            print 'LSU', ins
+            self._lsu.execute(ins)
 
         # Need to execute with a nop to actually step the bru pipeline.
         if not issuedBRU:
@@ -182,8 +186,8 @@ class CPU(object):
         print "Sim Time: ", self._simtime
         print self._fetcher
         print self._decoder
-        print self._eu
-        print self._bru
+        for eu in self._subpipes:
+            print eu
         print self._reg
 
     def dump(self, start, end):
