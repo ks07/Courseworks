@@ -2,6 +2,7 @@
 
 #import collections # TODO: Should probably use deque instead of list
 
+from itertools import chain
 from StatefulComponent import StatefulComponent
 from Instruction import Instruction
 import numpy as np
@@ -54,6 +55,8 @@ class ReservationStation(StatefulComponent):
     def _insReady(self, ins):
         """ Decides if an instruction is ready to be dispatched. """
         irs = ins.getInvRegs().copy()
+        #if ins.getOutReg() is not None:
+        #    irs.add(ins.getOutReg()) # Need to check for WaW dependencies!
         print 'tax evasion',irs
         if irs:
             bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
@@ -66,6 +69,8 @@ class ReservationStation(StatefulComponent):
                     print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._state[ri])
                     ins._values[vi] = self._state[ri]
                     irs.remove(ri)
+            if ins.getOutReg() in irs and self._reg.validScoreboard(ins.getOutReg()):
+                irs.remove(ins.getOutReg())
         return not irs
         
     def dispatch(self):

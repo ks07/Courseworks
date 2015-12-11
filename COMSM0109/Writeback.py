@@ -25,6 +25,9 @@ class Writeback(object):
             self._reg[reg] = val
             print 'Marking reg as ready.'
             self._reg.markScoreboard(reg, False)
+        # Also need to mark output as ready.
+        if self._ins.getOutReg() is not None:
+            self._reg.markScoreboard(self._ins.getOutReg(), False)
 
     def advstate(self):
         """ Advances state, like a StatefulComponent. """

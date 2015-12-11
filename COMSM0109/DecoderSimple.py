@@ -64,11 +64,13 @@ class DecoderSimple(StatefulComponent):
 
     def issue(self):
         """ Decodes current inputs, issues instructions up to width. Issue bound fetch, non-blocking! """
-        ready = [ self._decode(b,a) for b,a in zip(self._state[:self._width],self._srcas[:self._width]) ]
-        # Needs to mark the output registers as dirty
-        for ins in ready:
+        ready = []
+        for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
+            ins = self._decode(b,a)
             if ins.getOutReg() is not None:
                 self._reg.markScoreboard(ins.getOutReg(), True);
+            print 'ISSUES ABOUND',ins,ins._invregs
+            ready.append(ins)
         return ready
         
     def __no__decode(self):
