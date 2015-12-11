@@ -7,6 +7,7 @@ class BranchPredictor(StatefulComponent):
 
     def predict(self, pc, ins):
         """ Returns true if we predict the branch will be taken. """
+        pc = ins.asrc # TODO: PC might be weird, so just check the instruction location
         if ins.getOpc() == 'br':
             # Unconditional, always taken
             return True

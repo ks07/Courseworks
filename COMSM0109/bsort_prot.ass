@@ -22,6 +22,12 @@ iloop_start:
     ; r7 = temp (comparison)
     sub r7,r5,r6
     bn r7,endif
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
     ; if body
     ;swap A[i-1] and A[i]
     st r6,r0,r3
@@ -34,14 +40,44 @@ endif:
     addi r4,1
     ; break if > n-1
     bge r3,r1,iloop_end
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
     br iloop_start
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 iloop_end:
     ; n = newn
     mov r1,r2
     ; loop unti n = 0
     bz r1,oloop_end
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
     br oloop_start
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 oloop_end:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
     ; Infinite loop
     halt
 

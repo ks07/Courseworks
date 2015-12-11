@@ -6,7 +6,7 @@ from Instruction import Instruction
 from InstructionFormats import FORMATS
 from itertools import repeat, chain
 
-class Decoder(StatefulComponent):
+class DecoderSimple(StatefulComponent):
     """ A decode unit. State is the current instruction in this stage, and an indicator for load stalling. """
 
     NO_LD = 64
@@ -35,28 +35,43 @@ class Decoder(StatefulComponent):
         np.copyto(self._srcas, self._srcas_nxt, casting='no')
         # Need to handle dependency checking
     
-    def queueInstructions(self, toDecodeList):
+    def queueInstructions(self, toDecodeList, addrs):
+        print 'queue DS', toDecodeList, addrs
         # Put at end of waiting list in state.
-        accept = self._state[self.EMP_IND]
+#        accept = self._state[self.EMP_IND]
+        accept = self._width
         print 'queued, accepting:', accept
         print self._state_nxt
         print toDecodeList
-        toDecodeList = toDecodeList[:accept]
+        #toDecodeList = toDecodeList[:accept]
         print toDecodeList
+        print 'shit fuck what',self._state_nxt,self._srcas_nxt
         self._state_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = toDecodeList
+        self._srcas_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = addrs
         print self._state_nxt
+        print self._srcas_nxt
 
     def pipelineClear(self):
         """ Called when the stage needs clearing due to a branch misprediction. """
         self._state_nxt[:self._width] = 0 # Clear the instruction buffers
         self._state_nxt[self.RLD_IND] = self.NO_LD # Don't need to bubble for load
         self._state_nxt[self.EMP_IND] = self._width;
+        self._srcas_nxt = np.zeros_like(self._srcas_nxt)
 
     def branchResolved(self):
         """ Called when a branch has been resolved (made it out of execute). Unblocks issue. """
         self._state_nxt[self.BRW_IND] = 0
-    
-    def decode(self):
+
+    def issue(self):
+        """ Decodes current inputs, issues instructions up to width. Issue bound fetch, non-blocking! """
+        ready = [ self._decode(b,a) for b,a in zip(self._state[:self._width],self._srcas[:self._width]) ]
+        # Needs to mark the output registers as dirty
+        for ins in ready:
+            if ins.getOutReg() is not None:
+                self._reg.markScoreboard(ins.getOutReg(), True);
+        return ready
+        
+    def __no__decode(self):
         """ Decodes current inputs, returns as many independent instructions as possible up to width. """
         readyALU = []
         readyBRU = []

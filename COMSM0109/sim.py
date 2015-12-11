@@ -11,9 +11,11 @@ from Memory import Memory
 from RegisterFile import RegisterFile
 from BranchPredictor import BranchPredictor
 from Decoder import Decoder
+from DecoderSimple import DecoderSimple
 from InstructionFetcher import InstructionFetcher
 from ExecuteUnit import ExecuteUnit
 from BranchUnit import BranchUnit
+from ReservationStation import ReservationStation
 
 class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -29,7 +31,10 @@ class CPU(object):
         # Initial stage components.
         self._fetcher = InstructionFetcher(self._mem, self._decwidth)
 
-        self._decoder = Decoder(self._reg, self._decwidth)
+        #self._decoder = Decoder(self._reg, self._decwidth)
+        self._decoder = DecoderSimple(self._reg, self._decwidth)
+
+        self._rs = ReservationStation('All', 2, self._reg)
 
         # Superscalar stage components.
         self._eu = [
@@ -60,6 +65,7 @@ class CPU(object):
         self._mem.advstate()
         self._fetcher.advstate()
         self._decoder.advstate()
+        self._rs.advstate()
         for eu in self._subpipes:
             eu.advstate()
         # Need to increment time
@@ -69,20 +75,25 @@ class CPU(object):
         """ Clears the pipeline and does the branch (if necessary!). """
         # Need to tell decoder that the branch has been resolved, so blocking can stop
         self._decoder.branchResolved()
+        self._rs.branchResolved()
         if cond and not pred:
             # Should have taken, but did not.
             print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
             self._fetcher.update(0, dest) # Update the PC to point to the new address
             self._decoder.pipelineClear()
+            self._rs.pipelineClear()
             for eu in self._subpipes:
                 eu.invalidateExecute() # Empty the execute instruction reg
+            self._reg.resetScoreboard()
         elif not cond and pred:
             # Shouldn't have taken, but did.
             print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
             self._fetcher.restore() # Load the original PC value from before prediction
             self._decoder.pipelineClear()
+            self._rs.pipelineClear()
             for eu in self._subpipes:
                 eu.invalidateExecute() # Empty the execute instruction reg
+            self._reg.resetScoreboard()
         else:
             print "* ...and the predictor was right, so this was a nop!"
 
@@ -125,20 +136,33 @@ class CPU(object):
 
 
         # Get issued instructions from decoder.
-        issuedALU, issuedBRU, issuedLSU = self._decoder.decode()
+#        issuedALU, issuedBRU, issuedLSU = self._decoder.decode()
+        issued = self._decoder.issue()
 
         # Pass fetched to decode
-        self._decoder.queueInstructions(toDecodeList)
+        self._decoder.queueInstructions(toDecodeList, range(len(toDecodeList)) + pc)
         
         # Need to stall the fetcher, if decoder is stalling.
         # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
         # Need to tell fetcher to go back to the previous instructs.
-        self._fetcher.inc(len(issuedALU) + len(issuedBRU) + len(issuedLSU))
+#        self._fetcher.inc(len(issuedALU) + len(issuedBRU) + len(issuedLSU))
+        self._fetcher.inc(len(issued))
         
         # Tell fetch stage how much we need to replace next cycle.
         self._fetcher.update(self._fetcher.FCI, 2) # TODO: ???????????
 
-        print 'decoded', issuedALU, issuedBRU, issuedLSU
+ #       print 'decoded', issuedALU, issuedBRU, issuedLSU
+        print 'decoded', issued
+
+
+        # LOL RESERVATION STATION SAYS FUCK YOU
+#        big_issue = issuedALU + issuedBRU + issuedLSU
+        issuedALU = issuedBRU = issuedLSU = []
+        big_issue = issued
+
+        issuedALU = self._rs.dispatch()
+        print self._rs._state_nxt
+        self._rs.queueInstructions(big_issue) # THIS NEEDS TO GO 2ND, OOPSIE
 
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
@@ -186,6 +210,7 @@ class CPU(object):
         print "Sim Time: ", self._simtime
         print self._fetcher
         print self._decoder
+        print self._rs
         for eu in self._subpipes:
             print eu
         print self._reg

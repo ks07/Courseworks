@@ -1,0 +1,22 @@
+start:
+	movi r30,7
+	movi r30,8
+	movi r31,0
+	movi r4,2
+	xori r9,123
+then:
+	subi r4,1
+	addi r0,1
+	addi r1,1
+	muli r0,3
+	muli r1,3
+	nop
+	subi r0,1
+	nop
+	subi r1,1
+	bne r4,r31,then
+	nop
+	nop
+	nop
+	nop
+	halt

@@ -15,17 +15,18 @@ class Instruction(object):
         # Need to cover end = imm
         if frmt[-1] == 'i':
             strf.append('{:d}')
-        return ("{} " + ",".join(strf)).rstrip()
+        return ("(a={:d}) {} " + ",".join(strf)).rstrip()
 
     @staticmethod
-    def NOP(debug = False):
+    def NOP(debug = False, asrc = -1):
         """ Gets a NOP instruction, as a placeholder. If debug is set, the instruction should never be executed, and will throw an error if attempted. """
         if debug:
-            return Instruction('dnop', (0,1), debug, None) # Abuse the word field to hold the potentially invalid inst
+            return Instruction(asrc, 'dnop', (0,1), debug, None) # Abuse the word field to hold the potentially invalid inst
         else:
-            return Instruction('nop', (0,0), 0, None)
+            return Instruction(asrc, 'nop', (0,0), 0, None)
 
-    def __init__(self, opcode, frmt, word, regfile, predicted=False):
+    def __init__(self, asrc, opcode, frmt, word, regfile, predicted=False):
+        self.asrc = asrc
         self._opcode = opcode
         self._frmt_str = Instruction._decf2strf(frmt) # If we subclass this becomes unnecessary?
         # Store reg => val index mapping, for register bypassing.
@@ -73,7 +74,7 @@ class Instruction(object):
         self._writeback = []
         # Store memory op, for mem access stage.
         self._memOpp = None
-
+        
     def getOpc(self):
         return self._opcode
 
@@ -114,6 +115,9 @@ class Instruction(object):
         """ Gets the register/value for writeback output. """
         return tuple(self._writeback)
 
+    def getInvRegs(self):
+        return self._invregs
+
     def isBranch(self):
         # TODO: Stop being hacky?
         return self._opcode.startswith('b')
@@ -126,7 +130,7 @@ class Instruction(object):
 
     def __str__(self):
         # This is the implode_ins function in the assembler!
-        return self._frmt_str.format(self._opcode, *self._operands)
+        return self._frmt_str.format(self.asrc, self._opcode, *self._operands)
 
     def __repr__(self):
         return str(self)

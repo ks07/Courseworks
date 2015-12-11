@@ -145,6 +145,9 @@ class Executor(StatefulComponent):
         elif opc == 'bge':
             outReg = None
             self._cpu._branch(val[0] >= val[1], ins.predicted, opr[2])
+        elif opc == 'bne':
+            outReg = None
+            self._cpu._branch(val[0] != val[1], ins.predicted, opr[2])
         else:
             outReg = None
             print "WARNING: Unimplemented opcode:", opc
