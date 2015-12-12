@@ -16,7 +16,12 @@ dt = 3.6;
 
 % open new figure window
 figure
-hold on % so each plot doesn't wipte the predecessor
+hold on % so each plot doesn't wipe the predecessor
+
+% Set initial state
+uav = UAV([0,0],0);
+uav.cmdSpeed(20);
+uav.cmdTurn(6);
 
 % main simulation loop
 for kk=1:1000,
@@ -25,22 +30,24 @@ for kk=1:1000,
     t = t + dt;
     
     % cheat - robot goes round in circles
-    x = [500*cos(0.01*t); 500*sin(0.01*t)];
+    %x = [500*cos(0.01*t); 500*sin(0.01*t)];
+    uav.updateState();
     
     % take measurement
-    p = cloudsamp(cloud,x(1),x(2),t);
+    %p = cloudsamp(cloud,x(1),x(2),t);
     
     % clear the axes for fresh plotting
     cla
     
     % put information in the title
-    title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, x(1),x(2),p))
+    %title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, x(1),x(2),p))
         
     % plot robot location
-    plot(x(1),x(2),'o')
+    %plot(x(1),x(2),'o')
+    uav.plot(t, cloud);
     
     % plot the cloud contours
-    cloudplot(cloud,t)
+    %cloudplot(cloud,t)
     
     % pause ensures that the plots update
     pause(0.1)
