@@ -5,33 +5,65 @@ classdef Controller < handle
         dt;     % The size of timesteps.
         uav;	% The actual UAV we are controlling.
         cloud;	% The cloud to track.
-        POS_BOUND = 1000;	% Max distance in any direction.
+        prevGPS;    % The previously recorded
+        returning;  % Marks whether we are currently trying to get back
+        POS_BOUND = 800;%1000;	% Max distance in any direction.
         PPM_BOUND = 1;  % PPM that signifies the desired boundary.
     end
     
     methods
         function ctrl = Controller(dt,cloud)
             ctrl.dt = dt;
-            ctrl.uav = UAV([0 0],0);
+            ctrl.uav = UAV([0 0],270);
             ctrl.cloud = cloud;
+            ctrl.prevGPS = [0 0];
+            ctrl.returning = false;
         end
         function step(self,t)
             [gps, ppm] = self.uav.getInput(self.cloud,t);
             
+            self.estimateHeading(gps);
+            
             if self.checkBounds(gps)
                 disp('Oops, too far!');
+                if self.returning
+                    self.uav.cmdTurn(1);
+                    self.uav.cmdSpeed(20);
+                    self.returning = false;
+                else
+                    self.uav.cmdTurn(6);
+                    self.uav.cmdSpeed(20);
+                    self.returning = true;
+                end
             elseif ppm >= self.PPM_BOUND
                 disp('found cloud');
+                self.uav.cmdTurn(6);
+                self.uav.cmdSpeed(10);
+                self.returning = false;
             else
-                self.uav.cmdTurn(rand() * 12 - 6);
-                self.uav.cmdSpeed(rand() * 10 + 10);
+                %self.uav.cmdTurn(rand() * 6 - 3);
+                self.uav.cmdSpeed(20);
+                self.returning = false;
             end
             
             self.uav.updateState();
             self.uav.plot(self.cloud,t);
+            
+            % Update records.
+            self.prevGPS = gps;
         end
         function ok = checkBounds(self,gps)
-            ok = max(gps) >= self.POS_BOUND;
+            ok = max(abs(gps)) >= self.POS_BOUND;
+        end
+        function estHDG = estimateHeading(self,gps)
+            %a = [gps 0];
+            %b = [self.prevGPS 0];
+            a = self.prevGPS - gps;
+            b = [0 1];
+            a = a / norm(a);
+            b = b / norm(b);
+            %estHDG = atan2(norm(cross(a,b)), dot(a,b))
+            estHDG = acosd(a(:).'*b(:))
         end
     end
     

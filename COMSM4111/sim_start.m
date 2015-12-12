@@ -15,7 +15,8 @@ t = 0;
 dt = 3.6;
 
 % open new figure window
-figure(1)
+figure(1);
+clf;
 hold on % so each plot doesn't wipe the predecessor
 
 % Set initial state
