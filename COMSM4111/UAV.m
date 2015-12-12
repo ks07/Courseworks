@@ -38,7 +38,7 @@ classdef UAV < handle
             self.pos = self.pos + [x_, y_];
             self.hdg = theta + theta_;
         end
-        function plot(self, t, cloud)
+        function plot(self, cloud, t)
             % put information in the title
             ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);
             title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, self.pos(1),self.pos(2),ppm))
