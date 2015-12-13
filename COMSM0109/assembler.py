@@ -18,7 +18,7 @@ def implode_ins(op, args):
 def code_size(code):
     if code.startswith("halt"):
         # Halt needs to buffer with nops so previous instructions can complete writeback.
-        return 3
+        return 6
     if code.startswith("la ") or code.startswith("ad "):
         return 2
     return 1
@@ -44,6 +44,9 @@ def expand_pseudo(code, labels):
     elif code.startswith("halt"):
         # Halt needs padding with nops to clear through to writeback.
         return [
+            'nop',
+            'nop',
+            'nop',
             'nop',
             'nop',
             'halt'
