@@ -75,7 +75,17 @@ class Instruction(object):
         self._writeback = []
         # Store memory op, for mem access stage.
         self._memOpp = None
-        
+
+    def updateValues(self, regfile):
+        self._invregs = set()
+        self._values = [0] * len(self._values)
+        for ri in self._rregs:
+            vi = self._rvmap[ri]
+            if not regfile.validScoreboard(ri):
+                self._invregs.add(ri)
+            else:
+                self._values[vi] = regfile[ri]
+
     def getOpc(self):
         return self._opcode
 

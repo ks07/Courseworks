@@ -67,89 +67,9 @@ class DecoderSimple(StatefulComponent):
         ready = []
         for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
             ins = self._decode(b,a)
-            if ins.getOutReg() is not None:
-                self._reg.markScoreboard(ins.getOutReg(), True);
-            print 'ISSUES ABOUND',ins,ins._invregs
             ready.append(ins)
         return ready
         
-    def __no__decode(self):
-        """ Decodes current inputs, returns as many independent instructions as possible up to width. """
-        readyALU = []
-        readyBRU = []
-        readyLSU = []
-        maxALU = 4;
-        maxBRU = 1;
-        maxLSU = 1;
-        if False and self._state[self.BRW_IND]:
-            # Waiting for a branch to resolve, block issue.
-            pass
-        else:
-            # No branches currently waiting, try to issue.
-            for ii in range(self._width):
-                ins = self._decode(self._state[ii])
-                
-                if True and not ins._invregs:
-                    # If any of the operands are not ready, the ins is not ready (blocking issue)
-                    if ins.isBranch():
-                        if self._state[self.BRW_IND]:
-                            # Need to block here, as we're only letting one branch through at a time
-                            break
-                        else:
-                            # Need to put into a different queue
-                            readyBRU.append(ins)
-                        # Don't want to dispatch anything else after the branch
-                        break
-                    elif ins.isHalt():
-                        # Want to dispatch on it's own.
-                        if readyBRU or readyALU:
-                            break
-                        else:
-                            # Put halts on the branch unit queue
-                            readyBRU.append(ins)
-                    elif ins.isLoadStore():
-                        # Need to dispatch to load/store unit.
-                        readyLSU.append(ins);
-                        if len(readyLSU) >= maxLSU:
-                            break
-                    else:
-                        readyALU.append(ins)
-                        if len(readyALU) >= maxALU:
-                            break
-
-                    if ins.getOutReg() is not None:
-                        self._reg.markScoreboard(ins.getOutReg(), True);
-                else:
-                    break
-
-                # Regardless of data dependency, if this is a branch we don't want to pass any more ins (no speculative execution)
-                if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt(): # Need to block on halt
-                    # FOR NOW: Only let a single branch through.
-                    # Mark that we are waiting for a conditional.
-                    self._state_nxt[self.BRW_IND] = 1
-                    break
-
-        for ins in chain(readyALU, readyBRU, readyLSU):
-            # Need to mark the pending write in the register scoreboard.
-            print ins, 'OUT REG:', ins.getOutReg()
-            if ins.getOutReg() is not None:
-                self._reg.markScoreboard(ins.getOutReg(), True);
-
-        # Need to shift down by the number of instructions we are passing out.
-        count = len(readyALU) + len(readyBRU) + len(readyLSU)
-        self._state_nxt[:self.RLD_IND-count] = self._state[count:self.RLD_IND]
-        self._state_nxt[self.RLD_IND-count:self.RLD_IND] = [0] * (count)
-
-        # Set the accept count
-        self._state[self.EMP_IND] = count # JEEPERS CREEPERS
-        
-        print 'Ready:', readyALU, readyBRU, readyLSU
-        if count < self._width:
-            print 'DECODER IS BLOCKING/DELAYING'
-        else:
-            print 'DECODER OK'
-        return (readyALU, readyBRU, readyLSU)
-
     def _decode(self, word, asrc = -1):
         """ Decodes a given word; return an Instruction object represented by word. """
         group = word >> 26 # All instructions start with a possibly unique 6 bit ID

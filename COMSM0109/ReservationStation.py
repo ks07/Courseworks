@@ -22,12 +22,16 @@ class ReservationStation(StatefulComponent):
         self._ins_buff_nxt = []
         self._state = np.zeros(36, dtype=np.uint32) # For holding bypassed values (TODO: no shifts like scalar?)
         self._state_nxt = np.zeros_like(self._state)
+        #self._writers = [] # Holds current registers waiting for write
+        self._branched_now = False # Marks if a branch has been dispatched yet this time step.
         # Need a handle to register file
         self._reg = reg
 
     def __str__(self):
         return 'Reservation Station {0:s}: {1:s}'.format(self._id, str(self._ins_buff))
 
+
+    
     def queueInstructions(self, ins):
         """ Puts instructions on the stage input. """
         self._ins_buff_nxt.extend(ins)
@@ -50,10 +54,25 @@ class ReservationStation(StatefulComponent):
         
     def branchResolved(self):
         """ Called when a branch has been resolved (made it out of execute). Unblocks issue. """
+        print 'WOAH UNBLOCKED 80085'
         self._state_nxt[self.BRW_IND] = 0
+
+    def _insReady(self,ins):
+        """ DEBUG WRAPPER, CAUSE I SUCK """
+        ret = self._insReady2(ins)
+        if ret and ins.isBranch():
+            self._branched_now = True
+            self._state_nxt[self.BRW_IND] = 1
+        return ret
         
-    def _insReady(self, ins):
+    def _insReady2(self, ins):
         """ Decides if an instruction is ready to be dispatched. """
+        # We want to stall after a branch.
+        print 'TESTING READY',ins
+        if self._branched_now or self._state[self.BRW_IND] == 1:
+            print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
+            return False
+        ins.updateValues(self._reg)
         irs = ins.getInvRegs().copy()
         #if ins.getOutReg() is not None:
         #    irs.add(ins.getOutReg()) # Need to check for WaW dependencies!
@@ -76,6 +95,7 @@ class ReservationStation(StatefulComponent):
     def dispatch(self):
         # Set the next state
         self._ins_buff_nxt = list(self._ins_buff)
+        self._branched_now = False
 
         toremove = []
         togo = []
@@ -89,6 +109,10 @@ class ReservationStation(StatefulComponent):
                 # Can dispatch
                 togo.append(ins)
                 toremove.append(i) # Remove from choices for next time.
+                
+                # Mark scoreboard
+                if ins.getOutReg() is not None:
+                    self._reg.markScoreboard(ins.getOutReg(), True);
             else:
                 break
             i += 1
@@ -103,11 +127,6 @@ class ReservationStation(StatefulComponent):
         for j in sorted(toremove, reverse=True):
             self._ins_buff_nxt.pop(j)
 
-        for ins in togo:
-            # Mark scoreboard
-            if ins.getOutReg() is not None:
-                self._reg.markScoreboard(ins.getOutReg(), True);
-        
         print 'Dispatching', togo, self._ins_buff, self._ins_buff_nxt
         return togo
 
