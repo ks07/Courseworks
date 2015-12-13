@@ -7,7 +7,6 @@ class InstructionFetcher(StatefulComponent):
     """ The instruction fetching stage. State is the address we are loading from. (i.e. PC) Also required count. """
 
     PCI = 0 # Index of PC
-    FCI = 1 # Index of fetch count
     
     def __init__(self, mem, width):
         self._state = np.zeros(2, dtype=np.uint32)
@@ -16,11 +15,14 @@ class InstructionFetcher(StatefulComponent):
         self._old_state = np.zeros_like(self._state)
         # Need a handle to memory (read-only access!)
         self._mem = mem
-        # Set the fetch count for the first iter.
-        self._state[self.FCI] = width
+        self._width = width
 
     def __str__(self):
         return 'PC = {0:d}'.format(self._state[self.PCI])
+
+    def stall(self):
+        print 'STALLING FETCH', self._state, self._state_nxt
+        np.copyto(self._state_nxt, self._state, casting='no')
 
     # Need to override, to store old PC
     def update(self, addr, val):
@@ -34,7 +36,7 @@ class InstructionFetcher(StatefulComponent):
 
     def fetchIns(self): #TODO: Fix name conflict nicely!
         """ Does the fetch from memory (with implied cache)"""
-        return (self._mem[self._state[self.PCI]:self._state[self.PCI]+self._state[self.FCI]], self._state[self.PCI])
+        return (self._mem[self._state[self.PCI]:self._state[self.PCI]+self._width], self._state[self.PCI])
 
     def inc(self, count):
         """ Increments the PC by a specified amount. """

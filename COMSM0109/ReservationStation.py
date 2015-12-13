@@ -15,7 +15,7 @@ class ReservationStation(StatefulComponent):
     RBD3_IND = 34
     BRW_IND = 35
     
-    def __init__(self, myid, maxDisp, reg):
+    def __init__(self, myid, maxDisp, reg, buffLen):
         self._id = str(myid) # Some ID for display purposes
         self._max_disp = maxDisp # The max number of instructions to dispatch per cycle
         self._ins_buff = [] # Instruction buffer
@@ -26,16 +26,22 @@ class ReservationStation(StatefulComponent):
         self._branched_now = False # Marks if a branch has been dispatched yet this time step.
         # Need a handle to register file
         self._reg = reg
+        # Store max length of buffer.
+        self._buffLen = buffLen
+        self._prevStall = False # Marks if the previous step was a s
 
     def __str__(self):
         return 'Reservation Station {0:s}: {1:s}'.format(self._id, str(self._ins_buff))
 
-
-    
     def queueInstructions(self, ins):
-        """ Puts instructions on the stage input. """
-        self._ins_buff_nxt.extend(ins)
-        print 'extended',self._ins_buff_nxt
+        """ Puts instructions on the stage input. Returns True if we should stall previous. """
+        if len(self._ins_buff_nxt) + len(ins) <= self._buffLen:
+            self._ins_buff_nxt.extend(ins)
+            print 'extended',self._ins_buff_nxt
+            return False
+        else:
+            print 'RS buffer full'
+            return True
 
     def bypassBack(self, age, reg, val):
         """ Inserts a value back into the bypass registers, from a later stage. """

@@ -34,11 +34,18 @@ class DecoderSimple(StatefulComponent):
         np.copyto(self._state, self._state_nxt, casting='no')
         np.copyto(self._srcas, self._srcas_nxt, casting='no')
         # Need to handle dependency checking
-    
+
+    def stall(self):
+        """ Stall this stage this timestep """
+        # Next step should use the same input.
+        print 'STALLING DCDR', self._state, self._state_nxt
+        print 'STALLING DCDR', self._srcas, self._srcas_nxt
+        np.copyto(self._state_nxt, self._state, casting='no')
+        np.copyto(self._srcas_nxt, self._srcas, casting='no')
+
     def queueInstructions(self, toDecodeList, addrs):
         print 'queue DS', toDecodeList, addrs
         # Put at end of waiting list in state.
-#        accept = self._state[self.EMP_IND]
         accept = self._width
         print 'queued, accepting:', accept
         print self._state_nxt

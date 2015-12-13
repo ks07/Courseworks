@@ -34,7 +34,7 @@ class CPU(object):
         #self._decoder = Decoder(self._reg, self._decwidth)
         self._decoder = DecoderSimple(self._reg, self._decwidth)
 
-        self._rs = ReservationStation('All', 2, self._reg)
+        self._rs = ReservationStation('All', 2, self._reg, 3)
 
         # Superscalar stage components.
         self._eu = [
@@ -147,12 +147,9 @@ class CPU(object):
         # Need to tell fetcher to go back to the previous instructs.
 #        self._fetcher.inc(len(issuedALU) + len(issuedBRU) + len(issuedLSU))
         self._fetcher.inc(len(issued))
-        
-        # Tell fetch stage how much we need to replace next cycle.
-        self._fetcher.update(self._fetcher.FCI, 2) # TODO: ???????????
 
- #       print 'decoded', issuedALU, issuedBRU, issuedLSU
-        print 'decoded', issued
+#       print 'decoded', issuedALU, issuedBRU, issuedLSU
+#       print 'decoded', issued
 
 
         # LOL RESERVATION STATION SAYS FUCK YOU
@@ -161,9 +158,15 @@ class CPU(object):
         big_issue = issued
 
         issuedALU = self._rs.dispatch()
-        print self._rs._state_nxt
-        self._rs.queueInstructions(big_issue) # THIS NEEDS TO GO 2ND, OOPSIE
+#        print self._rs._state_nxt
+        stallingRS = self._rs.queueInstructions(big_issue) # THIS NEEDS TO GO 2ND, OOPSIE
 
+        if stallingRS:
+            print 'STALLING'
+            # Need to stall previous stages
+            self._decoder.stall()
+            self._fetcher.stall()
+        
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
         # TODO: I'm not sure this works completely correctly
