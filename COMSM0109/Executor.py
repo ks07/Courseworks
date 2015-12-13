@@ -167,6 +167,8 @@ class Executor(StatefulComponent):
             self._state_nxt[outReg] = outVal
             # Set the bitfield for bypass 1
             self._state_nxt[self.RBD1_IND] = (1 << outReg)
+            # Do actual bypass to everywhere
+            self._cpu.bypassBack(1,outReg,outVal)
         if not outAddr is None:
             ins.setMemOperation(outAddr, outVal)
         return ins

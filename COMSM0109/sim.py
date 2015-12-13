@@ -71,6 +71,10 @@ class CPU(object):
         # Need to increment time
         self._simtime += 1
 
+    def bypassBack(self, age, reg, val):
+        """ Bypasses results back to everywhere relevant (currently only RS) """
+        self._rs.bypassBack(age, reg, val)
+        
     def _branch(self, cond, pred, dest):
         """ Clears the pipeline and does the branch (if necessary!). """
         # Need to tell decoder that the branch has been resolved, so blocking can stop

@@ -45,14 +45,18 @@ class ReservationStation(StatefulComponent):
 
     def bypassBack(self, age, reg, val):
         """ Inserts a value back into the bypass registers, from a later stage. """
-        # TODO: We might only need support for age == 2, so forget generalising for now
-        if age != 2:
-            raise ValueError('Unimplemented bypassBack age!', age);
 
-        if not self._state_nxt[self.RBD1_IND] & reg:
+        if age == 1:
+            # TODO: Check for double writes???
             self._state_nxt[reg] = val
-        # Need to pass this back 2 steps
-        self._state_nxt[self.RBD2_IND] |= (1 << reg)
+            self._state_nxt[self.RBD1_IND] |= (1 << reg)
+        elif age == 2:
+            if not self._state_nxt[self.RBD1_IND] & (1 << reg): # TODO: Is this correct???
+                self._state_nxt[reg] = val
+            # Need to pass this back 2 steps
+            self._state_nxt[self.RBD2_IND] |= (1 << reg)
+        else:
+            raise ValueError('Unimplemented bypassBack age!', age)
 
     def pipelineClear(self):
         """ Mispredicted branch! Clear the pipeline. """
@@ -73,18 +77,19 @@ class ReservationStation(StatefulComponent):
         
     def _insReady2(self, ins):
         """ Decides if an instruction is ready to be dispatched. """
+        bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
         # We want to stall after a branch.
         print 'TESTING READY',ins
         if self._branched_now or self._state[self.BRW_IND] == 1:
             print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
             return False
-        ins.updateValues(self._reg)
+        print 'IRS BEFORE',ins.getInvRegs()
+        ins.updateValues(self._reg, bbf, self._state[:32])
         irs = ins.getInvRegs().copy()
         #if ins.getOutReg() is not None:
         #    irs.add(ins.getOutReg()) # Need to check for WaW dependencies!
         print 'tax evasion',irs
         if irs:
-            bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
             for ri,vi in ins.getRegValMap().iteritems():
                 # Need to check if a value has been bypassed (would be done by decoder in real cpu)
                 if ri in irs and self._reg.validScoreboard(ri):

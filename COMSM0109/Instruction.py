@@ -76,15 +76,19 @@ class Instruction(object):
         # Store memory op, for mem access stage.
         self._memOpp = None
 
-    def updateValues(self, regfile):
+    def updateValues(self, regfile, bypassFields = 0, bypassVals = None):
         self._invregs = set()
         self._values = [0] * len(self._values)
+        print 'Bypass fields',bypassFields
         for ri in self._rregs:
             vi = self._rvmap[ri]
-            if not regfile.validScoreboard(ri):
-                self._invregs.add(ri)
-            else:
+            if regfile.validScoreboard(ri):
                 self._values[vi] = regfile[ri]
+            elif bypassFields & (1 << ri):
+                print 'GETTING BYPASS VALUE',ri
+                self._values[vi] = bypassVals[ri]
+            else:
+                self._invregs.add(ri)
 
     def getOpc(self):
         return self._opcode
