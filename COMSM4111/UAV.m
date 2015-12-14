@@ -17,7 +17,9 @@ classdef UAV < handle
             uav.trn = 0;
         end
         function [gps, ppm] = getInput(self, cloud, t)
-            gps = self.pos; % TODO: This needs error
+            % Model GPS error as normal distribution, sdev of 1.5m
+            gps = normrnd(self.pos, [1.5, 1.5]);
+            % Can assume no error in ppm measure
             ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);
         end
         function cmdSpeed(self,spd)
