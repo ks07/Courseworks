@@ -27,11 +27,11 @@ classdef Controller < handle
             if self.checkBounds(gps)
                 disp('Oops, too far!');
                 if self.returning
-                    self.uav.cmdTurn(1);
+                    self.uav.cmdTurn(-1);
                     self.uav.cmdSpeed(20);
                     self.returning = false;
                 else
-                    self.uav.cmdTurn(6);
+                    self.uav.cmdTurn(-1);
                     self.uav.cmdSpeed(20);
                     self.returning = true;
                 end
@@ -42,11 +42,16 @@ classdef Controller < handle
                 self.returning = false;
             else
                 %self.uav.cmdTurn(rand() * 6 - 3);
+                self.uav.cmdTurn(0.5)
                 self.uav.cmdSpeed(20);
                 self.returning = false;
             end
             
-            self.uav.updateState();
+            % Check the radius
+            self.uav.cmdTurn(6);
+            self.uav.cmdSpeed(20);
+            
+            self.uav.updateState(self.dt);
             self.uav.plot(self.cloud,t);
             
             % Update records.

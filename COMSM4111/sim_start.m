@@ -12,8 +12,8 @@ load 'cloud2.mat'
 
 % time and time step
 t = 0;
-dt = 3.6;
-
+%dt = 3.6;
+dt = 0.1;
 % open new figure window
 figure(1);
 clf;
@@ -29,7 +29,7 @@ for kk=1:1000,
     t = t + dt;
     
     % clear the axes for fresh plotting
-    cla
+    cla;
     
     ctrl.step(t);
     % cheat - robot goes round in circles
@@ -37,6 +37,6 @@ for kk=1:1000,
     
     
     % pause ensures that the plots update
-    pause(0.1)
+    pause(0.025)
     
 end
