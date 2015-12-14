@@ -7,10 +7,6 @@ classdef UAV < handle
         hdg;    % Heading of the UAV
         spd;    % Commanded forward speed
         trn;    % Commanded turn curvature
-        maxX;
-        maxY;
-        minX;
-        minY;
     end
     
     methods
@@ -19,10 +15,6 @@ classdef UAV < handle
             uav.hdg = hdg;
             uav.spd = 0;
             uav.trn = 0;
-            uav.maxX = 0;
-            uav.maxY = 0;
-            uav.minX = 0;
-            uav.minY = 0;
         end
         function [gps, ppm] = getInput(self, cloud, t)
             gps = self.pos; % TODO: This needs error
@@ -35,30 +27,12 @@ classdef UAV < handle
             self.trn = trn;
         end
         function updateState(self,dt)
-            v = self.spd;
-            mu = self.trn;
-            theta = self.hdg;
-            x_ = v * sind(theta);
-            y_ = v * cosd(theta);
-            theta_ = v * mu;
-            
             % Lol, runge-kutta is for nerds (as is euler)
             state = [self.pos, self.hdg];
             input = [self.spd, self.trn];
             newstate = self.pos_rk4(state,input,dt);
             self.pos = newstate(1:2);
             self.hdg = newstate(3);
-            %self.pos = self.pos + [x_, y_];
-            %self.hdg = theta + theta_;
-            
-            self.maxX = max([self.maxX, self.pos(1)]);
-            self.maxY = max([self.maxY, self.pos(2)]);
-            self.minX = min([self.minX, self.pos(1)]);
-            self.minY = min([self.minY, self.pos(2)]);
-            disp(self.maxX)
-            disp(self.minX)
-            disp(self.maxY)
-            disp(self.minY)
         end
         function newstate=pos_rk4(self,state,input,dt)
             % Runge-Kutta 4th order for position

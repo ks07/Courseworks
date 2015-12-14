@@ -13,7 +13,7 @@ load 'cloud2.mat'
 % time and time step
 t = 0;
 %dt = 3.6;
-dt = 0.1;
+dt = 1.5;
 % open new figure window
 figure(1);
 clf;

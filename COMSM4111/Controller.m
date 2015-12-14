@@ -41,15 +41,10 @@ classdef Controller < handle
                 self.uav.cmdSpeed(10);
                 self.returning = false;
             else
-                %self.uav.cmdTurn(rand() * 6 - 3);
-                self.uav.cmdTurn(0.5)
+                self.uav.cmdTurn(0.1)
                 self.uav.cmdSpeed(20);
                 self.returning = false;
             end
-            
-            % Check the radius
-            self.uav.cmdTurn(6);
-            self.uav.cmdSpeed(20);
             
             self.uav.updateState(self.dt);
             self.uav.plot(self.cloud,t);
