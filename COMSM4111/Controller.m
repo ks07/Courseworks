@@ -49,8 +49,14 @@ classdef Controller < handle
                 self.uav.cmdSpeed(10);
                 self.returning = false;
                 self.cloudfound = true;
+            elseif ppm > self.prevPPM
+                disp('ppm increasing');
+                self.uav.cmdTurn(0);
+                self.uav.cmdSpeed(10);
+                self.returning = false;
             else
-                self.uav.cmdTurn(0.1)
+                disp('Searching for cloud...')
+                self.uav.cmdTurn(0.1);
                 self.uav.cmdSpeed(20);
                 self.returning = false;
             end
