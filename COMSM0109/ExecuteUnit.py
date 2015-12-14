@@ -11,7 +11,7 @@ class ExecuteUnit(object):
         """ ID is for debugging and display purposes. """
         self._id = myid;
         self._executor = Executor(cpu) # Requires a reference to cpu, for branches
-        self._memaccess = MemoryAccess(mem, self._executor) # Requires a ref to executor, for forwarding
+        self._memaccess = MemoryAccess(mem, cpu) # Requires a ref to executor, for forwarding
         self._writeback = Writeback(reg)
 
         # Easy iteration

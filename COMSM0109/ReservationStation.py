@@ -138,6 +138,15 @@ class ReservationStation(StatefulComponent):
         for j in sorted(toremove, reverse=True):
             self._ins_buff_nxt.pop(j)
 
+        # Need to keep all the old bypass values
+        self._state_nxt = self._state
+        # Need to move bypass 2,3 up
+        # Need to do 3 stages as explained here:
+        # http://courses.cs.washington.edu/courses/cse378/02sp/sections/section7-1.html
+        self._state_nxt[self.RBD3_IND] = self._state[self.RBD2_IND]
+        self._state_nxt[self.RBD2_IND] = self._state[self.RBD1_IND]
+        self._state_nxt[self.RBD1_IND] = 0
+            
         print 'Dispatching', togo, self._ins_buff, self._ins_buff_nxt
         return togo
 

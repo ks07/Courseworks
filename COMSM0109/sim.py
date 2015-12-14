@@ -236,34 +236,37 @@ def start(mem_file):
     # Manual stepping
     while True:
         usr = sys.stdin.readline().strip()
-        if usr.startswith('d'):
-            args = usr.split(' ')[1:]
-            cpu.dump(int(args[0], 0), int(args[1], 0))
-        elif usr.startswith('r'):
-            clearTerm('Resetting CPU...')
-            cpu = CPU(mem_file)
-        elif usr.startswith('a'):
-            # Show assembly for operand (decode operand)
-            arg = int(usr.split(' ')[1], 0)
-            try:
-                print cpu._decoder._decode(arg)
-            except:
-                print 'Not an instruction (dnop)'
-        elif usr.startswith('c'):
-            # Continue for given number of cycles
-            arg = int(usr.split(' ')[1], 0)
-            while arg:
+        try:
+            if usr.startswith('d'):
+                args = usr.split(' ')[1:]
+                cpu.dump(int(args[0], 0), int(args[1], 0))
+            elif usr.startswith('r'):
+                clearTerm('Resetting CPU...')
+                cpu = CPU(mem_file)
+            elif usr.startswith('a'):
+                # Show assembly for operand (decode operand)
+                arg = int(usr.split(' ')[1], 0)
+                try:
+                    print cpu._decoder._decode(arg)
+                except:
+                    print 'Not an instruction (dnop)'
+            elif usr.startswith('c'):
+                # Continue for given number of cycles
+                arg = int(usr.split(' ')[1], 0)
+                while arg:
+                    cpu.step()
+                    arg -= 1
+                    print '<CONTINUE COMPLETE>'
+                    cpu.displayState()
+            elif usr.startswith('e'):
+                # Eval
+                arg = usr.split(' ', 1)[1]
+                print eval(arg, globals(), locals())
+            else:
                 cpu.step()
-                arg -= 1
-                print '<CONTINUE COMPLETE>'
                 cpu.displayState()
-        elif usr.startswith('e'):
-            # Eval
-            arg = usr.split(' ', 1)[1]
-            print eval(arg, globals(), locals())
-        else:
-            cpu.step()
-            cpu.displayState()
+        except Exception as e:
+            print 'Error, try again:', e
 
 if __name__ == '__main__' :
     # Ignore overflow warnings - we expect it!
