@@ -74,6 +74,9 @@ class DecoderSimple(StatefulComponent):
         ready = []
         for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
             ins = self._decode(b,a)
+            oReg = ins.getOutReg()
+            if oReg is not None:
+                self._reg.markScoreboard(oReg, True)
             ready.append(ins)
         return ready
         

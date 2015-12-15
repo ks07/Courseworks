@@ -48,12 +48,12 @@ class Instruction(object):
                     self._rvmap[ri] = len(values)
                     values.append(regfile[ri])
                     self._rregs.add(ri)
+                    if not regfile.validScoreboard(ri):
+                        self._invregs.add(ri);
                 if arg == 'w' or arg == 'rw':
                     # Store the output reg.
                     self._oreg = ri
                 
-                if not regfile.validScoreboard(ri):
-                    self._invregs.add(ri);
             elif arg == 'i':
                 shift -= 16
                 mask = 0xFFFF
@@ -75,6 +75,9 @@ class Instruction(object):
         self._writeback = []
         # Store memory op, for mem access stage.
         self._memOpp = None
+        # Need to store a mapping between invalid values and special instruction IDs
+        self.rstag = -1
+        self.tvmap = {}
 
     def updateValues(self, regfile, bypassFields = 0, bypassVals = None):
         self._invregs = set()

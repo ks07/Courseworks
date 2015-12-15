@@ -34,7 +34,7 @@ class MemoryAccess(object):
                 print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._ins))
                 self._ins.setWBOutput(self._ins.getOpr()[0], val) # TODO: This will be broken by weird loads!
 
-                self._cpu.bypassBack(2, self._ins.getOpr()[0], val);
+                self._cpu.bypassBack(2, self._ins.getOpr()[0], val,self._ins);
         return self._ins
 
 

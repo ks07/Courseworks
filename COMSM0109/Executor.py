@@ -62,6 +62,7 @@ class Executor(StatefulComponent):
         val = ins.getVal()
 
         bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
+        bbf  = 0
         for ri,vi in ins.getRegValMap().iteritems():
             # Need to check if a value has been bypassed (would be done by decoder in real cpu)
             if bbf & (1 << ri):
@@ -168,7 +169,7 @@ class Executor(StatefulComponent):
             # Set the bitfield for bypass 1
             self._state_nxt[self.RBD1_IND] = (1 << outReg)
             # Do actual bypass to everywhere
-            self._cpu.bypassBack(1,outReg,outVal)
+            self._cpu.bypassBack(1,outReg,outVal,ins)
         if not outAddr is None:
             ins.setMemOperation(outAddr, outVal)
         return ins

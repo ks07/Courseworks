@@ -71,9 +71,10 @@ class CPU(object):
         # Need to increment time
         self._simtime += 1
 
-    def bypassBack(self, age, reg, val):
+    def bypassBack(self, age, reg, val, ins):
         """ Bypasses results back to everywhere relevant (currently only RS) """
         self._rs.bypassBack(age, reg, val)
+        self._rs.superbypass(ins)
         
     def _branch(self, cond, pred, dest):
         """ Clears the pipeline and does the branch (if necessary!). """
@@ -266,6 +267,7 @@ def start(mem_file):
                 cpu.step()
                 cpu.displayState()
         except Exception as e:
+            raise
             print 'Error, try again:', e
 
 if __name__ == '__main__' :
