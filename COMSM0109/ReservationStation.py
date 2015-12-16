@@ -77,9 +77,9 @@ class ReservationStation(StatefulComponent):
     def _insReady2(self, ins):
         """ Decides if an instruction is ready to be dispatched. """
         # We want to stall after a branch.
-#        if self._branched_now or self._state[self.BRW_IND] == 1:
-#            print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
-#            return False
+        if self._branched_now or self._state[self.BRW_IND] == 1:
+            print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
+            return False
         self._rob.fillInstruction(ins)
         return not ins.getInvRegs()
         
