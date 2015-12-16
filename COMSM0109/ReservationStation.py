@@ -22,6 +22,7 @@ class ReservationStation(StatefulComponent):
         self._state_nxt = np.zeros_like(self._state)
         #self._writers = [] # Holds current registers waiting for write
         self._branched_now = False # Marks if a branch has been dispatched yet this time step.
+#        self._writing_now = set()
         # Need a handle to register file
         self._reg = reg
         # Need handle to reorder buffer
@@ -86,6 +87,7 @@ class ReservationStation(StatefulComponent):
         # Set the next state
         self._ins_buff_nxt = list(self._ins_buff)
         self._branched_now = False
+        writing_now = set()
 
         toremove = []
         togo = []
@@ -94,14 +96,19 @@ class ReservationStation(StatefulComponent):
         while len(togo) < self._max_disp and i < len(self._ins_buff):
             # In order for now
             ins = self._ins_buff[i]
+            oreg = ins.getOutReg()
 
-            if self._insReady(ins):
+            if oreg not in writing_now and self._insReady(ins):
                 # Can dispatch
                 togo.append(ins)
                 toremove.append(i) # Remove from choices for next time.
 
                 # Update state in ROB
                 self._rob.insDispatched(ins)
+
+                # Don't dispatch two writes to the same register at once.
+                if ins.getOutReg() is not None:
+                    writing_now.add(ins.getOutReg())
                 
                 # Mark scoreboard
                 if ins.getOutReg() is not None:
