@@ -80,6 +80,38 @@ class ReorderBuffer(object):
         self._reg.markScoreboard(ri, False)
         return True
 
+    def tagDependentWrite(self, new_ins):
+        """ Puts handle for dependent write into the robvmap for the instruction. Might actually work. """
+        earlier = False
+        irs = new_ins.getInvRegs().copy()
+        for ins in self._ins_buff_nxt:
+            if earlier:
+                oreg = ins.getOutReg()
+                if oreg is not None and oreg in irs:
+                    new_ins.rrobmap[oreg] = ins # Mark that new_ins should get value for oreg from ins
+                    irs.remove(oreg) # Dont keep looking for this inv reg
+            elif ins is new_ins:
+                # Can only be dependent on an earlier instruction!
+                earlier = True
+        # Not sure if this should ever happen, but the result must be in the regfile.
+        print 'irstag',irs
+        assert len(irs) == 0
+        #print 'WARNING (maybe): latest write guessed in regfile...', ri
+        #return None
+
+    def fillInstruction(self, ins):
+        """ Fills as many invalid values as possible from completed and queued instructions. """
+        print 'filling',ins
+        for ri,vi in ins.getRegValMap().iteritems(): # TODO: Support for multiple value targets per reg
+            if ri in ins.getInvRegs():
+                # Loop through invalid regs, let us remove them.
+                depIns = ins.rrobmap[ri]
+                if depIns.rbstate == self.INS_COMPLETED:
+                    ins.getInvRegs().remove(ri)
+                    ins._values[vi] = depIns.getOutVal()
+                print 'checking r',ri,'depIns',depIns,'state',depIns.rbstate,self.INS_COMPLETED
+
+    # Probably useless
     def findLatestWrite(self, ri):
         """ Returns handle (would be ROB index) of the instruction we need result from, and if the ins is done. """
         for ins in self._ins_buff_nxt:

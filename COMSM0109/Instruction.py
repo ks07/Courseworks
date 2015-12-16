@@ -78,6 +78,7 @@ class Instruction(object):
 
         # Reorder Buffer Fields (kept here for ease of access)
         self.rbstate = -1
+        self.rrobmap = {}
 
     def updateValues(self, regfile):
         self._invregs = set()

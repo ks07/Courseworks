@@ -79,23 +79,8 @@ class ReservationStation(StatefulComponent):
         if self._branched_now or self._state[self.BRW_IND] == 1:
             print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
             return False
-        irs = ins.getInvRegs() # No copy, when dep is resolved we want it to stay that way
-        if irs:
-            for ri,vi in ins.getRegValMap().iteritems():
-                if ri in irs:
-                    # Loop through all values not yet filled.
-                    # TODO: This may want to happen at issue time in decoder, as OoO might ruin this
-                    waitingOn, depRdy = self._rob.findLatestWrite(ri)
-                    if waitingOn is None:
-                        ins._values[vi] = self._reg[ri]
-                        irs.remove(ri)
-                    elif depRdy:
-                        ins._values[vi] = waitingOn.getOutVal()
-                        irs.remove(ri)
-                    else:
-                        # Dependent instruction is still waiting
-                        pass
-        return not irs
+        self._rob.fillInstruction(ins)
+        return not ins.getInvRegs()
         
     def dispatch(self):
         # Set the next state

@@ -69,6 +69,7 @@ class DecoderSimple(StatefulComponent):
             ins = self._decode(b,a)
             ready.append(ins)
             self._rob.insIssued(ins)
+            self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready 
         return ready
         
     def _decode(self, word, asrc = -1):
