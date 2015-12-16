@@ -244,8 +244,11 @@ def start(mem_file):
     while True:
         usr = sys.stdin.readline().strip()
         if usr.startswith('d'):
-            args = usr.split(' ')[1:]
-            cpu.dump(int(args[0], 0), int(args[1], 0))
+            try:
+                args = usr.split(' ')[1:]
+                cpu.dump(int(args[0], 0), int(args[1], 0))
+            except:
+                print 'Invalid range.'
         elif usr.startswith('r'):
             clearTerm('Resetting CPU...')
             cpu = CPU(mem_file)
@@ -266,8 +269,11 @@ def start(mem_file):
                 cpu.displayState()
         elif usr.startswith('e'):
             # Eval
-            arg = usr.split(' ', 1)[1]
-            print eval(arg, globals(), locals())
+            try:
+                arg = usr.split(' ', 1)[1]
+                print eval(arg, globals(), locals())
+            except Exception as e:
+                print e
         else:
             cpu.step()
             cpu.displayState()
