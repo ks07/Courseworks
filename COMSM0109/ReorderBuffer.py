@@ -89,6 +89,13 @@ class ReorderBuffer(object):
         # Not sure if this should ever happen, but the result must be in the regfile.
         print 'WARNING (maybe): latest write guessed in regfile...', ri
         return None
+
+    def decoderStalled(self, cancelled):
+        """ The decoder stalled, so the decoded entries should be poisoned/removed/reused next iter. """
+        for ins in reversed(cancelled):
+            # Go by the assumption that these should match with the latest in buffer
+            togo = self._ins_buff_nxt.popleft()
+            assert togo is ins
     
     def advstate(self):
         self._ins_buff = collections.deque(self._ins_buff_nxt) # Need to copy the list TODO: Is a deep copy required?

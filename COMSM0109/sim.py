@@ -172,6 +172,7 @@ class CPU(object):
             # Need to stall previous stages
             self._decoder.stall()
             self._fetcher.stall()
+            self._rob.decoderStalled(issued) # Need to remove/poison the entries corresponding to stalled
         
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
@@ -225,7 +226,7 @@ class CPU(object):
         print self._rs
         for eu in self._subpipes:
             print eu
-        print self._rob
+        print '\n',self._rob,'\n'
         print self._reg
 
     def dump(self, start, end):
