@@ -113,11 +113,11 @@ class ReservationStation(StatefulComponent):
                 break
             i += 1
 
-#            if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt(): # Need to block on halt
-#                # FOR NOW: Only let a single branch through.
-#                # Mark that we are waiting for a conditional.
-#                self._state_nxt[self.BRW_IND] = 1
-#                break
+            if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt(): # Need to block on halt
+                # FOR NOW: Only let a single branch through.
+                # Mark that we are waiting for a conditional.
+                self._state_nxt[self.BRW_IND] = 1
+                break
 
         print 'rem', toremove, self._ins_buff, self._ins_buff_nxt
         for j in sorted(toremove, reverse=True):

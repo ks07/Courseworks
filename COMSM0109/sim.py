@@ -82,26 +82,31 @@ class CPU(object):
         # Need to tell decoder that the branch has been resolved, so blocking can stop
         self._decoder.branchResolved()
         self._rs.branchResolved()
-        if cond and not pred:
-            # Should have taken, but did not.
-            print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
-            self._fetcher.update(0, dest) # Update the PC to point to the new address
-            self._decoder.pipelineClear()
-            self._rs.pipelineClear()
-            for eu in self._subpipes:
-                eu.invalidateExecute() # Empty the execute instruction reg
-            self._reg.resetScoreboard()
-        elif not cond and pred:
-            # Shouldn't have taken, but did.
-            print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
-            self._fetcher.restore() # Load the original PC value from before prediction
-            self._decoder.pipelineClear()
-            self._rs.pipelineClear()
-            for eu in self._subpipes:
-                eu.invalidateExecute() # Empty the execute instruction reg
-            self._reg.resetScoreboard()
-        else:
-            print "* ...and the predictor was right, so this was a nop!"
+
+        if cond:
+            self._fetcher.update(0, dest);
+
+        
+        # if cond and not pred:
+        #     # Should have taken, but did not.
+        #     print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
+        #     self._fetcher.update(0, dest) # Update the PC to point to the new address
+        #     self._decoder.pipelineClear()
+        #     self._rs.pipelineClear()
+        #     for eu in self._subpipes:
+        #         eu.invalidateExecute() # Empty the execute instruction reg
+        #     self._reg.resetScoreboard()
+        # elif not cond and pred:
+        #     # Shouldn't have taken, but did.
+        #     print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
+        #     self._fetcher.restore() # Load the original PC value from before prediction
+        #     self._decoder.pipelineClear()
+        #     self._rs.pipelineClear()
+        #     for eu in self._subpipes:
+        #         eu.invalidateExecute() # Empty the execute instruction reg
+        #     self._reg.resetScoreboard()
+        # else:
+        #     print "* ...and the predictor was right, so this was a nop!"
 
     def _usePrediction(self, pred, branch):
         """ Uses the prediction to set the fetch target prematurely. Must run after fetch has set decoder input. """
