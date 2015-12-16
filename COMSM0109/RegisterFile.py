@@ -46,6 +46,7 @@ class RegisterFile(StatefulComponent):
     
     def markScoreboard(self, ri, dirty):
         """ Marks an entry in the reg file as dirty (or not). """
+        print 'HOLY BATMAN',ri,dirty
         scbd = self._state[self.SCBD_IND]
         if dirty:
             new = scbd & (0xFFFFFFFF ^ (1 << ri))

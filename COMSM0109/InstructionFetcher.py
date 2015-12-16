@@ -9,7 +9,7 @@ class InstructionFetcher(StatefulComponent):
     PCI = 0 # Index of PC
     
     def __init__(self, mem, width):
-        self._state = np.zeros(2, dtype=np.uint32)
+        self._state = np.zeros(1, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
         # Need to backup before changes (to undo bad predictions)
         self._old_state = np.zeros_like(self._state)
@@ -20,9 +20,13 @@ class InstructionFetcher(StatefulComponent):
     def __str__(self):
         return 'PC = {0:d}'.format(self._state[self.PCI])
 
-    def stall(self):
-        print 'STALLING FETCH', self._state, self._state_nxt
-        np.copyto(self._state_nxt, self._state, casting='no')
+    def stall(self, count = False):
+        if count == 1:
+            self._state_nxt[self.PCI] = self._state[self.PCI] + 1 # Eat one instruction, decode partially worked
+            print 'SPECIAL STALLING FETCH',count
+        else:
+            print 'STALLING FETCH', self._state, self._state_nxt, count
+            np.copyto(self._state_nxt, self._state, casting='no')
 
     # Need to override, to store old PC
     def update(self, addr, val):

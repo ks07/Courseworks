@@ -77,9 +77,9 @@ class ReservationStation(StatefulComponent):
     def _insReady2(self, ins):
         """ Decides if an instruction is ready to be dispatched. """
         # We want to stall after a branch.
-        if self._branched_now or self._state[self.BRW_IND] == 1:
-            print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
-            return False
+#        if self._branched_now or self._state[self.BRW_IND] == 1:
+#            print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
+#            return False
         self._rob.fillInstruction(ins)
         return not ins.getInvRegs()
         
@@ -109,19 +109,15 @@ class ReservationStation(StatefulComponent):
                 # Don't dispatch two writes to the same register at once.
                 if ins.getOutReg() is not None:
                     writing_now.add(ins.getOutReg())
-                
-                # Mark scoreboard
-                if ins.getOutReg() is not None:
-                    self._reg.markScoreboard(ins.getOutReg(), True); # TODO: Might need to happen in decoder
             else:
                 break
             i += 1
-            
-            if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt(): # Need to block on halt
-                # FOR NOW: Only let a single branch through.
-                # Mark that we are waiting for a conditional.
-                self._state_nxt[self.BRW_IND] = 1
-                break
+
+#            if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt(): # Need to block on halt
+#                # FOR NOW: Only let a single branch through.
+#                # Mark that we are waiting for a conditional.
+#                self._state_nxt[self.BRW_IND] = 1
+#                break
 
         print 'rem', toremove, self._ins_buff, self._ins_buff_nxt
         for j in sorted(toremove, reverse=True):

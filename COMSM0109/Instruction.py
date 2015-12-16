@@ -49,6 +49,7 @@ class Instruction(object):
                     values.append(regfile[ri])
                     self._rregs.add(ri)
                     if not regfile.validScoreboard(ri):
+                        print 'WOW WOW WOW INVALID ADD addr:',asrc,'r',ri
                         self._invregs.add(ri);
                 if arg == 'w' or arg == 'rw':
                     # Store the output reg.
@@ -79,15 +80,16 @@ class Instruction(object):
         self.rbstate = -1
         self.rrobmap = {}
 
-    def updateValues(self, regfile):
-        self._invregs = set()
-        self._values = [0] * len(self._values)
-        for ri in self._rregs:
-            vi = self._rvmap[ri]
-            if not regfile.validScoreboard(ri):
-                self._invregs.add(ri)
-            else:
-                self._values[vi] = regfile[ri]
+
+    # def updateValues(self, regfile):
+    #     self._invregs = set()
+    #     self._values = [0] * len(self._values)
+    #     for ri in self._rregs:
+    #         vi = self._rvmap[ri]
+    #         if not regfile.validScoreboard(ri):
+    #             self._invregs.add(ri)
+    #         else:
+    #             self._values[vi] = regfile[ri]
 
     def getOpc(self):
         return self._opcode
@@ -145,6 +147,9 @@ class Instruction(object):
 
     def isLoadStore(self):
         return self._opcode == 'ld' or self._opcode == 'st'
+
+    def isNOP(self):
+        return self._opcode == 'nop' or self._opcode == 'dnop'
 
     def __str__(self):
         # This is the implode_ins function in the assembler!

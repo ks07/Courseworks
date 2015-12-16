@@ -143,7 +143,7 @@ class CPU(object):
 
         # Get issued instructions from decoder.
 #        issuedALU, issuedBRU, issuedLSU = self._decoder.decode()
-        issued = self._decoder.issue()
+        issued, stallingDEC = self._decoder.issue()
 
         # Pass fetched to decode
         self._decoder.queueInstructions(toDecodeList, range(len(toDecodeList)) + pc)
@@ -173,6 +173,10 @@ class CPU(object):
             self._decoder.stall()
             self._fetcher.stall()
             self._rob.decoderStalled(issued) # Need to remove/poison the entries corresponding to stalled
+        elif stallingDEC:
+            print 'STALLING AT DECODER'
+            # Issue has stalled due to a branch.
+            self._fetcher.stall(1)
         
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 

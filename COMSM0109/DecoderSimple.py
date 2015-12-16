@@ -13,9 +13,8 @@ class DecoderSimple(StatefulComponent):
     def __init__(self, regfile, width, rob):
         # Width gives the number of instructions that are held and decoded.
         self.RLD_IND = width
-        self.EMP_IND = width + 1 # Index of empty counter, tells how many instructions from fetch to accept.
-        self.BRW_IND = width + 2 # Index of branch wait indicator, if set we should issue nothing until branch is resolved.
-        self._state = np.zeros(width + 3, dtype=np.uint32)
+        self.BRW_IND = width + 1 # Index of branch wait indicator, if set we should issue nothing until branch is resolved.
+        self._state = np.zeros(width + 2, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
         self._srcas = np.ones(width, dtype=np.uint32) * -1
         self._srcas_nxt = np.ones(width, dtype=np.uint32) * -1
@@ -23,7 +22,6 @@ class DecoderSimple(StatefulComponent):
         self._reg = regfile
         self._rob = rob
         self._width = width
-        self._state[self.EMP_IND] = self._width
 
     def __str__(self):
         #return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))
@@ -55,7 +53,6 @@ class DecoderSimple(StatefulComponent):
         """ Called when the stage needs clearing due to a branch misprediction. """
         self._state_nxt[:self._width] = 0 # Clear the instruction buffers
         self._state_nxt[self.RLD_IND] = self.NO_LD # Don't need to bubble for load
-        self._state_nxt[self.EMP_IND] = self._width;
         self._srcas_nxt = np.zeros_like(self._srcas_nxt)
 
     def branchResolved(self):
@@ -65,12 +62,22 @@ class DecoderSimple(StatefulComponent):
     def issue(self):
         """ Decodes current inputs, issues instructions up to width. Issue bound fetch, non-blocking! """
         ready = []
+        blocked = False
         for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
             ins = self._decode(b,a)
+            if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt():
+                # Block on branches for now
+                self._state_nxt[self.BRW_IND] = 1
+                blocked = True
+                break
             ready.append(ins)
             self._rob.insIssued(ins)
-            self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready 
-        return ready
+            self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready
+            # Mark scoreboard
+            if ins.getOutReg() is not None:
+                print ' MARKING SCOREBOARD FOR',ins.getOutReg(),ins
+                self._reg.markScoreboard(ins.getOutReg(), True)
+        return ready, blocked
         
     def _decode(self, word, asrc = -1):
         """ Decodes a given word; return an Instruction object represented by word. """

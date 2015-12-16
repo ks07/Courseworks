@@ -43,9 +43,9 @@ class ReorderBuffer(object):
             ins = self._ins_buff_nxt.pop()
         except IndexError:
             print 'Empty ROB'
-            ins = Instruction.NOP()
-
-        if ins.rbstate == self.INS_COMPLETED:
+            ins = None
+            
+        while ins is not None and (ins.rbstate == self.INS_COMPLETED or ins.isNOP()):
             print 'Committing', ins
 
             # Write to registers
@@ -61,10 +61,18 @@ class ReorderBuffer(object):
                 if write is not None:
                     print 'Writing {0:d} in MEM[{1:d}]'.format(write, addr)
                     self._mem[addr] = write
-        elif ins.asrc < 0:
-            # We have stalled, should not add this back to ROB!
-            print 'Ignoring', ins
-        else:
+
+            try:
+                ins = self._ins_buff_nxt.pop()
+            except IndexError:
+                print 'Empty ROB'
+                ins = None
+                    
+        # elif ins.asrc < 0:
+        #     # We have stalled, should not add this back to ROB!
+        #     print 'Ignoring', ins
+        # else:
+        if ins is not None and ins.asrc >= 0:
             # Instruction not done, put back in ROB
             print 'Not ready to commit', ins
             self._ins_buff_nxt.append(ins)
@@ -75,7 +83,7 @@ class ReorderBuffer(object):
         for ins in self._ins_buff_nxt:
             oreg = ins.getOutReg()
             if oreg is not None and oreg == ri:
-                print 'Pending write to scoreboard in ROB, not marking scoreboard.'
+                print 'Pending write to scoreboard in ROB, not marking scoreboard. ERMAHWUT', ri, ins
                 return False # TODO: With speculative exec we will need to rectify this if the matching ins is speculative and later deleted.
         self._reg.markScoreboard(ri, False)
         return True
@@ -124,11 +132,18 @@ class ReorderBuffer(object):
 
     def decoderStalled(self, cancelled):
         """ The decoder stalled, so the decoded entries should be poisoned/removed/reused next iter. """
+        oregs = set()
         for ins in reversed(cancelled):
             # Go by the assumption that these should match with the latest in buffer
             togo = self._ins_buff_nxt.popleft()
             assert togo is ins
-    
+            if togo.getOutReg() is not None:
+                oregs.add(togo.getOutReg())
+
+        for ri in oregs:
+            # Need to mark scoreboard as valid if the bit was flipped by the stalled instructions
+            self._scbdCheckSet(ri)
+
     def advstate(self):
         self._ins_buff = collections.deque(self._ins_buff_nxt) # Need to copy the list TODO: Is a deep copy required?
         #return super(self.__class__, self).advstate();
