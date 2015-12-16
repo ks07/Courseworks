@@ -11,13 +11,14 @@ class ReorderBuffer(object):
     INS_EXECUTING = 1
     INS_COMPLETED = 2
     
-    def __init__(self, size, reg, mem):
+    def __init__(self, size, reg, mem, cpu):
         self._maxlen = size # Max number of entries in the reorder buffer
         self._reg = reg # Need to commit to registers
         self._mem = mem # Need to commit to memory
         # PUSH TO LEFT, POP ON RIGHT
         self._ins_buff = collections.deque() # Buffer of reserved instructions TODO: maxlen param
         self._ins_buff_nxt = collections.deque() # Next step
+        self._cpu = cpu
 
     def __str__(self):
         return 'Reorder Buffer: {0:s}'.format(str(self._ins_buff))
@@ -47,6 +48,9 @@ class ReorderBuffer(object):
             
         while ins is not None and (ins.rbstate == self.INS_COMPLETED or ins.isNOP()):
             print 'Committing', ins
+
+            if ins.isHalt():
+                self._cpu.halt()
 
             # Write to registers
             for ri, val in ins.getWBOutput():

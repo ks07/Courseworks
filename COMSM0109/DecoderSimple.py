@@ -65,7 +65,7 @@ class DecoderSimple(StatefulComponent):
         blocked = False
         for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
             ins = self._decode(b,a)
-            if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt():
+            if (ins.isBranch() and self._state_nxt[self.BRW_IND]):
                 # Block on branches for now
                 self._state_nxt[self.BRW_IND] = 1
                 blocked = True

@@ -28,7 +28,7 @@ class CPU(object):
         self._reg = RegisterFile()
 
         # The almighty reorder buffer, may he save our dependent souls
-        self._rob = ReorderBuffer(16, self._reg, self._mem)
+        self._rob = ReorderBuffer(16, self._reg, self._mem, self)
         
         self._decwidth = 2
         
@@ -152,6 +152,9 @@ class CPU(object):
         # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
         # Need to tell fetcher to go back to the previous instructs.
 #        self._fetcher.inc(len(issuedALU) + len(issuedBRU) + len(issuedLSU))
+#        if stallingDEC and len(issued) != 1:
+#            assert False
+            
         self._fetcher.inc(len(issued))
 
 #       print 'decoded', issuedALU, issuedBRU, issuedLSU

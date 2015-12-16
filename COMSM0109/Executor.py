@@ -62,12 +62,9 @@ class Executor(StatefulComponent):
         opr = ins.getOpr()
         val = ins.getVal()
 
-        # bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
-        # for ri,vi in ins.getRegValMap().iteritems():
-        #     # Need to check if a value has been bypassed (would be done by decoder in real cpu)
-        #     if bbf & (1 << ri):
-        #         print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._state[ri])
-        #         val[vi] = self._state[ri];
+        # LOLLOLOLOLOLOLOLOLOL i hate python
+        val_orig = val
+        val = [v % 2**32 for v in val]
 
         outReg = opr[0] if len(opr) > 0 else None# True for almost all opcodes
         outAddr = None
@@ -79,7 +76,8 @@ class Executor(StatefulComponent):
             print 'WARNING: EXECUTING A DNOP!' # TODO: We rely on this causing exceptions for tests!
             #raise ValueError('Could not decode instruction. Perhaps PC has entered a data segment?', ins.getWord())
         elif opc == 'halt':
-            self._cpu.halt()
+            pass # do halt in rob
+            #self._cpu.halt()
         elif opc == 'add':
             outVal = val[0] + val[1]
         elif opc == 'sub':
