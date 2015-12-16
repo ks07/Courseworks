@@ -2,9 +2,7 @@
 
 #import collections # TODO: Should probably use deque instead of list
 
-from itertools import chain
 from StatefulComponent import StatefulComponent
-from Instruction import Instruction
 import numpy as np
 
 class ReservationStation(StatefulComponent):
@@ -15,7 +13,7 @@ class ReservationStation(StatefulComponent):
     RBD3_IND = 34
     BRW_IND = 35
     
-    def __init__(self, myid, maxDisp, reg, buffLen):
+    def __init__(self, myid, maxDisp, reg, buffLen, rob):
         self._id = str(myid) # Some ID for display purposes
         self._max_disp = maxDisp # The max number of instructions to dispatch per cycle
         self._ins_buff = [] # Instruction buffer
@@ -26,6 +24,8 @@ class ReservationStation(StatefulComponent):
         self._branched_now = False # Marks if a branch has been dispatched yet this time step.
         # Need a handle to register file
         self._reg = reg
+        # Need handle to reorder buffer
+        self._rob = rob
         # Store max length of buffer.
         self._buffLen = buffLen
         self._prevStall = False # Marks if the previous step was a s
@@ -45,14 +45,15 @@ class ReservationStation(StatefulComponent):
 
     def bypassBack(self, age, reg, val):
         """ Inserts a value back into the bypass registers, from a later stage. """
-        # TODO: We might only need support for age == 2, so forget generalising for now
-        if age != 2:
-            raise ValueError('Unimplemented bypassBack age!', age);
+        # # TODO: We might only need support for age == 2, so forget generalising for now
+        # if age != 2:
+        #     raise ValueError('Unimplemented bypassBack age!', age);
 
-        if not self._state_nxt[self.RBD1_IND] & reg:
-            self._state_nxt[reg] = val
-        # Need to pass this back 2 steps
-        self._state_nxt[self.RBD2_IND] |= (1 << reg)
+        # if not self._state_nxt[self.RBD1_IND] & reg:
+        #     self._state_nxt[reg] = val
+        # # Need to pass this back 2 steps
+        # self._state_nxt[self.RBD2_IND] |= (1 << reg)
+        return # Surpassed by rob, we hope
 
     def pipelineClear(self):
         """ Mispredicted branch! Clear the pipeline. """
@@ -65,6 +66,7 @@ class ReservationStation(StatefulComponent):
 
     def _insReady(self,ins):
         """ DEBUG WRAPPER, CAUSE I SUCK """
+        print 'TESTING READY',ins
         ret = self._insReady2(ins)
         if ret and ins.isBranch():
             self._branched_now = True
@@ -74,28 +76,25 @@ class ReservationStation(StatefulComponent):
     def _insReady2(self, ins):
         """ Decides if an instruction is ready to be dispatched. """
         # We want to stall after a branch.
-        print 'TESTING READY',ins
         if self._branched_now or self._state[self.BRW_IND] == 1:
             print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
             return False
-        ins.updateValues(self._reg)
-        irs = ins.getInvRegs().copy()
-        #if ins.getOutReg() is not None:
-        #    irs.add(ins.getOutReg()) # Need to check for WaW dependencies!
-        print 'tax evasion',irs
+        irs = ins.getInvRegs() # No copy, when dep is resolved we want it to stay that way
         if irs:
-            bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
             for ri,vi in ins.getRegValMap().iteritems():
-                # Need to check if a value has been bypassed (would be done by decoder in real cpu)
-                if ri in irs and self._reg.validScoreboard(ri):
-                    ins._values[vi] = self._reg[ri]
-                    irs.remove(ri)
-                elif ri in irs and bbf & (1 << ri):
-                    print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._state[ri])
-                    ins._values[vi] = self._state[ri]
-                    irs.remove(ri)
-            if ins.getOutReg() in irs and self._reg.validScoreboard(ins.getOutReg()):
-                irs.remove(ins.getOutReg())
+                if ri in irs:
+                    # Loop through all values not yet filled.
+                    # TODO: This may want to happen at issue time in decoder, as OoO might ruin this
+                    waitingOn, depRdy = self._rob.findLatestWrite(ri)
+                    if waitingOn is None:
+                        ins._values[vi] = self._reg[ri]
+                        irs.remove(ri)
+                    elif depRdy:
+                        ins._values[vi] = waitingOn.getOutVal()
+                        irs.remove(ri)
+                    else:
+                        # Dependent instruction is still waiting
+                        pass
         return not irs
         
     def dispatch(self):
@@ -115,10 +114,13 @@ class ReservationStation(StatefulComponent):
                 # Can dispatch
                 togo.append(ins)
                 toremove.append(i) # Remove from choices for next time.
+
+                # Update state in ROB
+                self._rob.insDispatched(ins)
                 
                 # Mark scoreboard
                 if ins.getOutReg() is not None:
-                    self._reg.markScoreboard(ins.getOutReg(), True);
+                    self._reg.markScoreboard(ins.getOutReg(), True); # TODO: Might need to happen in decoder
             else:
                 break
             i += 1

@@ -5,7 +5,7 @@ from Executor import Executor
 class BranchUnit(object):
     """ A specialised execution unit for performing branches, with it's own pipeline. """
     
-    def __init__(self, myid, mem, reg, cpu):
+    def __init__(self, myid, cpu):
         """ ID is for debugging and display purposes. """
         self._id = myid;
         # Just reuse the general purpose executor

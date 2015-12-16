@@ -5,11 +5,11 @@ from Instruction import Instruction
 class Writeback(object):
     """ The register writeback stage. We do have state, but nothing in a Numpy array! """
 
-    def __init__(self, reg):
+    def __init__(self, rob):
         self._ins = Instruction.NOP()
         self._ins_nxt = Instruction.NOP()
-        # Need a handle to register file
-        self._reg = reg
+        # Need handle to reorder buffer
+        self._rob = rob
 
     def __str__(self):
         return 'Now in writeback: {0:s}'.format(str(self._ins))
@@ -19,15 +19,8 @@ class Writeback(object):
         self._ins_nxt = ins;
 
     def writeback(self):
-        """ Performs the writeback stage. """
-        for reg, val in self._ins.getWBOutput():
-            print '* Writeback stage is storing {0:d} in r{1:d} for {2:s}.'.format(val, reg, str(self._ins))
-            self._reg[reg] = val
-            print 'Marking reg as ready.'
-            self._reg.markScoreboard(reg, False)
-        # Also need to mark output as ready.
-        if self._ins.getOutReg() is not None:
-            self._reg.markScoreboard(self._ins.getOutReg(), False)
+        """ Puts values into ROB. """
+        self._rob.insWriteback(self._ins)
 
     def advstate(self):
         """ Advances state, like a StatefulComponent. """

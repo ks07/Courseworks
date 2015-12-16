@@ -7,12 +7,12 @@ from Writeback import Writeback
 class ExecuteUnit(object):
     """ A general purpose execution unit, with it's own pipeline. """
     
-    def __init__(self, myid, mem, reg, cpu):
+    def __init__(self, myid, mem, cpu, rob):
         """ ID is for debugging and display purposes. """
         self._id = myid;
         self._executor = Executor(cpu) # Requires a reference to cpu, for branches
-        self._memaccess = MemoryAccess(mem, self._executor) # Requires a ref to executor, for forwarding
-        self._writeback = Writeback(reg)
+        self._memaccess = MemoryAccess(mem)
+        self._writeback = Writeback(rob)
 
         # Easy iteration
         self._stages = (self._executor, self._memaccess, self._writeback)

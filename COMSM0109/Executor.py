@@ -39,14 +39,15 @@ class Executor(StatefulComponent):
         
     def bypassBack(self, age, reg, val):
         """ Inserts a value back into the bypass registers, from a later stage. """
-        # TODO: We might only need support for age == 2, so forget generalising for now
-        if age != 2:
-            raise ValueError('Unimplemented bypassBack age!', age);
+        # # TODO: We might only need support for age == 2, so forget generalising for now
+        # if age != 2:
+        #     raise ValueError('Unimplemented bypassBack age!', age);
         
-        if not self._state_nxt[self.RBD1_IND] & reg:
-            self._state_nxt[reg] = val
-        # Need to pass this back 2 steps
-        self._state_nxt[self.RBD2_IND] |= (1 << reg)
+        # if not self._state_nxt[self.RBD1_IND] & reg:
+        #     self._state_nxt[reg] = val
+        # # Need to pass this back 2 steps
+        # self._state_nxt[self.RBD2_IND] |= (1 << reg)
+        return
 
     def __str__(self):
         return 'Executing now: {0:s}'.format(str(self._ins))
@@ -61,12 +62,12 @@ class Executor(StatefulComponent):
         opr = ins.getOpr()
         val = ins.getVal()
 
-        bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
-        for ri,vi in ins.getRegValMap().iteritems():
-            # Need to check if a value has been bypassed (would be done by decoder in real cpu)
-            if bbf & (1 << ri):
-                print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._state[ri])
-                val[vi] = self._state[ri];
+        # bbf = self._state[self.RBD1_IND] | self._state[self.RBD2_IND] | self._state[self.RBD3_IND]
+        # for ri,vi in ins.getRegValMap().iteritems():
+        #     # Need to check if a value has been bypassed (would be done by decoder in real cpu)
+        #     if bbf & (1 << ri):
+        #         print '* ...using the value of r{0:d} ({1:d}) bypassed back from the previous cycle.'.format(ri, self._state[ri])
+        #         val[vi] = self._state[ri];
 
         outReg = opr[0] if len(opr) > 0 else None# True for almost all opcodes
         outAddr = None

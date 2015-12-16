@@ -4,14 +4,13 @@ import numpy as np
 from StatefulComponent import StatefulComponent
 from Instruction import Instruction
 from InstructionFormats import FORMATS
-from itertools import repeat, chain
 
 class DecoderSimple(StatefulComponent):
     """ A decode unit. State is the current instruction in this stage, and an indicator for load stalling. """
 
     NO_LD = 64
     
-    def __init__(self, regfile, width):
+    def __init__(self, regfile, width, rob):
         # Width gives the number of instructions that are held and decoded.
         self.RLD_IND = width
         self.EMP_IND = width + 1 # Index of empty counter, tells how many instructions from fetch to accept.
@@ -22,6 +21,7 @@ class DecoderSimple(StatefulComponent):
         self._srcas_nxt = np.ones(width, dtype=np.uint32) * -1
         # Decode stage reads from register file.
         self._reg = regfile
+        self._rob = rob
         self._width = width
         self._state[self.EMP_IND] = self._width
 
@@ -45,14 +45,7 @@ class DecoderSimple(StatefulComponent):
 
     def queueInstructions(self, toDecodeList, addrs):
         print 'queue DS', toDecodeList, addrs
-        # Put at end of waiting list in state.
-        accept = self._width
-        print 'queued, accepting:', accept
-        print self._state_nxt
-        print toDecodeList
-        #toDecodeList = toDecodeList[:accept]
-        print toDecodeList
-        print 'shit fuck what',self._state_nxt,self._srcas_nxt
+        # Put at end of waiting list in state. TODO: Probably unnecessary now?
         self._state_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = toDecodeList
         self._srcas_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = addrs
         print self._state_nxt
@@ -75,6 +68,7 @@ class DecoderSimple(StatefulComponent):
         for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
             ins = self._decode(b,a)
             ready.append(ins)
+            self._rob.insIssued(ins)
         return ready
         
     def _decode(self, word, asrc = -1):

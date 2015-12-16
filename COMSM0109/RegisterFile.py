@@ -22,6 +22,8 @@ class RegisterFile(StatefulComponent):
         self._state_nxt = np.zeros_like(self._state)
         self._state[self.SCBD_IND] = 0xFFFFFFFF
         self._state_nxt[self.SCBD_IND] = 0xFFFFFFFF
+#        self._scbd_ctrs = np.zeros(32, dtype=np.int8) # Holds scoreboard counters WAIT WE DONT NEED THIS
+# SET SCBD IF ROB SEES NO MORE WRITES FOR GIVEN REG
 
     def diff(self):
         """ Prints any changes to state. """

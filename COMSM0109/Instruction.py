@@ -76,6 +76,9 @@ class Instruction(object):
         # Store memory op, for mem access stage.
         self._memOpp = None
 
+        # Reorder Buffer Fields (kept here for ease of access)
+        self.rbstate = -1
+
     def updateValues(self, regfile):
         self._invregs = set()
         self._values = [0] * len(self._values)
@@ -103,6 +106,10 @@ class Instruction(object):
         """ Gets the register that output is stored into, if any. """
         return self._oreg
 
+    def getOutVal(self):
+        """ Infinitely less flexible and infinitely better than the wb output function. """
+        return self._writeback[0][1]
+
     def getReadRegs(self):
         """ Gets the set of read registers. """
         return frozenset(self._rregs)
@@ -122,7 +129,7 @@ class Instruction(object):
         # Put in a list, in case we add any instructions with multiple outputs
         self._writeback = [(reg, val)]
 
-    def getWBOutput(self):
+    def getWBOutput(self): # This function is nasty and doesn't work with getOutReg anyway...
         """ Gets the register/value for writeback output. """
         return tuple(self._writeback)
 

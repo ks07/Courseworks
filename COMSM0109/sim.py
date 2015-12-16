@@ -10,12 +10,13 @@ from Instruction import Instruction
 from Memory import Memory
 from RegisterFile import RegisterFile
 from BranchPredictor import BranchPredictor
-from Decoder import Decoder
+#from Decoder import Decoder
 from DecoderSimple import DecoderSimple
 from InstructionFetcher import InstructionFetcher
 from ExecuteUnit import ExecuteUnit
 from BranchUnit import BranchUnit
 from ReservationStation import ReservationStation
+from ReorderBuffer import ReorderBuffer
 
 class CPU(object):
     """ A simple scalar processor simulator. Super-scalar coming soon... """
@@ -26,26 +27,30 @@ class CPU(object):
         print "Loaded", len(self._mem), "words into memory."
         self._reg = RegisterFile()
 
+        # The almighty reorder buffer, may he save our dependent souls
+        self._rob = ReorderBuffer(16, self._reg, self._mem)
+        
         self._decwidth = 2
         
         # Initial stage components.
         self._fetcher = InstructionFetcher(self._mem, self._decwidth)
 
         #self._decoder = Decoder(self._reg, self._decwidth)
-        self._decoder = DecoderSimple(self._reg, self._decwidth)
+        self._decoder = DecoderSimple(self._reg, self._decwidth, self._rob)
 
-        self._rs = ReservationStation('All', 2, self._reg, 3)
+        self._rs = ReservationStation('All', 2, self._reg, 3, self._rob)
 
         # Superscalar stage components.
         self._eu = [
-            ExecuteUnit(0, self._mem, self._reg, self),
-            ExecuteUnit(1, self._mem, self._reg, self)
+            ExecuteUnit(0, self._mem, self, self._rob),
+            ExecuteUnit(1, self._mem, self, self._rob)
         ] # General purpose EUs
         # Much simpler to handle branches if they all go through a single EU
-        self._bru = BranchUnit(64, self._mem, self._reg, self) # Branch unit
+        self._bru = BranchUnit(64, self) # Branch unit
         # Seperate EU for loads and stores
-        self._lsu = ExecuteUnit(32, self._mem, self._reg, self) # Load/Store unit
+        self._lsu = ExecuteUnit(32, self._mem, self, self._rob) # Load/Store unit
 
+        
         # For iteration
         self._subpipes = tuple(self._eu + [self._bru, self._lsu])
 
@@ -68,6 +73,7 @@ class CPU(object):
         self._rs.advstate()
         for eu in self._subpipes:
             eu.advstate()
+        self._rob.advstate()
         # Need to increment time
         self._simtime += 1
 
@@ -204,6 +210,9 @@ class CPU(object):
             # Handles printing
             self._bru.execute(ins)
 
+        # Commit results from reorder buffer
+        self._rob.commit()
+            
         # In theory, everything before this stage should have only changed the 'future' state.
         # Update states (increment sim time)
         self._update()
@@ -216,6 +225,7 @@ class CPU(object):
         print self._rs
         for eu in self._subpipes:
             print eu
+        print self._rob
         print self._reg
 
     def dump(self, start, end):
