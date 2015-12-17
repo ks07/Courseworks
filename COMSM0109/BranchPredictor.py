@@ -22,10 +22,11 @@ class DynamicPredictor(object):
     def __init__(self):
         self._table = {}
         self._dbg_log = []
+        self.DEFAULT = 1
 
     def _getOrInit(self, ins):
         if ins.asrc not in self._table:
-            self._table[ins.asrc] = 0
+            self._table[ins.asrc] = self.DEFAULT
         return self._table[ins.asrc]
 
     def predict(self, ins):
