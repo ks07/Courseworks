@@ -23,7 +23,7 @@ class DecoderSimple(StatefulComponent):
         self._rob = rob
         self._width = width
 
-        self.BRBLOCK = True
+        self.BRBLOCK = False
         
     def __str__(self):
         #return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))

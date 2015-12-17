@@ -25,10 +25,11 @@ class ReorderBuffer(object):
 
     def insIssued(self, ins):
         """ Adds a newly dispatched instruction to the end of the reorder buffer. """
+        prev = self._ins_buff_nxt[0] if len(self._ins_buff_nxt) > 0 else Instruction.NOP()
+        # Would usually be stored in a circular buffer, and would return index, but we can just use the object
         self._ins_buff_nxt.appendleft(ins)
         # Set the state of the instruction
         ins.rbstate = self.INS_ISSUED
-        # Would usually be stored in a circular buffer, and would return index, but we can just use the object
 
     def insDispatched(self, ins):
         """ Update instruction state to show dispatched. """
@@ -47,29 +48,50 @@ class ReorderBuffer(object):
             ins = None
             
         while ins is not None and (ins.rbstate == self.INS_COMPLETED or ins.isNOP()):
-            print 'Committing', ins
+            if ins.robpoisoned:
+                print 'Poisoned, deleting', ins
+                if ins.isBranch():
+                    self._cpu._rob_branch_poisoned(ins)
+            else:
+                print 'Committing', ins
 
-            if ins.isHalt():
-                self._cpu.halt()
+                if ins.isHalt():
+                    self._cpu.halt()
 
-            if ins.isBranch():
-                # Dump the entire buffer?
-                self._ins_buff_nxt.clear()
-                self._cpu._rob_branch(ins)
+                if ins.isBranch():
+                    mispredicted = self._cpu._rob_branch(ins)
+                    if mispredicted:
+                        discard = []
+                        # Mark all later instructions.
+                        for ilater in self._ins_buff_nxt:
+                            print 'Poisoning',ilater,'due to',ins
+                            ilater.robpoisoned = True
+                            if ilater.rbstate == self.INS_ISSUED:
+                                # Can cut these out now
+                                discard.append(ilater)
+                            else:
+                                # This ins is executing (or done!), can mark reg as valid
+                                ri = ilater.getOutReg()
+                                if ri is not None:
+                                    #pass
+                                    self._reg.markScoreboard(ri, False)
+                        for ilater in discard:
+                            print 'Discarding',ilater,'due to',ins
+                            self._ins_buff_nxt.remove(ilater)
 
-            # Write to registers
-            for ri, val in ins.getWBOutput():
-                print 'Writing {0:d} in r{1:d}'.format(val, ri)
-                self._reg[ri] = val
-                self._scbdCheckSet(ri)
+                # Write to registers
+                for ri, val in ins.getWBOutput():
+                    print 'Writing {0:d} in r{1:d}'.format(val, ri)
+                    self._reg[ri] = val
+                    self._scbdCheckSet(ri)
 
-            # Write to memory
-            memop = ins.getMemOperation()
-            if memop:
-                addr,write = memop
-                if write is not None:
-                    print 'Writing {0:d} in MEM[{1:d}]'.format(write, addr)
-                    self._mem[addr] = write
+                # Write to memory
+                memop = ins.getMemOperation()
+                if memop:
+                    addr,write = memop
+                    if write is not None:
+                        print 'Writing {0:d} in MEM[{1:d}]'.format(write, addr)
+                        self._mem[addr] = write
 
             try:
                 ins = self._ins_buff_nxt.pop()
@@ -112,8 +134,9 @@ class ReorderBuffer(object):
                 earlier = True
         # Not sure if this should ever happen, but the result must be in the regfile.
         print 'irstag',irs
-        assert len(irs) == 0
-        #print 'WARNING (maybe): latest write guessed in regfile...', ri
+#        assert len(irs) == 0
+        if irs:
+            print 'WARNING (maybe): latest write guessed in regfile...',new_ins
         #return None
 
     def fillInstruction(self, ins):
@@ -122,11 +145,15 @@ class ReorderBuffer(object):
         for ri,vi in ins.getRegValMap().iteritems(): # TODO: Support for multiple value targets per reg
             if ri in ins.getInvRegs():
                 # Loop through invalid regs, let us remove them.
-                depIns = ins.rrobmap[ri]
-                if depIns.rbstate == self.INS_COMPLETED:
-                    ins.getInvRegs().remove(ri)
-                    ins._values[vi] = depIns.getOutVal()
-                print 'checking r',ri,'depIns',depIns,'state',depIns.rbstate,self.INS_COMPLETED
+                if ri in ins.rrobmap:
+                    depIns = ins.rrobmap[ri]
+                    if depIns.rbstate == self.INS_COMPLETED:
+                        ins.getInvRegs().remove(ri)
+                        ins._values[vi] = depIns.getOutVal()
+                    print 'checking r',ri,'depIns',depIns,'state',depIns.rbstate,self.INS_COMPLETED
+                else:
+                    print ' THIS IS BAD, BUT DOES IT WORK?',ins,ri
+                    ins._values[vi] = self._reg[ri]
 
     # Probably useless
     def findLatestWrite(self, ri):

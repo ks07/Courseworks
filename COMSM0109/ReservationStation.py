@@ -85,6 +85,8 @@ class ReservationStation(StatefulComponent):
             ins = self._ins_buff[i]
             oreg = ins.getOutReg()
 
+            self._rob.tagDependentWrite(ins)
+
             if oreg not in writing_now and self._insReady(ins):
                 # Can dispatch
                 togo.append(ins)
@@ -96,10 +98,11 @@ class ReservationStation(StatefulComponent):
                 # Don't dispatch two writes to the same register at once.
                 if ins.getOutReg() is not None:
                     writing_now.add(ins.getOutReg())
+                    
+                if ins.isBranch():
+                    self._branched_now = True # Don't dispatch multiple branches at once... is this necessary?
             i += 1
 
-            if ins.isBranch():
-                self._branched_now = True # Don't dispatch multiple branches at once... is this necessary?
 
         for j in sorted(toremove, reverse=True):
             self._ins_buff_nxt.pop(j)

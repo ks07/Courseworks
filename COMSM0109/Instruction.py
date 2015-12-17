@@ -78,17 +78,7 @@ class Instruction(object):
         # Reorder Buffer Fields (kept here for ease of access)
         self.rbstate = -1
         self.rrobmap = {}
-
-
-    # def updateValues(self, regfile):
-    #     self._invregs = set()
-    #     self._values = [0] * len(self._values)
-    #     for ri in self._rregs:
-    #         vi = self._rvmap[ri]
-    #         if not regfile.validScoreboard(ri):
-    #             self._invregs.add(ri)
-    #         else:
-    #             self._values[vi] = regfile[ri]
+        self.robpoisoned = False # If true, when completed this instruction should be dropped without effect
 
     def getOpc(self):
         return self._opcode
@@ -152,7 +142,10 @@ class Instruction(object):
 
     def __str__(self):
         # This is the implode_ins function in the assembler!
-        return self._frmt_str.format(self.asrc, self._opcode, *self._operands)
+        out = self._frmt_str.format(self.asrc, self._opcode, *self._operands)
+        if self.robpoisoned:
+            out += ' [RIP]' # Mark poisoned instructions
+        return out
 
     def __repr__(self):
         return str(self)

@@ -76,17 +76,33 @@ class CPU(object):
 
     def _rob_branch(self, ins):
         """ Clears the pipeline and does the branch (if necessary!). """
+        predicted = False # TODO: This should actually come from the instruction
+        cond = ins.robbr[0]
+        
         # Need to tell decoder that the branch has been resolved, so blocking can stop
         self._decoder.branchResolved()
         self._fetcher.branchResolved()
 
-        if ins.robbr[0]:
+        if cond and not predicted:
             #self._rs.pipelineClear() # I dont think I actually needed this, but...
             print 'BRANCHY TO',ins.robbr
-            self._fetcher.update(0, ins.robbr[1]);
-        else:
+            self._fetcher.update(0, ins.robbr[1])
+            self._decoder.pipelineClear()
+            self._rs.pipelineClear()
+            self._reg.resetScoreboard()
+            return True # return true if rob needs to clear speculative instructions
+        elif not cond and predicted:
             print 'NOT BRANCHY',ins.asrc
-            self._fetcher.update(0, ins.asrc + 1); # LOL SCREW IT
+            # TODO: Need contents
+            #self._fetcher.update(0, ins.asrc + 1); # LOL SCREW IT
+        else:
+            print 'Good BRANCHY!'
+        return False
+
+    def _rob_branch_poisoned(self, psnd):
+        """ Stop early pipeline input stages from blocking on discarded branches. """
+        self._decoder.branchResolved()
+        self._fetcher.branchResolved()
 
     # EASIER TO SORT OUT BRANCHES IF THEY ARE DEALT WITH IN COMMIT    
     def _branch(self, cond, pred, dest, ins):
