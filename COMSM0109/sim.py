@@ -137,7 +137,9 @@ class CPU(object):
 
     def halt(self):
         """ Halts the simulation. """
-        print "Program has halted the simulation!"
+        print "Program has halted the simulation! Doing final update and print."
+        self._update()
+        self.displayState()
         if check_file:
             print "Running check."
             check_vars = {
@@ -308,6 +310,9 @@ def start(mem_file):
                 print eval(arg, globals(), locals())
             except Exception as e:
                 print e
+        elif usr.startswith('p'):
+            # Re-print state
+            cpu.displayState()
         else:
             cpu.step()
             cpu.displayState()

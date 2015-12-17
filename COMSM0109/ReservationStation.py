@@ -20,9 +20,7 @@ class ReservationStation(StatefulComponent):
         self._ins_buff_nxt = []
         self._state = np.zeros(36, dtype=np.uint32) # For holding bypassed values (TODO: no shifts like scalar?)
         self._state_nxt = np.zeros_like(self._state)
-        #self._writers = [] # Holds current registers waiting for write
         self._branched_now = False # Marks if a branch has been dispatched yet this time step.
-#        self._writing_now = set()
         # Need a handle to register file
         self._reg = reg
         # Need handle to reorder buffer
@@ -38,7 +36,6 @@ class ReservationStation(StatefulComponent):
         """ Puts instructions on the stage input. Returns True if we should stall previous. """
         if len(self._ins_buff_nxt) + len(ins) <= self._buffLen:
             self._ins_buff_nxt.extend(ins)
-            print 'extended',self._ins_buff_nxt
             return False
         else:
             print 'RS buffer full'
@@ -62,16 +59,14 @@ class ReservationStation(StatefulComponent):
         
     def branchResolved(self):
         """ Called when a branch has been resolved (made it out of execute). Unblocks issue. """
-        print 'WOAH UNBLOCKED 80085'
         self._state_nxt[self.BRW_IND] = 0
 
     def _insReady(self,ins):
         """ DEBUG WRAPPER, CAUSE I SUCK """
-        print 'TESTING READY',ins
         ret = self._insReady2(ins)
-        if ret and ins.isBranch():
-            self._branched_now = True
-            self._state_nxt[self.BRW_IND] = 1
+#        if ret and ins.isBranch():
+#            self._branched_now = True
+#            self._state_nxt[self.BRW_IND] = 1
         return ret
         
     def _insReady2(self, ins):
@@ -109,21 +104,21 @@ class ReservationStation(StatefulComponent):
                 # Don't dispatch two writes to the same register at once.
                 if ins.getOutReg() is not None:
                     writing_now.add(ins.getOutReg())
-            else:
-                break
+            # else:
+            #     break
             i += 1
 
-            if (ins.isBranch() and self._state_nxt[self.BRW_IND]) or ins.isHalt(): # Need to block on halt
+            if (ins.isBranch() and self._state_nxt[self.BRW_IND]):
                 # FOR NOW: Only let a single branch through.
                 # Mark that we are waiting for a conditional.
+                print '\n\n\n\n\n\n\n\n\n\I HOPE THIS ISNT HAPPENING CAUSE IF IT IS THAT WOULD BE BAD YES?\n\n'
+                self._branched_now = True
                 self._state_nxt[self.BRW_IND] = 1
                 break
 
-        print 'rem', toremove, self._ins_buff, self._ins_buff_nxt
         for j in sorted(toremove, reverse=True):
             self._ins_buff_nxt.pop(j)
 
-        print 'Dispatching', togo, self._ins_buff, self._ins_buff_nxt
         return togo
 
     def advstate(self):

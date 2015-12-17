@@ -36,13 +36,10 @@ class DecoderSimple(StatefulComponent):
     def stall(self):
         """ Stall this stage this timestep """
         # Next step should use the same input.
-        print 'STALLING DCDR', self._state, self._state_nxt
-        print 'STALLING DCDR', self._srcas, self._srcas_nxt
         np.copyto(self._state_nxt, self._state, casting='no')
         np.copyto(self._srcas_nxt, self._srcas, casting='no')
 
     def queueInstructions(self, toDecodeList, addrs):
-        print 'queue DS', toDecodeList, addrs
         # Put at end of waiting list in state. TODO: Probably unnecessary now?
         self._state_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = toDecodeList
         self._srcas_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = addrs
@@ -82,7 +79,6 @@ class DecoderSimple(StatefulComponent):
                     # Block on branches for now
                     self._state_nxt[self.BRW_IND] = 1
                     blocked = self._width - len(ready)
-                    print 'tick break', blocked, ready
                     break
         return ready, blocked
         

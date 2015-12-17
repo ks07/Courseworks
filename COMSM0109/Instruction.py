@@ -49,7 +49,6 @@ class Instruction(object):
                     values.append(regfile[ri])
                     self._rregs.add(ri)
                     if not regfile.validScoreboard(ri):
-                        print 'WOW WOW WOW INVALID ADD addr:',asrc,'r',ri
                         self._invregs.add(ri);
                 if arg == 'w' or arg == 'rw':
                     # Store the output reg.
