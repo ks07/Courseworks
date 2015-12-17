@@ -10,7 +10,7 @@ class DecoderSimple(StatefulComponent):
 
     NO_LD = 64
     
-    def __init__(self, regfile, width, rob):
+    def __init__(self, regfile, width, rob, cpu):
         # Width gives the number of instructions that are held and decoded.
         self.RLD_IND = width
         self.BRW_IND = width + 1 # Index of branch wait indicator, if set we should issue nothing until branch is resolved.
@@ -22,6 +22,7 @@ class DecoderSimple(StatefulComponent):
         self._reg = regfile
         self._rob = rob
         self._width = width
+        self._cpu = cpu
 
         self.BRBLOCK = False
         
@@ -45,8 +46,6 @@ class DecoderSimple(StatefulComponent):
         # Put at end of waiting list in state. TODO: Probably unnecessary now?
         self._state_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = toDecodeList
         self._srcas_nxt[self.RLD_IND-len(toDecodeList):self.RLD_IND] = addrs
-        print self._state_nxt
-        print self._srcas_nxt
 
     def pipelineClear(self):
         """ Called when the stage needs clearing due to a branch misprediction. """
@@ -62,6 +61,7 @@ class DecoderSimple(StatefulComponent):
         """ Decodes current inputs, issues instructions up to width. Issue bound fetch, non-blocking! """
         ready = []
         blocked = None
+        branchseen = False # Used only if speculative execution is enabled
         if self.BRBLOCK and self._state[self.BRW_IND]:
             # Waiting for a branch, don't accept anything.
             print 'OLEOLOLEOLEOELEOELOLEOELEO BRANCH WAITING'
@@ -69,19 +69,31 @@ class DecoderSimple(StatefulComponent):
         else:
             for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
                 ins = self._decode(b,a)
-                print ins
-                ready.append(ins)
-                self._rob.insIssued(ins)
-                self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready
-                # Mark scoreboard
-                if ins.getOutReg() is not None:
-                    print ' MARKING SCOREBOARD FOR',ins.getOutReg(),ins
-                    self._reg.markScoreboard(ins.getOutReg(), True)
-                if self.BRBLOCK and ins.isBranch():
-                    # Block on branches for now
-                    self._state_nxt[self.BRW_IND] = 1
-                    blocked = self._width - len(ready)
-                    break
+                #print ins
+                if branchseen:
+                    # Just make doubly sure the instruction becomes an effective nop
+                    ins.robpoisoned = True
+                else:
+                    ready.append(ins)
+                    self._rob.insIssued(ins)
+                    self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready
+                    # Mark scoreboard
+                    if ins.getOutReg() is not None:
+                        print ' MARKING SCOREBOARD FOR',ins.getOutReg(),ins
+                        self._reg.markScoreboard(ins.getOutReg(), True)
+                    if (self.BRBLOCK and ins.isBranch()):
+                        # Blocking on branches
+                        self._state_nxt[self.BRW_IND] = 1
+                        blocked = self._width - len(ready)
+                        break
+                    elif ins.isBranch() and not self.BRBLOCK:
+                        # Need to discard any instructions after this branch
+                        branchseen = True # Might not actually need this flag
+                        print 'GO GO BRANCH PREDICTION', ins
+                        self._cpu._usePrediction(True, ins)
+                        blocked = -100
+                        #blocked = self._width - len(ready)
+                    
         return ready, blocked
         
     def _decode(self, word, asrc = -1):

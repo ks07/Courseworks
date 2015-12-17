@@ -52,5 +52,7 @@ class InstructionFetcher(StatefulComponent):
 
     def inc(self, count):
         """ Increments the PC by a specified amount. """
-        if not self._state[self.BRW_IND]:
+        print 'INCY INCY', count
+        if not self._state[self.BRW_IND] or not self.BRBLOCK:
+            print 'WOAH NELLY'
             self._state_nxt[self.PCI] = self._state[self.PCI] + count

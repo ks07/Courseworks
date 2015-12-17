@@ -36,7 +36,7 @@ class CPU(object):
         self._fetcher = InstructionFetcher(self._mem, self._decwidth)
 
         #self._decoder = Decoder(self._reg, self._decwidth)
-        self._decoder = DecoderSimple(self._reg, self._decwidth, self._rob)
+        self._decoder = DecoderSimple(self._reg, self._decwidth, self._rob, self)
 
         self._rs = ReservationStation('All', 2, self._reg, 3, self._rob)
 
@@ -76,7 +76,7 @@ class CPU(object):
 
     def _rob_branch(self, ins):
         """ Clears the pipeline and does the branch (if necessary!). """
-        predicted = False # TODO: This should actually come from the instruction
+        predicted = True
         cond = ins.robbr[0]
         
         # Need to tell decoder that the branch has been resolved, so blocking can stop
@@ -93,8 +93,11 @@ class CPU(object):
             return True # return true if rob needs to clear speculative instructions
         elif not cond and predicted:
             print 'NOT BRANCHY',ins.asrc
-            # TODO: Need contents
-            #self._fetcher.update(0, ins.asrc + 1); # LOL SCREW IT
+            self._fetcher.update(0, ins.asrc + 1)
+            self._decoder.pipelineClear()
+            self._rs.pipelineClear()
+            self._reg.resetScoreboard()
+            return True # return true if rob needs to clear speculative instructions
         else:
             print 'Good BRANCHY!'
         return False
@@ -136,8 +139,10 @@ class CPU(object):
         if pred:
             print "* Predictor (in decode stage) decided branch {0:s} will be taken.".format(str(branch))
             dest = branch.getOpr()[-1] # TODO: Pass in?
+            print ' PREDICTED A JUMP TO',dest,branch
             # Set the new dest
             self._fetcher.update(0, dest)
+            self._fetcher._state[0] = dest
             # The branch predictor will switch the input to the decode stage to a nop (whatever was there is after the branch and we don't want it!)
             self._decoder.pipelineClear()
 #            self._decoder.update(0, Instruction.NOP().getWord()) # WARNING! There is now a dependency that this must run AFTER fetch passes to decode!
@@ -176,8 +181,6 @@ class CPU(object):
 #        issuedALU, issuedBRU, issuedLSU = self._decoder.decode()
         issued, stallingDEC = self._decoder.issue()
 
-        # Pass fetched to decode
-        self._decoder.queueInstructions(toDecodeList, range(len(toDecodeList)) + pc)
         
         # Need to stall the fetcher, if decoder is stalling.
         # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
@@ -185,12 +188,14 @@ class CPU(object):
 #        self._fetcher.inc(len(issuedALU) + len(issuedBRU) + len(issuedLSU))
 #        if stallingDEC and len(issued) != 1:
 #            assert False
-            
-        self._fetcher.inc(len(issued))
+
+        if stallingDEC != -100:
+            self._fetcher.inc(len(issued))
+            # Pass fetched to decode
+            self._decoder.queueInstructions(toDecodeList, range(len(toDecodeList)) + pc)
 
 #       print 'decoded', issuedALU, issuedBRU, issuedLSU
 #       print 'decoded', issued
-
 
         # LOL RESERVATION STATION SAYS FUCK YOU
 #        big_issue = issuedALU + issuedBRU + issuedLSU
