@@ -52,6 +52,11 @@ class ReorderBuffer(object):
             if ins.isHalt():
                 self._cpu.halt()
 
+            if ins.isBranch():
+                # Dump the entire buffer?
+                self._ins_buff_nxt.clear()
+                self._cpu._rob_branch(ins)
+
             # Write to registers
             for ri, val in ins.getWBOutput():
                 print 'Writing {0:d} in r{1:d}'.format(val, ri)

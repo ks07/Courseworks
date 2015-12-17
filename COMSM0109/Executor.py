@@ -127,26 +127,26 @@ class Executor(StatefulComponent):
         elif opc == 'br':
             # Should do nothing as we will always predict this!
             outReg = None
-            self._cpu._branch(True, ins.predicted, opr[0])
+            self._cpu._branch(True, ins.predicted, opr[0], ins)
             print "* ...but br is always taken, so this is a nop!"
 
             pass
         elif opc == 'bz':
             outReg = None
-            self._cpu._branch(val[0] == 0, ins.predicted, opr[1])
+            self._cpu._branch(val[0] == 0, ins.predicted, opr[1], ins)
         elif opc == 'bn':
             # Need to switch on the top bit (rather than <0), as we're storing as unsigned!
             outReg = None
-            self._cpu._branch(val[0] >> 31, ins.predicted, opr[1])
+            self._cpu._branch(val[0] >> 31, ins.predicted, opr[1], ins)
         elif opc == 'beq':
             outReg = None
-            self._cpu._branch(val[0] == val[1], ins.predicted, opr[2])
+            self._cpu._branch(val[0] == val[1], ins.predicted, opr[2], ins)
         elif opc == 'bge':
             outReg = None
-            self._cpu._branch(val[0] >= val[1], ins.predicted, opr[2])
+            self._cpu._branch(val[0] >= val[1], ins.predicted, opr[2], ins)
         elif opc == 'bne':
             outReg = None
-            self._cpu._branch(val[0] != val[1], ins.predicted, opr[2])
+            self._cpu._branch(val[0] != val[1], ins.predicted, opr[2], ins)
         else:
             outReg = None
             print "WARNING: Unimplemented opcode:", opc

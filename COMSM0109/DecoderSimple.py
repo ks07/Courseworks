@@ -62,21 +62,28 @@ class DecoderSimple(StatefulComponent):
     def issue(self):
         """ Decodes current inputs, issues instructions up to width. Issue bound fetch, non-blocking! """
         ready = []
-        blocked = False
-        for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
-            ins = self._decode(b,a)
-            if (ins.isBranch() and self._state_nxt[self.BRW_IND]):
-                # Block on branches for now
-                self._state_nxt[self.BRW_IND] = 1
-                blocked = True
-                break
-            ready.append(ins)
-            self._rob.insIssued(ins)
-            self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready
-            # Mark scoreboard
-            if ins.getOutReg() is not None:
-                print ' MARKING SCOREBOARD FOR',ins.getOutReg(),ins
-                self._reg.markScoreboard(ins.getOutReg(), True)
+        blocked = None
+        if self._state[self.BRW_IND]:
+            # Waiting for a branch, don't accept anything.
+            print 'OLEOLOLEOLEOELEOELOLEOELEO BRANCH WAITING'
+            blocked = 2
+        else:
+            for b,a in zip(self._state[:self._width],self._srcas[:self._width]):
+                ins = self._decode(b,a)
+                print ins
+                ready.append(ins)
+                self._rob.insIssued(ins)
+                self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready
+                # Mark scoreboard
+                if ins.getOutReg() is not None:
+                    print ' MARKING SCOREBOARD FOR',ins.getOutReg(),ins
+                    self._reg.markScoreboard(ins.getOutReg(), True)
+                if ins.isBranch():
+                    # Block on branches for now
+                    self._state_nxt[self.BRW_IND] = 1
+                    blocked = self._width - len(ready)
+                    print 'tick break', blocked, ready
+                    break
         return ready, blocked
         
     def _decode(self, word, asrc = -1):

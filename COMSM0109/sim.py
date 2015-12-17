@@ -77,14 +77,24 @@ class CPU(object):
         # Need to increment time
         self._simtime += 1
 
-    def _branch(self, cond, pred, dest):
+    def _rob_branch(self, ins):
         """ Clears the pipeline and does the branch (if necessary!). """
         # Need to tell decoder that the branch has been resolved, so blocking can stop
         self._decoder.branchResolved()
         self._rs.branchResolved()
 
-        if cond:
-            self._fetcher.update(0, dest);
+        if ins.robbr[0]:
+            #self._rs.pipelineClear() # I dont think I actually needed this, but...
+            print 'BRANCHY TO',ins.robbr
+            self._fetcher.update(0, ins.robbr[1]);
+        else:
+            print 'NOT BRANCHY',ins.asrc
+            self._fetcher.update(0, ins.asrc + 1); # LOL SCREW IT
+
+    # EASIER TO SORT OUT BRANCHES IF THEY ARE DEALT WITH IN COMMIT    
+    def _branch(self, cond, pred, dest, ins):
+        """ Clears the pipeline and does the branch (if necessary!). """
+        ins.robbr = (cond, dest) # Jam stuff in here so rob can do things later
 
         
         # if cond and not pred:
@@ -181,10 +191,17 @@ class CPU(object):
             self._decoder.stall()
             self._fetcher.stall()
             self._rob.decoderStalled(issued) # Need to remove/poison the entries corresponding to stalled
-        elif stallingDEC:
-            print 'STALLING AT DECODER'
-            # Issue has stalled due to a branch.
+        elif stallingDEC == 1:
+            print 'STALLING AT DECODER (half)'
+            # Issue has stalled due to a branch before instruction.
             self._fetcher.stall(1)
+        elif stallingDEC == 2:
+            print 'STALLING AT DECODER (full)'
+            # Issue waiting for branch
+            self._fetcher.stall()
+        elif stallingDEC == 0:
+            print 'STALLING AT DECODER (errr..... zero?)' # Probably stupid
+            self._fetcher.stall(2)
         
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
