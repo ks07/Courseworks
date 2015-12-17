@@ -23,6 +23,8 @@ class DecoderSimple(StatefulComponent):
         self._rob = rob
         self._width = width
 
+        self.BRBLOCK = True
+        
     def __str__(self):
         #return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))
         return 'Decoder buffer: ' + str(self._state[:self.RLD_IND]) + ' @ ' + str(self._srcas)
@@ -60,7 +62,7 @@ class DecoderSimple(StatefulComponent):
         """ Decodes current inputs, issues instructions up to width. Issue bound fetch, non-blocking! """
         ready = []
         blocked = None
-        if self._state[self.BRW_IND]:
+        if self.BRBLOCK and self._state[self.BRW_IND]:
             # Waiting for a branch, don't accept anything.
             print 'OLEOLOLEOLEOELEOELOLEOELEO BRANCH WAITING'
             blocked = 2
@@ -75,7 +77,7 @@ class DecoderSimple(StatefulComponent):
                 if ins.getOutReg() is not None:
                     print ' MARKING SCOREBOARD FOR',ins.getOutReg(),ins
                     self._reg.markScoreboard(ins.getOutReg(), True)
-                if ins.isBranch():
+                if self.BRBLOCK and ins.isBranch():
                     # Block on branches for now
                     self._state_nxt[self.BRW_IND] = 1
                     blocked = self._width - len(ready)
