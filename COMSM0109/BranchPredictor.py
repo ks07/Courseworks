@@ -45,3 +45,15 @@ class DynamicPredictor(object):
             self._table[ins.asrc] = min(self._ctrlim - 1, self._table[ins.asrc] + 1)
         else:
             self._table[ins.asrc] = max(0, self._table[ins.asrc] - 1)
+
+class HybridPredictor(DynamicPredictor):
+
+    STATIC = StaticPredictor()
+    
+    def _getOrInit(self, ins):
+        if ins.asrc not in self._table:
+            start = 3 if self.STATIC.predict(ins) else 0
+            self._table[ins.asrc] = start
+        return self._table[ins.asrc]
+
+# TODO: 3 bit predictor?
