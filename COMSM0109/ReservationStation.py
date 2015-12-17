@@ -11,14 +11,13 @@ class ReservationStation(StatefulComponent):
     RBD1_IND = 32
     RBD2_IND = 33
     RBD3_IND = 34
-    BRW_IND = 35
     
     def __init__(self, myid, maxDisp, reg, buffLen, rob):
         self._id = str(myid) # Some ID for display purposes
         self._max_disp = maxDisp # The max number of instructions to dispatch per cycle
         self._ins_buff = [] # Instruction buffer
         self._ins_buff_nxt = []
-        self._state = np.zeros(36, dtype=np.uint32) # For holding bypassed values (TODO: no shifts like scalar?)
+        self._state = np.zeros(35, dtype=np.uint32) # For holding bypassed values (TODO: no shifts like scalar?)
         self._state_nxt = np.zeros_like(self._state)
         self._branched_now = False # Marks if a branch has been dispatched yet this time step.
         # Need a handle to register file
@@ -56,24 +55,17 @@ class ReservationStation(StatefulComponent):
     def pipelineClear(self):
         """ Mispredicted branch! Clear the pipeline. """
         self._ins_buff_nxt = []
-        
-    def branchResolved(self):
-        """ Called when a branch has been resolved (made it out of execute). Unblocks issue. """
-        self._state_nxt[self.BRW_IND] = 0
 
     def _insReady(self,ins):
         """ DEBUG WRAPPER, CAUSE I SUCK """
         ret = self._insReady2(ins)
-#        if ret and ins.isBranch():
-#            self._branched_now = True
-#            self._state_nxt[self.BRW_IND] = 1
         return ret
         
     def _insReady2(self, ins):
         """ Decides if an instruction is ready to be dispatched. """
         # We want to stall after a branch.
-        if self._branched_now or self._state[self.BRW_IND] == 1:
-            print 'DONT WANT NONE',self._branched_now,self._state[self.BRW_IND]
+        if self._branched_now:
+            print 'DONT WANT NONE',self._branched_now
             return False
         self._rob.fillInstruction(ins)
         return not ins.getInvRegs()
@@ -104,17 +96,10 @@ class ReservationStation(StatefulComponent):
                 # Don't dispatch two writes to the same register at once.
                 if ins.getOutReg() is not None:
                     writing_now.add(ins.getOutReg())
-            # else:
-            #     break
             i += 1
 
-            if (ins.isBranch() and self._state_nxt[self.BRW_IND]):
-                # FOR NOW: Only let a single branch through.
-                # Mark that we are waiting for a conditional.
-                print '\n\n\n\n\n\n\n\n\n\I HOPE THIS ISNT HAPPENING CAUSE IF IT IS THAT WOULD BE BAD YES?\n\n'
-                self._branched_now = True
-                self._state_nxt[self.BRW_IND] = 1
-                break
+            if ins.isBranch():
+                self._branched_now = True # Don't dispatch multiple branches at once... is this necessary?
 
         for j in sorted(toremove, reverse=True):
             self._ins_buff_nxt.pop(j)

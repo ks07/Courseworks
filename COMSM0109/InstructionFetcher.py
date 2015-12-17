@@ -17,7 +17,7 @@ class InstructionFetcher(StatefulComponent):
         # Need a handle to memory (read-only access!)
         self._mem = mem
         self._width = width
-        
+        self.BRBLOCK = True
 
     def __str__(self):
         return 'PC = {0:d}'.format(self._state[self.PCI])
@@ -44,7 +44,7 @@ class InstructionFetcher(StatefulComponent):
         
     def fetchIns(self): #TODO: Fix name conflict nicely!
         """ Does the fetch from memory (with implied cache)"""
-        if self._state[self.BRW_IND]:
+        if self.BRBLOCK and self._state[self.BRW_IND]:
             #return None
             return (np.zeros(self._width, dtype=np.uint32), np.int64(-10)) # Blocking. Need to return numpy types.
         else:

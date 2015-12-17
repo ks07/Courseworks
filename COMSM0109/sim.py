@@ -81,7 +81,6 @@ class CPU(object):
         """ Clears the pipeline and does the branch (if necessary!). """
         # Need to tell decoder that the branch has been resolved, so blocking can stop
         self._decoder.branchResolved()
-        self._rs.branchResolved()
         self._fetcher.branchResolved()
 
         if ins.robbr[0]:
