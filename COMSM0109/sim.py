@@ -76,7 +76,7 @@ class CPU(object):
 
     def _rob_branch(self, ins):
         """ Clears the pipeline and does the branch (if necessary!). """
-        predicted = True
+        predicted = ins.predicted
         cond = ins.robbr[0]
         
         # Need to tell decoder that the branch has been resolved, so blocking can stop

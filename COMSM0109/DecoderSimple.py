@@ -4,6 +4,7 @@ import numpy as np
 from StatefulComponent import StatefulComponent
 from Instruction import Instruction
 from InstructionFormats import FORMATS
+from BranchPredictor import BranchPredictor
 
 class DecoderSimple(StatefulComponent):
     """ A decode unit. State is the current instruction in this stage, and an indicator for load stalling. """
@@ -23,6 +24,9 @@ class DecoderSimple(StatefulComponent):
         self._rob = rob
         self._width = width
         self._cpu = cpu
+
+        # Branch predictor inside the decoder.
+        self._predictor = BranchPredictor()
 
         self.BRBLOCK = False
         
@@ -79,20 +83,25 @@ class DecoderSimple(StatefulComponent):
                     self._rob.tagDependentWrite(ins) # Tag the dependent instructions for later fetch when ready
                     # Mark scoreboard
                     if ins.getOutReg() is not None:
-                        print ' MARKING SCOREBOARD FOR',ins.getOutReg(),ins
                         self._reg.markScoreboard(ins.getOutReg(), True)
                     if (self.BRBLOCK and ins.isBranch()):
-                        # Blocking on branches
+                        # Blocking on branches, if enabled
                         self._state_nxt[self.BRW_IND] = 1
                         blocked = self._width - len(ready)
                         break
                     elif ins.isBranch() and not self.BRBLOCK:
                         # Need to discard any instructions after this branch
-                        branchseen = True # Might not actually need this flag
                         print 'GO GO BRANCH PREDICTION', ins
-                        self._cpu._usePrediction(True, ins)
-                        blocked = -100
-                        #blocked = self._width - len(ready)
+
+                        # Use the predictor
+                        prediction = self._predictor.predict(ins)
+                        
+                        self._cpu._usePrediction(prediction, ins)
+
+                        if prediction:
+                            # Set flags to make sure we discard the stuff we predicted not to do
+                            blocked = -100
+                            branchseen = True
                     
         return ready, blocked
         
