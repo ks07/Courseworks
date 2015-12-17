@@ -60,9 +60,6 @@ class CPU(object):
         # Branch predictor (part of decode stage)
         self._predictor = BranchPredictor()
 
-        # Halt flag
-        self._haltpending = False
-
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
         print '\n---------Stepping---------\n'
@@ -210,17 +207,6 @@ class CPU(object):
             self._fetcher[self._fetcher.BRW_IND] = 1
         
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
-
-        # TODO: I'm not sure this works completely correctly
-        if self._haltpending or (issuedBRU and issuedBRU[0].isHalt()):
-            print 'HALT TIME'
-            if issuedBRU:
-                issuedBRU[0] = Instruction.NOP()
-            # If we are halting, wait for all pipes to clear before issue
-            self._haltpending = True
-            self._fetcher.update(self._fetcher.FCI, 0)
-            if not any((u.hasInstructions() for u in self._subpipes)):
-                self.halt()
 
         # Issue instructions to execute units #TODO: Targeted EUs (e.g. ALU, branch, Mem)
         shuffle(issuedALU) # Shuffle to flag up bugs!
