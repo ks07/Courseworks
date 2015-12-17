@@ -82,6 +82,7 @@ class CPU(object):
         # Need to tell decoder that the branch has been resolved, so blocking can stop
         self._decoder.branchResolved()
         self._rs.branchResolved()
+        self._fetcher.branchResolved()
 
         if ins.robbr[0]:
             #self._rs.pipelineClear() # I dont think I actually needed this, but...
@@ -152,6 +153,7 @@ class CPU(object):
         
         # Fetch Stage (will fetch as many as has been requested by decode)
         toDecodeList, pc = self._fetcher.fetchIns()
+        print 'lolwut fetchins',type(toDecodeList),toDecodeList,type(pc),pc
         for i,toDecode in enumerate(toDecodeList):
             print '* Fetch stage loaded from mem, passing ({0:d}): {1:08d} to decode stage.'.format(pc+i, toDecode)
 
@@ -194,14 +196,17 @@ class CPU(object):
         elif stallingDEC == 1:
             print 'STALLING AT DECODER (half)'
             # Issue has stalled due to a branch before instruction.
-            self._fetcher.stall(1)
+            #self._fetcher.stall(1)
+            self._fetcher[self._fetcher.BRW_IND] = 1
         elif stallingDEC == 2:
             print 'STALLING AT DECODER (full)'
             # Issue waiting for branch
-            self._fetcher.stall()
+            #self._fetcher.stall()
+            self._fetcher[self._fetcher.BRW_IND] = 1
         elif stallingDEC == 0:
             print 'STALLING AT DECODER (errr..... zero?)' # Probably stupid
-            self._fetcher.stall(2)
+            #self._fetcher.stall(2)
+            self._fetcher[self._fetcher.BRW_IND] = 1
         
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 

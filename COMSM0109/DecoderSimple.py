@@ -16,8 +16,8 @@ class DecoderSimple(StatefulComponent):
         self.BRW_IND = width + 1 # Index of branch wait indicator, if set we should issue nothing until branch is resolved.
         self._state = np.zeros(width + 2, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
-        self._srcas = np.ones(width, dtype=np.uint32) * -1
-        self._srcas_nxt = np.ones(width, dtype=np.uint32) * -1
+        self._srcas = np.ones(width, dtype=np.int64) * -1
+        self._srcas_nxt = np.ones(width, dtype=np.int64) * -1
         # Decode stage reads from register file.
         self._reg = regfile
         self._rob = rob
@@ -25,7 +25,7 @@ class DecoderSimple(StatefulComponent):
 
     def __str__(self):
         #return 'Decoding now: {0:08x} => {1:s}'.format(self._state[0], str(self._decode(self._state[0])))
-        return 'Decoder buffer: ' + str(self._state[:self.RLD_IND])
+        return 'Decoder buffer: ' + str(self._state[:self.RLD_IND]) + ' @ ' + str(self._srcas)
 
     def advstate(self):
         # TODO: should call super

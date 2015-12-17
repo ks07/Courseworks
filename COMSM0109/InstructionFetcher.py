@@ -7,15 +7,17 @@ class InstructionFetcher(StatefulComponent):
     """ The instruction fetching stage. State is the address we are loading from. (i.e. PC) Also required count. """
 
     PCI = 0 # Index of PC
+    BRW_IND = 1
     
     def __init__(self, mem, width):
-        self._state = np.zeros(1, dtype=np.uint32)
+        self._state = np.zeros(2, dtype=np.uint32)
         self._state_nxt = np.zeros_like(self._state)
         # Need to backup before changes (to undo bad predictions)
         self._old_state = np.zeros_like(self._state)
         # Need a handle to memory (read-only access!)
         self._mem = mem
         self._width = width
+        
 
     def __str__(self):
         return 'PC = {0:d}'.format(self._state[self.PCI])
@@ -38,10 +40,20 @@ class InstructionFetcher(StatefulComponent):
         """ Restores the previously saved state, when branch prediction was wrong. """
         self._state_nxt[self.PCI] = self._old_state[self.PCI]
 
+    def branchResolved(self):
+        print 'GOODBYE MOONMAN IF BRANCH'
+        self._state_nxt[self.BRW_IND] = 0
+        
     def fetchIns(self): #TODO: Fix name conflict nicely!
         """ Does the fetch from memory (with implied cache)"""
-        return (self._mem[self._state[self.PCI]:self._state[self.PCI]+self._width], self._state[self.PCI])
+        if self._state[self.BRW_IND]:
+            #return None
+            return (np.zeros(self._width, dtype=np.uint32), np.int64(-10)) # Blocking. Need to return numpy types.
+        else:
+            return (self._mem[self._state[self.PCI]:self._state[self.PCI]+self._width], self._state[self.PCI])
 
     def inc(self, count):
         """ Increments the PC by a specified amount. """
-        self._state_nxt[self.PCI] = self._state[self.PCI] + count
+        if not self._state[self.BRW_IND]:
+            print ' INCREMENTING PC',count
+            self._state_nxt[self.PCI] = self._state[self.PCI] + count
