@@ -9,8 +9,6 @@ from random import shuffle
 from Instruction import Instruction
 from Memory import Memory
 from RegisterFile import RegisterFile
-from BranchPredictor import BranchPredictor
-#from Decoder import Decoder
 from DecoderSimple import DecoderSimple
 from InstructionFetcher import InstructionFetcher
 from ExecuteUnit import ExecuteUnit
@@ -57,9 +55,6 @@ class CPU(object):
         # Time counter
         self._simtime = 0
 
-        # Branch predictor (part of decode stage)
-        self._predictor = BranchPredictor()
-
     def _update(self):
         """ Updates the state of all components, ready for the next iteration. """
         print '\n---------Stepping---------\n'
@@ -80,7 +75,7 @@ class CPU(object):
         cond = ins.robbr[0]
         
         # Need to tell decoder that the branch has been resolved, so blocking can stop
-        self._decoder.branchResolved()
+        self._decoder.branchResolved(ins, cond)
         self._fetcher.branchResolved()
 
         if cond and not predicted:
@@ -104,7 +99,7 @@ class CPU(object):
 
     def _rob_branch_poisoned(self, psnd):
         """ Stop early pipeline input stages from blocking on discarded branches. """
-        self._decoder.branchResolved()
+        self._decoder.branchResolved(None, False)
         self._fetcher.branchResolved()
 
     # EASIER TO SORT OUT BRANCHES IF THEY ARE DEALT WITH IN COMMIT    
@@ -246,10 +241,6 @@ class CPU(object):
             issuedBRU = [Instruction.NOP()]
         for ins in issuedBRU:
             print 'BRU', ins
-            if ins.isBranch():
-                # Predictor as part of decode
-                prediction = self._predictor.predict(self._fetcher[0], ins)
-                self._usePrediction(prediction, ins)
             # Handles printing
             self._bru.execute(ins)
 

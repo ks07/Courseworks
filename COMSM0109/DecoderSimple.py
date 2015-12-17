@@ -4,7 +4,7 @@ import numpy as np
 from StatefulComponent import StatefulComponent
 from Instruction import Instruction
 from InstructionFormats import FORMATS
-from BranchPredictor import BranchPredictor
+from BranchPredictor import *
 
 class DecoderSimple(StatefulComponent):
     """ A decode unit. State is the current instruction in this stage, and an indicator for load stalling. """
@@ -26,7 +26,7 @@ class DecoderSimple(StatefulComponent):
         self._cpu = cpu
 
         # Branch predictor inside the decoder.
-        self._predictor = BranchPredictor()
+        self._predictor = DynamicPredictor()
 
         self.BRBLOCK = False
         
@@ -57,9 +57,12 @@ class DecoderSimple(StatefulComponent):
         self._state_nxt[self.RLD_IND] = self.NO_LD # Don't need to bubble for load
         self._srcas_nxt = np.zeros_like(self._srcas_nxt)
 
-    def branchResolved(self):
+    def branchResolved(self, ins, taken):
         """ Called when a branch has been resolved (made it out of execute). Unblocks issue. """
         self._state_nxt[self.BRW_IND] = 0
+        if ins is not None:
+            # Update predictor (it may or may not use this)
+            self._predictor.branchResult(ins, taken)
 
     def issue(self):
         """ Decodes current inputs, issues instructions up to width. Issue bound fetch, non-blocking! """
