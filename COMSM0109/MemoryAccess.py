@@ -23,7 +23,7 @@ class MemoryAccess(object):
     def memaccess(self):
         """ Performs the memory access stage. """
         memop = self._ins.getMemOperation()
-        if memop:
+        if memop and not self._ins.robpoisoned: # Poisoned instructions usually have bogus values
             addr,write = memop
             if write:
                 #print '* Memory access stage wrote {0:d} to address {1:d} for {2:s}.'.format(write, addr, str(self._ins))
