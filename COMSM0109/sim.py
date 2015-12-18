@@ -36,7 +36,7 @@ class CPU(object):
         #self._decoder = Decoder(self._reg, self._decwidth)
         self._decoder = DecoderSimple(self._reg, self._decwidth, self._rob, self)
 
-        self._rs = ReservationStation('All', 2, self._reg, 3, self._rob)
+        self._rs = ReservationStation('All', self._reg, 6, self._rob)
 
         # Superscalar stage components.
         self._eu = [

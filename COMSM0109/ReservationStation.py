@@ -12,9 +12,8 @@ class ReservationStation(StatefulComponent):
     RBD2_IND = 33
     RBD3_IND = 34
     
-    def __init__(self, myid, maxDisp, reg, buffLen, rob):
+    def __init__(self, myid, reg, buffLen, rob):
         self._id = str(myid) # Some ID for display purposes
-        self._max_disp = maxDisp # The max number of instructions to dispatch per cycle
         self._ins_buff = [] # Instruction buffer
         self._ins_buff_nxt = []
         self._state = np.zeros(35, dtype=np.uint32) # For holding bypassed values (TODO: no shifts like scalar?)

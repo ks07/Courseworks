@@ -31,11 +31,15 @@ class MemoryAccess(object):
                 # ROB PERFORMS WRITES NOW FOR CONSISTENCY
                 pass
             else:
-                val = self._mem[addr]
-                print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._ins))
+                try:
+                    val = self._mem[addr]
+                except IndexError:
+                    val = -1
+                else:
+                    print '* Memory access stage read {0:d} from address {1:d} for {2:s}.'.format(val, addr, str(self._ins))
+
                 self._ins.setWBOutput(self._ins.getOpr()[0], val) # TODO: This will be broken by weird loads!
 
-#                self._executor.bypassBack(2, self._ins.getOpr()[0], val);
         return self._ins
 
 

@@ -81,6 +81,8 @@ class ReorderBuffer(object):
 
                 # Write to registers
                 for ri, val in ins.getWBOutput():
+                    if val is None:
+                        raise ValueError('Bad mem value - should have been poisoned?', ins)
                     print 'Writing {0:d} in r{1:d}'.format(val, ri)
                     self._reg[ri] = val
                     self._scbdCheckSet(ri)
