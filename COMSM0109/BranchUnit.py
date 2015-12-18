@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 
 from Executor import Executor
+from Writeback import Writeback
 
 class BranchUnit(object):
     """ A specialised execution unit for performing branches, with it's own pipeline. """
     
-    def __init__(self, myid, cpu):
+    def __init__(self, myid, cpu, rob):
         """ ID is for debugging and display purposes. """
         self._id = myid;
         # Just reuse the general purpose executor
         self._executor = Executor(cpu) # Requires a reference to cpu, for branches
+        self._writeback = Writeback(rob) # Need a writeback stage to pass into commit
         # Only an execute stage, branch instructions never write to registers or access mem
 
         # Easy iteration
-        self._stages = (self._executor,)
+        self._stages = (self._executor, self._writeback)
 
         # Pipeline information (currently for halt)
         self.pipelen = len(self._stages)
@@ -32,6 +34,10 @@ class BranchUnit(object):
 
         # Execute Stage (this might undo all the previous steps, if we branch!)
         completedBr = self._executor.execute()
+
+        self._writeback.updateInstruction(completedBr)
+
+        self._writeback.writeback()
 
     def advstate(self):
         """ Updates the state of all components, ready for the next iteration. """

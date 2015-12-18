@@ -6,7 +6,7 @@ failed=()
 for t in $all_tests; do
     echo $t
     ./assembler.py < $t
-    if yes 'c 50' | timeout 30 ./sim.py out.bin out_test.py > /dev/null; then
+    if yes 'c 50' | timeout --foreground 30 ./sim.py out.bin out_test.py > /dev/null; then
 	passed+=("$t")
     else
 	failed+=("$t")

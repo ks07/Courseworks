@@ -60,7 +60,7 @@ class DecoderSimple(StatefulComponent):
     def branchResolved(self, ins, taken):
         """ Called when a branch has been resolved (made it out of execute). Unblocks issue. """
         self._state_nxt[self.BRW_IND] = 0
-        if ins is not None:
+        if not self.BRBLOCK and ins is not None:
             # Update predictor (it may or may not use this)
             self._predictor.branchResult(ins, taken)
 

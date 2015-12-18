@@ -40,18 +40,6 @@ class ReservationStation(StatefulComponent):
             print 'RS buffer full'
             return True
 
-    def bypassBack(self, age, reg, val):
-        """ Inserts a value back into the bypass registers, from a later stage. """
-        # # TODO: We might only need support for age == 2, so forget generalising for now
-        # if age != 2:
-        #     raise ValueError('Unimplemented bypassBack age!', age);
-
-        # if not self._state_nxt[self.RBD1_IND] & reg:
-        #     self._state_nxt[reg] = val
-        # # Need to pass this back 2 steps
-        # self._state_nxt[self.RBD2_IND] |= (1 << reg)
-        return # Surpassed by rob, we hope
-
     def pipelineClear(self):
         """ Mispredicted branch! Clear the pipeline. """
         self._ins_buff_nxt = []
@@ -77,10 +65,15 @@ class ReservationStation(StatefulComponent):
         writing_now = set()
 
         toremove = []
-        togo = []
+        togo_ALU = []
+        max_disp_ALU = 2
+        togo_BRU = []
+        max_disp_BRU = 1
+        togo_LSU = []
+        max_disp_LSU = 1
         i = 0
 
-        while len(togo) < self._max_disp and i < len(self._ins_buff):
+        while (len(togo_ALU) < max_disp_ALU or len(togo_BRU) < max_disp_BRU or len(togo_LSU) < max_disp_LSU) and i < len(self._ins_buff):
             # In order for now
             ins = self._ins_buff[i]
             oreg = ins.getOutReg()
@@ -88,8 +81,23 @@ class ReservationStation(StatefulComponent):
             self._rob.tagDependentWrite(ins)
 
             if oreg not in writing_now and self._insReady(ins):
-                # Can dispatch
-                togo.append(ins)
+                # Can dispatch, if there's room!
+                if ins.isBranch() or ins.isHalt():
+                    if len(togo_BRU) < max_disp_BRU:
+                        togo_BRU.append(ins)
+                    else:
+                        break
+                elif ins.isLoadStore():
+                    if len(togo_LSU) < max_disp_LSU:
+                        togo_LSU.append(ins)
+                    else:
+                        break
+                else:
+                    if len(togo_ALU) < max_disp_ALU:
+                        togo_ALU.append(ins)
+                    else:
+                        break
+
                 toremove.append(i) # Remove from choices for next time.
 
                 # Update state in ROB
@@ -107,7 +115,7 @@ class ReservationStation(StatefulComponent):
         for j in sorted(toremove, reverse=True):
             self._ins_buff_nxt.pop(j)
 
-        return togo
+        return togo_ALU, togo_BRU, togo_LSU
 
     def advstate(self):
         self._ins_buff = list(self._ins_buff_nxt) # Need to copy the list TODO: Is a deep copy required?

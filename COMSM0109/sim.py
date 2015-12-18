@@ -44,7 +44,7 @@ class CPU(object):
             ExecuteUnit(1, self._mem, self, self._rob)
         ] # General purpose EUs
         # Much simpler to handle branches if they all go through a single EU
-        self._bru = BranchUnit(64, self) # Branch unit
+        self._bru = BranchUnit(64, self, self._rob) # Branch unit
         # Seperate EU for loads and stores
         self._lsu = ExecuteUnit(32, self._mem, self, self._rob) # Load/Store unit
 
@@ -107,28 +107,6 @@ class CPU(object):
         """ Clears the pipeline and does the branch (if necessary!). """
         ins.robbr = (cond, dest) # Jam stuff in here so rob can do things later
 
-        
-        # if cond and not pred:
-        #     # Should have taken, but did not.
-        #     print "* ...and the predictor was wrong, taking branch and clearing pipeline inputs!"
-        #     self._fetcher.update(0, dest) # Update the PC to point to the new address
-        #     self._decoder.pipelineClear()
-        #     self._rs.pipelineClear()
-        #     for eu in self._subpipes:
-        #         eu.invalidateExecute() # Empty the execute instruction reg
-        #     self._reg.resetScoreboard()
-        # elif not cond and pred:
-        #     # Shouldn't have taken, but did.
-        #     print "* ...and the predictor was wrong, restoring PC and clearing pipeline inputs!"
-        #     self._fetcher.restore() # Load the original PC value from before prediction
-        #     self._decoder.pipelineClear()
-        #     self._rs.pipelineClear()
-        #     for eu in self._subpipes:
-        #         eu.invalidateExecute() # Empty the execute instruction reg
-        #     self._reg.resetScoreboard()
-        # else:
-        #     print "* ...and the predictor was right, so this was a nop!"
-
     def _usePrediction(self, pred, branch):
         """ Uses the prediction to set the fetch target prematurely. Must run after fetch has set decoder input. """
         if pred:
@@ -171,18 +149,9 @@ class CPU(object):
         for i,toDecode in enumerate(toDecodeList):
             print '* Fetch stage loaded from mem, passing ({0:d}): {1:08d} to decode stage.'.format(pc+i, toDecode)
 
-
         # Get issued instructions from decoder.
-#        issuedALU, issuedBRU, issuedLSU = self._decoder.decode()
+#        issuedALU, issuedBRU, issuedLSU, stallingDEC = self._decoder.issue()
         issued, stallingDEC = self._decoder.issue()
-
-        
-        # Need to stall the fetcher, if decoder is stalling.
-        # BUT: Fetcher will already have fetched the next ins, and will inc for next clock.
-        # Need to tell fetcher to go back to the previous instructs.
-#        self._fetcher.inc(len(issuedALU) + len(issuedBRU) + len(issuedLSU))
-#        if stallingDEC and len(issued) != 1:
-#            assert False
 
         if stallingDEC != -100:
             self._fetcher.inc(len(issued))
@@ -194,12 +163,12 @@ class CPU(object):
 
         # LOL RESERVATION STATION SAYS FUCK YOU
 #        big_issue = issuedALU + issuedBRU + issuedLSU
-        issuedALU = issuedBRU = issuedLSU = []
-        big_issue = issued
+#        issuedALU = issuedBRU = issuedLSU = []
+#        big_issue = issued
 
-        issuedALU = self._rs.dispatch()
+        dispatchedALU, dispatchedBRU, dispatchedLSU = self._rs.dispatch()
 #        print self._rs._state_nxt
-        stallingRS = self._rs.queueInstructions(big_issue) # THIS NEEDS TO GO 2ND, OOPSIE
+        stallingRS = self._rs.queueInstructions(issued) # THIS NEEDS TO GO 2ND, OOPSIE
 
         if stallingRS:
             print 'STALLING'
@@ -225,21 +194,21 @@ class CPU(object):
 #        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
 
         # Issue instructions to execute units #TODO: Targeted EUs (e.g. ALU, branch, Mem)
-        shuffle(issuedALU) # Shuffle to flag up bugs!
-        for i,(eu,ins) in enumerate(izip_longest(self._eu, issuedALU, fillvalue=Instruction.NOP())):
+        shuffle(dispatchedALU) # Shuffle to flag up bugs!
+        for i,(eu,ins) in enumerate(izip_longest(self._eu, dispatchedALU, fillvalue=Instruction.NOP())):
             print 'EU', i, ins
             eu.execute(ins)
 
-        if not issuedLSU:
-            issuedLSU = [Instruction.NOP()]
-        for ins in issuedLSU:
+        if not dispatchedLSU:
+            dispatchedLSU = [Instruction.NOP()]
+        for ins in dispatchedLSU:
             print 'LSU', ins
             self._lsu.execute(ins)
 
         # Need to execute with a nop to actually step the bru pipeline.
-        if not issuedBRU:
-            issuedBRU = [Instruction.NOP()]
-        for ins in issuedBRU:
+        if not dispatchedBRU:
+            dispatchedBRU = [Instruction.NOP()]
+        for ins in dispatchedBRU:
             print 'BRU', ins
             # Handles printing
             self._bru.execute(ins)
