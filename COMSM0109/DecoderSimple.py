@@ -26,7 +26,7 @@ class DecoderSimple(StatefulComponent):
         self._cpu = cpu
 
         # Branch predictor inside the decoder.
-        self._predictor = HybridPredictor(2, 3)
+        self._predictor = DynamicPredictor(3, 7)
 
         self.BRBLOCK = False
         

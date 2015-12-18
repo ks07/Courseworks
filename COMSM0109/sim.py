@@ -13,6 +13,7 @@ from DecoderSimple import DecoderSimple
 from InstructionFetcher import InstructionFetcher
 from ExecuteUnit import ExecuteUnit
 from BranchUnit import BranchUnit
+from LoadStoreUnit import LoadStoreUnit
 from ReservationStation import ReservationStation
 from ReorderBuffer import ReorderBuffer
 
@@ -36,7 +37,7 @@ class CPU(object):
         #self._decoder = Decoder(self._reg, self._decwidth)
         self._decoder = DecoderSimple(self._reg, self._decwidth, self._rob, self)
 
-        self._rs = ReservationStation('All', self._reg, 8, self._rob)
+        self._rs = ReservationStation('All', self._reg, 6, self._rob)
 
         # Superscalar stage components.
         self._eu = [
@@ -46,7 +47,7 @@ class CPU(object):
         # Much simpler to handle branches if they all go through a single EU
         self._bru = BranchUnit(64, self, self._rob) # Branch unit
         # Seperate EU for loads and stores
-        self._lsu = ExecuteUnit(32, self._mem, self, self._rob) # Load/Store unit
+        self._lsu = LoadStoreUnit(32, self._mem, self, self._rob) # Load/Store unit
 
         
         # For iteration

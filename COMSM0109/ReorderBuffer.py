@@ -150,8 +150,9 @@ class ReorderBuffer(object):
         # Not sure if this should ever happen, but the result must be in the regfile.
         print 'irstag',irs
 #        assert len(irs) == 0
-        if irs:
+        for ri in irs:
             print 'WARNING (maybe): latest write guessed in regfile...',new_ins
+            new_ins.rrobmap[ri] = None
         #return None
 
     def fillInstruction(self, ins):
@@ -160,12 +161,16 @@ class ReorderBuffer(object):
         for ri,vi in ins.getRegValMap().iteritems(): # TODO: Support for multiple value targets per reg
             if ri in ins.getInvRegs():
                 # Loop through invalid regs, let us remove them.
-                if ri in ins.rrobmap:
+                if ri in ins.rrobmap and ins.rrobmap[ri] is not None:
                     depIns = ins.rrobmap[ri]
                     if depIns.rbstate == self.INS_COMPLETED:
                         ins.getInvRegs().remove(ri)
                         ins._values[vi] = depIns.getOutVal()
                     print 'checking r',ri,'depIns',depIns,'state',depIns.rbstate,self.INS_COMPLETED
+                elif ri in ins.rrobmap and ins.rrobmap[ri] is None:
+                    print ' THIS IS BAD, BUT DOES IT WORK?',ins,ri
+                    ins._values[vi] = self._reg[ri]
+                    ins.getInvRegs().remove(ri)
                 else:
                     print ' THIS IS BAD, BUT DOES IT WORK?',ins,ri
                     ins._values[vi] = self._reg[ri]

@@ -94,10 +94,12 @@ class ReservationStation(StatefulComponent):
             ins = self._ins_buff[i]
             oreg = ins.getOutReg()
 
+            print 'CHECKING DISP', ins, max_disp_LSU, togo_LSU
             self._rob.tagDependentWrite(ins)
 
             #if oreg not in writing_now and self._insReady(ins):
             if self._insReady(ins):
+                print 'READY FOR DISP', ins
                 # Can dispatch, if there's room!
                 if ins.isBranch() or ins.isHalt():
                     if len(togo_BRU) < max_disp_BRU:
@@ -106,6 +108,7 @@ class ReservationStation(StatefulComponent):
                         break
                 elif ins.isLoadStore():
                     if len(togo_LSU) < max_disp_LSU:
+                        print 'APPEND DISP'
                         togo_LSU.append(ins)
                     else:
                         break

@@ -11,11 +11,10 @@ class ExecuteUnit(object):
         """ ID is for debugging and display purposes. """
         self._id = myid;
         self._executor = Executor(cpu) # Requires a reference to cpu, for branches
-        self._memaccess = MemoryAccess(mem)
         self._writeback = Writeback(rob)
 
         # Easy iteration
-        self._stages = (self._executor, self._memaccess, self._writeback)
+        self._stages = (self._executor, self._writeback)
 
         # Pipeline information (currently for halt)
         self.pipelen = len(self._stages)
@@ -36,14 +35,8 @@ class ExecuteUnit(object):
         self._executor.updateInstruction(toExecute)
 
         # Execute Stage (this might undo all the previous steps, if we branch!)
-        toMacc, stalled = self._executor.execute()
+        toWriteback, stalled = self._executor.execute()
         # Handles printing
-
-        # Pass to memory access
-        self._memaccess.updateInstruction(toMacc)
-
-        # Memory access stage
-        toWriteback = self._memaccess.memaccess()
 
         # Pass to writeback
         self._writeback.updateInstruction(toWriteback)
