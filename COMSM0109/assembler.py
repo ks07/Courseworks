@@ -16,9 +16,9 @@ def implode_ins(op, args):
     return op + ' ' + ",".join(str(a) for a in args);
 
 def code_size(code):
-    if code.startswith("halt"):
-        # Halt needs to buffer with nops so previous instructions can complete writeback.
-        return 6
+#    if code.startswith("halt"):
+#        # Halt needs to buffer with nops so previous instructions can complete writeback.
+#        return 6
     if code.startswith("la ") or code.startswith("ad "):
         return 2
     return 1
@@ -41,16 +41,16 @@ def expand_pseudo(code, labels):
             implode_ins('movi', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) & 0xFFFF]),
             implode_ins('moui', [args[0], (abs(labels[args[1]] - labels[args[2]]) - args[3]) >> 16])
         ]
-    elif code.startswith("halt"):
-        # Halt needs padding with nops to clear through to writeback.
-        return [
-            'nop',
-            'nop',
-            'nop',
-            'nop',
-            'nop',
-            'halt'
-        ]
+    # elif code.startswith("halt"):
+    #     # Halt needs padding with nops to clear through to writeback.
+    #     return [
+    #         'nop',
+    #         'nop',
+    #         'nop',
+    #         'nop',
+    #         'nop',
+    #         'halt'
+    #     ]
     else:
         return [code];
 
