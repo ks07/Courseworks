@@ -28,7 +28,7 @@ class CPU(object):
         # The almighty reorder buffer, may he save our dependent souls
         self._rob = ReorderBuffer(16, self._reg, self._mem, self)
         
-        self._decwidth = 6
+        self._decwidth = 2
         
         # Initial stage components.
         self._fetcher = InstructionFetcher(self._mem, self._decwidth)
@@ -36,7 +36,7 @@ class CPU(object):
         #self._decoder = Decoder(self._reg, self._decwidth)
         self._decoder = DecoderSimple(self._reg, self._decwidth, self._rob, self)
 
-        self._rs = ReservationStation('All', self._reg, 12, self._rob)
+        self._rs = ReservationStation('All', self._reg, 6, self._rob)
 
         # Superscalar stage components.
         self._eu = [
@@ -158,18 +158,48 @@ class CPU(object):
             # Pass fetched to decode
             self._decoder.queueInstructions(toDecodeList, range(len(toDecodeList)) + pc)
 
-#       print 'decoded', issuedALU, issuedBRU, issuedLSU
-#       print 'decoded', issued
-
-        # LOL RESERVATION STATION SAYS FUCK YOU
-#        big_issue = issuedALU + issuedBRU + issuedLSU
-#        issuedALU = issuedBRU = issuedLSU = []
-#        big_issue = issued
 
         dispatchedALU, dispatchedBRU, dispatchedLSU = self._rs.dispatch()
-#        print self._rs._state_nxt
-        stallingRS = self._rs.queueInstructions(issued) # THIS NEEDS TO GO 2ND, OOPSIE
 
+        
+#        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
+
+        # Issue instructions to execute units #TODO: Targeted EUs (e.g. ALU, branch, Mem)
+        shuffle(dispatchedALU) # Shuffle to flag up bugs!
+        #stallingALU = False
+        lostinsALU = []
+        for i,(eu,ins) in enumerate(izip_longest([eu for eu in self._eu if not eu.willStall()], dispatchedALU, fillvalue=Instruction.NOP())):
+            print 'EU', i, ins
+            stallingALU = eu.execute(ins)
+            if stallingALU:
+                lostinsALU.append(ins)
+
+        if not dispatchedLSU:
+            dispatchedLSU = [Instruction.NOP()]
+        for ins in dispatchedLSU:
+            print 'LSU', ins
+            self._lsu.execute(ins)
+
+        # Need to execute with a nop to actually step the bru pipeline.
+        if not dispatchedBRU:
+            dispatchedBRU = [Instruction.NOP()]
+        for ins in dispatchedBRU:
+            print 'BRU', ins
+            # Handles printing
+            self._bru.execute(ins)
+
+
+#        if lostinsALU:
+            #self._rs.stallingEU('ALU', stallingALU)
+            # Stall by putting the instructions back in RS
+#            print 'SENDING BACK TO ALU',lostinsALU
+#            self._rs.stallingEU(lostinsALU)
+#            for ins in lostinsALU:
+                # Should not be marked as executing
+#                ins.rbstate = 0
+
+        stallingRS = self._rs.queueInstructions(issued) # THIS NEEDS TO GO AFTER DISPATCH AND EUs!
+            
         if stallingRS:
             print 'STALLING'
             # Need to stall previous stages
@@ -191,28 +221,6 @@ class CPU(object):
             #self._fetcher.stall(2)
             self._fetcher[self._fetcher.BRW_IND] = 1
         
-#        print '* Decode stage determined the instruction is {0:s}, reading any input registers and passing to execution unit'.format(str(toExecuteA))
-
-        # Issue instructions to execute units #TODO: Targeted EUs (e.g. ALU, branch, Mem)
-        shuffle(dispatchedALU) # Shuffle to flag up bugs!
-        for i,(eu,ins) in enumerate(izip_longest(self._eu, dispatchedALU, fillvalue=Instruction.NOP())):
-            print 'EU', i, ins
-            eu.execute(ins)
-
-        if not dispatchedLSU:
-            dispatchedLSU = [Instruction.NOP()]
-        for ins in dispatchedLSU:
-            print 'LSU', ins
-            self._lsu.execute(ins)
-
-        # Need to execute with a nop to actually step the bru pipeline.
-        if not dispatchedBRU:
-            dispatchedBRU = [Instruction.NOP()]
-        for ins in dispatchedBRU:
-            print 'BRU', ins
-            # Handles printing
-            self._bru.execute(ins)
-
         # Commit results from reorder buffer
         self._rob.commit()
             

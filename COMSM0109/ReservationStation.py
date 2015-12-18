@@ -19,6 +19,8 @@ class ReservationStation(StatefulComponent):
         self._state = np.zeros(35, dtype=np.uint32) # For holding bypassed values (TODO: no shifts like scalar?)
         self._state_nxt = np.zeros_like(self._state)
         self._branched_now = False # Marks if a branch has been dispatched yet this time step.
+        self._multicycles = []
+        self._multicycles_nxt = []
         # Need a handle to register file
         self._reg = reg
         # Need handle to reorder buffer
@@ -43,6 +45,10 @@ class ReservationStation(StatefulComponent):
         """ Mispredicted branch! Clear the pipeline. """
         self._ins_buff_nxt = []
 
+    def stallingEU(self, lins):
+        """ Stalled EU, putting inss back into the buffer. """
+        self._ins_buff_nxt = lins + self._ins_buff_nxt
+        
     def _insReady(self,ins):
         """ DEBUG WRAPPER, CAUSE I SUCK """
         ret = self._insReady2(ins)
@@ -56,20 +62,31 @@ class ReservationStation(StatefulComponent):
             return False
         self._rob.fillInstruction(ins)
         return not ins.getInvRegs()
-        
+    
     def dispatch(self):
         # Set the next state
         self._ins_buff_nxt = list(self._ins_buff)
         self._branched_now = False
         writing_now = set()
 
-        toremove = []
         togo_ALU = []
         max_disp_ALU = 2
         togo_BRU = []
         max_disp_BRU = 1
         togo_LSU = []
         max_disp_LSU = 1
+        
+        self._multicycles_nxt = []
+        for mins in self._multicycles:
+            if mins.cycleCnt(True) and not mins.robpoisoned:
+                self._multicycles_nxt.append(mins)
+                max_disp_ALU -= 1 # Reduce/stall dispatch
+            else:
+                # Can dispatch again!
+                pass
+        print 'NOW ACCEPTING FOR RS ALU',max_disp_ALU
+
+        toremove = []
         i = 0
 
         while (len(togo_ALU) < max_disp_ALU or len(togo_BRU) < max_disp_BRU or len(togo_LSU) < max_disp_LSU) and i < len(self._ins_buff):
@@ -95,6 +112,8 @@ class ReservationStation(StatefulComponent):
                 else:
                     if len(togo_ALU) < max_disp_ALU:
                         togo_ALU.append(ins)
+                        if ins.cycleLen() > 1:
+                            self._multicycles_nxt.append(ins)
                     else:
                         break
 
@@ -119,4 +138,5 @@ class ReservationStation(StatefulComponent):
 
     def advstate(self):
         self._ins_buff = list(self._ins_buff_nxt) # Need to copy the list TODO: Is a deep copy required?
+        self._multicycles = list(self._multicycles_nxt)
         return super(self.__class__, self).advstate();

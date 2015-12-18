@@ -33,7 +33,7 @@ class BranchUnit(object):
         self._executor.updateInstruction(toExecute)
 
         # Execute Stage (this might undo all the previous steps, if we branch!)
-        completedBr = self._executor.execute()
+        completedBr, stalled = self._executor.execute()
 
         self._writeback.updateInstruction(completedBr)
 

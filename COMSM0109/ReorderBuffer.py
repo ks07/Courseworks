@@ -37,6 +37,7 @@ class ReorderBuffer(object):
         
     def insWriteback(self, ins):
         """ Marks instruction as completed, waiting for commit. """
+        print 'MARKING COMPLETE',ins
         ins.rbstate = self.INS_COMPLETED
 
     def commit(self):

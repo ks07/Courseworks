@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+iuid = 0
 class Instruction(object):
     """ An instruction. """
 
@@ -15,7 +15,7 @@ class Instruction(object):
         # Need to cover end = imm
         if frmt[-1] == 'i':
             strf.append('{:d}')
-        return ("(a={:d}) {} " + ",".join(strf)).rstrip()
+        return ("{} (a={:d}) {} " + ",".join(strf)).rstrip()
 
     @staticmethod
     def NOP(debug = False, asrc = -1):
@@ -24,8 +24,11 @@ class Instruction(object):
             return Instruction(asrc, 'dnop', (0,1), debug, None) # Abuse the word field to hold the potentially invalid inst
         else:
             return Instruction(asrc, 'nop', (0,0), 0, None)
-
+    
     def __init__(self, asrc, opcode, frmt, word, regfile, predicted=False):
+        global iuid
+        self.uid = iuid
+        iuid += 1
         self.asrc = asrc
         self._opcode = opcode
         self._frmt_str = Instruction._decf2strf(frmt) # If we subclass this becomes unnecessary?
@@ -79,6 +82,9 @@ class Instruction(object):
         self.rbstate = -1
         self.rrobmap = {}
         self.robpoisoned = False # If true, when completed this instruction should be dropped without effect
+
+        # Execute Fields (again, here for code simplicity)
+        self.excycles = -1
 
     def getOpc(self):
         return self._opcode
@@ -140,9 +146,26 @@ class Instruction(object):
     def isNOP(self):
         return self._opcode == 'nop' or self._opcode == 'dnop'
 
+    def cycleLen(self):
+        """ Returns the number of cycles this instruction should take in execute. """
+        if self._opcode == 'mul' or self._opcode == 'muli':
+            return 3
+        else:
+            return 1
+
+    def cycleCnt(self, dec = False):
+        """ Gets the current number of cycles remaining. Stored here for convenience. """
+        print ' CYCLE CNT ',self
+        if self.excycles < 0:
+            self.excycles = self.cycleLen() # Initialise on first call
+        if dec:
+            self.excycles -= 1
+            print ' CC RED TO ',self.excycles
+        return self.excycles
+
     def __str__(self):
         # This is the implode_ins function in the assembler!
-        out = self._frmt_str.format(self.asrc, self._opcode, *self._operands)
+        out = self._frmt_str.format(self.uid,self.asrc, self._opcode, *self._operands)
         if self.robpoisoned:
             out += ' [RIP]' # Mark poisoned instructions
         return out

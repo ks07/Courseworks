@@ -21,6 +21,10 @@ class ExecuteUnit(object):
         self.pipelen = len(self._stages)
         self._stepcount = 0
 
+    def willStall(self):
+        """ Returns True if the EU will stall (from multistage ins). """
+        return self._executor._ins.cycleLen() > 1 and self._executor._ins.cycleCnt() > 0 # This should really be a method on executor
+        
     def execute(self, toExecute):
         """ Runs the current timestep. Should be issued an instruction. """
         # Update the step count (used to tell if pipe is clear of instructions).
@@ -32,7 +36,7 @@ class ExecuteUnit(object):
         self._executor.updateInstruction(toExecute)
 
         # Execute Stage (this might undo all the previous steps, if we branch!)
-        toMacc = self._executor.execute()
+        toMacc, stalled = self._executor.execute()
         # Handles printing
 
         # Pass to memory access
@@ -46,6 +50,8 @@ class ExecuteUnit(object):
 
         # Writeback stage
         self._writeback.writeback()
+
+        return stalled
 
     def advstate(self):
         """ Updates the state of all components, ready for the next iteration. """

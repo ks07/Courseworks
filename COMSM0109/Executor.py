@@ -168,4 +168,13 @@ class Executor(StatefulComponent):
             self._state_nxt[self.RBD1_IND] = (1 << outReg)
         if not outAddr is None:
             ins.setMemOperation(outAddr, outVal)
-        return ins
+
+        # Deal with multicycle instructions.
+        cycles = ins.cycleCnt(False)
+        if ins.cycleLen() > 1 and cycles > 0: # WARNING: This will fail if ins execute has side effects!
+            print ' BLOCKING THE EXECUTE STAGE OK? ',cycles,ins
+            # Need to stall
+            self._ins_nxt = ins
+            return (Instruction.NOP(), True)
+        else:
+            return (ins, False)
