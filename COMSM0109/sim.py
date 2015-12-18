@@ -28,7 +28,7 @@ class CPU(object):
         # The almighty reorder buffer, may he save our dependent souls
         self._rob = ReorderBuffer(16, self._reg, self._mem, self)
         
-        self._decwidth = 2
+        self._decwidth = 4
         
         # Initial stage components.
         self._fetcher = InstructionFetcher(self._mem, self._decwidth)
