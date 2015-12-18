@@ -79,7 +79,8 @@ class ReservationStation(StatefulComponent):
 
             self._rob.tagDependentWrite(ins)
 
-            if oreg not in writing_now and self._insReady(ins):
+            #if oreg not in writing_now and self._insReady(ins):
+            if self._insReady(ins):
                 # Can dispatch, if there's room!
                 if ins.isBranch() or ins.isHalt():
                     if len(togo_BRU) < max_disp_BRU:

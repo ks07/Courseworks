@@ -28,7 +28,7 @@ class CPU(object):
         # The almighty reorder buffer, may he save our dependent souls
         self._rob = ReorderBuffer(16, self._reg, self._mem, self)
         
-        self._decwidth = 4
+        self._decwidth = 6
         
         # Initial stage components.
         self._fetcher = InstructionFetcher(self._mem, self._decwidth)
@@ -36,7 +36,7 @@ class CPU(object):
         #self._decoder = Decoder(self._reg, self._decwidth)
         self._decoder = DecoderSimple(self._reg, self._decwidth, self._rob, self)
 
-        self._rs = ReservationStation('All', self._reg, 6, self._rob)
+        self._rs = ReservationStation('All', self._reg, 12, self._rob)
 
         # Superscalar stage components.
         self._eu = [

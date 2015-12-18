@@ -46,7 +46,7 @@ class ReorderBuffer(object):
         except IndexError:
             print 'Empty ROB'
             ins = None
-            
+
         while ins is not None and (ins.rbstate == self.INS_COMPLETED or ins.isNOP()):
             if ins.robpoisoned:
                 print 'Poisoned, deleting', ins
