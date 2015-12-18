@@ -20,6 +20,12 @@ class ReorderBuffer(object):
         self._ins_buff_nxt = collections.deque() # Next step
         self._cpu = cpu
 
+        # Debug/Output Variables
+        self.INSTRUCTIONS_COMMITTED = 0 # Normally completed instruction count
+        self.INSTRUCTIONS_DISCARDED = 0 # Wrongly speculatively executed instruction count
+        self.BRANCH_MISPREDICTIONS = 0 # Number of branch mispredictions
+        self.TOTAL_BRANCHES = 0 # Total number of branch instructions executed
+
     def __str__(self):
         return 'Reorder Buffer: {0:s}'.format(str(self._ins_buff))
 
@@ -53,15 +59,21 @@ class ReorderBuffer(object):
                 print 'Poisoned, deleting', ins
                 if ins.isBranch():
                     self._cpu._rob_branch_poisoned(ins)
+                # Record this discard
+                self.INSTRUCTIONS_DISCARDED += 1
             else:
                 print 'Committing', ins
+
+                self.INSTRUCTIONS_COMMITTED += 1
 
                 if ins.isHalt():
                     self._cpu.halt()
 
                 if ins.isBranch():
+                    self.TOTAL_BRANCHES += 1
                     mispredicted = self._cpu._rob_branch(ins)
                     if mispredicted:
+                        self.BRANCH_MISPREDICTIONS += 1
                         discard = []
                         # Mark all later instructions.
                         for ilater in self._ins_buff_nxt:

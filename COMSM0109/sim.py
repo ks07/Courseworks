@@ -129,9 +129,22 @@ class CPU(object):
         """ Halts the simulation. """
         print "Program has halted the simulation! Doing final update and print."
         self._update()
-        self.displayState()
+
+        print self._reg
+        # self.displayState() # Prints too much!
+
+        print '\n=== Simulation Stats ===\n'
+        total_exec = self._rob.INSTRUCTIONS_COMMITTED + self._rob.INSTRUCTIONS_DISCARDED
+        print 'CYCLE COUNT:', self._simtime
+        print 'INSTRUCTIONS EXECUTED:', total_exec
+        print 'AVG INSTRUCTIONS PER CYCLE:', float(total_exec) / float(self._simtime)
+        print 'INSTRUCTIONS COMMITTED:', self._rob.INSTRUCTIONS_COMMITTED
+        print 'INSTRUCTIONS DISCARDED:', self._rob.INSTRUCTIONS_DISCARDED
+        print 'TOTAL BRANCHES:', self._rob.TOTAL_BRANCHES
+        print 'BRANCH MISPREDICTIONS:', self._rob.BRANCH_MISPREDICTIONS
+
         if check_file:
-            print "Running check."
+            print "\nRunning check."
             check_vars = {
                 'mem': self._mem,
                 'reg': self._reg
