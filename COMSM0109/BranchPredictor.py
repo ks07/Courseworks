@@ -1,5 +1,17 @@
 #!/usr/bin/env python
 
+class ConstantPredictor(object):
+    """ Always taken/not taken. """
+
+    def __init__(self, taken):
+        self._taken = taken
+
+    def predict(self, ins):
+        return self._taken
+
+    def branchResult(self, ins, taken):
+        return
+
 class StaticPredictor(object):
     """ A static branch predictor. """
 
@@ -52,7 +64,7 @@ class HybridPredictor(DynamicPredictor):
     
     def _getOrInit(self, ins):
         if ins.asrc not in self._table:
-            start = 3 if self.STATIC.predict(ins) else 0
+            start = self._ctrlim - 1 if self.STATIC.predict(ins) else 0
             self._table[ins.asrc] = start
         return self._table[ins.asrc]
 
