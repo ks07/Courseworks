@@ -55,6 +55,88 @@ loop_start:
     ld r18,r3,r27
     add r19,r17,r18
     st r19,r1,r27
+    ; load B[i]
+    ld r4,r2,r0
+    ; load C[i]
+    ld r5,r3,r0
+    add r6,r4,r5
+    st r6,r1,r0
+    
+    ; load B[i]
+    ld r14,r2,r30
+    ; load C[i]
+    ld r15,r3,r30
+    add r16,r14,r15
+    st r16,r1,r30
+    
+    ; load B[i]
+    ld r17,r2,r31
+    ; load C[i]
+    ld r18,r3,r31
+    add r19,r17,r18
+    st r19,r1,r31
+    
+    ; load B[i]
+    ld r4,r2,r29
+    ; load C[i]
+    ld r5,r3,r29
+    add r6,r4,r5
+    st r6,r1,r29
+    
+    ; load B[i]
+    ld r14,r2,r28
+    ; load C[i]
+    ld r15,r3,r28
+    add r16,r14,r15
+    st r16,r1,r28
+    
+    ; load B[i]
+    ld r17,r2,r27
+    ; load C[i]
+    ld r18,r3,r27
+    add r19,r17,r18
+    st r19,r1,r27
+    ; load B[i]
+    ld r4,r2,r0
+    ; load C[i]
+    ld r5,r3,r0
+    add r6,r4,r5
+    st r6,r1,r0
+    
+    ; load B[i]
+    ld r14,r2,r30
+    ; load C[i]
+    ld r15,r3,r30
+    add r16,r14,r15
+    st r16,r1,r30
+    
+    ; load B[i]
+    ld r17,r2,r31
+    ; load C[i]
+    ld r18,r3,r31
+    add r19,r17,r18
+    st r19,r1,r31
+    
+    ; load B[i]
+    ld r4,r2,r29
+    ; load C[i]
+    ld r5,r3,r29
+    add r6,r4,r5
+    st r6,r1,r29
+    
+    ; load B[i]
+    ld r14,r2,r28
+    ; load C[i]
+    ld r15,r3,r28
+    add r16,r14,r15
+    st r16,r1,r28
+    
+    ; load B[i]
+    ld r17,r2,r27
+    ; load C[i]
+    ld r18,r3,r27
+    add r19,r17,r18
+    st r19,r1,r27
 loop_end:
     halt
 
