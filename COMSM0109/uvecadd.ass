@@ -1,0 +1,104 @@
+;for( int i = 0; i < 10; i++ ) {
+;    A[ i ] = B[ i ] + C[ i ];
+;}
+
+start:
+    ; base of A, B, and C
+    la r1,vecA
+    la r2,vecB
+    la r3,vecC
+    movi r0,0
+    movi r30,1
+    movi r31,2
+    movi r29,3
+    movi r28,4
+    movi r27,5
+loop_start:
+    ; load B[i]
+    ld r4,r2,r0
+    ; load C[i]
+    ld r5,r3,r0
+    add r6,r4,r5
+    st r6,r1,r0
+    
+    ; load B[i]
+    ld r14,r2,r30
+    ; load C[i]
+    ld r15,r3,r30
+    add r16,r14,r15
+    st r16,r1,r30
+    
+    ; load B[i]
+    ld r17,r2,r31
+    ; load C[i]
+    ld r18,r3,r31
+    add r19,r17,r18
+    st r19,r1,r31
+    
+    ; load B[i]
+    ld r4,r2,r29
+    ; load C[i]
+    ld r5,r3,r29
+    add r6,r4,r5
+    st r6,r1,r29
+    
+    ; load B[i]
+    ld r14,r2,r28
+    ; load C[i]
+    ld r15,r3,r28
+    add r16,r14,r15
+    st r16,r1,r28
+    
+    ; load B[i]
+    ld r17,r2,r27
+    ; load C[i]
+    ld r18,r3,r27
+    add r19,r17,r18
+    st r19,r1,r27
+loop_end:
+    halt
+
+; data segment - .data?
+    .word 0xDEADBEEF
+vecB:
+    .word 10
+    .word 92
+    .word 65
+    .word 13
+    .word 21
+    .word 1234
+
+    .word 0xDEADBEEF
+vecC:
+    .word 249
+    .word 212
+    .word 40
+    .word 11
+    .word 10009
+    .word 1
+
+    .word 0xDEADBEEF
+vecA:
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+
+;;;test;;;
+import sys, json
+lf = open('out_labels.json', 'r')
+labels = json.load(lf)
+ivecA = labels['vecA']
+ivecB = labels['vecB']
+ivecC = labels['vecC']
+
+vecA = mem[ivecA:]
+vecB = mem[ivecB:ivecC-1]
+vecC = mem[ivecC:ivecA-1]
+for (a,b,c) in zip(vecA,vecB,vecC):
+    if a != b + c:
+        print 'Fail!', a, b, c
+	sys.exit(1);
+print 'Pass'
