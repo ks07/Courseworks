@@ -30,9 +30,9 @@ classdef Controller < handle
     end
     
     methods
-        function ctrl = Controller(dt,cloud)
+        function ctrl = Controller(dt,cloud,colour)
             ctrl.dt = dt;
-            ctrl.uav = UAV([0 0],90);
+            ctrl.uav = UAV(normrnd(0,3,1,2), rand() * 360, colour);
             ctrl.cloud = cloud;
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
@@ -43,7 +43,7 @@ classdef Controller < handle
             ctrl.PPM_LOWER = ctrl.PPM_BOUND * (1 - ppm_pcnt);
             ctrl.PPM_UPPER = ctrl.PPM_BOUND * (1 + ppm_pcnt);
         end
-        function step(self,t)
+        function step(self,t,mapDraw)
             [gps, ppm] = self.uav.getInput(self.cloud,t);
             
             self.estimateHeading(gps);
@@ -61,7 +61,7 @@ classdef Controller < handle
                 self.state = self.STATE_FOUND;
                 self.inside_measures = ppm;
             elseif self.state == self.STATE_FOUND
-                avg_ppm = mean(self.inside_measures)
+                avg_ppm = mean(self.inside_measures);
                 if avg_ppm > self.PPM_UPPER
                     self.state = self.STATE_INSIDE;
                 end
@@ -109,7 +109,7 @@ classdef Controller < handle
             end
             
             self.uav.updateState(self.dt);
-            self.uav.plot(self.cloud,t);
+            self.uav.plot(self.cloud,t,mapDraw);
             
             % Update records.
             self.prevGPS = gps;

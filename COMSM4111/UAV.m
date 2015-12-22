@@ -7,14 +7,17 @@ classdef UAV < handle
         hdg;    % Heading of the UAV
         spd;    % Commanded forward speed
         trn;    % Commanded turn curvature
+        hplot;  % Handle to plotted position.
+        colour; % Plot colour
     end
     
     methods
-        function uav = UAV(start,hdg)
+        function uav = UAV(start,hdg,colour)
             uav.pos = start;
             uav.hdg = hdg;
             uav.spd = 0;
             uav.trn = 0;
+            uav.colour = colour;
         end
         function [gps, ppm] = getInput(self, cloud, t)
             % Model GPS error as normal distribution, sdev of 1.5m
@@ -56,13 +59,23 @@ classdef UAV < handle
             % buff is max 32 bytes, tx time is 1s
             % TODO: Actually send to others
         end
-        function plot(self, cloud, t)
-            % put information in the title
-            ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);
-            title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, self.pos(1),self.pos(2),ppm))
-            plot(self.pos(1),self.pos(2),'o');
-            % plot the cloud contours
-            cloudplot(cloud,t)
+        function plot(self, cloud, t, mapDraw)
+            if mapDraw
+                % put information in the title
+                ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);
+                title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, self.pos(1),self.pos(2),ppm))
+
+                % plot the cloud contours
+                cloudplot(cloud,t);
+            end
+            
+            % Clear old plot
+            try
+                delete(self.hplot);
+            end
+            
+            % Plot position
+            self.hplot = plot(self.pos(1),self.pos(2),'o','Color',self.colour);
         end
     end
     

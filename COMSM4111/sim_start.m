@@ -19,8 +19,16 @@ figure(1);
 clf;
 hold on % so each plot doesn't wipe the predecessor
 
+uav_count = 100;
+
+colour = [0 1 1];
+cstep = 1 / uav_count;
+
 % Set initial state
-ctrl = Controller(dt,cloud);
+for i = 1:uav_count
+    ctrl(i) = Controller(dt,cloud,hsv2rgb(colour));
+    colour(1) = colour(1) + cstep;
+end
 
 % main simulation loop
 for kk=1:1000,
@@ -29,9 +37,11 @@ for kk=1:1000,
     t = t + dt;
     
     % clear the axes for fresh plotting
-    cla;
+    %cla;
     
-    ctrl.step(t);
+    for i = 1:uav_count
+        ctrl(i).step(t, i == 1);
+    end
     
     % pause ensures that the plots update
     pause(0.025)
