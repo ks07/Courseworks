@@ -51,6 +51,11 @@ classdef UAV < handle
             theta_ = input(1) * input(2);
             state_ = [x_, y_, theta_];
         end
+        function comm_tx(self,buff)
+            % Send a message to all other UAVs.
+            % buff is max 32 bytes, tx time is 1s
+            % TODO: Actually send to others
+        end
         function plot(self, cloud, t)
             % put information in the title
             ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);

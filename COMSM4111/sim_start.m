@@ -32,9 +32,6 @@ for kk=1:1000,
     cla;
     
     ctrl.step(t);
-    % cheat - robot goes round in circles
-    %x = [500*cos(0.01*t); 500*sin(0.01*t)];
-    
     
     % pause ensures that the plots update
     pause(0.025)

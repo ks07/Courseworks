@@ -7,11 +7,17 @@ classdef Controller < handle
         cloud;	% The cloud to track.
         prevGPS;    % The previously recorded GPS position.
         prevPPM;    % The previously recorded PPM.
-        returning;  % Marks whether we are currently trying to get back
-        cloudfound; % Marks whether we have found the cloud boundary.
-        ppmincreased;   % Marks whether the ppm had increased prev step.
+        state;
         POS_BOUND = 800;%1000;	% Max distance in any direction.
         PPM_BOUND = 1;  % PPM that signifies the desired boundary.
+    end
+    
+    properties (Constant)
+      STATE_LOST = 0;
+      STATE_INCREASING = 1;
+      STATE_FOUND = 2;
+      STATE_LEAVING = 3;
+      STATE_RETURNING = 4;
     end
     
     methods
@@ -21,55 +27,48 @@ classdef Controller < handle
             ctrl.cloud = cloud;
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
-            ctrl.returning = false;
-            ctrl.cloudfound = false;
-            ctrl.ppmincreased = false;
+            ctrl.state = ctrl.STATE_LOST;
         end
         function step(self,t)
             [gps, ppm] = self.uav.getInput(self.cloud,t);
             
             self.estimateHeading(gps);
             
-            if self.cloudfound
-                disp('found cloud');
-                self.uav.cmdTurn(6);
-                self.uav.cmdSpeed(10);
-            elseif self.checkBounds(gps)
-                disp('Oops, too far!');
-                if self.returning
-                    self.uav.cmdTurn(-0.1);
+            % State transition function(s)
+            if ppm >= self.PPM_BOUND
+                self.state = self.STATE_FOUND;
+            elseif self.state == self.STATE_LEAVING
+                self.state = self.STATE_RETURNING;
+            elseif ~self.checkBounds(gps)
+                self.state = self.STATE_LEAVING;
+            elseif ppm > self.prevPPM
+                self.state = self.STATE_INCREASING;
+            else
+                self.state = self.STATE_LOST;
+            end
+            
+            % Perform state operations
+            switch self.state
+                case self.STATE_LOST
+                    disp('Searching for cloud...');
+                    self.uav.cmdTurn(0.1);
                     self.uav.cmdSpeed(20);
-                    self.returning = false;
-                    self.ppmincreased = false;
-                    self.cloudfound = false;
-                else
+                case self.STATE_INCREASING
+                    disp('ppm increasing');
+                    self.uav.cmdTurn(0);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_FOUND
+                    disp('found cloud');
+                    self.uav.cmdTurn(6);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_LEAVING
+                    disp('moving out of bounds');
                     self.uav.cmdTurn(-1);
                     self.uav.cmdSpeed(20);
-                    self.returning = true;
-                    self.ppmincreased = false;
-                    self.cloudfound = false;
-                end
-            elseif ppm >= self.PPM_BOUND
-                disp('found cloud');
-                self.uav.cmdTurn(6);
-                self.uav.cmdSpeed(10);
-                self.returning = false;
-                self.ppmincreased = false;
-                self.cloudfound = true;
-            elseif ppm > self.prevPPM
-                disp('ppm increasing');
-                self.uav.cmdTurn(0);
-                self.uav.cmdSpeed(10);
-                self.returning = false;
-                self.ppmincreased = false;
-                self.cloudfound = false;
-            else
-                disp('Searching for cloud...')
-                self.uav.cmdTurn(0.1);
-                self.uav.cmdSpeed(20);
-                self.returning = false;
-                self.ppmincreased = false;
-                self.cloudfound = false;
+                case self.STATE_RETURNING
+                    disp('moving away from boundary');
+                    self.uav.cmdTurn(-0.1);
+                    self.uav.cmdSpeed(20);
             end
             
             self.uav.updateState(self.dt);
@@ -80,7 +79,7 @@ classdef Controller < handle
             self.prevPPM = ppm;
         end
         function ok = checkBounds(self,gps)
-            ok = max(abs(gps)) >= self.POS_BOUND;
+            ok = max(abs(gps)) <= self.POS_BOUND;
         end
         function estHDG = estimateHeading(self,gps)
             %a = [gps 0];
