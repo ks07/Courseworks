@@ -12,6 +12,8 @@ classdef Controller < handle
         inside_measures; % Stores last 4 measurements in inside state.
         state_ctr;
         prevState;
+        prevTurn;
+        prevSpeed;
         
         PPM_UPPER;
         PPM_LOWER;
@@ -26,8 +28,14 @@ classdef Controller < handle
         STATE_INSIDE = 5; % Too far into cloud
         
         STATE_FOLLOW = 10;  % Maybe on contour line
-        STATE_VEERING_LEFT = 11; 
-        STATE_VEERING_RIGHT = 12;
+        STATE_HIGH_LEFT_0 = 11; 
+        STATE_HIGH_RIGHT_0 = 12;
+        STATE_LOW_LEFT_0 = 13;
+        STATE_LOW_RIGHT_0 = 14;
+        STATE_HIGH_LEFT_1 = 15; 
+        STATE_HIGH_RIGHT_1 = 16;
+        STATE_LOW_LEFT_1 = 17;
+        STATE_LOW_RIGHT_1 = 18;
         
         POS_BOUND = 800;%1000;	% Max distance in any direction.
         PPM_BOUND = 1;  % PPM that signifies the desired boundary.
@@ -89,13 +97,96 @@ classdef Controller < handle
 %                 self.state = self.STATE_LOST;
 %             end
 
-            if ppm <= 0.9
-                self.state = self.STATE_VEERING_LEFT;
-            elseif ppm >= 1.1
-                self.state = self.STATE_VEERING_RIGHT;
-            else
-                self.state = self.STATE_FOLLOW;
+            if self.state == self.STATE_FOLLOW
+                if ppm <= 0.9
+                    self.state = self.STATE_LOW_LEFT_0
+                elseif ppm >= 1.1
+                    self.state = self.STATE_HIGH_RIGHT_0;
+                else
+                    self.state = self.STATE_FOLLOW;
+                end
+            elseif self.state == self.STATE_HIGH_RIGHT_0
+                if ppm < self.prevPPM
+                    % working
+                    self.state = self.STATE_HIGH_RIGHT_1
+                else
+                    % getting worse!
+                    self.state = self.STATE_HIGH_LEFT_0
+                end
+            elseif self.state == self.STATE_HIGH_RIGHT_1
+                if ppm <= 0.9
+                    % too far gone
+                    self.state = self.STATE_LOW_LEFT_0
+                elseif ppm > 0.9 && ppm < 1.1
+                    self.state = self.STATE_FOLLOW
+                elseif ppm < self.prevPPM
+                    self.state = self.STATE_HIGH_RIGHT_1
+                else
+                    % going up again!
+                    self.state = self.STATE_HIGH_RIGHT_0
+                end
+            elseif self.state == self.STATE_HIGH_LEFT_0
+                if ppm < self.prevPPM
+                    % working
+                    self.state = self.STATE_HIGH_LEFT_1
+                else
+                    % getting worse!
+                    self.state = self.STATE_HIGH_RIGHT_0
+                end
+            elseif self.state == self.STATE_HIGH_LEFT_1
+                if ppm <= 0.9
+                    % too far gone
+                    self.state = self.STATE_LOW_RIGHT_0
+                elseif ppm > 0.9 && ppm < 1.1
+                    self.state = self.STATE_FOLLOW
+                elseif ppm < self.prevPPM
+                    self.state = self.STATE_HIGH_LEFT_1
+                else
+                    % going up again!
+                    self.state = self.STATE_HIGH_LEFT_0
+                end
+            elseif self.state == self.STATE_LOW_LEFT_0
+                if ppm > self.prevPPM
+                    % working
+                    self.state = self.STATE_LOW_LEFT_1
+                else
+                    % getting worse!
+                    self.state = self.STATE_LOW_RIGHT_0
+                end
+            elseif self.state == self.STATE_LOW_LEFT_1
+                if ppm >= 1.1
+                    % too far gone
+                    self.state = self.STATE_HIGH_RIGHT_0
+                elseif ppm > 0.9 && ppm < 1.1
+                    self.state = self.STATE_FOLLOW
+                elseif ppm > self.prevPPM
+                    self.state = self.STATE_LOW_LEFT_1
+                else
+                    % going down again!
+                    self.state = self.STATE_LOW_LEFT_0
+                end
+            elseif self.state == self.STATE_LOW_RIGHT_0
+                if ppm > self.prevPPM
+                    % working
+                    self.state = self.STATE_LOW_RIGHT_1
+                else
+                    % getting worse!
+                    self.state = self.STATE_LOW_LEFT_0
+                end
+            elseif self.state == self.STATE_LOW_RIGHT_1
+                if ppm >= 1.1
+                    % too far gone
+                    self.state = self.STATE_HIGH_LEFT_0
+                elseif ppm > 0.9 && ppm < 1.1
+                    self.state = self.STATE_FOLLOW
+                elseif ppm > self.prevPPM
+                    self.state = self.STATE_HIGH_RIGHT_1
+                else
+                    % going down again!
+                    self.state = self.STATE_HIGH_RIGHT_0
+                end
             end
+
             
             % Perform state operations
             switch self.state
@@ -130,19 +221,62 @@ classdef Controller < handle
                     disp('folo')
                     self.uav.cmdTurn(0);
                     self.uav.cmdSpeed(10);
-                case self.STATE_VEERING_LEFT
-                    disp('need to go right gov')
+                case self.STATE_HIGH_RIGHT_0
+                    disp('too high trying right')
                     
-                    dist = 1 - ppm;
-                    turn = dist * 2;
-                    
-                    if self.prevState == self.STATE_VEERING_LEFT
-                        turn = 0;
-                        self.state = self.STATE_FOLLOW;
-                    end
-                    
-                    self.uav.cmdTurn(turn);
+                    self.uav.cmdTurn(2);
                     self.uav.cmdSpeed(10);
+                    
+                    
+%                     
+%                     dist = 1 - ppm;
+%                     turn = dist * 2;
+%                     
+%                     if self.prevState == self.STATE_VEERING_LEFT
+%                         turn = 0.5 * self.prevTurn;
+%                         self.state = self.STATE_FOLLOW;
+%                     end
+%                     
+%                     self.uav.cmdTurn(turn);
+%                     self.uav.cmdSpeed(10);
+                    
+%                     self.prevTurn = turn;
+                case self.STATE_HIGH_RIGHT_1
+                    disp('too high, right working')
+                    
+                    self.uav.cmdTurn(0.2);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_HIGH_LEFT_0
+                    disp('too high trying left')
+                    
+                    self.uav.cmdTurn(-2);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_HIGH_LEFT_1
+                    disp('too high, right working')
+                    
+                    self.uav.cmdTurn(-0.2);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_LOW_RIGHT_0
+                    disp('too low, trying right')
+                    
+                    self.uav.cmdTurn(2);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_LOW_RIGHT_1
+                    disp('too low, right working')
+                    
+                    self.uav.cmdTurn(0.2);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_LOW_LEFT_0
+                    disp('too low, trying left')
+                    
+                    self.uav.cmdTurn(-2);
+                    self.uav.cmdSpeed(10);
+                case self.STATE_LOW_LEFT_1
+                    disp('too low, left working');
+                    
+                    self.uav.cmdTurn(-0.2);
+                    self.uav.cmdSpeed(10);
+             
                 case self.STATE_VEERING_RIGHT
                     disp('need to go left bruv')
                     
@@ -150,12 +284,19 @@ classdef Controller < handle
                     turn = dist * -2;
                     
                     if self.prevState == self.STATE_VEERING_RIGHT
-                        turn = 0;
-                        self.state = self.STATE_FOLLOW;
+                        % We tried to adjust, is it getting better?
+                        if ppm < self.prevPPM
+                            turn = 0;
+                        else
+                            turn = 0.5 * self.prevTurn;
+                            self.state = self.STATE_FOLLOW;
+                        end
                     end
                     
                     self.uav.cmdTurn(turn);
                     self.uav.cmdSpeed(10);
+                    
+                    self.prevTurn = turn;
             end
             
             self.uav.updateState(self.dt);
