@@ -11,7 +11,7 @@ function sim_start
 load 'cloud2.mat'
 
 % time and time step
-t = 0;
+t = 400;
 %dt = 3.6;
 dt = 1.5;
 % open new figure window
@@ -19,7 +19,7 @@ figure(1);
 clf;
 hold on % so each plot doesn't wipe the predecessor
 
-uav_count = 100;
+uav_count = 1;
 
 colour = [0 1 1];
 cstep = 1 / uav_count;
