@@ -8,12 +8,15 @@ classdef Controller < handle
         prevGPS;    % The previously recorded GPS position.
         prevPPM;    % The previously recorded PPM.
         state;
+        net; % Should this be in UAV? todo
         
         inside_measures; % Stores last 4 measurements in inside state.
         state_ctr;
         prevState;
         prevTurn;
         prevSpeed;
+        
+        target;
         
         PPM_UPPER;
         PPM_LOWER;
@@ -41,20 +44,25 @@ classdef Controller < handle
         STATE_LOW_LEFT_A = 21;
         STATE_LOW_RIGHT_A = 22;
         
+        STATE_T_LOST = 50;
+        
         POS_BOUND = 800;%1000;	% Max distance in any direction.
         PPM_BOUND = 1;  % PPM that signifies the desired boundary.
     end
     
     methods
-        function ctrl = Controller(dt,cloud,colour)
+        function ctrl = Controller(dt,cloud,colour,net)
             ctrl.dt = dt;
             %ctrl.uav = UAV(normrnd(0,3,1,2), rand() * 360, colour);
-            ctrl.uav = UAV([200 300], 45, colour);
+            ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
+            %ctrl.uav = UAV([200 300], 45, colour);
             ctrl.cloud = cloud;
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
             ctrl.state = ctrl.STATE_FOLLOW;
             ctrl.state_ctr = 0;
+            ctrl.net = net;
+            ctrl.target = rand(1,2) * ctrl.POS_BOUND * 2 - ctrl.POS_BOUND;
             
             ppm_pcnt = 0.1;
             ctrl.PPM_LOWER = ctrl.PPM_BOUND * (1 - ppm_pcnt);
@@ -67,6 +75,14 @@ classdef Controller < handle
             if isnan(ppm)
                 ppm = 0;
             end
+            
+            rcv = self.net.rx();
+            
+            if ~isempty(rcv)
+                i = randi(size(rcv,1));
+                self.target = rcv(i,:)
+            end
+            
             
 %             self.estimateHeading(gps);
             
@@ -103,105 +119,120 @@ classdef Controller < handle
 
             if self.state == self.STATE_FOLLOW
                 if ppm <= 0.9
-                    self.state = self.STATE_LOW_LEFT_A
+                    self.state = self.STATE_LOW_LEFT_A;
                 elseif ppm >= 1.1
                     self.state = self.STATE_HIGH_RIGHT_A;
                 else
                     self.state = self.STATE_FOLLOW;
                 end
+            elseif ppm < 0.5
+                self.state = self.STATE_T_LOST;
+            elseif self.state == self.STATE_T_LOST
+                self.state = self.STATE_FOLLOW;
             elseif self.state == self.STATE_LOW_LEFT_A
-                self.state = self.STATE_LOW_LEFT_0
+                self.state = self.STATE_LOW_LEFT_0;
             elseif self.state == self.STATE_LOW_RIGHT_A
-                self.state = self.STATE_LOW_RIGHT_0
+                self.state = self.STATE_LOW_RIGHT_0;
             elseif self.state == self.STATE_HIGH_LEFT_A
-                self.state = self.STATE_HIGH_LEFT_0
+                self.state = self.STATE_HIGH_LEFT_0;
             elseif self.state == self.STATE_HIGH_RIGHT_A
-                self.state = self.STATE_HIGH_RIGHT_0
+                self.state = self.STATE_HIGH_RIGHT_0;
             elseif self.state == self.STATE_HIGH_RIGHT_0
                 if ppm < self.prevPPM
                     % working
-                    self.state = self.STATE_HIGH_RIGHT_1
+                    self.state = self.STATE_HIGH_RIGHT_1;
                 else
                     % getting worse!
-                    self.state = self.STATE_HIGH_LEFT_A
+                    self.state = self.STATE_HIGH_LEFT_A;
                 end
             elseif self.state == self.STATE_HIGH_RIGHT_1
                 if ppm <= 0.9
                     % too far gone
-                    self.state = self.STATE_LOW_LEFT_A
+                    self.state = self.STATE_LOW_LEFT_A;
                 elseif ppm > 0.9 && ppm < 1.1
-                    self.state = self.STATE_FOLLOW
+                    self.state = self.STATE_FOLLOW;
                 elseif ppm < self.prevPPM
-                    self.state = self.STATE_HIGH_RIGHT_1
+                    self.state = self.STATE_HIGH_RIGHT_1;
                 else
                     % going up again!
-                    self.state = self.STATE_HIGH_RIGHT_A
+                    self.state = self.STATE_HIGH_RIGHT_A;
                 end
             elseif self.state == self.STATE_HIGH_LEFT_0
                 if ppm < self.prevPPM
                     % working
-                    self.state = self.STATE_HIGH_LEFT_1
+                    self.state = self.STATE_HIGH_LEFT_1;
                 else
                     % getting worse!
-                    self.state = self.STATE_HIGH_RIGHT_A
+                    self.state = self.STATE_HIGH_RIGHT_A;
                 end
             elseif self.state == self.STATE_HIGH_LEFT_1
                 if ppm <= 0.9
                     % too far gone
-                    self.state = self.STATE_LOW_RIGHT_A
+                    self.state = self.STATE_LOW_RIGHT_A;
                 elseif ppm > 0.9 && ppm < 1.1
-                    self.state = self.STATE_FOLLOW
+                    self.state = self.STATE_FOLLOW;
                 elseif ppm < self.prevPPM
-                    self.state = self.STATE_HIGH_LEFT_1
+                    self.state = self.STATE_HIGH_LEFT_1;
                 else
                     % going up again!
-                    self.state = self.STATE_HIGH_LEFT_A
+                    self.state = self.STATE_HIGH_LEFT_A;
                 end
             elseif self.state == self.STATE_LOW_LEFT_0
                 if ppm > self.prevPPM
                     % working
-                    self.state = self.STATE_LOW_LEFT_1
+                    self.state = self.STATE_LOW_LEFT_1;
                 else
                     % getting worse!
-                    self.state = self.STATE_LOW_RIGHT_A
+                    self.state = self.STATE_LOW_RIGHT_A;
                 end
             elseif self.state == self.STATE_LOW_LEFT_1
                 if ppm >= 1.1
                     % too far gone
-                    self.state = self.STATE_HIGH_RIGHT_A
+                    self.state = self.STATE_HIGH_RIGHT_A;
                 elseif ppm > 0.9 && ppm < 1.1
-                    self.state = self.STATE_FOLLOW
+                    self.state = self.STATE_FOLLOW;
                 elseif ppm > self.prevPPM
-                    self.state = self.STATE_LOW_LEFT_1
+                    self.state = self.STATE_LOW_LEFT_1;
                 else
                     % going down again!
-                    self.state = self.STATE_LOW_LEFT_A
+                    self.state = self.STATE_LOW_LEFT_A;
                 end
             elseif self.state == self.STATE_LOW_RIGHT_0
                 if ppm > self.prevPPM
                     % working
-                    self.state = self.STATE_LOW_RIGHT_1
+                    self.state = self.STATE_LOW_RIGHT_1;
                 else
                     % getting worse!
-                    self.state = self.STATE_LOW_LEFT_A
+                    self.state = self.STATE_LOW_LEFT_A;
                 end
             elseif self.state == self.STATE_LOW_RIGHT_1
                 if ppm >= 1.1
                     % too far gone
-                    self.state = self.STATE_HIGH_LEFT_A
+                    self.state = self.STATE_HIGH_LEFT_A;
                 elseif ppm > 0.9 && ppm < 1.1
-                    self.state = self.STATE_FOLLOW
+                    self.state = self.STATE_FOLLOW;
                 elseif ppm > self.prevPPM
-                    self.state = self.STATE_HIGH_RIGHT_1
+                    self.state = self.STATE_HIGH_RIGHT_1;
                 else
                     % going down again!
-                    self.state = self.STATE_HIGH_RIGHT_A
+                    self.state = self.STATE_HIGH_RIGHT_A;
                 end
             end
 
             
             % Perform state operations
             switch self.state
+                case self.STATE_T_LOST
+                    prevDist = self.dist(self.prevGPS, self.target);
+                    newDist = self.dist(gps, self.target);
+                    
+                    self.uav.cmdSpeed(10)
+                    if newDist < prevDist
+                        self.uav.cmdTurn(0);
+                    else
+                        self.uav.cmdTurn(2);
+                    end
+                    
                 case self.STATE_LOST
                     disp('Searching for cloud...');
                     self.uav.cmdTurn(0.1);
@@ -233,6 +264,9 @@ classdef Controller < handle
                     disp('folo')
                     self.uav.cmdTurn(0);
                     self.uav.cmdSpeed(10);
+                    
+                    self.net.tx(gps)
+                    self.target = gps;
                 case self.STATE_HIGH_RIGHT_A
                     disp('too high trying right')
                     
@@ -310,6 +344,9 @@ classdef Controller < handle
             b = b / norm(b);
             %estHDG = atan2(norm(cross(a,b)), dot(a,b))
             estHDG = acosd(a(:).'*b(:));
+        end
+        function d = dist(self, p, q)
+            d = pdist([p;q]);
         end
     end
     

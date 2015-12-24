@@ -19,16 +19,19 @@ figure(1);
 clf;
 hold on % so each plot doesn't wipe the predecessor
 
-uav_count = 1;
+uav_count = 50;
 
 colour = [0 1 1];
 cstep = 1 / uav_count;
 
+net = Network();
+
 % Set initial state
 for i = 1:uav_count
-    ctrl(i) = Controller(dt,cloud,hsv2rgb(colour));
+    ctrl(i) = Controller(dt,cloud,hsv2rgb(colour),net);
     colour(1) = colour(1) + cstep;
 end
+
 
 % main simulation loop
 for kk=1:1000,
@@ -42,6 +45,8 @@ for kk=1:1000,
     for i = 1:uav_count
         ctrl(i).step(t, i == 1);
     end
+    
+    net.step();
     
     % pause ensures that the plots update
     pause(0.025)
