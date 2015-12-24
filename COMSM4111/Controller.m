@@ -36,6 +36,10 @@ classdef Controller < handle
         STATE_HIGH_RIGHT_1 = 16;
         STATE_LOW_LEFT_1 = 17;
         STATE_LOW_RIGHT_1 = 18;
+        STATE_HIGH_LEFT_A = 19;
+        STATE_HIGH_RIGHT_A = 20;
+        STATE_LOW_LEFT_A = 21;
+        STATE_LOW_RIGHT_A = 22;
         
         POS_BOUND = 800;%1000;	% Max distance in any direction.
         PPM_BOUND = 1;  % PPM that signifies the desired boundary.
@@ -99,31 +103,39 @@ classdef Controller < handle
 
             if self.state == self.STATE_FOLLOW
                 if ppm <= 0.9
-                    self.state = self.STATE_LOW_LEFT_0
+                    self.state = self.STATE_LOW_LEFT_A
                 elseif ppm >= 1.1
-                    self.state = self.STATE_HIGH_RIGHT_0;
+                    self.state = self.STATE_HIGH_RIGHT_A;
                 else
                     self.state = self.STATE_FOLLOW;
                 end
+            elseif self.state == self.STATE_LOW_LEFT_A
+                self.state = self.STATE_LOW_LEFT_0
+            elseif self.state == self.STATE_LOW_RIGHT_A
+                self.state = self.STATE_LOW_RIGHT_0
+            elseif self.state == self.STATE_HIGH_LEFT_A
+                self.state = self.STATE_HIGH_LEFT_0
+            elseif self.state == self.STATE_HIGH_RIGHT_A
+                self.state = self.STATE_HIGH_RIGHT_0
             elseif self.state == self.STATE_HIGH_RIGHT_0
                 if ppm < self.prevPPM
                     % working
                     self.state = self.STATE_HIGH_RIGHT_1
                 else
                     % getting worse!
-                    self.state = self.STATE_HIGH_LEFT_0
+                    self.state = self.STATE_HIGH_LEFT_A
                 end
             elseif self.state == self.STATE_HIGH_RIGHT_1
                 if ppm <= 0.9
                     % too far gone
-                    self.state = self.STATE_LOW_LEFT_0
+                    self.state = self.STATE_LOW_LEFT_A
                 elseif ppm > 0.9 && ppm < 1.1
                     self.state = self.STATE_FOLLOW
                 elseif ppm < self.prevPPM
                     self.state = self.STATE_HIGH_RIGHT_1
                 else
                     % going up again!
-                    self.state = self.STATE_HIGH_RIGHT_0
+                    self.state = self.STATE_HIGH_RIGHT_A
                 end
             elseif self.state == self.STATE_HIGH_LEFT_0
                 if ppm < self.prevPPM
@@ -131,19 +143,19 @@ classdef Controller < handle
                     self.state = self.STATE_HIGH_LEFT_1
                 else
                     % getting worse!
-                    self.state = self.STATE_HIGH_RIGHT_0
+                    self.state = self.STATE_HIGH_RIGHT_A
                 end
             elseif self.state == self.STATE_HIGH_LEFT_1
                 if ppm <= 0.9
                     % too far gone
-                    self.state = self.STATE_LOW_RIGHT_0
+                    self.state = self.STATE_LOW_RIGHT_A
                 elseif ppm > 0.9 && ppm < 1.1
                     self.state = self.STATE_FOLLOW
                 elseif ppm < self.prevPPM
                     self.state = self.STATE_HIGH_LEFT_1
                 else
                     % going up again!
-                    self.state = self.STATE_HIGH_LEFT_0
+                    self.state = self.STATE_HIGH_LEFT_A
                 end
             elseif self.state == self.STATE_LOW_LEFT_0
                 if ppm > self.prevPPM
@@ -151,19 +163,19 @@ classdef Controller < handle
                     self.state = self.STATE_LOW_LEFT_1
                 else
                     % getting worse!
-                    self.state = self.STATE_LOW_RIGHT_0
+                    self.state = self.STATE_LOW_RIGHT_A
                 end
             elseif self.state == self.STATE_LOW_LEFT_1
                 if ppm >= 1.1
                     % too far gone
-                    self.state = self.STATE_HIGH_RIGHT_0
+                    self.state = self.STATE_HIGH_RIGHT_A
                 elseif ppm > 0.9 && ppm < 1.1
                     self.state = self.STATE_FOLLOW
                 elseif ppm > self.prevPPM
                     self.state = self.STATE_LOW_LEFT_1
                 else
                     % going down again!
-                    self.state = self.STATE_LOW_LEFT_0
+                    self.state = self.STATE_LOW_LEFT_A
                 end
             elseif self.state == self.STATE_LOW_RIGHT_0
                 if ppm > self.prevPPM
@@ -171,19 +183,19 @@ classdef Controller < handle
                     self.state = self.STATE_LOW_RIGHT_1
                 else
                     % getting worse!
-                    self.state = self.STATE_LOW_LEFT_0
+                    self.state = self.STATE_LOW_LEFT_A
                 end
             elseif self.state == self.STATE_LOW_RIGHT_1
                 if ppm >= 1.1
                     % too far gone
-                    self.state = self.STATE_HIGH_LEFT_0
+                    self.state = self.STATE_HIGH_LEFT_A
                 elseif ppm > 0.9 && ppm < 1.1
                     self.state = self.STATE_FOLLOW
                 elseif ppm > self.prevPPM
                     self.state = self.STATE_HIGH_RIGHT_1
                 else
                     % going down again!
-                    self.state = self.STATE_HIGH_RIGHT_0
+                    self.state = self.STATE_HIGH_RIGHT_A
                 end
             end
 
@@ -221,7 +233,7 @@ classdef Controller < handle
                     disp('folo')
                     self.uav.cmdTurn(0);
                     self.uav.cmdSpeed(10);
-                case self.STATE_HIGH_RIGHT_0
+                case self.STATE_HIGH_RIGHT_A
                     disp('too high trying right')
                     
                     self.uav.cmdTurn(2);
@@ -246,7 +258,7 @@ classdef Controller < handle
                     
                     self.uav.cmdTurn(0.2);
                     self.uav.cmdSpeed(10);
-                case self.STATE_HIGH_LEFT_0
+                case self.STATE_HIGH_LEFT_A
                     disp('too high trying left')
                     
                     self.uav.cmdTurn(-2);
@@ -256,7 +268,7 @@ classdef Controller < handle
                     
                     self.uav.cmdTurn(-0.2);
                     self.uav.cmdSpeed(10);
-                case self.STATE_LOW_RIGHT_0
+                case self.STATE_LOW_RIGHT_A
                     disp('too low, trying right')
                     
                     self.uav.cmdTurn(2);
@@ -266,7 +278,7 @@ classdef Controller < handle
                     
                     self.uav.cmdTurn(0.2);
                     self.uav.cmdSpeed(10);
-                case self.STATE_LOW_LEFT_0
+                case self.STATE_LOW_LEFT_A
                     disp('too low, trying left')
                     
                     self.uav.cmdTurn(-2);
@@ -277,26 +289,6 @@ classdef Controller < handle
                     self.uav.cmdTurn(-0.2);
                     self.uav.cmdSpeed(10);
              
-                case self.STATE_VEERING_RIGHT
-                    disp('need to go left bruv')
-                    
-                    dist = ppm - 1;
-                    turn = dist * -2;
-                    
-                    if self.prevState == self.STATE_VEERING_RIGHT
-                        % We tried to adjust, is it getting better?
-                        if ppm < self.prevPPM
-                            turn = 0;
-                        else
-                            turn = 0.5 * self.prevTurn;
-                            self.state = self.STATE_FOLLOW;
-                        end
-                    end
-                    
-                    self.uav.cmdTurn(turn);
-                    self.uav.cmdSpeed(10);
-                    
-                    self.prevTurn = turn;
             end
             
             self.uav.updateState(self.dt);

@@ -11,7 +11,7 @@ function sim_start
 load 'cloud2.mat'
 
 % time and time step
-t = 400;
+t = 1300;
 %dt = 3.6;
 dt = 1.5;
 % open new figure window
