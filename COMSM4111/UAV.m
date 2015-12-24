@@ -2,7 +2,7 @@ classdef UAV < handle
     %UAV Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties (SetAccess = private,GetAccess = private)
+    properties %(SetAccess = private,GetAccess = private)
         pos;    % Co-ordinates of the UAV
         hdg;    % Heading of the UAV
         spd;    % Commanded forward speed
@@ -38,6 +38,8 @@ classdef UAV < handle
             newstate = self.pos_rk4(state,input,dt);
             self.pos = newstate(1:2);
             self.hdg = newstate(3);
+            disp('now at');
+            disp(self.pos);
         end
         function newstate=pos_rk4(self,state,input,dt)
             % Runge-Kutta 4th order for position
