@@ -64,7 +64,7 @@ classdef Controller < handle
             ctrl.dt = dt;
             %ctrl.uav = UAV(normrnd(0,3,1,2), rand() * 360, colour);
             %ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
-            ctrl.uav = UAV([150 0], 45, colour);
+            ctrl.uav = UAV([168 20], 210, colour);
             ctrl.cloud = cloud;
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
@@ -86,7 +86,7 @@ classdef Controller < handle
             disp(self.state);
             
             disp('go go go statehex');
-            self.statehex.step(t,self);
+            self.statehex = self.statehex.step(t,self);
             
              %self.uav.updateState(self.dt);
              %self.uav.plot(self.cloud,t,mapDraw);
