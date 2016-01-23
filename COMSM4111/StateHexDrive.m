@@ -5,12 +5,14 @@ classdef StateHexDrive < handle
     properties
         ctr;
         ppoint;
+        holdfor; % To pass to next step
     end
     
     methods
-        function state = StateHexDrive(ppoint)
+        function state = StateHexDrive(ppoint,holdfor)
             state.ctr = 0;
             state.ppoint = ppoint;
+            state.holdfor = holdfor; % parameter to pass to next step
         end
         function newState = step(state, t, c)
             newState = state;
@@ -24,7 +26,7 @@ classdef StateHexDrive < handle
                 % Done!
                 disp('je suis finis');
                 %This should actually pass to a new state.
-                newState = StateHoldCourse(4);
+                newState = StateHoldCourse(state.holdfor);
                 newState = newState.step(t,c);
                 return
             else

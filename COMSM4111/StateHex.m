@@ -48,7 +48,6 @@ classdef StateHex < handle
                 newState = state;
             else
                 % Make a decision
-                on = find(state.measures == 1);
                 edges = [];
                 for i = 1:6
                     a = state.measures(i);
@@ -63,20 +62,53 @@ classdef StateHex < handle
                     end
                 end
                 
+                % Need to check if all of our checked points were on one
+                % side of the boundary.
+                if isempty(edges)
+                    if min(state.measures) > 1
+%                         % Completely inside, go for a guess of line from
+%                         % 6 to lowest vertex.
+%                         lowest = 
+%                         edges = [6, state.points(6); ];
+                        % For now just try holding course an extra step.
+                        newState = StateHexDrive(2,2);
+                        newState.step(t,c);
+                        return;
+                    else
+                        disp('Unhandled, we have lost the cloud.');
+                    end
+                end
+                
                 %Plot the chosen ones?
                 plot(edges(:,2),edges(:,3));
                 disp('wow');
                 
                 ppick = state.parallel_edge(edges(:,1));
                 
+                %Extra step, pick the opposite point - prefer the one
+                %inside the cloud.
+                vpick = floor(ppick) + 1;
+                if state.measures(vpick) < 1
+                    disp('Using opposite');
+                    ppick = mod(ppick + 3, 6);
+                end
+                
                 disp('okay');
-                newState = StateHexDrive(ppick);
+                newState = StateHexDrive(ppick,4);
+                newState = newState.step(t,c);
+                return
             end
         end
         function point = parallel_edge(state, point_nos)
             point_nos = mod(point_nos, 6); % Treat 6+ as 0s
             an = min(point_nos);
             bn = max(point_nos);
+            %%TODO: forgotten case of one on point, one on midpoint!
+            if mod(bn - an, 1) ~= 0
+                disp('I am a rarity, but not as rare as some of the cases actually covered. huh');
+                an = an + 0.5
+            end
+            %%END TODO WORKAROUND
             diff = bn - an;
             %moddiff = (an + 6) - bn; % To check past the bounds!
             if diff == 1
