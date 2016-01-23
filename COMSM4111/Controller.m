@@ -64,7 +64,7 @@ classdef Controller < handle
             ctrl.dt = dt;
             %ctrl.uav = UAV(normrnd(0,3,1,2), rand() * 360, colour);
             %ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
-            ctrl.uav = UAV([168 20], 210, colour);
+            ctrl.uav = UAV([560 218], 10, colour);
             ctrl.cloud = cloud;
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;

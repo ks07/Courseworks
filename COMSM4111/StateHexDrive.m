@@ -13,6 +13,7 @@ classdef StateHexDrive < handle
             state.ppoint = ppoint;
         end
         function newState = step(state, t, c)
+            newState = state;
             hexturn = 4;
             
             if state.ctr + 0.5 == state.ppoint
@@ -22,9 +23,10 @@ classdef StateHexDrive < handle
             elseif state.ctr >= state.ppoint
                 % Done!
                 disp('je suis finis');
-                c.uav.cmdTurn(0);
-                c.uav.cmdSpeed(20);
                 %This should actually pass to a new state.
+                newState = StateHoldCourse(4);
+                newState = newState.step(t,c);
+                return
             else
                 c.uav.cmdTurn(hexturn);
                 c.uav.cmdSpeed(10);
@@ -33,7 +35,6 @@ classdef StateHexDrive < handle
             c.uav.updateState(c.dt);
             c.uav.plot(c.cloud,t,true);
             state.ctr = state.ctr + 1;
-            newState = state;
         end
     end
     
