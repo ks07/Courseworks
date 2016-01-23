@@ -15,10 +15,17 @@ classdef StateHoldCourse < handle
             state.hexbrake = hexbrake; % If true, break if the ppm gets near 1.
         end
         function newState = step(state, t, c)
-            [gps,ppm] = c.getInput(t);
-            ppmbound = 1.05; % When to brake, if enabled.
+            [~,ppm] = c.getInput(t);
+            ppmlobound = 1.05; % When to brake, if enabled.
+            ppmhibound = 1.80; % When to brake, if enabled.
             newState = state;
-            if state.hexbrake && ppm < ppmbound
+            if state.hexbrake && ppm < ppmlobound
+                % Done!
+                disp('emergency stop');
+                newState = StateHex();
+                newState = newState.step(t,c);
+                return
+            elseif state.hexbrake && ppm > ppmhibound
                 % Done!
                 disp('emergency stop');
                 newState = StateHex();

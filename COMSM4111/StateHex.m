@@ -65,12 +65,13 @@ classdef StateHex < handle
                 % Need to check if all of our checked points were on one
                 % side of the boundary.
                 if isempty(edges)
-                    if min(state.measures) > 1
-%                         % Completely inside, go for a guess of line from
-%                         % 6 to lowest vertex.
-%                         lowest = 
-%                         edges = [6, state.points(6); ];
-                        % For now just try holding course an extra step.
+                    if min(state.measures) > 1.5
+                        % Very much inside, try and head outward. go for a
+                        % guess of line from lowest - 1?
+                        [~,imin] = min(state.measures);
+                        ppick = mod(imin - 2, 6) + 1;
+                    elseif min(state.measures) > 1
+                        % Inside, but not much, so just edge forward.
                         newState = StateHexDrive(2,2);
                         newState.step(t,c);
                         return;
