@@ -87,14 +87,23 @@ classdef StateHex < handle
                 
                 %Extra step, pick the opposite point - prefer the one
                 %inside the cloud.
-                vpick = floor(ppick) + 1;
+                vpick = floor(ppick) + 1; % The vertex of the chosen (or the one after if midpoint)
                 if state.measures(vpick) < 1
                     disp('Using opposite');
                     ppick = mod(ppick + 3, 6);
                 end
                 
                 disp('okay');
-                newState = StateHexDrive(ppick,4);
+                
+                % Base hold length on how close to the edge of the cloud we
+                % are?
+                ppmdifflim = 0.2;
+                ppmdiff = min(state.measures(vpick) - 1, ppmdifflim); % limit scaling
+                steplim = 3;
+                stepextra = 1;
+                postholdfor = floor((ppmdiff / ppmdifflim) * steplim) + stepextra;
+                
+                newState = StateHexDrive(ppick,postholdfor);
                 newState = newState.step(t,c);
                 return
             end
