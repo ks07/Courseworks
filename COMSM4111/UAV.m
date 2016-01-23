@@ -8,6 +8,7 @@ classdef UAV < handle
         spd;    % Commanded forward speed
         trn;    % Commanded turn curvature
         hplot;  % Handle to plotted position.
+        hhplot; % Handle to plotted heading.
         colour; % Plot colour
     end
     
@@ -21,7 +22,7 @@ classdef UAV < handle
         end
         function [gps, ppm] = getInput(self, cloud, t)
             % Model GPS error as normal distribution, sdev of 1.5m
-            gps = normrnd(self.pos, [1.5, 1.5]);
+            gps = normrnd(self.pos, [0.1 0.1]);%[1.5, 1.5]);
             % Can assume no error in ppm measure
             ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);
         end
@@ -73,11 +74,19 @@ classdef UAV < handle
             
             % Clear old plot
             try
-                delete(self.hplot);
+                %delete(self.hplot);
+                %delete(self.hhplot);
             end
             
             % Plot position
             self.hplot = plot(self.pos(1),self.pos(2),'o','Color',self.colour);
+            
+            % Plot heading
+            linelen = 15;
+            linecol = 1 - self.colour;
+            hx = [self.pos(1), self.pos(1)+sind(self.hdg)*linelen];
+            hy = [self.pos(2), self.pos(2)+cosd(self.hdg)*linelen];
+            self.hhplot = plot(hx, hy, 'Color', linecol);
         end
     end
     
