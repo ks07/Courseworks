@@ -19,7 +19,7 @@ figure(1);
 clf;
 hold on % so each plot doesn't wipe the predecessor
 
-uav_count = 50;
+uav_count = 1;
 
 colour = [0 1 1];
 cstep = 1 / uav_count;

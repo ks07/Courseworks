@@ -20,6 +20,8 @@ classdef Controller < handle
         
         PPM_UPPER;
         PPM_LOWER;
+        
+        statehex;
     end
     
     properties (Constant)
@@ -61,8 +63,8 @@ classdef Controller < handle
         function ctrl = Controller(dt,cloud,colour,net)
             ctrl.dt = dt;
             %ctrl.uav = UAV(normrnd(0,3,1,2), rand() * 360, colour);
-            ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
-            %ctrl.uav = UAV([200 300], 45, colour);
+            %ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
+            ctrl.uav = UAV([150 0], 45, colour);
             ctrl.cloud = cloud;
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
@@ -74,6 +76,8 @@ classdef Controller < handle
             ppm_pcnt = 0.1;
             ctrl.PPM_LOWER = ctrl.PPM_BOUND * (1 - ppm_pcnt);
             ctrl.PPM_UPPER = ctrl.PPM_BOUND * (1 + ppm_pcnt);
+            
+            ctrl.statehex = StateHex();
         end
         function step(self,t,mapDraw)
             [gps, ppm] = self.uav.getInput(self.cloud,t);
@@ -81,305 +85,11 @@ classdef Controller < handle
             disp('state');
             disp(self.state);
             
-%             ppmo = ppm;
-%             if isnan(ppm)
-%                 ppm = 0;
-%             end
-%             
-%             rcv = self.net.rx();
-%             
-%             if ~isempty(rcv)
-%                 i = randi(size(rcv,1));
-%                 self.target = rcv(i,:);
-%             end
+            disp('go go go statehex');
+            self.statehex.step(t,self);
             
-            
-%             self.estimateHeading(gps);
-            
-%             self.prevState = self.state;
-            
-            % State transition function(s)
-%             if self.state == self.STATE_INSIDE
-%                 
-%             elseif self.state == self.STATE_FOUND && self.state_ctr < 4
-%                 disp('counting up');
-%                 self.state_ctr = self.state_ctr + 1;
-%                 self.inside_measures = [self.inside_measures ppm];
-%             elseif ppm >= self.PPM_LOWER && ppm <= self.PPM_UPPER
-%                 disp('in bounds')
-%                 self.state_ctr = 0;
-%                 self.state = self.STATE_FOUND;
-%                 self.inside_measures = ppm;
-%             elseif self.state == self.STATE_FOUND
-%                 avg_ppm = mean(self.inside_measures);
-%                 if avg_ppm > self.PPM_UPPER
-%                     self.state = self.STATE_INSIDE;
-%                 end
-%             elseif ppm > self.PPM_UPPER
-%                 self.state = self.STATE_INSIDE;
-%             elseif self.state == self.STATE_LEAVING
-%                 self.state = self.STATE_RETURNING;
-%             elseif ~self.checkBounds(gps)
-%                 self.state = self.STATE_LEAVING;
-%             elseif ppm > self.prevPPM
-%                 self.state = self.STATE_INCREASING;
-%             else
-%                 self.state = self.STATE_LOST;
-%             end
-
-%             if self.state == self.STATE_FOLLOW
-%                 if ppm <= 0.9
-%                     self.state = self.STATE_LOW_LEFT_A;
-%                 elseif ppm >= 1.1
-%                     self.state = self.STATE_HIGH_RIGHT_A;
-%                 else
-%                     self.state = self.STATE_FOLLOW;
-%                 end
-%             elseif ppm < 0.5
-%                 self.state = self.STATE_T_LOST;
-%             elseif self.state == self.STATE_T_LOST
-%                 self.state = self.STATE_FOLLOW;
-%             elseif self.state == self.STATE_LOW_LEFT_A
-%                 self.state = self.STATE_LOW_LEFT_0;
-%             elseif self.state == self.STATE_LOW_RIGHT_A
-%                 self.state = self.STATE_LOW_RIGHT_0;
-%             elseif self.state == self.STATE_HIGH_LEFT_A
-%                 self.state = self.STATE_HIGH_LEFT_0;
-%             elseif self.state == self.STATE_HIGH_RIGHT_A
-%                 self.state = self.STATE_HIGH_RIGHT_0;
-%             elseif self.state == self.STATE_HIGH_RIGHT_0
-%                 if ppm < self.prevPPM
-%                     % working
-%                     self.state = self.STATE_HIGH_RIGHT_1;
-%                 else
-%                     % getting worse!
-%                     self.state = self.STATE_HIGH_LEFT_A;
-%                 end
-%             elseif self.state == self.STATE_HIGH_RIGHT_1
-%                 if ppm <= 0.9
-%                     % too far gone
-%                     self.state = self.STATE_LOW_LEFT_A;
-%                 elseif ppm > 0.9 && ppm < 1.1
-%                     self.state = self.STATE_FOLLOW;
-%                 elseif ppm < self.prevPPM
-%                     self.state = self.STATE_HIGH_RIGHT_1;
-%                 else
-%                     % going up again!
-%                     self.state = self.STATE_HIGH_RIGHT_A;
-%                 end
-%             elseif self.state == self.STATE_HIGH_LEFT_0
-%                 if ppm < self.prevPPM
-%                     % working
-%                     self.state = self.STATE_HIGH_LEFT_1;
-%                 else
-%                     % getting worse!
-%                     self.state = self.STATE_HIGH_RIGHT_A;
-%                 end
-%             elseif self.state == self.STATE_HIGH_LEFT_1
-%                 if ppm <= 0.9
-%                     % too far gone
-%                     self.state = self.STATE_LOW_RIGHT_A;
-%                 elseif ppm > 0.9 && ppm < 1.1
-%                     self.state = self.STATE_FOLLOW;
-%                 elseif ppm < self.prevPPM
-%                     self.state = self.STATE_HIGH_LEFT_1;
-%                 else
-%                     % going up again!
-%                     self.state = self.STATE_HIGH_LEFT_A;
-%                 end
-%             elseif self.state == self.STATE_LOW_LEFT_0
-%                 if ppm > self.prevPPM
-%                     % working
-%                     self.state = self.STATE_LOW_LEFT_1;
-%                 else
-%                     % getting worse!
-%                     self.state = self.STATE_LOW_RIGHT_A;
-%                 end
-%             elseif self.state == self.STATE_LOW_LEFT_1
-%                 if ppm >= 1.1
-%                     % too far gone
-%                     self.state = self.STATE_HIGH_RIGHT_A;
-%                 elseif ppm > 0.9 && ppm < 1.1
-%                     self.state = self.STATE_FOLLOW;
-%                 elseif ppm > self.prevPPM
-%                     self.state = self.STATE_LOW_LEFT_1;
-%                 else
-%                     % going down again!
-%                     self.state = self.STATE_LOW_LEFT_A;
-%                 end
-%             elseif self.state == self.STATE_LOW_RIGHT_0
-%                 if ppm > self.prevPPM
-%                     % working
-%                     self.state = self.STATE_LOW_RIGHT_1;
-%                 else
-%                     % getting worse!
-%                     self.state = self.STATE_LOW_LEFT_A;
-%                 end
-%             elseif self.state == self.STATE_LOW_RIGHT_1
-%                 if ppm >= 1.1
-%                     % too far gone
-%                     self.state = self.STATE_HIGH_LEFT_A;
-%                 elseif ppm > 0.9 && ppm < 1.1
-%                     self.state = self.STATE_FOLLOW;
-%                 elseif ppm > self.prevPPM
-%                     self.state = self.STATE_HIGH_RIGHT_1;
-%                 else
-%                     % going down again!
-%                     self.state = self.STATE_HIGH_RIGHT_A;
-%                 end
-%             end
-
-            
-            % Perform state operations
-            switch self.state
-                case self.STATE_DECIDE_INIT
-                    [spd, trn] = self.calcTurn(-45);
-                    self.uav.cmdTurn(trn);
-                    self.uav.cmdSpeed(spd);
-                    
-                    self.uav.updateState(self.dt);
-                    self.uav.plot(self.cloud,t,mapDraw);
-                    
-                    self.state = self.STATE_DECIDE_LEFT;
-                case self.STATE_DECIDE_LEFT
-                    [spd, trn] = self.calcTurn(90);
-                    self.uav.cmdTurn(trn);
-                    self.uav.cmdSpeed(spd);
-                    
-                    self.uav.updateState(self.dt);
-                    self.uav.plot(self.cloud,t,mapDraw);
-                    
-                    self.state = self.STATE_DECIDE_MID;
-                case self.STATE_DECIDE_MID
-                    [spd, trn] = self.calcTurn(90);
-                    self.uav.cmdTurn(trn);
-                    self.uav.cmdSpeed(spd);
-                    
-                    self.uav.updateState(self.dt);
-                    self.uav.plot(self.cloud,t,mapDraw);
-                    
-                    self.state = self.STATE_DECIDE_RIGHT;
-                case self.STATE_DECIDE_RIGHT
-                    [spd, trn] = self.calcTurn(45);
-                    self.uav.cmdTurn(trn);
-                    self.uav.cmdSpeed(spd);
-                    
-                    self.uav.updateState(self.dt);
-                    self.uav.plot(self.cloud,t,mapDraw);
-                    
-                    self.state = self.STATE_DECIDE_BACK;
-                case self.STATE_DECIDE_BACK
-                    
-                    [spd, trn] = self.calcTurn(135);
-                    self.uav.cmdTurn(trn);
-                    self.uav.cmdSpeed(spd);
-                    
-                    self.uav.updateState(self.dt);
-                    self.uav.plot(self.cloud,t,mapDraw);
-                    
-                    self.state = self.STATE_DECIDE_OUTCOME;
-                case self.STATE_DECIDE_OUTCOME
-                    self.uav.cmdTurn(0);
-                    self.uav.cmdSpeed(20);
-                    self.uav.updateState(self.dt);
-                    self.uav.plot(self.cloud,t,mapDraw);
-                
-                
-                
-%                 case self.STATE_T_LOST
-%                     prevDist = self.dist(self.prevGPS, self.target);
-%                     newDist = self.dist(gps, self.target);
-%                     
-%                     self.uav.cmdSpeed(10)
-%                     if newDist < prevDist
-%                         self.uav.cmdTurn(0);
-%                     else
-%                         self.uav.cmdTurn(2);
-%                     end
-%                     
-%                 case self.STATE_LOST
-%                     disp('Searching for cloud...');
-%                     self.uav.cmdTurn(0.1);
-%                     self.uav.cmdSpeed(20);
-%                 case self.STATE_INCREASING
-%                     disp('ppm increasing');
-%                     self.uav.cmdTurn(0);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_FOUND
-%                     disp('found cloud');
-%                     self.uav.cmdTurn(6);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_LEAVING
-%                     disp('moving out of bounds');
-%                     self.uav.cmdTurn(-1);
-%                     self.uav.cmdSpeed(20);
-%                 case self.STATE_RETURNING
-%                     disp('moving away from boundary');
-%                     self.uav.cmdTurn(-0.1);
-%                     self.uav.cmdSpeed(20);
-%                 case self.STATE_INSIDE
-%                     disp('too far inside');
-%                     if self.prevPPM > ppm
-%                         self.uav.cmdTurn(0);
-%                         self.uav.cmdSpeed(10);
-%                         self.state = self.STATE_LOST;
-%                     end
-%                 case self.STATE_FOLLOW
-%                     disp('folo')
-%                     self.uav.cmdTurn(0);
-%                     self.uav.cmdSpeed(10);
-%                     
-%                     self.net.tx(gps)
-%                     self.target = gps;
-%                 case self.STATE_HIGH_RIGHT_A
-%                     disp('too high trying right')
-%                     
-%                     self.uav.cmdTurn(2);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_HIGH_RIGHT_1
-%                     disp('too high, right working')
-%                     
-%                     self.uav.cmdTurn(0.2);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_HIGH_LEFT_A
-%                     disp('too high trying left')
-%                     
-%                     self.uav.cmdTurn(-2);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_HIGH_LEFT_1
-%                     disp('too high, right working')
-%                     
-%                     self.uav.cmdTurn(-0.2);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_LOW_RIGHT_A
-%                     disp('too low, trying right')
-%                     
-%                     self.uav.cmdTurn(2);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_LOW_RIGHT_1
-%                     disp('too low, right working')
-%                     
-%                     self.uav.cmdTurn(0.2);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_LOW_LEFT_A
-%                     disp('too low, trying left')
-%                     
-%                     self.uav.cmdTurn(-2);
-%                     self.uav.cmdSpeed(10);
-%                 case self.STATE_LOW_LEFT_1
-%                     disp('too low, left working');
-%                     
-%                     self.uav.cmdTurn(-0.2);
-%                     self.uav.cmdSpeed(10);
-             
-            end
-            
-%             self.uav.updateState(self.dt);
-%             self.uav.plot(self.cloud,t,mapDraw);
-%             
-%             % Update records.
-%             self.prevGPS = gps;
-%             self.prevPPM = ppm;
+             %self.uav.updateState(self.dt);
+             %self.uav.plot(self.cloud,t,mapDraw);
         end
         function ok = checkBounds(self,gps)
             ok = max(abs(gps)) <= self.POS_BOUND;

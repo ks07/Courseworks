@@ -5,6 +5,7 @@ classdef StateHex < handle
     properties
         ctr;
         measures;
+        points;
     end
     
     methods
@@ -14,15 +15,15 @@ classdef StateHex < handle
             state.points = zeros(6,2);
         end
         function newState = step(state, t, c)
-            [gps,ppm] = c.uav.getInput();
             
             if state.ctr == 0
                 % Turn left to open the hex.
                 c.uav.cmdTurn(-4);
                 c.uav.cmdSpeed(10);
                 
-                c.uav.updateState(self.dt);
-                c.uav.plot(self.cloud,t,mapDraw);
+                c.uav.updateState(c.dt);
+                c.uav.plot(c.cloud,t,true);
+                [gps,ppm] = c.uav.getInput(c.cloud, t);
                 
                 state.ctr = 1;
                 state.measures(state.ctr) = ppm;
@@ -34,8 +35,9 @@ classdef StateHex < handle
                 c.uav.cmdTurn(4);
                 c.uav.cmdSpeed(10);
                 
-                c.uav.updateState(self.dt);
-                c.uav.plot(self.cloud,t,mapDraw);
+                c.uav.updateState(c.dt);
+                c.uav.plot(c.cloud,t,true);
+                [gps,ppm] = c.uav.getInput(c.cloud, t);
                 
                 state.ctr = state.ctr + 1;
                 if state.ctr <= 6
@@ -51,11 +53,19 @@ classdef StateHex < handle
                 for i = 1:6
                     a = state.measures(i);
                     b = state.measures(mod(i,6)+1);
-                    if min(a,b) < 1 && max(a,b) > 1
-                        midpoint = 
+                    ap = state.points(i,:);
+                    bp = state.points(mod(i,6)+1,:);
+                    if min(a,b) < 1 && max(a,b) > 1 || (a == 1 && b == 1)
+                        midpoint = (ap + bp) / 2;
                         edges = [edges; i midpoint];
-                        
+                    elseif a == 1
+                        edges = [edges; i ap];
+                    end
                 end
+                
+                %Plot the chosen ones?
+                plot(edges(:,2),edges(:,3));
+                disp('wow');
             end
         end
     end
