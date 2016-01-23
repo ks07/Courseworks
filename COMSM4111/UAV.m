@@ -40,7 +40,7 @@ classdef UAV < handle
             self.pos = newstate(1:2);
             self.hdg = newstate(3);
             disp('now at');
-            disp(self.pos);
+            disp([self.pos, self.hdg]);
         end
         function newstate=pos_rk4(self,state,input,dt)
             % Runge-Kutta 4th order for position

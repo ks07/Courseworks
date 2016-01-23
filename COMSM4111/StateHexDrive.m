@@ -26,7 +26,7 @@ classdef StateHexDrive < handle
                 % Done!
                 disp('je suis finis');
                 %This should actually pass to a new state.
-                newState = StateHoldCourse(state.holdfor);
+                newState = StateHoldCourse(state.holdfor,true);
                 newState = newState.step(t,c);
                 return
             else

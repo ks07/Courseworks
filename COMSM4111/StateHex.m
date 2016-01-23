@@ -76,32 +76,39 @@ classdef StateHex < handle
                         return;
                     else
                         disp('Unhandled, we have lost the cloud.');
+                        %Completely outside, just try high - 1?
+                        [~,imax] = max(state.measures);
+                        ppick = mod(imax - 2, 6) + 1;
                     end
-                end
+                else
+                    %Plot the chosen ones?
+                    plot(edges(:,2),edges(:,3));
+                    disp('wow');
+                    
+                    ppick = state.parallel_edge(edges(:,1));
                 
-                %Plot the chosen ones?
-                plot(edges(:,2),edges(:,3));
-                disp('wow');
-                
-                ppick = state.parallel_edge(edges(:,1));
-                
-                %Extra step, pick the opposite point - prefer the one
-                %inside the cloud.
-                vpick = floor(ppick) + 1; % The vertex of the chosen (or the one after if midpoint)
-                if state.measures(vpick) < 1
-                    disp('Using opposite');
-                    ppick = mod(ppick + 3, 6);
+                    %Extra step, pick the opposite point - prefer the one
+                    %inside the cloud. Note this bit is a little fishy
+                    vpick = ceil(ppick); % The vertex of the chosen (or the one after if midpoint)
+                    if vpick == 0
+                        vpick = 6; % I hate matlab indexing
+                    end
+                    if state.measures(vpick) < 1
+                        disp('Using opposite');
+                        ppick = mod(ppick + 3, 6);
+                    end
                 end
                 
                 disp('okay');
                 
                 % Base hold length on how close to the edge of the cloud we
                 % are?
-                ppmdifflim = 0.2;
-                ppmdiff = min(state.measures(vpick) - 1, ppmdifflim); % limit scaling
-                steplim = 3;
-                stepextra = 1;
-                postholdfor = floor((ppmdiff / ppmdifflim) * steplim) + stepextra;
+%                 ppmdifflim = 0.2;
+%                 ppmdiff = min(state.measures(vpick) - 1, ppmdifflim); % limit scaling
+%                 steplim = 3;
+%                 stepextra = 2;
+%                 postholdfor = floor((ppmdiff / ppmdifflim) * steplim) + stepextra;
+                postholdfor = 4;
                 
                 newState = StateHexDrive(ppick,postholdfor);
                 newState = newState.step(t,c);

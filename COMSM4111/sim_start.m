@@ -33,8 +33,8 @@ for i = 1:uav_count
 end
 
 
-% main simulation loop
-for kk=1:1000,
+% main simulation loop, run for 30 minutes
+for kk=1:(30*60/dt),
     
     % time
     t = t + dt;

@@ -79,6 +79,10 @@ classdef Controller < handle
             
             ctrl.statehex = StateHex();
         end
+        function [gps, ppm] = getInput(self,t)
+            % Wrapper so we can do extra processing if wanted
+            [gps, ppm] = self.uav.getInput(self.cloud,t);
+        end
         function step(self,t,mapDraw)
             [gps, ppm] = self.uav.getInput(self.cloud,t);
             
