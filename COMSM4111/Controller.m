@@ -22,17 +22,24 @@ classdef Controller < handle
             %ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
             %ctrl.uav = UAV([190 0], 200, colour);
             
-            ctrl.state = StateHoldCourse(6,false);
+            ctrl.prevGPS = [0 0];
+            ctrl.prevPPM = 0;
+            
+            % Set starting state.
+            %ctrl.state = StateHoldCourse(6,false);
+            ctrl.state = StateTarget([500 500]);
         end
         function [gps, ppm] = getInput(self,t)
             % Wrapper so we can do extra processing if wanted
             [gps, ppm] = self.uav.getInput(t);
         end
         function step(self,t)
-            %[gps, ppm] = self.getInput(t);
+            [gps, ppm] = self.getInput(t);
             
-            disp('go go go statehex');
-            self.state = self.state.step(t,self);
+            self.state = self.state.step(t,self); %State step should inc
+            
+            self.prevGPS = gps;
+            self.prevPPM = ppm;
         end
         function ok = checkBounds(self,gps)
             ok = max(abs(gps)) <= self.POS_BOUND;

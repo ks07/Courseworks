@@ -43,8 +43,8 @@ classdef UAV < handle
             newstate = self.pos_rk4(state,input,dt);
             self.pos = newstate(1:2);
             self.hdg = newstate(3);
-            disp('now at');
-            disp([self.pos, self.hdg]);
+            %disp('now at');
+            %disp([self.pos, self.hdg]);
             
             self.plot();
         end
