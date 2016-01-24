@@ -27,7 +27,8 @@ classdef Controller < handle
             
             % Set starting state.
             %ctrl.state = StateHoldCourse(6,false);
-            ctrl.state = StateTarget([500 500]);
+            %ctrl.state = StateTarget([500 500]);
+            ctrl.state = StateLost();
         end
         function [gps, ppm] = getInput(self,t)
             % Wrapper so we can do extra processing if wanted
@@ -35,6 +36,12 @@ classdef Controller < handle
         end
         function step(self,t)
             [gps, ppm] = self.getInput(t);
+            
+            % Check for interrupts first.
+            istate = StateInterruptLeaving.triggered(self.state,t,self,gps,ppm);
+            if ~isequal(istate,false)
+                self.state = istate;
+            end
             
             self.state = self.state.step(t,self); %State step should inc
             

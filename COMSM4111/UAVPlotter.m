@@ -11,6 +11,12 @@ classdef UAVPlotter < handle
         linelen; % Length of line to draw for UAV heading
         
         dbg_updated; % Used to check if every UAV has updated each timestep
+        
+        stat_oob; % Count of UAVs that have gone out of bounds.
+    end
+    
+    properties(Constant)
+        POS_BOUNDS = 1000;
     end
     
     methods
@@ -31,8 +37,13 @@ classdef UAVPlotter < handle
             plotter.linelen = 15;
             
             plotter.dbg_updated = zeros(uav_count,1);
+            
+            plotter.stat_oob = 0;
         end
         function plot(self,id,pos,hdg)
+            if max(abs(pos)) > self.POS_BOUNDS
+                self.stat_oob = self.stat_oob + 1;
+            end
             self.dbg_updated(id) = true;
             self.uav_states(id,:) = [pos, hdg];
         end
@@ -48,7 +59,7 @@ classdef UAVPlotter < handle
                 
                 % put information in the title
                 ppm = cloudsamp(cloud,self.uav_states(1,1),self.uav_states(1,2),t);
-                title(sprintf('t=%.1f secs pos=(%.1f, %.1f) Concentration=%.2f',t,self.uav_states(1,1),self.uav_states(1,2),ppm))
+                title(sprintf('t=%.1f secs pos=(%.1f, %.1f) Concentration=%.2f OOB=%d',t,self.uav_states(1,1),self.uav_states(1,2),ppm,self.stat_oob))
 
                 % plot the cloud contours
                 cloudplot(cloud,t);

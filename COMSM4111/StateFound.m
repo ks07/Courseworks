@@ -1,0 +1,47 @@
+classdef StateFound < handle
+    %STATEFOUND Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        MEASURE_COUNT = 4;
+        PPM_UPPER = 1.1;
+        ctr;
+        ppm_measures;
+    end
+    
+    methods
+        function state = StateFound()
+            state.ctr = 1;
+            state.ppm_measures = zeros(state.MEASURE_COUNT,1);
+        end
+        function newState = step(state, t, c)
+            newState = state;
+            [~, ppm] = c.getInput(t);
+            
+            % On the boundary, hold position.
+            c.uav.cmdTurn(6);
+            c.uav.cmdSpeed(10);
+            
+            if state.ctr <= state.MEASURE_COUNT
+                state.ppm_measures(state.ctr) = ppm;
+                c.uav.updateState(c.dt);
+                state.ctr = state.ctr + 1;
+            else
+                avg_ppm = mean(state.ppm_measures);
+                if avg_ppm > state.PPM_UPPER
+                    % The cloud has grown around us too much, need to move
+                    % outwards
+                    newState = StateInside();
+                    newState = newState.step(t,c);
+                else
+                    % Still okay, hold. TODO: What if we get moved outside?
+                    state.ctr = 1;
+                    state.ppm_measures(:) = 0;
+                    c.uav.updateState(c.dt);
+                end
+            end
+        end
+    end
+    
+end
+
