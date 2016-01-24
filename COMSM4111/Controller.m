@@ -7,7 +7,6 @@ classdef Controller < handle
         cloud;	% The cloud to track.
         prevGPS;    % The previously recorded GPS position.
         prevPPM;    % The previously recorded PPM.
-        state;
         net; % Should this be in UAV? todo
         
         inside_measures; % Stores last 4 measurements in inside state.
@@ -60,15 +59,14 @@ classdef Controller < handle
     end
     
     methods
-        function ctrl = Controller(dt,cloud,colour,net)
+        function ctrl = Controller(id,dt,cloud,net,plotter)
             ctrl.dt = dt;
-            %ctrl.uav = UAV(normrnd(0,3,1,2), rand() * 360, colour);
+            ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter);
             %ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
-            ctrl.uav = UAV([560 218], 10, colour);
+            %ctrl.uav = UAV([190 0], 200, colour);
             ctrl.cloud = cloud;
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
-            ctrl.state = ctrl.STATE_DECIDE_INIT;
             ctrl.state_ctr = 0;
             ctrl.net = net;
             ctrl.target = rand(1,2) * ctrl.POS_BOUND * 2 - ctrl.POS_BOUND;
@@ -83,17 +81,11 @@ classdef Controller < handle
             % Wrapper so we can do extra processing if wanted
             [gps, ppm] = self.uav.getInput(self.cloud,t);
         end
-        function step(self,t,mapDraw)
+        function step(self,t)
             [gps, ppm] = self.uav.getInput(self.cloud,t);
-            
-            disp('state');
-            disp(self.state);
             
             disp('go go go statehex');
             self.statehex = self.statehex.step(t,self);
-            
-             %self.uav.updateState(self.dt);
-             %self.uav.plot(self.cloud,t,mapDraw);
         end
         function ok = checkBounds(self,gps)
             ok = max(abs(gps)) <= self.POS_BOUND;
@@ -108,7 +100,7 @@ classdef Controller < handle
             %estHDG = atan2(norm(cross(a,b)), dot(a,b))
             estHDG = acosd(a(:).'*b(:));
         end
-        function d = dist(self, p, q)
+        function d = dist(~, p, q)
             d = pdist([p;q]);
         end
         function [spd, trn] = calcTurn(self, angle)

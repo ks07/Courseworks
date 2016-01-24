@@ -3,22 +3,22 @@ classdef UAV < handle
     %   Detailed explanation goes here
     
     properties %(SetAccess = private,GetAccess = private)
+        id;     % Unique ID for UAV object, for debug and plotting.
         pos;    % Co-ordinates of the UAV
         hdg;    % Heading of the UAV
         spd;    % Commanded forward speed
         trn;    % Commanded turn curvature
-        hplot;  % Handle to plotted position.
-        hhplot; % Handle to plotted heading.
-        colour; % Plot colour
+        plotter;% Plotter object
     end
     
     methods
-        function uav = UAV(start,hdg,colour)
+        function uav = UAV(id,start,hdg,plotter)
+            uav.id = id; % Unique ID
             uav.pos = start;
             uav.hdg = hdg;
             uav.spd = 0;
             uav.trn = 0;
-            uav.colour = colour;
+            uav.plotter = plotter;
         end
         function [gps, ppm] = getInput(self, cloud, t)
             % Model GPS error as normal distribution, sdev of 1.5m
@@ -41,6 +41,8 @@ classdef UAV < handle
             self.hdg = newstate(3);
             disp('now at');
             disp([self.pos, self.hdg]);
+            
+            self.plot();
         end
         function newstate=pos_rk4(self,state,input,dt)
             % Runge-Kutta 4th order for position
@@ -62,31 +64,8 @@ classdef UAV < handle
             % buff is max 32 bytes, tx time is 1s
             % TODO: Actually send to others
         end
-        function plot(self, cloud, t, mapDraw)
-            if mapDraw
-                % put information in the title
-                ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);
-                title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, self.pos(1),self.pos(2),ppm))
-
-                % plot the cloud contours
-                cloudplot(cloud,t);
-            end
-            
-            % Clear old plot
-            try
-                %delete(self.hplot);
-                %delete(self.hhplot);
-            end
-            
-            % Plot position
-            self.hplot = plot(self.pos(1),self.pos(2),'o','Color',self.colour);
-            
-            % Plot heading
-            linelen = 15;
-            linecol = 1 - self.colour;
-            hx = [self.pos(1), self.pos(1)+sind(self.hdg)*linelen];
-            hy = [self.pos(2), self.pos(2)+cosd(self.hdg)*linelen];
-            self.hhplot = plot(hx, hy, 'Color', linecol);
+        function plot(self)
+            self.plotter.plot(self.id, self.pos, self.hdg);
         end
     end
     

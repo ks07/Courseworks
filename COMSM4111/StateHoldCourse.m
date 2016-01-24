@@ -38,7 +38,6 @@ classdef StateHoldCourse < handle
                 state.ctr = state.ctr + 1;
             
                 c.uav.updateState(c.dt);
-                c.uav.plot(c.cloud,t,true);
             else
                 % Done!
                 disp('held it in as long as I could');

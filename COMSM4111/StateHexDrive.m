@@ -35,7 +35,6 @@ classdef StateHexDrive < handle
             end
             
             c.uav.updateState(c.dt);
-            c.uav.plot(c.cloud,t,true);
             state.ctr = state.ctr + 1;
         end
     end

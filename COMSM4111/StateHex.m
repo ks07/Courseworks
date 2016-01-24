@@ -22,21 +22,17 @@ classdef StateHex < handle
                 c.uav.cmdSpeed(10);
                 
                 c.uav.updateState(c.dt);
-                c.uav.plot(c.cloud,t,true);
                 [gps,ppm] = c.uav.getInput(c.cloud, t);
                 
                 state.ctr = 1;
                 state.measures(state.ctr) = ppm;
                 state.points(state.ctr,:) = gps;
-                
-                newState = state;
             elseif state.ctr < 6
                 % Turn right and measure 5 times.
                 c.uav.cmdTurn(4);
                 c.uav.cmdSpeed(10);
                 
                 c.uav.updateState(c.dt);
-                c.uav.plot(c.cloud,t,true);
                 [gps,ppm] = c.uav.getInput(c.cloud, t);
                 
                 state.ctr = state.ctr + 1;
@@ -44,8 +40,6 @@ classdef StateHex < handle
                     state.measures(state.ctr) = ppm;
                     state.points(state.ctr,:) = gps;
                 end
-                
-                newState = state;
             else
                 % Make a decision
                 edges = [];
