@@ -16,11 +16,12 @@ classdef Controller < handle
     end
     
     methods
-        function ctrl = Controller(id,dt,cloud,net,plotter)
+        function ctrl = Controller(id,spos,shdg,dt,cloud,net,plotter)
             ctrl.dt = dt;
-            ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter, net, cloud);
-            %ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
-            %ctrl.uav = UAV([190 0], 200, colour);
+            %ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter, net, cloud);
+            
+            % TODO: ADD NOISE
+            ctrl.uav = UAV(id, spos, shdg, plotter, net, cloud);
             
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;

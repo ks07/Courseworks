@@ -13,10 +13,12 @@ classdef UAVPlotter < handle
         dbg_updated; % Used to check if every UAV has updated each timestep
         
         stat_oob; % Count of UAVs that have gone out of bounds.
+        stat_coll; % Count of the number of collisions.
     end
     
     properties(Constant)
         POS_BOUNDS = 1000;
+        COLL_LIM = 50;
     end
     
     methods
@@ -39,6 +41,7 @@ classdef UAVPlotter < handle
             plotter.dbg_updated = zeros(uav_count,1);
             
             plotter.stat_oob = 0;
+            plotter.stat_coll = 0;
         end
         function plot(self,id,pos,hdg)
             if max(abs(pos)) > self.POS_BOUNDS
@@ -54,12 +57,24 @@ classdef UAVPlotter < handle
             end
             self.dbg_updated(:) = false;
             
+            % Check for any collisions.
+            combos = nchoosek(1:self.uav_count,2); % Use binomial to avoid symmetric checks!
+            for ci=1:size(combos,1);
+                ai = combos(ci,1);
+                bi = combos(ci,2);
+                apos = self.uav_states(ai,1:2);
+                bpos = self.uav_states(bi,1:2);
+                abdist = pdist([apos;bpos]);
+                if abdist < self.COLL_LIM
+                    self.stat_coll = self.stat_coll + 1;
+                end
+            end
+            
             if mapDraw
                 cla;
                 
                 % put information in the title
-                ppm = cloudsamp(cloud,self.uav_states(1,1),self.uav_states(1,2),t);
-                title(sprintf('t=%.1f secs pos=(%.1f, %.1f) Concentration=%.2f OOB=%d',t,self.uav_states(1,1),self.uav_states(1,2),ppm,self.stat_oob))
+                title(sprintf('t=%.1f Collisions=%d OOB=%d',t,self.stat_coll,self.stat_oob))
 
                 % plot the cloud contours
                 cloudplot(cloud,t);

@@ -66,7 +66,11 @@ classdef UAV < handle
         function comm_tx(self,buff)
             % Send a message to all other UAVs.
             % buff is max 32 bytes, tx time is 1s
-            % TODO: Actually send to others
+            self.net.tx(buff);
+        end
+        function msgs = comm_rx(self,buff)
+            % Receive all messages.
+            msgs = self.net.rx();
         end
         function plot(self)
             self.plotter.plot(self.id, self.pos, self.hdg);

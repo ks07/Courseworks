@@ -24,9 +24,16 @@ uav_count = 10;
 net = Network();
 plotter = UAVPlotter(uav_count);
 
+% Start UAVs spread in a circle facing outward.
+START_RADIUS = 100;
+START_ORIGIN = [0 0];
+
 % Set initial state
 for i = 1:uav_count
-    ctrl(i) = Controller(i,dt,cloud,net,plotter);
+    sa = 2*pi*(i-1)/uav_count;
+    sx = START_ORIGIN(1) + START_RADIUS * sin(sa); % This should be cos, but hdg is rotated 90 deg!
+    sy = START_ORIGIN(2) + START_RADIUS * cos(sa);
+    ctrl(i) = Controller(i,[sx,sy],rad2deg(sa),dt,cloud,net,plotter);
 end
 
 

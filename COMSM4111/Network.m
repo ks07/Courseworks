@@ -1,5 +1,5 @@
 classdef Network < handle
-    %NETWORK Summary of this class goes here
+    %NETWORK Communications layer
     %   Detailed explanation goes here
     
     properties
@@ -9,13 +9,17 @@ classdef Network < handle
     
     methods
         function net = Network()
-            
         end
         function sent = tx(self,buff)
             % Send a message to all other UAVs.
             % buff is max 32 bytes, tx time is 1s
-            % TODO: Actually send to others
-            self.sending = [self.sending; buff];
+            if numel(buff) > 4
+                error('Tried to send too large message.');
+            end
+            packet = zeros(1,5);
+            packet(2:1+numel(buff)) = buff;
+            packet(1) = numel(buff);
+            self.sending = [self.sending; packet];
             sent = true;
         end
         function msgs = rx(self)
