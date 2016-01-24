@@ -22,7 +22,7 @@ classdef StateHex < handle
                 c.uav.cmdSpeed(10);
                 
                 c.uav.updateState(c.dt);
-                [gps,ppm] = c.uav.getInput(c.cloud, t);
+                [gps,ppm] = c.getInput(t);
                 
                 state.ctr = 1;
                 state.measures(state.ctr) = ppm;
@@ -33,7 +33,7 @@ classdef StateHex < handle
                 c.uav.cmdSpeed(10);
                 
                 c.uav.updateState(c.dt);
-                [gps,ppm] = c.uav.getInput(c.cloud, t);
+                [gps,ppm] = c.getInput(t);
                 
                 state.ctr = state.ctr + 1;
                 if state.ctr <= 6
@@ -110,7 +110,7 @@ classdef StateHex < handle
                 return
             end
         end
-        function point = parallel_edge(state, point_nos)
+        function point = parallel_edge(~, point_nos)
             point_nos = mod(point_nos, 6); % Treat 6+ as 0s
             an = min(point_nos);
             bn = max(point_nos);

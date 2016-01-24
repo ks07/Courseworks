@@ -9,22 +9,26 @@ classdef UAV < handle
         spd;    % Commanded forward speed
         trn;    % Commanded turn curvature
         plotter;% Plotter object
+        net;    % Network object
+        cloud;	% The cloud to track.
     end
     
     methods
-        function uav = UAV(id,start,hdg,plotter)
+        function uav = UAV(id,start,hdg,plotter,net,cloud)
             uav.id = id; % Unique ID
             uav.pos = start;
             uav.hdg = hdg;
             uav.spd = 0;
             uav.trn = 0;
             uav.plotter = plotter;
+            uav.net = net;
+            uav.cloud = cloud;
         end
-        function [gps, ppm] = getInput(self, cloud, t)
+        function [gps, ppm] = getInput(self, t)
             % Model GPS error as normal distribution, sdev of 1.5m
             gps = normrnd(self.pos, [0.1 0.1]);%[1.5, 1.5]);
             % Can assume no error in ppm measure
-            ppm = cloudsamp(cloud,self.pos(1),self.pos(2),t);
+            ppm = cloudsamp(self.cloud,self.pos(1),self.pos(2),t);
         end
         function cmdSpeed(self,spd)
             self.spd = spd;
@@ -52,7 +56,7 @@ classdef UAV < handle
             k4 = self.state_f_(state+k3*dt,input);
             newstate = state+(k1+2*k2+2*k3+k4)*dt/6;
         end
-        function state_=state_f_(self,state,input)
+        function state_=state_f_(~,state,input)
             % UAV dynamics
             x_ = input(1) * sind(state(3));
             y_ = input(1) * cosd(state(3));

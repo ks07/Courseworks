@@ -4,56 +4,13 @@ classdef Controller < handle
     properties
         dt;     % The size of timesteps.
         uav;	% The actual UAV we are controlling.
-        cloud;	% The cloud to track.
         prevGPS;    % The previously recorded GPS position.
         prevPPM;    % The previously recorded PPM.
-        net; % Should this be in UAV? todo
         
-        inside_measures; % Stores last 4 measurements in inside state.
-        state_ctr;
-        prevState;
-        prevTurn;
-        prevSpeed;
-        
-        target;
-        
-        PPM_UPPER;
-        PPM_LOWER;
-        
-        statehex;
+        state;  % The state object to use to drive the UAV
     end
     
     properties (Constant)
-        STATE_LOST = 0; % Not in cloud
-        STATE_INCREASING = 1; % Detected moving towards cloud
-        STATE_FOUND = 2; % At approx 1ppm boundary
-        STATE_LEAVING = 3; % Leaving map bounds
-        STATE_RETURNING = 4; % Just made a turn after leaving
-        STATE_INSIDE = 5; % Too far into cloud
-        
-        STATE_FOLLOW = 10;  % Maybe on contour line
-        STATE_HIGH_LEFT_0 = 11; 
-        STATE_HIGH_RIGHT_0 = 12;
-        STATE_LOW_LEFT_0 = 13;
-        STATE_LOW_RIGHT_0 = 14;
-        STATE_HIGH_LEFT_1 = 15; 
-        STATE_HIGH_RIGHT_1 = 16;
-        STATE_LOW_LEFT_1 = 17;
-        STATE_LOW_RIGHT_1 = 18;
-        STATE_HIGH_LEFT_A = 19;
-        STATE_HIGH_RIGHT_A = 20;
-        STATE_LOW_LEFT_A = 21;
-        STATE_LOW_RIGHT_A = 22;
-        
-        STATE_T_LOST = 50;
-        
-        STATE_DECIDE_INIT = 100;
-        STATE_DECIDE_LEFT = 110;
-        STATE_DECIDE_MID = 120;
-        STATE_DECIDE_RIGHT = 130;
-        STATE_DECIDE_BACK = 140;
-        STATE_DECIDE_OUTCOME = 150;
-        
         POS_BOUND = 800;%1000;	% Max distance in any direction.
         PPM_BOUND = 1;  % PPM that signifies the desired boundary.
     end
@@ -61,31 +18,21 @@ classdef Controller < handle
     methods
         function ctrl = Controller(id,dt,cloud,net,plotter)
             ctrl.dt = dt;
-            ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter);
+            ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter, net, cloud);
             %ctrl.uav = UAV(normrnd(0,150,1,2), rand() * 360, colour);
             %ctrl.uav = UAV([190 0], 200, colour);
-            ctrl.cloud = cloud;
-            ctrl.prevGPS = [0 0];
-            ctrl.prevPPM = 0;
-            ctrl.state_ctr = 0;
-            ctrl.net = net;
-            ctrl.target = rand(1,2) * ctrl.POS_BOUND * 2 - ctrl.POS_BOUND;
             
-            ppm_pcnt = 0.1;
-            ctrl.PPM_LOWER = ctrl.PPM_BOUND * (1 - ppm_pcnt);
-            ctrl.PPM_UPPER = ctrl.PPM_BOUND * (1 + ppm_pcnt);
-            
-            ctrl.statehex = StateHex();
+            ctrl.state = StateHoldCourse(6,false);
         end
         function [gps, ppm] = getInput(self,t)
             % Wrapper so we can do extra processing if wanted
-            [gps, ppm] = self.uav.getInput(self.cloud,t);
+            [gps, ppm] = self.uav.getInput(t);
         end
         function step(self,t)
-            [gps, ppm] = self.uav.getInput(self.cloud,t);
+            %[gps, ppm] = self.getInput(t);
             
             disp('go go go statehex');
-            self.statehex = self.statehex.step(t,self);
+            self.state = self.state.step(t,self);
         end
         function ok = checkBounds(self,gps)
             ok = max(abs(gps)) <= self.POS_BOUND;

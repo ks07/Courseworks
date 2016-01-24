@@ -8,7 +8,9 @@ classdef UAVPlotter < handle
         uav_colours; % RGB * uav_count
         uav_lcolours; % RGB * uav_count
         
-        linelen;
+        linelen; % Length of line to draw for UAV heading
+        
+        dbg_updated; % Used to check if every UAV has updated each timestep
     end
     
     methods
@@ -27,11 +29,20 @@ classdef UAVPlotter < handle
             end
             
             plotter.linelen = 15;
+            
+            plotter.dbg_updated = zeros(uav_count,1);
         end
         function plot(self,id,pos,hdg)
+            self.dbg_updated(id) = true;
             self.uav_states(id,:) = [pos, hdg];
         end
         function draw(self,t,cloud,mapDraw)
+            % Check if all UAVs have actually done something this timestep!
+            if min(self.dbg_updated) == false
+                error('Some UAVs did not update this timestep!');
+            end
+            self.dbg_updated(:) = false;
+            
             if mapDraw
                 cla;
                 
