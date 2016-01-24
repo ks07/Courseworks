@@ -20,8 +20,7 @@ classdef Controller < handle
             ctrl.dt = dt;
             %ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter, net, cloud);
             
-            % TODO: ADD NOISE
-            ctrl.uav = UAV(id, spos, shdg, plotter, net, cloud);
+            ctrl.uav = UAV(id, normrnd(spos,3), normrnd(shdg,0.1), plotter, net, cloud);
             
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
