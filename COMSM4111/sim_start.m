@@ -11,7 +11,8 @@ function sim_start
 load 'cloud2.mat'
 
 % time and time step
-t = 1300;
+cloud_start_time = 1300;
+t = cloud_start_time;
 %dt = 3.6;
 dt = 1.5;
 % open new figure window
@@ -44,11 +45,11 @@ for kk=1:(30*60/dt),
     t = t + dt;
     
     for i = 1:uav_count
-        ctrl(i).step(t);
+        ctrl(i).step(t - cloud_start_time); % UAV needs relative time (to start time)
     end
     
     net.step();
-    plotter.draw(t,cloud,true);
+    plotter.draw(t,cloud,true); % Plotter needs real time
     
     % pause ensures that the plots update
     pause(0.0025)

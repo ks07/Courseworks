@@ -20,7 +20,7 @@ classdef Controller < handle
             ctrl.dt = dt;
             %ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter, net, cloud);
             
-            ctrl.uav = UAV(id, normrnd(spos,3), normrnd(shdg,0.1), plotter, net, cloud);
+            ctrl.uav = UAV(id, normrnd(spos,3), normrnd(shdg,6), plotter, net, cloud);
             
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
@@ -37,10 +37,20 @@ classdef Controller < handle
         function step(self,t)
             [gps, ppm] = self.getInput(t);
             
+            % All UAVs broadcast their positions at/near start of timestep,
+            % should give enough time to read the positions back in the
+            % next timestep
+            self.uav.comm_tx(gps);
+            
             % Check for interrupts first.
-            istate = StateInterruptLeaving.triggered(self.state,t,self,gps,ppm);
+            istate = StateInterruptColliding.triggered(self.state,t,self,gps,ppm);
             if ~isequal(istate,false)
                 self.state = istate;
+            else
+                istate = StateInterruptLeaving.triggered(self.state,t,self,gps,ppm);
+                if ~isequal(istate,false)
+                    self.state = istate;
+                end
             end
             
             self.state = self.state.step(t,self); %State step should inc
