@@ -77,6 +77,10 @@ classdef Controller < handle
         function [spd, trn] = calcTurn(self, angle)
             trn = sign(angle) * 6;
             spd = angle / trn / self.dt;
+            if spd < 10
+                spd = 10;
+                trn = angle / (1.5 * spd);
+            end
         end
     end
     

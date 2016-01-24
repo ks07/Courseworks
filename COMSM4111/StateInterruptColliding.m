@@ -4,29 +4,39 @@ classdef StateInterruptColliding
     
     properties
         ctr;
+        steps;
+        stepAng;
+        otherPos;
+        initDist;
     end
     
     properties(Constant)
         TRIGGER_COLL_BOUND = 70; % Min distance to another UAV to trigger
+        STEPS = 5;
     end
     
     methods
-        function state = StateInterruptColliding()
+        function state = StateInterruptColliding(otherPos, initDist)
             state.ctr = 0;
+            state.otherPos = otherPos;
+            state.initDist = initDist;
+            state.stepAng = -360 / state.STEPS;
         end
-        function newState = step(state, ~, c)
-            if state.ctr == 0
-                % About to go out of range, turn!
-                c.uav.cmdTurn(-6);
-                c.uav.cmdSpeed(20);
-                
-                newState = state;
-            else
-                % Should have turned away, go forward once.
+        function newState = step(state, t, c)
+            [gps,~] = c.getInput(t);
+            if pdist([gps;state.otherPos]) < state.initDist
+                % We are now getting further away from the other UAV, hold
                 c.uav.cmdTurn(0);
                 c.uav.cmdSpeed(20);
                 
                 newState = StateLost();
+            else
+                % About to go out of range, turn!
+                [spd,turn] = c.calcTurn(state.stepAng);
+                c.uav.cmdTurn(turn);
+                c.uav.cmdSpeed(spd);
+                
+                newState = state;
             end
 
             c.uav.updateState(c.dt);
@@ -44,7 +54,7 @@ classdef StateInterruptColliding
                     loc = locs(i,:);
                     % Ignore what we presume to be our own message
                     if any(loc ~= c.prevGPS) && (pdist([gps;loc]) < StateInterruptColliding.TRIGGER_COLL_BOUND)
-                        interruptState = StateInterruptColliding();
+                        interruptState = StateInterruptColliding(loc,pdist([gps;loc]));
                         return;
                     end
                 end

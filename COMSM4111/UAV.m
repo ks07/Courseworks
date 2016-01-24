@@ -31,9 +31,15 @@ classdef UAV < handle
             ppm = cloudsamp(self.cloud,self.pos(1),self.pos(2),t);
         end
         function cmdSpeed(self,spd)
+            if spd < 10 || spd > 20
+                error('Speed command out of range.');
+            end
             self.spd = spd;
         end
         function cmdTurn(self,trn)
+            if abs(trn) > 6
+                error('Turn command out of range.');
+            end
             self.trn = trn;
         end
         function updateState(self,dt)
