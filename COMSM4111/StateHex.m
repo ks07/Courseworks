@@ -15,9 +15,6 @@ classdef StateHex < handle
             state.points = zeros(6,2);
         end
         function newState = step(state, t, c)
-            [gps,~] = c.getInput(t);
-            c.uav.comm_tx([Network.TYPE_FOUND,gps]);
-            
             newState = state; % catch-all
             if state.ctr == 0
                 % Turn left to open the hex.
@@ -75,13 +72,8 @@ classdef StateHex < handle
                     else
                         disp('Unhandled, we have lost the cloud.');
                         %Completely outside, just try high - 1?
-%                         [~,imax] = max(state.measures);
-%                         ppick = mod(imax - 2, 6) + 1;
-                        c.uav.cmdTurn(0);
-                        c.uav.cmdSpeed(10);
-                        c.uav.updateState(c.dt);
-                        newState = StateLost();
-                        return;
+                        [~,imax] = max(state.measures);
+                        ppick = mod(imax - 2, 6) + 1;
                     end
                 else
                     %Plot the chosen ones?
