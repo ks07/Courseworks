@@ -18,7 +18,7 @@ classdef StateIncreasing < handle
             
             if ppm >= state.PPM_LOWER && ppm <= state.PPM_UPPER
                 % Have reached the cloud boundary.
-                newState = StateFound();
+                newState = StateHex();
                 newState = newState.step(t,c);
             elseif ppm > c.prevPPM
                 c.uav.cmdTurn(0);
