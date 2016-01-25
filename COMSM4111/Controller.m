@@ -42,11 +42,11 @@ classdef Controller < handle
             self.uav.comm_tx(gps);
             
             % Check for interrupts first.
-            istate = StateInterruptColliding.triggered(self.state,t,self,gps,ppm);
+            istate = StateInterruptLeaving.triggered(self.state,t,self,gps,ppm);
             if ~isequal(istate,false)
                 self.state = istate;
             else
-                istate = StateInterruptLeaving.triggered(self.state,t,self,gps,ppm);
+                istate = StateInterruptColliding.triggered(self.state,t,self,gps,ppm);
                 if ~isequal(istate,false)
                     self.state = istate;
                 end
