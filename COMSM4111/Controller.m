@@ -8,6 +8,10 @@ classdef Controller < handle
         prevPPM;    % The previously recorded PPM.
         
         state;  % The state object to use to drive the UAV
+        
+        saved_timestamp; % The time the saved values were last updated.
+        saved_gps; % The current (dep on timestamp) gps
+        saved_ppm; % Ditto, for ppm.
     end
     
     properties (Constant)
@@ -28,10 +32,20 @@ classdef Controller < handle
             %ctrl.state = StateHoldCourse(6,false);
             %ctrl.state = StateTarget([500 500]);
             ctrl.state = StateLost();
+            ctrl.saved_timestamp = -1;
         end
         function [gps, ppm] = getInput(self,t)
             % Wrapper so we can do extra processing if wanted
-            [gps, ppm] = self.uav.getInput(t);
+            % PPM calculation can be quite slow, so cache the result!
+            if self.saved_timestamp ~= t
+                self.saved_timestamp = t;
+                [gps, ppm] = self.uav.getInput(t);
+                self.saved_gps = gps;
+                self.saved_ppm = ppm;
+            else
+               gps = self.saved_gps;
+               ppm = self.saved_ppm;
+            end
         end
         function step(self,t)
             [gps, ppm] = self.getInput(t);
