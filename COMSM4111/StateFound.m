@@ -22,7 +22,7 @@ classdef StateFound < handle
             newState = state;
             [gps, ppm] = c.getInput(t);
             
-            c.uav.comm_tx([Network.TYPE_FOUND,gps]);
+            %c.uav.comm_tx([Network.TYPE_FOUND,gps]);
             
             % On the boundary, hold position.
             c.uav.cmdTurn(6);
@@ -44,10 +44,18 @@ classdef StateFound < handle
                     newState = StateOutside();
                     newState = newState.step(t,c);
                 else
-                    % Still okay, hold. TODO: What if we get moved outside?
-                    state.ctr = 1;
-                    state.ppm_measures(:) = 0;
-                    c.uav.updateState(c.dt);
+                    % Still okay, hold.
+                    
+                    % 50% chance to enter hex mode?
+                    if randi(2) == 2
+                        newState = StateHex();
+                        newState = newState.step(t,c);
+                        return;
+                    else
+                        state.ctr = 1;
+                        state.ppm_measures(:) = 0;
+                        c.uav.updateState(c.dt);
+                    end
                 end
             end
         end
