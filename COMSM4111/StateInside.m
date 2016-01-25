@@ -19,7 +19,7 @@ classdef StateInside < handle
                 
                 c.uav.updateState(c.dt);
                 
-                newState = StateLost(); % Don't need to step this, wait one
+                newState = StateFound(); % Don't need to step this, wait one
             else
                 % Too inside, spin until we find a direction that appears
                 % to be outwards.
