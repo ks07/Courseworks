@@ -56,7 +56,7 @@ classdef Controller < handle
             % All UAVs broadcast their positions at/near start of timestep,
             % should give enough time to read the positions back in the
             % next timestep
-            self.uav.comm_tx([Network.TYPE_COLLIDE,gps,bgps]);
+            self.uav.comm_tx([Network.TYPE_COLLIDE,gps,bgps,ppm]);
             
             % Check for interrupts first.
             istate = StateInterruptLeaving.triggered(self.state,t,self,gps,ppm);
