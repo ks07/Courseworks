@@ -10,7 +10,8 @@ classdef StateInterruptLeaving < handle
     
     properties(Constant)
         TRIGGER_POS_BOUND = 800; % Min distance in any direction to trigger
-        STEPS = 5;
+        POS_CONSIDER_BOUND = StateInterruptLeaving.TRIGGER_POS_BOUND * 0.95; % Dist used to filter gps.
+        STEPS = 7;
     end
     
     methods
@@ -25,7 +26,13 @@ classdef StateInterruptLeaving < handle
             [spd,trn] = c.calcTurn(360/state.STEPS);
             if state.ctr <= state.STEPS
                 % Note positions and make a move.
-                state.points(state.ctr) = pdist([gps;0 0]) - pdist([c.prevGPS;0 0]); % Store the diff in dist to origin
+                % Try 0'ing any coord thats not outside, so we pick the
+                % better route?
+                gps2 = gps;
+                gps2(gps2 < state.POS_CONSIDER_BOUND) = 0;
+                prevGPS2 = c.prevGPS;
+                prevGPS2(prevGPS2 < state.POS_CONSIDER_BOUND) = 0;
+                state.points(state.ctr) = pdist([gps2;0 0]) - pdist([prevGPS2;0 0]); % Store the diff in dist to origin
                 
                 c.uav.cmdTurn(trn);
                 c.uav.cmdSpeed(spd);

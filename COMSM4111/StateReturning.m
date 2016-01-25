@@ -30,7 +30,7 @@ classdef StateReturning < handle
             else
                 % Forward once, then resume search.
                 c.uav.cmdTurn(0);
-                c.uav.cmdSpeed(10);
+                c.uav.cmdSpeed(20);
                 
                 c.uav.updateState(c.dt);
                 
