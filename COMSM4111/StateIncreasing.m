@@ -25,6 +25,10 @@ classdef StateIncreasing < handle
                 c.uav.cmdSpeed(10);
             
                 c.uav.updateState(c.dt);
+            elseif ppm > state.PPM_UPPER
+                % Have reached the cloud boundary.
+                newState = StateInside();
+                newState = newState.step(t,c);
             else
                 % No longer increasing, go back to lost state.
                 newState = StateLost();

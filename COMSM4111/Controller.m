@@ -16,11 +16,10 @@ classdef Controller < handle
     end
     
     methods
-        function ctrl = Controller(id,spos,shdg,dt,cloud,net,plotter)
+        function ctrl = Controller(id,spos,shdg,dt,cloud,net,plotter,t_offset)
             ctrl.dt = dt;
-            %ctrl.uav = UAV(id, normrnd(0,3,1,2), rand() * 360, plotter, net, cloud);
-            
-            ctrl.uav = UAV(id, normrnd(spos,3), normrnd(shdg,6), plotter, net, cloud);
+
+            ctrl.uav = UAV(id, normrnd(spos,3), normrnd(shdg,6), plotter, net, cloud, t_offset);
             
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
@@ -52,7 +51,7 @@ classdef Controller < handle
                     self.state = istate;
                 end
             end
-            
+            self.state
             self.state = self.state.step(t,self); %State step should inc
             
             self.prevGPS = gps;

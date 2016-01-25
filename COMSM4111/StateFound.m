@@ -3,10 +3,14 @@ classdef StateFound < handle
     %   Detailed explanation goes here
     
     properties
-        MEASURE_COUNT = 4;
-        PPM_UPPER = 1.1;
         ctr;
         ppm_measures;
+    end
+    
+    properties(Constant)
+        MEASURE_COUNT = 4;
+        PPM_UPPER = 1.1;
+        PPM_LOWER = 0.9;
     end
     
     methods
@@ -32,6 +36,10 @@ classdef StateFound < handle
                     % The cloud has grown around us too much, need to move
                     % outwards
                     newState = StateInside();
+                    newState = newState.step(t,c);
+                elseif avg_ppm < state.PPM_LOWER
+                    % The cloud has moved on.
+                    newState = StateOutside();
                     newState = newState.step(t,c);
                 else
                     % Still okay, hold. TODO: What if we get moved outside?

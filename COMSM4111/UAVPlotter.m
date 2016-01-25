@@ -58,15 +58,17 @@ classdef UAVPlotter < handle
             self.dbg_updated(:) = false;
             
             % Check for any collisions.
-            combos = nchoosek(1:self.uav_count,2); % Use binomial to avoid symmetric checks!
-            for ci=1:size(combos,1);
-                ai = combos(ci,1);
-                bi = combos(ci,2);
-                apos = self.uav_states(ai,1:2);
-                bpos = self.uav_states(bi,1:2);
-                abdist = pdist([apos;bpos]);
-                if abdist < self.COLL_LIM
-                    self.stat_coll = self.stat_coll + 1;
+            if self.uav_count > 1
+                combos = nchoosek(1:self.uav_count,2); % Use binomial to avoid symmetric checks!
+                for ci=1:size(combos,1);
+                    ai = combos(ci,1);
+                    bi = combos(ci,2);
+                    apos = self.uav_states(ai,1:2);
+                    bpos = self.uav_states(bi,1:2);
+                    abdist = pdist([apos;bpos]);
+                    if abdist < self.COLL_LIM
+                        self.stat_coll = self.stat_coll + 1;
+                    end
                 end
             end
             

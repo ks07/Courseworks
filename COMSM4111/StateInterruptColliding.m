@@ -11,7 +11,7 @@ classdef StateInterruptColliding
     end
     
     properties(Constant)
-        TRIGGER_COLL_BOUND = 70; % Min distance to another UAV to trigger
+        TRIGGER_COLL_BOUND = 100; % Min distance to another UAV to trigger
         STEPS = 5;
     end
     
@@ -24,7 +24,7 @@ classdef StateInterruptColliding
         end
         function newState = step(state, t, c)
             [gps,~] = c.getInput(t);
-            if pdist([gps;state.otherPos]) < state.initDist
+            if pdist([gps;state.otherPos]) > state.initDist
                 % We are now getting further away from the other UAV, hold
                 c.uav.cmdTurn(0);
                 c.uav.cmdSpeed(20);

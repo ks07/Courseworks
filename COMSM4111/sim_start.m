@@ -34,7 +34,7 @@ for i = 1:uav_count
     sa = 2*pi*(i-1)/uav_count;
     sx = START_ORIGIN(1) + START_RADIUS * sin(sa); % This should be cos, but hdg is rotated 90 deg!
     sy = START_ORIGIN(2) + START_RADIUS * cos(sa);
-    ctrl(i) = Controller(i,[sx,sy],rad2deg(sa),dt,cloud,net,plotter);
+    ctrl(i) = Controller(i,[sx,sy],rad2deg(sa),dt,cloud,net,plotter,cloud_start_time); % Give the offset, so ppm readings work
 end
 
 

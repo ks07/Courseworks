@@ -11,10 +11,11 @@ classdef UAV < handle
         plotter;% Plotter object
         net;    % Network object
         cloud;	% The cloud to track.
+        t_offset; % Time offset, to match start time to cloud simulation.
     end
     
     methods
-        function uav = UAV(id,start,hdg,plotter,net,cloud)
+        function uav = UAV(id,start,hdg,plotter,net,cloud,t_offset)
             uav.id = id; % Unique ID
             uav.pos = start;
             uav.hdg = hdg;
@@ -23,8 +24,11 @@ classdef UAV < handle
             uav.plotter = plotter;
             uav.net = net;
             uav.cloud = cloud;
+            uav.t_offset = t_offset;
         end
         function [gps, ppm] = getInput(self, t)
+            % Correct t
+            t = t + self.t_offset;
             % Model GPS error as normal distribution, sdev of 1.5m
             gps = normrnd(self.pos, [0.1 0.1]);%[1.5, 1.5]);
             % Can assume no error in ppm measure
