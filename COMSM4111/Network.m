@@ -10,6 +10,7 @@ classdef Network < handle
     % Hold some constants for message 'types' for easy access
     properties(Constant)
         TYPE_COLLIDE = 0;
+        TYPE_FOUND = 1;
     end
     
     methods

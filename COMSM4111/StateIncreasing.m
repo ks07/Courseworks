@@ -32,7 +32,8 @@ classdef StateIncreasing < handle
             else
                 % No longer increasing, go back to lost state.
                 newState = StateLost();
-                newState = newState.step(t,c);
+                c.uav.updateState(c.dt);
+                %newState = newState.step(t,c);
             end
         end
     end

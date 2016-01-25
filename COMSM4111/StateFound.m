@@ -20,7 +20,9 @@ classdef StateFound < handle
         end
         function newState = step(state, t, c)
             newState = state;
-            [~, ppm] = c.getInput(t);
+            [gps, ppm] = c.getInput(t);
+            
+            c.uav.comm_tx([Network.TYPE_FOUND,gps]);
             
             % On the boundary, hold position.
             c.uav.cmdTurn(6);
