@@ -7,8 +7,8 @@ function sim_start
 
 % load cloud data
 % choose a scenario
-load 'cloud1.mat'
-%load 'cloud2.mat'
+%load 'cloud1.mat'
+load 'cloud2.mat'
 
 % time and time step
 cloud_start_time = 0;%1300;
