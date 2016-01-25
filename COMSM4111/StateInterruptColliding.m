@@ -1,9 +1,10 @@
-classdef StateInterruptColliding
+classdef StateInterruptColliding < handle
     %STATEINTERRUPTCOLLIDING Interrupt state to avoid collisions.
     %   Detailed explanation goes here
     
     properties
         ctr;
+        points;
         steps;
         stepAng;
         otherPos;
@@ -17,29 +18,35 @@ classdef StateInterruptColliding
     
     methods
         function state = StateInterruptColliding(otherPos, initDist)
-            state.ctr = 0;
+            state.ctr = 1;
             state.otherPos = otherPos;
             state.initDist = initDist;
             state.stepAng = -360 / state.STEPS;
+            state.points = zeros(state.STEPS,1);
         end
         function newState = step(state, t, c)
+            newState = state;
             [gps,~] = c.getInput(t);
-            if pdist([gps;state.otherPos]) > state.initDist
-                % We are now getting further away from the other UAV, hold
-                c.uav.cmdTurn(0);
-                c.uav.cmdSpeed(20);
+            [spd,trn] = c.calcTurn(360/state.STEPS);
+            if state.ctr <= state.STEPS
+                % Note positions and make a move.
+                % Try 0'ing any coord thats not outside, so we pick the
+                % better route?
+                state.points(state.ctr) = pdist([gps;state.otherPos]) - pdist([c.prevGPS;state.otherPos]); % Store the diff in dist to origin
                 
-                newState = StateLost();
-            else
-                % About to go out of range, turn!
-                [spd,turn] = c.calcTurn(state.stepAng);
-                c.uav.cmdTurn(turn);
+                c.uav.cmdTurn(trn);
                 c.uav.cmdSpeed(spd);
                 
-                newState = state;
-            end
+                c.uav.updateState(c.dt);
+                
+                state.ctr = state.ctr + 1;
+            else
+                % Decision making time.
+                [~,bestend] = max(state.points);
 
-            c.uav.updateState(c.dt);
+                newState = StateReturning(bestend,trn,spd,state.STEPS);
+                newState = newState.step(t,c);
+            end
         end
     end
     methods(Static)
@@ -48,7 +55,7 @@ classdef StateInterruptColliding
             
             %Assume that all messages are location broadcasts, and ignore
             %this handling near launch time.
-            if size(msgs,1) > 0 && t > 30 && ~isa(state,'StateInterruptColliding') && ~isa(state,'StateFound')
+            if size(msgs,1) > 0 && t > 30 && ~isa(state,'StateInterruptColliding') && ~isa(state,'StateFound') && ~isa(state,'StateReturning')
                 locs = msgs(:,2:3);
                 for i=1:size(locs,1)
                     loc = locs(i,:);
