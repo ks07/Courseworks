@@ -4,16 +4,13 @@ classdef StateInterruptColliding < handle
     
     properties
         ctr;
-        points;
-        steps;
-        stepAng;
         otherPos;
         initDist;
     end
     
     properties(Constant)
         TRIGGER_COLL_BOUND = 100; % Min distance to another UAV to trigger
-        STEPS = 5;
+        STEPS = 2;
     end
     
     methods
@@ -21,25 +18,30 @@ classdef StateInterruptColliding < handle
             state.ctr = 1;
             state.otherPos = otherPos;
             state.initDist = initDist;
-            state.stepAng = -360 / state.STEPS;
-            state.points = zeros(state.STEPS,1);
         end
         function newState = step(state, t, c)
-            newState = StateIncreasing();
             [gps,~] = c.getInput(t);
-            if pdist([c.prevGPS;state.otherPos]) < pdist([gps;state.otherPos])
-                % If we are already moving away from the one ~behind us, go
-                % straight on one step.
-                c.uav.cmdTurn(0);
-                c.uav.cmdSpeed(20);
+            if state.ctr == 1
+                if pdist([c.prevGPS;state.otherPos]) < pdist([gps;state.otherPos])
+                    % If we are already moving away from the one ~behind us, go
+                    % straight on one step.
+                    c.uav.cmdTurn(0);
+                    c.uav.cmdSpeed(20);
+                else
+                    % We are moving into the other one, turn 180.
+                    [spd,trn] = c.calcTurn(180);
+                    c.uav.cmdTurn(trn);
+                    c.uav.cmdSpeed(spd);
+                end
+                newState = state;
             else
-                % We are moving into the other one, turn 180.
-                [spd,trn] = c.calcTurn(180);
-                c.uav.cmdTurn(trn);
-                c.uav.cmdSpeed(spd);
+                c.uav.cmdTurn(0);
+                c.uav.cmdSpeed(15);
+                newState = StateIncreasing();
             end
             
             c.uav.updateState(c.dt);
+            state.ctr = state.ctr + 1;
         end
     end
     methods(Static)

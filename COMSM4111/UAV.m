@@ -2,7 +2,7 @@ classdef UAV < handle
     %UAV Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties %(SetAccess = private,GetAccess = private)
+    properties(SetAccess = private,GetAccess = private)
         id;     % Unique ID for UAV object, for debug and plotting.
         pos;    % Co-ordinates of the UAV
         hdg;    % Heading of the UAV
