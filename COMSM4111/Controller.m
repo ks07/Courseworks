@@ -16,10 +16,10 @@ classdef Controller < handle
     end
     
     methods
-        function ctrl = Controller(id,spos,shdg,dt,cloud,net,plotter,t_offset)
+        function ctrl = Controller(uav,dt)
             ctrl.dt = dt;
 
-            ctrl.uav = UAV(id, normrnd(spos,3), normrnd(shdg,6), plotter, net, cloud, t_offset);
+            ctrl.uav = uav;
             
             ctrl.prevGPS = [0 0];
             ctrl.prevPPM = 0;
