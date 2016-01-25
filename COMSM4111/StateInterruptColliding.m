@@ -54,13 +54,8 @@ classdef StateInterruptColliding < handle
                     loc = locs(i,:);
                     % Ignore what we presume to be our own message
                     if any(loc ~= c.prevGPS) && (pdist([gps;loc]) < StateInterruptColliding.TRIGGER_COLL_BOUND)
-                        % If we are already moving away from the other,
-                        % ignore (i.e. the other is driving into us from
-                        % behind)
-                        if pdist([c.prevGPS;loc]) >= pdist([gps;loc])
-                            interruptState = StateInterruptColliding(loc,pdist([gps;loc]));
-                            return;
-                        end
+                        interruptState = StateInterruptColliding(loc,pdist([gps;loc]));
+                        return;
                     end
                 end
             end
