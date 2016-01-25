@@ -1,29 +1,38 @@
 classdef Network < handle
     %NETWORK Communications layer
-    %   Detailed explanation goes here
+    %   All comms use single precision floats - can send 8 per message
     
     properties
         sending;
         sent;
     end
     
+    % Hold some constants for message 'types' for easy access
+    properties(Constant)
+        TYPE_COLLIDE = 0;
+    end
+    
     methods
         function net = Network()
         end
-        function sent = tx(self,buff)
+        function tx(self,buff)
             % Send a message to all other UAVs.
             % buff is max 32 bytes, tx time is 1s
-            if numel(buff) > 4
+            if numel(buff) > 8
                 error('Tried to send too large message.');
             end
-            packet = zeros(1,5);
-            packet(2:1+numel(buff)) = buff;
-            packet(1) = numel(buff);
+            packet = zeros(1,8,'single');
+            packet(1:numel(buff)) = buff;
             self.sending = [self.sending; packet];
-            sent = true;
         end
-        function msgs = rx(self)
-            msgs = self.sent;
+        function msgs = rx(self,filter)
+            if nargin == 1
+                msgs = self.sent;
+            elseif ~isempty(self.sent)
+                msgs = self.sent(self.sent(:,1)==filter,:);
+            else
+                msgs = [];
+            end
         end
         function step(self)
             self.sent = self.sending;

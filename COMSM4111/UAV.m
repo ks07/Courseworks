@@ -78,9 +78,9 @@ classdef UAV < handle
             % buff is max 32 bytes, tx time is 1s
             self.net.tx(buff);
         end
-        function msgs = comm_rx(self)
+        function msgs = comm_rx(self,filter)
             % Receive all messages.
-            msgs = self.net.rx();
+            msgs = self.net.rx(filter);
         end
         function plot(self)
             self.plotter.plot(self.id, self.pos, self.hdg);

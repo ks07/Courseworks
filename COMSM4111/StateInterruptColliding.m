@@ -44,7 +44,7 @@ classdef StateInterruptColliding < handle
     end
     methods(Static)
         function interruptState = triggered(state,t,c,gps,ppm)
-            msgs = c.uav.comm_rx();
+            msgs = double(c.uav.comm_rx(Network.TYPE_COLLIDE)); %Conv to dbl
             
             %Assume that all messages are location broadcasts, and ignore
             %this handling near launch time.
@@ -55,7 +55,7 @@ classdef StateInterruptColliding < handle
                     loc = locs(i,:);
                     pred = preds(i,:);
                     % Ignore what we presume to be our own message
-                    if any(loc ~= c.prevGPS) && (pdist([gps;loc]) < StateInterruptColliding.TRIGGER_COLL_BOUND)
+                    if any(loc ~= single(c.prevGPS)) && (pdist([gps;loc]) < StateInterruptColliding.TRIGGER_COLL_BOUND)
                         interruptState = StateInterruptColliding(pred,pdist([gps;pred]));
                         return;
                     end
