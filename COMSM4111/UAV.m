@@ -1,5 +1,5 @@
 classdef UAV < handle
-    %UAV Summary of this class goes here
+    %UAV The simulated UAV, no user code should have direct access
     %   Detailed explanation goes here
     
     properties(SetAccess = private,GetAccess = private)

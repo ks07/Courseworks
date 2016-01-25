@@ -1,5 +1,6 @@
 classdef StateHex < handle
-    %STATEHEX Summary of this class goes here
+    %STATEHEX State for flying in a 'hex' to find the most likely boundary
+    %trajectory.
     %   Detailed explanation goes here
     
     properties

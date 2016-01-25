@@ -1,4 +1,5 @@
 classdef StateHoldCourse < handle
+    %STATEHEX State to try and follow the predicted boundary trajectory (2)
     
     properties
         ctr;

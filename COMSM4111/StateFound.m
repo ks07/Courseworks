@@ -1,5 +1,5 @@
 classdef StateFound < handle
-    %STATEFOUND Summary of this class goes here
+    %STATEFOUND State for when we are on the boundary.
     %   Detailed explanation goes here
     
     properties
@@ -44,7 +44,7 @@ classdef StateFound < handle
                     newState = StateOutside();
                     newState = newState.step(t,c);
                 else
-                    % Still okay, hold. TODO: What if we get moved outside?
+                    % Still okay, hold.
                     state.ctr = 1;
                     state.ppm_measures(:) = 0;
                     c.uav.updateState(c.dt);

@@ -1,5 +1,5 @@
 classdef UAVPlotter < handle
-    %UAVPLOTTER Summary of this class goes here
+    %UAVPLOTTER Class to handle batch plotting at each round.
     %   Detailed explanation goes here
     
     properties

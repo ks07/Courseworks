@@ -1,5 +1,5 @@
 classdef StateTarget < handle
-    %STATETARGET Summary of this class goes here
+    %STATETARGET State to fly towards a target, in a spiral motion.
     %   Detailed explanation goes here
     
     properties

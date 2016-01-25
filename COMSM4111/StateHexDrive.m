@@ -1,5 +1,5 @@
 classdef StateHexDrive < handle
-    %STATEHEX Summary of this class goes here
+    %STATEHEX State to try and follow the predicted boundary trajectory
     %   Detailed explanation goes here
     
     properties
