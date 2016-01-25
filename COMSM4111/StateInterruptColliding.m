@@ -25,28 +25,21 @@ classdef StateInterruptColliding < handle
             state.points = zeros(state.STEPS,1);
         end
         function newState = step(state, t, c)
-            newState = state;
+            newState = StateIncreasing();
             [gps,~] = c.getInput(t);
-            [spd,trn] = c.calcTurn(360/state.STEPS);
-            if state.ctr <= state.STEPS
-                % Note positions and make a move.
-                % Try 0'ing any coord thats not outside, so we pick the
-                % better route?
-                state.points(state.ctr) = pdist([gps;state.otherPos]) - pdist([c.prevGPS;state.otherPos]); % Store the diff in dist to origin
-                
+            if pdist([c.prevGPS;state.otherPos]) < pdist([gps;state.otherPos])
+                % If we are already moving away from the one ~behind us, go
+                % straight on one step.
+                c.uav.cmdTurn(0);
+                c.uav.cmdSpeed(20);
+            else
+                % We are moving into the other one, turn 180.
+                [spd,trn] = c.calcTurn(180);
                 c.uav.cmdTurn(trn);
                 c.uav.cmdSpeed(spd);
-                
-                c.uav.updateState(c.dt);
-                
-                state.ctr = state.ctr + 1;
-            else
-                % Decision making time.
-                [~,bestend] = max(state.points);
-
-                newState = StateReturning(bestend,trn,spd,state.STEPS);
-                newState = newState.step(t,c);
             end
+            
+            c.uav.updateState(c.dt);
         end
     end
     methods(Static)
@@ -55,7 +48,7 @@ classdef StateInterruptColliding < handle
             
             %Assume that all messages are location broadcasts, and ignore
             %this handling near launch time.
-            if size(msgs,1) > 0 && t > 30 && ~isa(state,'StateInterruptColliding') && ~isa(state,'StateFound') && ~isa(state,'StateReturning')
+            if size(msgs,1) > 0 && t > 30 && ~isa(state,'StateInterruptColliding') && ~isa(state,'StateReturning')
                 locs = msgs(:,2:3);
                 for i=1:size(locs,1)
                     loc = locs(i,:);
