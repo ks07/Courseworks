@@ -48,7 +48,7 @@ classdef StateInterruptColliding
             
             %Assume that all messages are location broadcasts, and ignore
             %this handling near launch time.
-            if size(msgs,1) > 0 && t > 30 && ~isa(state,'StateInterruptColliding')
+            if size(msgs,1) > 0 && t > 30 && ~isa(state,'StateInterruptColliding') && ~isa(state,'StateFound')
                 locs = msgs(:,2:3);
                 for i=1:size(locs,1)
                     loc = locs(i,:);
