@@ -50,11 +50,13 @@ classdef StateInterruptColliding < handle
             %this handling near launch time.
             if size(msgs,1) > 0 && t > 30 && ~isa(state,'StateInterruptColliding') && ~isa(state,'StateReturning')
                 locs = msgs(:,2:3);
+                preds = msgs(:,4:5);
                 for i=1:size(locs,1)
                     loc = locs(i,:);
+                    pred = preds(i,:);
                     % Ignore what we presume to be our own message
                     if any(loc ~= c.prevGPS) && (pdist([gps;loc]) < StateInterruptColliding.TRIGGER_COLL_BOUND)
-                        interruptState = StateInterruptColliding(loc,pdist([gps;loc]));
+                        interruptState = StateInterruptColliding(pred,pdist([gps;pred]));
                         return;
                     end
                 end
