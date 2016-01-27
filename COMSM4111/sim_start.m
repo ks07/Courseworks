@@ -1,4 +1,4 @@
-function sim_start
+function out = sim_start(uav_count)
 %
 % simulation example for use of cloud dispersion model
 %
@@ -20,7 +20,7 @@ figure(1);
 clf;
 hold on % so each plot doesn't wipe the predecessor
 
-uav_count = 10;
+%uav_count = 1;
 
 net = Network();
 plotter = UAVPlotter(uav_count);
@@ -53,6 +53,13 @@ for kk=1:(30*60/dt),
     plotter.draw(t,cloud,true); % Plotter needs real time
     
     % pause ensures that the plots update
-    pause(0.0025)
+    %pause(0.0025)
+    drawnow;
     
 end
+
+out = zeros(1,i);
+for i = 1:uav_count
+    out(i) = ctrl(i).stat_state_found;
+end
+disp('done');

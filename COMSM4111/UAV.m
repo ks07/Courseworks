@@ -2,7 +2,7 @@ classdef UAV < handle
     %UAV The simulated UAV, no user code should have direct access
     %   Detailed explanation goes here
     
-    properties(SetAccess = private,GetAccess = private)
+    properties%(SetAccess = private,GetAccess = private)
         id;     % Unique ID for UAV object, for debug and plotting.
         pos;    % Co-ordinates of the UAV
         hdg;    % Heading of the UAV
