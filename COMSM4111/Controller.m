@@ -14,7 +14,6 @@ classdef Controller < handle
         saved_ppm; % Ditto, for ppm.
         
         stat_state_found;
-        stat_state_other;
     end
     
     properties (Constant)
@@ -38,7 +37,6 @@ classdef Controller < handle
             ctrl.saved_timestamp = -1;
             
             ctrl.stat_state_found = 0;
-            ctrl.stat_state_other = 0;
         end
         function [gps, ppm] = getInput(self,t)
             % Wrapper so we can do extra processing if wanted
@@ -77,8 +75,6 @@ classdef Controller < handle
             
             if isa(self.state,'StateFound')
                 self.stat_state_found = self.stat_state_found + 1;
-            else
-                self.stat_state_other = self.stat_state_other + 1;
             end
             self.state = self.state.step(t,self); %State step should inc
             

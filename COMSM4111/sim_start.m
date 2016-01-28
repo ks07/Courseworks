@@ -1,4 +1,4 @@
-function out = sim_start(uav_count)
+function [foundout,ppmout,stat_ppm_leg_count_time] = sim_start(uav_count)
 %
 % simulation example for use of cloud dispersion model
 %
@@ -38,6 +38,11 @@ for i = 1:uav_count
     ctrl(i) = Controller(uav,dt);
 end
 
+iter = 1;
+stat_ppm_now = zeros(uav_count,1);
+stat_ppm_avg_time = zeros((30*60/dt),4);
+stat_ppm_leg_count_time = zeros((30*60/dt),6);
+
 
 % main simulation loop, run for 30 minutes
 for kk=1:(30*60/dt),
@@ -45,9 +50,26 @@ for kk=1:(30*60/dt),
     % time
     t = t + dt;
     
+    stat = [-0.8,-0.9,-1.1,-1.2,-2];
+    
     for i = 1:uav_count
         ctrl(i).step(t - cloud_start_time); % UAV needs relative time (to start time)
+        stat_ppm_now(i) = ctrl(i).prevPPM;
+        if ctrl(i).prevPPM < 0.8
+            stat(1) = stat(1) + 1;
+        elseif ctrl(i).prevPPM < 0.9
+            stat(2) = stat(2) + 1;
+        elseif ctrl(i).prevPPM > 1.2
+            stat(5) = stat(5) + 1;
+        elseif ctrl(i).prevPPM > 1.1
+            stat(4) = stat(4) + 1;
+        else
+            stat(3) = stat(3) + 1;
+        end
     end
+    
+    stat_ppm_avg_time(iter,:) = [t,mean(stat_ppm_now),median(stat_ppm_now),std(stat_ppm_now)];
+    stat_ppm_leg_count_time(iter,:) = [t,stat];
     
     net.step();
     plotter.draw(t,cloud,true); % Plotter needs real time
@@ -56,10 +78,12 @@ for kk=1:(30*60/dt),
     %pause(0.0025)
     drawnow;
     
+    iter = iter + 1;
 end
 
-out = zeros(1,i);
+foundout = zeros(1,i);
 for i = 1:uav_count
-    out(i) = ctrl(i).stat_state_found;
+    foundout(i) = ctrl(i).stat_state_found;
 end
+ppmout = stat_ppm_avg_time;
 disp('done');
