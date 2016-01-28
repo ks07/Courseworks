@@ -1,4 +1,4 @@
-function cloudplot(cloud,t)
+function c = cloudplot(cloud,t)
 %
 %    cloudplot(cloud,t)
 %
@@ -6,7 +6,7 @@ function cloudplot(cloud,t)
 %
 
 % store contour handles as persistent to delete them each time
-persistent c h;
+persistent h;
 
 % need to permute 
 pp = permute(cloud.p,[3 1 2]);
@@ -20,7 +20,7 @@ try
 end
 
 % and draw contours
-[c, h] = contour(cloud.x,cloud.y,pf,(0.5:0.5:3));
+[c, h] = contour(cloud.x,cloud.y,pf,[1,1]);%(0.5:0.5:3));
 colorbar('EastOutside');
 axis equal;
 axis([min(cloud.x) max(cloud.x) min(cloud.y) max(cloud.y)]);

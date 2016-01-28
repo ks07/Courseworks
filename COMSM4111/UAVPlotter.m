@@ -50,7 +50,7 @@ classdef UAVPlotter < handle
             self.dbg_updated(id) = true;
             self.uav_states(id,:) = [pos, hdg];
         end
-        function draw(self,t,cloud,mapDraw)
+        function points = draw(self,t,cloud,mapDraw)
             % Check if all UAVs have actually done something this timestep!
             if min(self.dbg_updated) == false
                 error('Some UAVs did not update this timestep!');
@@ -79,7 +79,7 @@ classdef UAVPlotter < handle
                 title(sprintf('t=%.1f Collisions=%d OOB=%d',t,self.stat_coll,self.stat_oob))
 
                 % plot the cloud contours
-                cloudplot(cloud,t);
+                points = cloudplot(cloud,t);
             end
             
             % Plot position (Need loop else all will be one colour!)
