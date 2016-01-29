@@ -22,7 +22,7 @@ classdef StateFound < handle
             newState = state;
             [gps, ppm] = c.getInput(t);
             
-            c.uav.comm_tx([Network.TYPE_FOUND,gps]);
+            %c.uav.comm_tx([Network.TYPE_FOUND,gps]);
             
             % On the boundary, hold position.
             c.uav.cmdTurn(6);

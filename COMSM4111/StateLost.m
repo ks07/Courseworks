@@ -16,7 +16,7 @@ classdef StateLost < handle
                 newState = StateIncreasing();
                 newState = newState.step(t,c);
             else
-                msgs = double(c.uav.comm_rx(Network.TYPE_FOUND));
+                msgs = [];%double(c.uav.comm_rx(Network.TYPE_FOUND));
 
                 c.uav.cmdTurn(0.1);
                 c.uav.cmdSpeed(20);
