@@ -103,7 +103,7 @@ for kk=1:(30*60/dt),
     
     % pause ensures that the plots update
     %pause(0.0025)
-    %drawnow;
+    drawnow;
     
     iter = iter + 1;
 end
