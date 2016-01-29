@@ -1,4 +1,4 @@
-function [foundout,ppmout,stat_ppm_leg_count_time,stat_hull_time] = sim_start(uav_count)
+function [foundout,ppmout,stat_ppm_leg_count_time,stat_hull_time,stat_collisions,stat_oob] = sim_start(uav_count)
 %
 % simulation example for use of cloud dispersion model
 %
@@ -103,7 +103,7 @@ for kk=1:(30*60/dt),
     
     % pause ensures that the plots update
     %pause(0.0025)
-    drawnow;
+    %drawnow;
     
     iter = iter + 1;
 end
@@ -113,4 +113,6 @@ for i = 1:uav_count
     foundout(i) = ctrl(i).stat_state_found;
 end
 ppmout = stat_ppm_avg_time;
+stat_collisions = plotter.stat_coll;
+stat_oob = plotter.stat_oob;
 disp('done');

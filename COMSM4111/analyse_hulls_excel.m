@@ -9,3 +9,14 @@ for i=1:size(flathull,2)
 end
 maflathull = maflathull / 12;
 xlswrite('excelout\hulls_all.xlsx',maflathull,2);
+
+
+
+% %% COMBO CODE, NOT SCRIPT WORTHY REALLY
+% flathull_both = cat(3,flathull_1,flathull_2)
+% mfhb = mean(flathull_both,3)
+% for i=1:size(mfhb,2)
+%     mamfhb(:,i) = conv(mfhb(:,i),ones(1,12),'valid');
+% end
+% mamfhb = mamfhb / 12;
+% xlswrite('excelout\hulls_meantest.xlsx',mamfhb);
